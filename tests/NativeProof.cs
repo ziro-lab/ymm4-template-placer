@@ -42,13 +42,12 @@ internal static partial class NativeProof
                     {
                         projectCreated = true; root.GetType().GetMethod("CreateProject", Type.EmptyTypes)!.Invoke(root, null); break;
                     }
-                    // Exact CI-only paths proven on the pinned 4.55.1.1 runtime. Production does not use reflection.
                     var model = root.GetType().GetField("model", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(root);
                     var timeline = active?.GetType().GetField("timeline", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(active) as Timeline;
                     var undo = model?.GetType().GetProperty("UndoRedoManager")?.GetValue(model) as UndoRedoManager;
                     if (timeline == null || undo == null) continue;
                     timer.Stop(); Log($"YMM4={typeof(Timeline).Assembly.GetName().Version}; host={root.GetType().FullName}");
-                    DumpType(timeline.LayerSettings.GetType());
+                    InspectTemplateRegistration(timeline);
                     await Run(root, timeline, undo);
                     File.WriteAllText(Path.Combine(output, "proof-result.txt"), "PASS P1 P2 P3 P4 P5 P6 P7 P8\n"); return;
                 }
@@ -61,6 +60,18 @@ internal static partial class NativeProof
             }
         };
         timer.Start();
+    }
+    private static void InspectTemplateRegistration(Timeline timeline)
+    {
+        // Diagnostic of the real native constructor; does not register or place anything.
+        var source = new TachieFaceItem(new Character { Name = "RegistrationProbe" }) { Frame = 42, Length = 100, Layer = 7 };
+        var ctor = typeof(ItemTemplate).GetConstructors().Single(x => x.GetParameters().Length == 5 && x.GetParameters()[3].ParameterType == typeof(Timeline));
+        var groupType = ctor.GetParameters()[0].ParameterType;
+        DumpType(groupType);
+        var group = groupType.IsValueType ? Activator.CreateInstance(groupType) : null;
+        var template = (ItemTemplate)ctor.Invoke([group, "RegistrationProbe", new IItem[] { source }, timeline, Guid.Empty]);
+        var face = template.Items.OfType<TachieFaceItem>().Single();
+        Log($"registration constructor: sourceFrame={source.Frame}, sourceLayer={source.Layer}, innerFrame={face.Frame}, innerLayer={face.Layer}, outerLayer={template.Layer}");
     }
     private static Task Idle() => Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle).Task;
     private static ItemTemplate Template(string name, IItem[] items)
