@@ -23,16 +23,15 @@ public sealed class AssignmentRow : INotifyPropertyChanged
         set
         {
             if (value == null || !Choices.Contains(value) || ReferenceEquals(value, selectedChoice)) return;
-            selectedChoice = value;
-            Changed(); Changed(nameof(State));
+            selectedChoice = value; Changed(); Changed(nameof(State));
         }
     }
     public AssignmentRow(int no, VoiceSnapshot target, IReadOnlyList<FaceTemplate> catalog)
     {
-        No = no;
-        Target = target;
-        Choices = new[] { new TemplateChoice(null, "— 配置しない —") }
-            .Concat(TemplateCatalog.ForVoice(target.Voice, catalog).Select(x => new TemplateChoice(x, x.Name))).ToArray();
+        No = no; Target = target;
+        var candidates = TemplateCatalog.ForVoice(target.Voice, catalog);
+        Choices = new[] { new TemplateChoice(null, candidates.Count == 0 ? "— 候補なし —" : "— 配置しない —") }
+            .Concat(candidates.Select(x => new TemplateChoice(x, x.Name))).ToArray();
         selectedChoice = Choices[0];
     }
     public event PropertyChangedEventHandler? PropertyChanged;
