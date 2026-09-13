@@ -6,12 +6,14 @@
     <Nullable>enable</Nullable>
     <AssemblyName>Ymm4TemplatePlacer</AssemblyName>
     <RootNamespace>Ymm4TemplatePlacer</RootNamespace>
+    <Version>0.3.0</Version>
+    <DefineConstants Condition="'$(Ymm4Proof)' == 'true'">$(DefineConstants);YMM4_PROOF</DefineConstants>
   </PropertyGroup>
-
   <ItemGroup>
-    <Reference Include="YukkuriMovieMaker.Plugin">
-      <HintPath>$(YMM4DirPath)YukkuriMovieMaker.Plugin.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
+    <Reference Include="YukkuriMovieMaker.Plugin"><HintPath>$(YMM4DirPath)YukkuriMovieMaker.Plugin.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="YukkuriMovieMaker"><HintPath>$(YMM4DirPath)YukkuriMovieMaker.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="YukkuriMovieMaker.Controls"><HintPath>$(YMM4DirPath)YukkuriMovieMaker.Controls.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>$(YMM4DirPath)Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
+    <Compile Include="../../tests/NativeProof.cs" Link="Proof/NativeProof.cs" Condition="'$(Ymm4Proof)' == 'true'" />
   </ItemGroup>
 </Project>
