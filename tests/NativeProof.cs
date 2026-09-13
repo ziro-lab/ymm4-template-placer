@@ -30,6 +30,7 @@ internal static class NativeProof
     {
         DumpApi();
         var ticks = 0;
+        var projectCreated = false;
         var timer = new DispatcherTimer(DispatcherPriority.ApplicationIdle) { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += (_, _) =>
         {
@@ -39,10 +40,18 @@ internal static class NativeProof
                 foreach (Window window in Application.Current.Windows)
                 {
                     var root = window.DataContext;
-                    if (root == null || !root.GetType().Name.Contains("Main", StringComparison.Ordinal)) continue;
-                    DumpType(root.GetType());
-                    var timeline = Find<Timeline>(root, 3);
-                    var undo = Find<UndoRedoManager>(root, 3);
+                    if (root == null || root.GetType().FullName != "YukkuriMovieMaker.ViewModels.MainViewModel") continue;
+                    if (root.GetType().GetProperty("ActiveTimelineViewModel")?.GetValue(root) is object active)
+                        DumpType(active.GetType());
+                    else if (!projectCreated)
+                    {
+                        projectCreated = true;
+                        root.GetType().GetMethod("CreateProject", Type.EmptyTypes)!.Invoke(root, null);
+                        Log("fixture: created native project");
+                        break;
+                    }
+                    var timeline = Find<Timeline>(root);
+                    var undo = Find<UndoRedoManager>(root);
                     if (timeline == null || undo == null) continue;
                     timer.Stop();
                     Log($"host={root.GetType().FullName};timeline={timeline.GetType().FullName}");
@@ -50,7 +59,7 @@ internal static class NativeProof
                     File.WriteAllText(Path.Combine(output, "proof-result.txt"), "PASS P1 P2 P3\n");
                     return;
                 }
-                if (ticks >= 90) throw new InvalidOperationException("Native main Timeline/UndoRedoManager was not available.");
+                if (ticks >= 45) throw new InvalidOperationException("Native main Timeline/UndoRedoManager was not available.");
             }
             catch (Exception ex)
             {
@@ -64,14 +73,12 @@ internal static class NativeProof
     private static void Run(Timeline timeline, UndoRedoManager undo)
     {
         Assert(!timeline.Items.Any(), "CI fixture requires an empty native Timeline");
-        var a = Create<VoiceItem>("TestA");
-        Set(a, "Character", "TestA"); a.Frame = 10; a.Length = 30; a.Layer = 1; a.Serif = "Test A voice";
-        var b = Create<VoiceItem>("TestB");
-        Set(b, "Character", "TestB"); b.Frame = 60; b.Length = 20; b.Layer = 1; b.Serif = "Test B voice";
-        var faceA = Create<TachieFaceItem>("TestA");
-        Set(faceA, "Character", "TestA"); faceA.Frame = 0; faceA.Length = 100; faceA.Layer = 3;
-        var faceB = Create<TachieFaceItem>("TestB");
-        Set(faceB, "Character", "TestB"); faceB.Frame = 0; faceB.Length = 100; faceB.Layer = 4;
+        var characterA = new Character { Name = "TestA" };
+        var characterB = new Character { Name = "TestB" };
+        var a = new VoiceItem(characterA) { Frame = 10, Length = 30, Layer = 1, Serif = "Test A voice" };
+        var b = new VoiceItem(characterB) { Frame = 60, Length = 20, Layer = 1, Serif = "Test B voice" };
+        var faceA = new TachieFaceItem(characterA) { Frame = 0, Length = 100, Layer = 3 };
+        var faceB = new TachieFaceItem(characterB) { Frame = 0, Length = 100, Layer = 4 };
         var templateA = MakeTemplate("TestA/Neutral", [faceA]);
         var templateB = MakeTemplate("TestB/Neutral", [faceB]);
         ItemSettings.Default.Templates.Add(templateA);
@@ -90,65 +97,48 @@ internal static class NativeProof
         var clone = PlacementEngine.CloneForVoice(voices[0], catalog.Single(x => x.Name == "TestA/Neutral"));
         PlacementEngine.AddPrepared(timeline, undo, [clone]);
         Assert(timeline.Items.Contains(clone) && clone.Frame == 10 && clone.Length == 30 && clone.Layer == 3 && clone.Remark == PlacementEngine.Marker, "P3 native Timeline placement");
+        Assert(Equals(clone.Character, characterA), "P3 Character preserved");
         Assert(!ReferenceEquals(faceA, clone) && faceA.Frame == 0 && faceA.Length == 100 && faceA.Remark != PlacementEngine.Marker, "P3 independent clone/source preserved");
         Log("P1=PASS\nP2=PASS\nP3=PASS");
     }
-    private static T Create<T>(string name, IItem[]? items = null)
-    {
-        var errors = new List<string>();
-        foreach (var ctor in typeof(T).GetConstructors().OrderBy(x => x.GetParameters().Length))
-        {
-            try
-            {
-                var args = ctor.GetParameters().Select(p => p.HasDefaultValue ? p.DefaultValue :
-                    p.ParameterType == typeof(string) ? name :
-                    items != null && p.ParameterType.IsAssignableFrom(typeof(IItem[])) ? (object)items :
-                    p.ParameterType.IsValueType ? Activator.CreateInstance(p.ParameterType) : null).ToArray();
-                return (T)ctor.Invoke(args);
-            }
-            catch (Exception ex) { errors.Add(ex.GetBaseException().Message); }
-        }
-        throw new InvalidOperationException($"Fixture constructor {typeof(T).FullName}: {string.Join("; ", errors)}");
-    }
     private static ItemTemplate MakeTemplate(string name, IItem[] items)
     {
-        var result = Create<ItemTemplate>(name, items);
-        Set(result, "Name", name);
-        var property = typeof(ItemTemplate).GetProperty("Items")!;
-        if (property.CanWrite)
-        {
-            object value = property.PropertyType.IsAssignableFrom(typeof(IItem[])) ? items : items.ToList();
-            property.SetValue(result, value);
-        }
-        else if (property.GetValue(result) is IList list)
-        {
-            list.Clear(); foreach (var item in items) list.Add(item);
-        }
-        Assert(result.Items.Count() == items.Length, "fixture Template item count");
+        var result = new ItemTemplate { Name = name };
+        foreach (var item in items) result.Items.Add(item);
         return result;
     }
-    private static void Set(object value, string name, object propertyValue) => value.GetType().GetProperty(name)!.SetValue(value, propertyValue);
-    private static T? Find<T>(object root, int depth) where T : class
+    // CI-only adapter into the native application's actual object graph. Production uses TimelineToolInfo.
+    private static T? Find<T>(object root) where T : class
     {
-        if (root is T found) return found;
-        if (depth == 0) return null;
-        foreach (var property in root.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+        var queue = new Queue<(object Value, int Depth, string Path)>();
+        var seen = new HashSet<object>(ReferenceEqualityComparer.Instance);
+        queue.Enqueue((root, 0, "Main"));
+        while (queue.Count > 0 && seen.Count < 400)
         {
-            if (property.GetIndexParameters().Length != 0 || !property.CanRead) continue;
-            var ns = property.PropertyType.Namespace ?? "";
-            if (!typeof(T).IsAssignableFrom(property.PropertyType) && !ns.StartsWith("YukkuriMovieMaker", StringComparison.Ordinal)) continue;
-            try
+            var (value, depth, path) = queue.Dequeue();
+            if (!seen.Add(value)) continue;
+            if (value is T match) { Log("host binding: " + path); return match; }
+            if (depth >= 6) continue;
+            var type = value.GetType();
+            bool Allowed(Type t) => typeof(T).IsAssignableFrom(t) || (t.Namespace ?? "").StartsWith("YukkuriMovieMaker", StringComparison.Ordinal) || (t.Namespace ?? "").StartsWith("Reactive.Bindings", StringComparison.Ordinal);
+            foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
-                var value = property.GetValue(root);
-                if (value != null && !ReferenceEquals(value, root) && Find<T>(value, depth - 1) is T match) return match;
+                if (property.GetIndexParameters().Length != 0 || !property.CanRead || !Allowed(property.PropertyType)) continue;
+                try { if (property.GetValue(value) is object next) queue.Enqueue((next, depth + 1, path + "." + property.Name)); }
+                catch { /* Not-ready optional host property. */ }
             }
-            catch { /* A non-ready host property must not abort the readiness poll. */ }
+            for (var current = type; current != null && Allowed(current); current = current.BaseType)
+                foreach (var field in current.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+                {
+                    if (!Allowed(field.FieldType)) continue;
+                    if (field.GetValue(value) is object next) queue.Enqueue((next, depth + 1, path + "." + field.Name));
+                }
         }
         return null;
     }
     private static void DumpApi()
     {
-        foreach (var type in new[] { typeof(ItemTemplate), typeof(VoiceItem), typeof(TachieFaceItem), typeof(Timeline), typeof(TimelineToolInfo), typeof(UndoRedoManager), typeof(ITimelineToolViewModel), typeof(IToolViewModel) }) DumpType(type);
+        foreach (var type in new[] { typeof(Character), typeof(ItemTemplate), typeof(Timeline), typeof(TimelineToolInfo), typeof(UndoRedoManager), typeof(IToolViewModel) }) DumpType(type);
     }
     private static readonly HashSet<Type> dumped = [];
     private static void DumpType(Type type)
