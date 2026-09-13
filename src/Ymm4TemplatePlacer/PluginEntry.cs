@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using YukkuriMovieMaker.Plugin;
 
@@ -8,26 +9,24 @@ namespace Ymm4TemplatePlacer;
 public sealed class PluginEntry : ILocalizePlugin
 {
     public string Name => "YMM4 Template Placer";
-
     public void SetCulture(CultureInfo cultureInfo)
     {
-        // CI-only probe. Normal YMM4 launches do not create any marker file.
-        var markerPath = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_CI_MARKER");
-        if (string.IsNullOrWhiteSpace(markerPath))
-            return;
-
-        var fullPath = Path.GetFullPath(markerPath);
-        var directory = Path.GetDirectoryName(fullPath);
-        if (!string.IsNullOrEmpty(directory))
-            Directory.CreateDirectory(directory);
-
-        var body = new StringBuilder()
-            .AppendLine("YMM4 Template Placer")
-            .Append("culture=").AppendLine(cultureInfo.Name)
-            .Append("assembly=").AppendLine(typeof(PluginEntry).Assembly.FullName)
-            .Append("base_dir=").AppendLine(AppContext.BaseDirectory)
-            .ToString();
-
-        File.WriteAllText(fullPath, body, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        var marker = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_CI_MARKER");
+        if (!string.IsNullOrWhiteSpace(marker))
+        {
+#if YMM4_PROOF
+            const string build = "proof";
+#else
+            const string build = "distribution";
+#endif
+            var assembly = typeof(PluginEntry).Assembly;
+            var hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(assembly.Location))).ToLowerInvariant();
+            var path = Path.GetFullPath(marker);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, $"YMM4 Template Placer\nculture={cultureInfo.Name}\nassembly={assembly.FullName}\nbuild={build}\nsha256={hash}\n", new UTF8Encoding(false));
+        }
+#if YMM4_PROOF
+        NativeProof.Schedule();
+#endif
     }
 }

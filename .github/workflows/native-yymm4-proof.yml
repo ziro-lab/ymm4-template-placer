@@ -1,159 +1,111 @@
 name: native-yymm4-proof
-
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-    paths:
-      - 'src/**/*.cs'
-      - 'src/**/*.csproj'
-      - 'tests/**/*.cs'
-      - 'tests/**/*.csproj'
-      - 'fixtures/**/*.ymmp'
-      - 'fixtures/**/*.json'
-      - 'fixtures/**/*.png'
-      - 'fixtures/**/*.xlsx'
-      - '.github/workflows/native-yymm4-proof.yml'
-
+    branches: [main]
+    paths: ['src/**/*.cs', 'src/**/*.csproj', 'src/**/*.xaml', 'tests/**/*.cs', 'tests/**/*.csproj', 'tests/**/*.ps1', 'fixtures/**/*.json', 'fixtures/**/*.ymmp', 'fixtures/**/*.png', 'fixtures/**/*.xlsx', '.github/workflows/native-yymm4-proof.yml']
+  pull_request:
+    paths: ['src/**/*.cs', 'src/**/*.csproj', 'src/**/*.xaml', 'tests/**/*.cs', 'tests/**/*.csproj', 'tests/**/*.ps1', 'fixtures/**/*.json', 'fixtures/**/*.ymmp', 'fixtures/**/*.png', 'fixtures/**/*.xlsx', '.github/workflows/native-yymm4-proof.yml']
 permissions:
   contents: read
-
 concurrency:
-  group: native-yymm4-proof
+  group: native-yymm4-proof-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
-  native-load-proof:
+  native-proof:
     runs-on: windows-latest
     timeout-minutes: 15
-
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-
+          fetch-depth: 0
+      - name: Gate native work by actual changed paths
+        id: scope
+        shell: pwsh
+        run: ./tests/CiScope.ps1
       - name: Confirm .NET 10 SDK
+        if: steps.scope.outputs.run == 'true'
         shell: pwsh
         run: |
           dotnet --list-sdks | Tee-Object -FilePath dotnet-sdks.txt
-          if (-not (Select-String -Path dotnet-sdks.txt -Pattern '^10\.')) {
-            throw '.NET 10 SDK is not present on windows-latest'
-          }
-
+          if (-not (Select-String -Path dotnet-sdks.txt -Pattern '^10\.')) { throw '.NET 10 SDK missing' }
       - name: Download exact YMM4 4.55.1.1 Lite
+        if: steps.scope.outputs.run == 'true'
         shell: pwsh
         run: |
-          curl.exe -L --fail --retry 3 --silent --show-error -o ymm4.zip `
-            https://github.com/manju-summoner/YukkuriMovieMaker4/releases/download/v4.55.1.1/YukkuriMovieMaker_v4.55.1.1_Lite.zip
+          curl.exe -L --fail --retry 3 --silent --show-error -o ymm4.zip https://github.com/manju-summoner/YukkuriMovieMaker4/releases/download/v4.55.1.1/YukkuriMovieMaker_v4.55.1.1_Lite.zip
+          if ($LASTEXITCODE -ne 0) { throw 'YMM4 download failed' }
           $hash=(Get-FileHash ymm4.zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($hash -ne '125860147cc33b831fc1a6d6ea996958001c2ead3b0d37f7d900251d5617db9b') {
-            throw "YMM4 hash mismatch: $hash"
-          }
+          if ($hash -ne '125860147cc33b831fc1a6d6ea996958001c2ead3b0d37f7d900251d5617db9b') { throw "YMM4 hash mismatch: $hash" }
           Expand-Archive -LiteralPath ymm4.zip -DestinationPath ymm4
           $exe=Get-ChildItem ymm4 -Recurse -Filter YukkuriMovieMaker.exe | Select-Object -First 1
-          if (-not $exe) { throw 'YukkuriMovieMaker.exe not found' }
-          $ymm4Dir=$exe.Directory.FullName + [IO.Path]::DirectorySeparatorChar
-          "YMM4_DIR=$ymm4Dir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "YMM4_EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-
-      - name: Build and install plugin
+          if (-not $exe) { throw 'YMM4 exe missing' }
+          "YMM4_DIR=$($exe.Directory.FullName)\" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build distributable and isolated proof variant
+        if: steps.scope.outputs.run == 'true'
         shell: pwsh
         run: |
-          dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release "-p:YMM4DirPath=$env:YMM4_DIR" --nologo
-          $dll=Get-ChildItem src/Ymm4TemplatePlacer/bin/Release -Recurse -Filter Ymm4TemplatePlacer.dll | Select-Object -First 1
-          if (-not $dll) { throw 'plugin DLL was not produced' }
-
-          $pluginDir=Join-Path $env:YMM4_DIR 'user\plugin\Ymm4TemplatePlacer'
-          New-Item -ItemType Directory -Force $pluginDir | Out-Null
-          Copy-Item $dll.FullName (Join-Path $pluginDir 'Ymm4TemplatePlacer.dll')
-
-          New-Item -ItemType Directory -Force out | Out-Null
-          Copy-Item $dll.FullName out/Ymm4TemplatePlacer.dll
-          Get-FileHash out/Ymm4TemplatePlacer.dll -Algorithm SHA256 | Format-List | Out-File out/SHA256.txt
-          Compress-Archive -Path out/Ymm4TemplatePlacer.dll -DestinationPath out/Ymm4TemplatePlacer.zip
-          Move-Item out/Ymm4TemplatePlacer.zip out/Ymm4TemplatePlacer.ymme
-
-      - name: Launch native YMM4 and require plugin callback
+          New-Item -ItemType Directory -Force out/package | Out-Null
+          dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release "-p:YMM4DirPath=$env:YMM4_DIR" -p:Ymm4Proof=false -o out/package --nologo -warnaserror 2>&1 | Tee-Object out/build-release.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Distribution build failed' }
+          $proof=Join-Path $env:RUNNER_TEMP 'placer-proof-build'
+          dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release "-p:YMM4DirPath=$env:YMM4_DIR" -p:Ymm4Proof=true -o $proof --nologo -warnaserror 2>&1 | Tee-Object out/build-proof.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Proof build failed' }
+          # Shared platform assemblies already belong to the YMM4 host. Test and ship
+          # only this plugin and the Open XML runtime dependencies, not SDK copies.
+          foreach ($folder in @('out/package',$proof)) {
+            foreach ($file in @('Microsoft.Windows.SDK.NET.dll','WinRT.Runtime.dll')) {
+              Remove-Item (Join-Path $folder $file) -ErrorAction SilentlyContinue
+            }
+          }
+          $dest=Join-Path $env:YMM4_DIR 'user/plugin/Ymm4TemplatePlacer'
+          New-Item -ItemType Directory -Force $dest | Out-Null
+          Copy-Item "$proof/*.dll" $dest
+          Copy-Item "$proof/*.deps.json" $dest
+      - name: Run P1-P8 in actual native YMM4
+        if: steps.scope.outputs.run == 'true'
         shell: pwsh
         run: |
-          Add-Type -TypeDefinition @'
-          using System;
-          using System.Text;
-          using System.Runtime.InteropServices;
-          public static class CwtWin32 {
-              public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
-              [DllImport("user32.dll")] public static extern bool EnumWindows(EnumWindowsProc callback, IntPtr lParam);
-              [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hWnd);
-              [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int maxCount);
-              [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-          }
-          '@
-
-          function Get-CwtWindows {
-            $script:cwtRows = @()
-            $cb = [CwtWin32+EnumWindowsProc]{
-              param([IntPtr]$hWnd, [IntPtr]$lParam)
-              if ([CwtWin32]::IsWindowVisible($hWnd)) {
-                $sb = New-Object System.Text.StringBuilder 1024
-                [void][CwtWin32]::GetWindowText($hWnd, $sb, $sb.Capacity)
-                $title = $sb.ToString()
-                if (-not [string]::IsNullOrWhiteSpace($title)) {
-                  $script:cwtRows += [pscustomobject]@{ Handle=$hWnd; Title=$title }
-                }
-              }
-              return $true
-            }
-            [void][CwtWin32]::EnumWindows($cb, [IntPtr]::Zero)
-            return $script:cwtRows
-          }
-
-          $marker=(Join-Path $PWD 'out\plugin-loaded.txt')
-          Remove-Item $marker -Force -ErrorAction SilentlyContinue
-          $env:YMM4_TEMPLATE_PLACER_CI_MARKER=$marker
-          New-Item -ItemType File -Force out/windows-seen.txt | Out-Null
-
-          $p=Start-Process -FilePath $env:YMM4_EXE -WorkingDirectory $env:YMM4_DIR -PassThru
-          $loaded=$false
-          $mainSeen=$false
-
-          for ($i=0; $i -lt 120; $i++) {
-            if (Test-Path $marker) { $loaded=$true; break }
-            if ($p.HasExited) { break }
-
-            $wins = Get-CwtWindows
-            foreach ($w in $wins) {
-              "tick=$i handle=$($w.Handle) title=$($w.Title)" | Add-Content out/windows-seen.txt
-              if ($w.Title -like '*Check for updates*') {
-                [void][CwtWin32]::PostMessage($w.Handle, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero)
-              } elseif ($w.Title -eq 'Confirm') {
-                [void][CwtWin32]::PostMessage($w.Handle, 0x0100, [IntPtr]0x0D, [IntPtr]::Zero)
-                [void][CwtWin32]::PostMessage($w.Handle, 0x0101, [IntPtr]0x0D, [IntPtr]::Zero)
-              } elseif ($w.Title -like '*About YukkuriMovieMaker*') {
-                [void][CwtWin32]::PostMessage($w.Handle, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero)
-              } elseif ($w.Title -like '*YukkuriMovieMaker v4.55.1.1 Lite*' -and $w.Title -notlike '*Starting*') {
-                $mainSeen=$true
-              }
-            }
-            Start-Sleep -Seconds 1
-          }
-
-          "plugin_loaded=$loaded" | Tee-Object -FilePath out/native-result.txt
-          "main_window_seen=$mainSeen" | Add-Content out/native-result.txt
-          "process_has_exited=$($p.HasExited)" | Add-Content out/native-result.txt
-          if ($p.HasExited) { "exit_code=$($p.ExitCode)" | Add-Content out/native-result.txt }
-          if (Test-Path $marker) { Get-Content $marker | Tee-Object -FilePath out/plugin-marker.txt }
-
-          Get-CwtWindows | Format-Table -AutoSize | Out-String | Set-Content out/windows-final.txt
-          if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
-
-          if (-not $loaded) { throw 'YMM4 did not execute the plugin startup callback' }
-          if (-not (Select-String -Path out/plugin-marker.txt -Pattern '^YMM4 Template Placer$')) {
-            throw 'plugin marker content mismatch'
-          }
-
-      - name: Upload native proof evidence
-        if: always()
+          ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -DistributionDir (Join-Path $PWD 'out/package')
+      - name: Native release DLL identity smoke test
+        if: steps.scope.outputs.run == 'true'
+        shell: pwsh
+        run: |
+          $dest=Join-Path $env:YMM4_DIR 'user/plugin/Ymm4TemplatePlacer'
+          Remove-Item "$dest/*" -Recurse -Force
+          Copy-Item out/package/*.dll $dest
+          Copy-Item out/package/*.deps.json $dest
+          ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -ReleaseSmoke
+      - name: Package verified distributable
+        if: steps.scope.outputs.run == 'true'
+        shell: pwsh
+        run: |
+          Copy-Item docs/USAGE.md out/package/README.md
+          Copy-Item THIRD_PARTY_NOTICES.md out/package/
+          Remove-Item out/package/*.pdb -ErrorAction SilentlyContinue
+          $event=Get-Content -Raw $env:GITHUB_EVENT_PATH | ConvertFrom-Json
+          $sourceHead=if ($env:GITHUB_EVENT_NAME -eq 'pull_request') { $event.pull_request.head.sha } else { $env:GITHUB_SHA }
+          [ordered]@{
+            schema='YMM4-Template-Placer-Provenance/1'; repository=$env:GITHUB_REPOSITORY
+            source_head=$sourceHead; checkout_commit=(git rev-parse HEAD); checkout_tree=(git rev-parse 'HEAD^{tree}')
+            run_id=$env:GITHUB_RUN_ID; run_url="https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+            ymm4_version='4.55.1.1 Lite'; ymm4_zip_sha256='125860147cc33b831fc1a6d6ea996958001c2ead3b0d37f7d900251d5617db9b'
+            result=(Get-Content -Raw out/proof-result.txt).Trim()
+            native_assertions=@(Select-String -Path out/proof-log.txt -Pattern '^ASSERT PASS:').Count
+            distribution_dll_sha256=(Get-FileHash out/package/Ymm4TemplatePlacer.dll -Algorithm SHA256).Hash.ToLowerInvariant()
+          } | ConvertTo-Json | Set-Content out/provenance.json
+          Copy-Item out/provenance.json out/package/
+          $forbidden=@(Get-ChildItem out/package -Filter '*.dll' | Where-Object { $_.Name -notin @('Ymm4TemplatePlacer.dll','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll') })
+          if ($forbidden.Count) { throw 'Unexpected DLL in distributable' }
+          Compress-Archive -Path out/package/* -DestinationPath out/Ymm4TemplatePlacer-v0.3.0.zip
+          Move-Item out/Ymm4TemplatePlacer-v0.3.0.zip out/Ymm4TemplatePlacer-v0.3.0.ymme
+          Copy-Item out/package/Ymm4TemplatePlacer.dll out/Ymm4TemplatePlacer.dll
+          git archive --format=zip -o out/Ymm4TemplatePlacer-source.zip HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Source archive failed' }
+          Get-FileHash out/Ymm4TemplatePlacer* -Algorithm SHA256 | Select-Object @{Name='File';Expression={Split-Path $_.Path -Leaf}},Hash | ConvertTo-Json | Set-Content out/SHA256.json
+      - name: Upload native proof and distributable
+        if: always() && steps.scope.outputs.run == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: native-yymm4-proof
