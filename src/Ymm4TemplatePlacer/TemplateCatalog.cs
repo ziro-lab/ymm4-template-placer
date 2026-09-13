@@ -24,10 +24,9 @@ public static class TemplateCatalog
         catalog.Where(x => voice.Character != null && Equals(x.Face.Character, voice.Character)).ToArray();
 }
 
-public sealed record VoiceSnapshot(VoiceItem Voice, string Character, int Frame, int Length, string Serif)
+public sealed record VoiceSnapshot(VoiceItem Voice, string Character, int Frame, int Length, string Serif, int Layer)
 {
     public static IReadOnlyList<VoiceSnapshot> Capture(Timeline timeline) => timeline.Items.OfType<VoiceItem>()
         .OrderBy(x => x.Frame).ThenBy(x => x.Layer)
-        .Select(x => new VoiceSnapshot(x, x.CharacterName, x.Frame, x.Length, x.Serif ?? ""))
-        .ToArray();
+        .Select(x => new VoiceSnapshot(x, x.CharacterName, x.Frame, x.Length, x.Serif ?? "", x.Layer)).ToArray();
 }

@@ -3,9 +3,9 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['src/**/*.cs', 'src/**/*.csproj', 'src/**/*.xaml', 'tests/**', 'fixtures/**', '.github/workflows/native-yymm4-proof.yml']
+    paths: ['src/**/*.cs', 'src/**/*.csproj', 'src/**/*.xaml', 'tests/**/*.cs', 'tests/**/*.csproj', 'tests/**/*.ps1', 'fixtures/**/*.json', 'fixtures/**/*.ymmp', 'fixtures/**/*.png', 'fixtures/**/*.xlsx', '.github/workflows/native-yymm4-proof.yml']
   pull_request:
-    paths: ['src/**/*.cs', 'src/**/*.csproj', 'src/**/*.xaml', 'tests/**', 'fixtures/**', '.github/workflows/native-yymm4-proof.yml']
+    paths: ['src/**/*.cs', 'src/**/*.csproj', 'src/**/*.xaml', 'tests/**/*.cs', 'tests/**/*.csproj', 'tests/**/*.ps1', 'fixtures/**/*.json', 'fixtures/**/*.ymmp', 'fixtures/**/*.png', 'fixtures/**/*.xlsx', '.github/workflows/native-yymm4-proof.yml']
 permissions:
   contents: read
 concurrency:
@@ -35,68 +35,44 @@ jobs:
           $exe=Get-ChildItem ymm4 -Recurse -Filter YukkuriMovieMaker.exe | Select-Object -First 1
           if (-not $exe) { throw 'YMM4 exe missing' }
           "YMM4_DIR=$($exe.Directory.FullName)\" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
-          "YMM4_EXE=$($exe.FullName)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
-      - name: Build native proof plugin
+      - name: Build distributable and isolated proof variant
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force out | Out-Null
-          dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release "-p:YMM4DirPath=$env:YMM4_DIR" -p:Ymm4Proof=true --nologo 2>&1 | Tee-Object out/build.txt
-          if ($LASTEXITCODE -ne 0) { throw 'Plugin build failed' }
-          $dll=Get-ChildItem src/Ymm4TemplatePlacer/bin/Release -Recurse -Filter Ymm4TemplatePlacer.dll | Select-Object -First 1
-          $dest=Join-Path $env:YMM4_DIR 'user\plugin\Ymm4TemplatePlacer'
+          New-Item -ItemType Directory -Force out/package | Out-Null
+          dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release "-p:YMM4DirPath=$env:YMM4_DIR" -p:Ymm4Proof=false -o out/package --nologo -warnaserror 2>&1 | Tee-Object out/build-release.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Distribution build failed' }
+          $proof=Join-Path $env:RUNNER_TEMP 'placer-proof-build'
+          dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release "-p:YMM4DirPath=$env:YMM4_DIR" -p:Ymm4Proof=true -o $proof --nologo -warnaserror 2>&1 | Tee-Object out/build-proof.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Proof build failed' }
+          $dest=Join-Path $env:YMM4_DIR 'user/plugin/Ymm4TemplatePlacer'
           New-Item -ItemType Directory -Force $dest | Out-Null
-          Copy-Item $dll.FullName $dest
-      - name: Run native YMM4 functional proof
+          Copy-Item "$proof/*.dll" $dest
+          Copy-Item "$proof/*.deps.json" $dest
+      - name: Run P1-P8 in actual native YMM4
         shell: pwsh
         run: |
-          Add-Type -TypeDefinition @'
-          using System; using System.Text; using System.Runtime.InteropServices;
-          public static class CwtWin32 {
-            public delegate bool EnumWindowsProc(IntPtr h, IntPtr l);
-            [DllImport("user32.dll")] public static extern bool EnumWindows(EnumWindowsProc callback, IntPtr l);
-            [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
-            [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
-            [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint p);
-            [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
-          }
-          '@
-          $env:YMM4_TEMPLATE_PLACER_CI_MARKER=Join-Path $PWD 'out\plugin-loaded.txt'
-          $env:YMM4_TEMPLATE_PLACER_PROOF_DIR=Join-Path $PWD 'out'
-          $result=Join-Path $PWD 'out\proof-result.txt'
-          $p=Start-Process $env:YMM4_EXE -WorkingDirectory $env:YMM4_DIR -PassThru
-          try {
-            for ($i=0; $i -lt 150; $i++) {
-              if ((Test-Path $result) -or $p.HasExited) { break }
-              $cb=[CwtWin32+EnumWindowsProc]{
-                param([IntPtr]$h,[IntPtr]$l)
-                [uint32]$windowPid=0
-                [void][CwtWin32]::GetWindowThreadProcessId($h,[ref]$windowPid)
-                if ($windowPid -eq $p.Id -and [CwtWin32]::IsWindowVisible($h)) {
-                  $s=New-Object Text.StringBuilder 1024
-                  [void][CwtWin32]::GetWindowText($h,$s,1024)
-                  $t=$s.ToString()
-                  "$t" | Add-Content out/windows-seen.txt
-                  if ($t -like '*Check for updates*' -or $t -like '*About YukkuriMovieMaker*') {
-                    [void][CwtWin32]::PostMessage($h,0x0010,[IntPtr]::Zero,[IntPtr]::Zero)
-                  } elseif ($t -eq 'Confirm') {
-                    [void][CwtWin32]::PostMessage($h,0x0100,[IntPtr]0x0D,[IntPtr]::Zero)
-                    [void][CwtWin32]::PostMessage($h,0x0101,[IntPtr]0x0D,[IntPtr]::Zero)
-                  }
-                }
-                return $true
-              }
-              [void][CwtWin32]::EnumWindows($cb,[IntPtr]::Zero)
-              Start-Sleep -Seconds 1
-            }
-          } finally {
-            if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
-          }
-          if (Test-Path out/api-surface.txt) { Get-Content out/api-surface.txt }
-          if (Test-Path out/proof-log.txt) { Get-Content out/proof-log.txt }
-          if (-not (Test-Path $result)) { throw 'Native proof did not finish' }
-          Get-Content $result
-          if (-not (Select-String -Path $result -Pattern '^PASS P1 P2 P3$')) { throw 'Native functional proof failed' }
-      - name: Upload native proof evidence
+          ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -DistributionDir (Join-Path $PWD 'out/package')
+      - name: Native release DLL smoke test
+        shell: pwsh
+        run: |
+          $dest=Join-Path $env:YMM4_DIR 'user/plugin/Ymm4TemplatePlacer'
+          Remove-Item "$dest/*" -Recurse -Force
+          Copy-Item out/package/*.dll $dest
+          Copy-Item out/package/*.deps.json $dest
+          ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -ReleaseSmoke
+      - name: Package verified distributable
+        shell: pwsh
+        run: |
+          Copy-Item docs/USAGE.md out/package/README.md
+          Copy-Item THIRD_PARTY_NOTICES.md out/package/
+          Remove-Item out/package/*.pdb -ErrorAction SilentlyContinue
+          Compress-Archive -Path out/package/* -DestinationPath out/Ymm4TemplatePlacer-v0.3.0.zip
+          Move-Item out/Ymm4TemplatePlacer-v0.3.0.zip out/Ymm4TemplatePlacer-v0.3.0.ymme
+          Copy-Item out/package/Ymm4TemplatePlacer.dll out/Ymm4TemplatePlacer.dll
+          git archive --format=zip -o out/Ymm4TemplatePlacer-source.zip HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Source archive failed' }
+          Get-FileHash out/Ymm4TemplatePlacer* -Algorithm SHA256 | Select-Object @{Name='File';Expression={Split-Path $_.Path -Leaf}},Hash | ConvertTo-Json | Set-Content out/SHA256.json
+      - name: Upload native proof and distributable
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
