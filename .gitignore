@@ -1,0 +1,16 @@
+bin/
+obj/
+out/
+artifacts/
+TestResults/
+*.user
+*.suo
+*.tmp
+*.log
+*.xlsx~
+~$*.xlsx
+.vs/
+.idea/
+.DS_Store
+ymm4/
+ymm4.zip
