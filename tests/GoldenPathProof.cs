@@ -52,7 +52,7 @@ internal static partial class NativeProof
             foreach (var error in errors) Log("OOXML: " + error.Description + " " + error.Path?.XPath); Assert(errors.Length == 0, "P5 Open XML schema validation");
             var book = doc.WorkbookPart!; var main = Sheet(book, "Assignments"); var rules = main.GetFirstChild<S.DataValidations>()!;
             Assert(rules.Elements<S.DataValidation>().Count() == 3 && rules.Elements<S.DataValidation>().First().Formula1!.Text.Contains("MATCH($B2,tpl_chars", StringComparison.Ordinal), "P5 Character-aware dropdown definitions");
-            Assert(book.Workbook!.GetFirstChild<S.Sheets>()!.Elements<S.Sheet>().Single(x => x.Name == "_Catalog").State == S.SheetStateValues.Hidden, "P5 hidden workbook-local Catalog");
+            Assert(book.Workbook!.GetFirstChild<S.Sheets>()!.Elements<S.Sheet>().Single(x => x.Name == "_Catalog").State?.Value == S.SheetStateValues.Hidden, "P5 hidden workbook-local Catalog");
             Assert(main.Descendants<S.Cell>().Single(x => x.CellReference == "E2").CellFormula == null, "P5 formula-looking Serif remains literal text");
         }
         Log("P5=PASS"); stage = "P6"; EditCell(workbook, "F2", "TestA/Smile"); var beforeImport = Signature(timeline); vm.ImportFrom(workbook);
