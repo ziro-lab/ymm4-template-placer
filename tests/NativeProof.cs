@@ -49,6 +49,7 @@ internal static partial class NativeProof
                     timer.Stop(); Log($"YMM4={typeof(Timeline).Assembly.GetName().Version}; host={root.GetType().FullName}");
                     InspectTemplateRegistration(timeline);
                     await Run(root, timeline, undo);
+                    VerifyWorkbookVariants(timeline);
                     File.WriteAllText(Path.Combine(output, "proof-result.txt"), "PASS P1 P2 P3 P4 P5 P6 P7 P8\n"); return;
                 }
                 if (ticks >= 45) throw new InvalidOperationException("Pinned native host adapter could not obtain the current Timeline / Undo manager.");
@@ -63,15 +64,22 @@ internal static partial class NativeProof
     }
     private static void InspectTemplateRegistration(Timeline timeline)
     {
-        // Diagnostic of the real native constructor; does not register or place anything.
-        var source = new TachieFaceItem(new Character { Name = "RegistrationProbe" }) { Frame = 42, Length = 100, Layer = 7 };
-        var ctor = typeof(ItemTemplate).GetConstructors().Single(x => x.GetParameters().Length == 5 && x.GetParameters()[3].ParameterType == typeof(Timeline));
-        var groupType = ctor.GetParameters()[0].ParameterType;
-        DumpType(groupType);
-        var group = groupType.IsValueType ? Activator.CreateInstance(groupType) : null;
-        var template = (ItemTemplate)ctor.Invoke([group, "RegistrationProbe", new IItem[] { source }, timeline, Guid.Empty]);
+        var character = new Character { Name = "RegistrationProbe" };
+        var source = new TachieFaceItem(character) { Frame = 42, Length = 100, Layer = 7 };
+        var template = new ItemTemplate(ItemTemplateGroup.TachieFaceItem, "RegistrationProbe", new IItem[] { source }, timeline, Guid.Empty);
         var face = template.Items.OfType<TachieFaceItem>().Single();
-        Log($"registration constructor: sourceFrame={source.Frame}, sourceLayer={source.Layer}, innerFrame={face.Frame}, innerLayer={face.Layer}, outerLayer={template.Layer}");
+        Assert(face.Layer == 7 && source.Frame == 42, "native Face Template constructor preserves inner Layer and source");
+        ItemSettings.Default.Templates.Add(template);
+        try
+        {
+            var voice = new VoiceItem(character) { Frame = 22, Length = 30 };
+            var target = new VoiceSnapshot(voice, voice.CharacterName, voice.Frame, voice.Length, voice.Serif ?? "", voice.Layer);
+            var catalog = TemplateCatalog.Read().Single(x => ReferenceEquals(x.Template, template));
+            var clone = PlacementEngine.CloneForVoice(target, catalog);
+            Assert(!ReferenceEquals(clone, face) && clone.Layer == 7 && clone.Frame == 22 && clone.Length == 30,
+                "native constructor-created Template uses the same independent placement clone");
+        }
+        finally { ItemSettings.Default.Templates.Remove(template); }
     }
     private static Task Idle() => Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle).Task;
     private static ItemTemplate Template(string name, IItem[] items)

@@ -47,6 +47,10 @@ try {
 } finally { if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } }
 if ($ReleaseSmoke) {
  if (-not (Test-Path $marker)) { throw 'Release DLL did not load in native YMM4' }
+ $text=Get-Content -Raw $marker
+ $installed=Join-Path $Ymm4Dir 'user/plugin/Ymm4TemplatePlacer/Ymm4TemplatePlacer.dll'
+ $expected=(Get-FileHash $installed -Algorithm SHA256).Hash.ToLowerInvariant()
+ if ($text -notmatch '(?m)^build=distribution\r?$' -or $text -notmatch "(?m)^sha256=$expected\r?`$") { throw 'Loaded assembly is not the exact distribution DLL' }
  Get-Content $marker
 } else {
  if (Test-Path (Join-Path $OutputDir 'proof-log.txt')) { Get-Content (Join-Path $OutputDir 'proof-log.txt') }

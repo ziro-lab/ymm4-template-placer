@@ -19,12 +19,19 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+          fetch-depth: 0
+      - name: Gate native work by actual changed paths
+        id: scope
+        shell: pwsh
+        run: ./tests/CiScope.ps1
       - name: Confirm .NET 10 SDK
+        if: steps.scope.outputs.run == 'true'
         shell: pwsh
         run: |
           dotnet --list-sdks | Tee-Object -FilePath dotnet-sdks.txt
           if (-not (Select-String -Path dotnet-sdks.txt -Pattern '^10\.')) { throw '.NET 10 SDK missing' }
       - name: Download exact YMM4 4.55.1.1 Lite
+        if: steps.scope.outputs.run == 'true'
         shell: pwsh
         run: |
           curl.exe -L --fail --retry 3 --silent --show-error -o ymm4.zip https://github.com/manju-summoner/YukkuriMovieMaker4/releases/download/v4.55.1.1/YukkuriMovieMaker_v4.55.1.1_Lite.zip
@@ -36,6 +43,7 @@ jobs:
           if (-not $exe) { throw 'YMM4 exe missing' }
           "YMM4_DIR=$($exe.Directory.FullName)\" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
       - name: Build distributable and isolated proof variant
+        if: steps.scope.outputs.run == 'true'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force out/package | Out-Null
@@ -44,15 +52,24 @@ jobs:
           $proof=Join-Path $env:RUNNER_TEMP 'placer-proof-build'
           dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release "-p:YMM4DirPath=$env:YMM4_DIR" -p:Ymm4Proof=true -o $proof --nologo -warnaserror 2>&1 | Tee-Object out/build-proof.txt
           if ($LASTEXITCODE -ne 0) { throw 'Proof build failed' }
+          # Shared platform assemblies already belong to the YMM4 host. Test and ship
+          # only this plugin and the Open XML runtime dependencies, not SDK copies.
+          foreach ($folder in @('out/package',$proof)) {
+            foreach ($file in @('Microsoft.Windows.SDK.NET.dll','WinRT.Runtime.dll')) {
+              Remove-Item (Join-Path $folder $file) -ErrorAction SilentlyContinue
+            }
+          }
           $dest=Join-Path $env:YMM4_DIR 'user/plugin/Ymm4TemplatePlacer'
           New-Item -ItemType Directory -Force $dest | Out-Null
           Copy-Item "$proof/*.dll" $dest
           Copy-Item "$proof/*.deps.json" $dest
       - name: Run P1-P8 in actual native YMM4
+        if: steps.scope.outputs.run == 'true'
         shell: pwsh
         run: |
           ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -DistributionDir (Join-Path $PWD 'out/package')
-      - name: Native release DLL smoke test
+      - name: Native release DLL identity smoke test
+        if: steps.scope.outputs.run == 'true'
         shell: pwsh
         run: |
           $dest=Join-Path $env:YMM4_DIR 'user/plugin/Ymm4TemplatePlacer'
@@ -61,11 +78,26 @@ jobs:
           Copy-Item out/package/*.deps.json $dest
           ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -ReleaseSmoke
       - name: Package verified distributable
+        if: steps.scope.outputs.run == 'true'
         shell: pwsh
         run: |
           Copy-Item docs/USAGE.md out/package/README.md
           Copy-Item THIRD_PARTY_NOTICES.md out/package/
           Remove-Item out/package/*.pdb -ErrorAction SilentlyContinue
+          $event=Get-Content -Raw $env:GITHUB_EVENT_PATH | ConvertFrom-Json
+          $sourceHead=if ($env:GITHUB_EVENT_NAME -eq 'pull_request') { $event.pull_request.head.sha } else { $env:GITHUB_SHA }
+          [ordered]@{
+            schema='YMM4-Template-Placer-Provenance/1'; repository=$env:GITHUB_REPOSITORY
+            source_head=$sourceHead; checkout_commit=(git rev-parse HEAD); checkout_tree=(git rev-parse 'HEAD^{tree}')
+            run_id=$env:GITHUB_RUN_ID; run_url="https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+            ymm4_version='4.55.1.1 Lite'; ymm4_zip_sha256='125860147cc33b831fc1a6d6ea996958001c2ead3b0d37f7d900251d5617db9b'
+            result=(Get-Content -Raw out/proof-result.txt).Trim()
+            native_assertions=@(Select-String -Path out/proof-log.txt -Pattern '^ASSERT PASS:').Count
+            distribution_dll_sha256=(Get-FileHash out/package/Ymm4TemplatePlacer.dll -Algorithm SHA256).Hash.ToLowerInvariant()
+          } | ConvertTo-Json | Set-Content out/provenance.json
+          Copy-Item out/provenance.json out/package/
+          $forbidden=@(Get-ChildItem out/package -Filter '*.dll' | Where-Object { $_.Name -notin @('Ymm4TemplatePlacer.dll','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll') })
+          if ($forbidden.Count) { throw 'Unexpected DLL in distributable' }
           Compress-Archive -Path out/package/* -DestinationPath out/Ymm4TemplatePlacer-v0.3.0.zip
           Move-Item out/Ymm4TemplatePlacer-v0.3.0.zip out/Ymm4TemplatePlacer-v0.3.0.ymme
           Copy-Item out/package/Ymm4TemplatePlacer.dll out/Ymm4TemplatePlacer.dll
@@ -73,7 +105,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Source archive failed' }
           Get-FileHash out/Ymm4TemplatePlacer* -Algorithm SHA256 | Select-Object @{Name='File';Expression={Split-Path $_.Path -Leaf}},Hash | ConvertTo-Json | Set-Content out/SHA256.json
       - name: Upload native proof and distributable
-        if: always()
+        if: always() && steps.scope.outputs.run == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: native-yymm4-proof
