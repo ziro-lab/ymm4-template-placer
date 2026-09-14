@@ -2,12 +2,12 @@
  <StackPanel Margin="0,6,0,0">
   <WrapPanel>
    <Button x:Name="DropButton" Content="再生位置へ配置" Command="{Binding QuickDropCommand}" Padding="10,5" Margin="0,0,8,4" ToolTip="パレットの項目を左ダブルクリックするのと同じ操作です。"/>
-   <ComboBox ItemsSource="{Binding QuickDropModes}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding QuickDropMode,Mode=TwoWay}" MinWidth="190" VerticalAlignment="Center" Margin="0,0,0,4">
+   <ComboBox ItemsSource="{Binding QuickDropModes}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding QuickDropMode,Mode=TwoWay}" MinWidth="100" ToolTip="基準: 保存したレイヤー設定。前面: 同じキャラクターより大きいレイヤー番号。背面: 小さいレイヤー番号。空きの探索範囲はレイヤー設定で変更できます。" VerticalAlignment="Center" Margin="0,0,0,4">
     <ComboBox.Style><Style TargetType="ComboBox"><Style.Triggers><DataTrigger Binding="{Binding IsCharacterPaletteMode}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></ComboBox.Style>
    </ComboBox>
-   <TextBlock Text="スタイルパレットは基準配置" VerticalAlignment="Center"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding IsCharacterPaletteMode}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+
   </WrapPanel>
-  <TextBlock Text="{Binding PaletteLayerNotice}" TextWrapping="Wrap" Opacity="0.75"/>
+  <TextBlock Text="{Binding PaletteLayerNotice}" TextWrapping="Wrap" Opacity="0.75"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding PaletteLayerNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
   <Expander x:Name="LayerEditor" Header="レイヤー設定" Margin="0,4,0,0">
    <StackPanel>
     <TextBlock Text="{Binding PaletteLayerSummary}" TextWrapping="Wrap"/>

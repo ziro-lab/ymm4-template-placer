@@ -26,6 +26,7 @@ public sealed partial class PlacerViewModel
         set
         {
             if (refreshingPalettes || value == settings.PaletteMode) return;
+            explicitPaletteSelection = false;
             Guard(() => EditSettings(next => next.PaletteMode = value));
         }
     }
@@ -50,11 +51,11 @@ public sealed partial class PlacerViewModel
     public PaletteDefinition? CurrentPalette => settings.Palettes.FirstOrDefault(x => x.Id ==
         (ActivePaletteKind == PaletteKind.Style ? settings.ManualStylePaletteId : contextCharacterPaletteId ?? settings.ManualCharacterPaletteId));
     public string CurrentPaletteName => CurrentPalette?.Name ?? "パレットが未選択です";
-    public bool HasCharacterContext => contextCharacterPaletteId != null;
+    public bool HasCharacterContext => ActivePaletteKind == PaletteKind.Character && contextCharacterPaletteId != null;
     public bool IsCharacterPaletteMode => ActivePaletteKind == PaletteKind.Character;
-    public string PaletteContextStatus => ActivePaletteKind == PaletteKind.Style ? "スタイルパレットは手動で切り替えます。" :
-        HasCharacterContext ? $"単体選択のキャラクターに一時切替中。解除すると「{ManualCharacterPalette?.Name ?? "未選択"}」へ戻ります。" :
-        string.IsNullOrEmpty(selectedCharacterNotice) ? "手動で選んだキャラクターパレットです。音声・表情を1つだけ選んでいる間だけ自動で切り替わります。" : selectedCharacterNotice;
+    public string PaletteContextStatus => ActivePaletteKind == PaletteKind.Style ? "" :
+        HasCharacterContext ? $"タイムラインの「{CurrentPalette?.CharacterName}」に連動中" : selectedCharacterNotice;
+    public string PaletteContextDetail => HasCharacterContext ? $"選択を解除すると「{ManualCharacterPalette?.Name ?? "未選択"}」へ戻ります。" : "";
     public string PaletteEmptyMessage => CurrentPalette == null ? "［＋ テンプレートを追加］から始められます。" :
         PaletteEntries.Count == 0 ? "このパレットは空です。［＋ テンプレートを追加］で、よく使うものをまとめましょう。" : "";
     public string NewPaletteName { get => newPaletteName; set => Set(ref newPaletteName, value); }
@@ -71,6 +72,7 @@ public sealed partial class PlacerViewModel
         DeletePaletteCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null, _ => Guard(DeleteCurrentPalette));
         AddPaletteEntryCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null && PaletteLibraryChoice != null, _ => Guard(AddPaletteEntry));
         RemovePaletteEntryCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null && SelectedPaletteEntry != null, _ => Guard(RemovePaletteEntry));
+        InitializePaletteTask();
         InitializeTemplateAddition();
         InitializeQuickDrop();
         RefreshPalettes();
@@ -85,9 +87,12 @@ public sealed partial class PlacerViewModel
         {
             var choiceId = paletteLibraryChoice?.Id;
             var createCharacter = newPaletteCharacter?.Name;
-            CharacterPalettes.Clear(); StylePalettes.Clear(); PaletteLibraryChoices.Clear();
+            CharacterPalettes.Clear(); StylePalettes.Clear(); PaletteLibraryChoices.Clear(); PaletteChoices.Clear();
             foreach (var palette in settings.Palettes)
+            {
                 (palette.Kind == PaletteKind.Character ? CharacterPalettes : StylePalettes).Add(palette);
+                PaletteChoices.Add(palette);
+            }
             foreach (var entry in settings.Library) PaletteLibraryChoices.Add(new(entry));
             PaletteLibraryChoice = PaletteLibraryChoices.FirstOrDefault(x => x.Id == choiceId);
             NewPaletteCharacter = LibraryCharacters.FirstOrDefault(x => x.Name == createCharacter);
@@ -102,10 +107,12 @@ public sealed partial class PlacerViewModel
         var selectedId = SelectedPaletteEntry?.LibraryEntryId;
         PaletteEntries.Clear();
         var library = settings.Library.ToDictionary(x => x.Id);
-        foreach (var id in CurrentPalette?.LibraryEntryIds ?? []) PaletteEntries.Add(new(id, library.GetValueOrDefault(id)));
+        foreach (var id in CurrentPalette?.LibraryEntryIds ?? []) PaletteEntries.Add(new(id, library.GetValueOrDefault(id), CurrentPalette?.CharacterName));
         SelectedPaletteEntry = PaletteEntries.FirstOrDefault(x => x.LibraryEntryId == selectedId);
         OnPropertyChanged(nameof(CurrentPalette)); OnPropertyChanged(nameof(CurrentPaletteName));
         OnPropertyChanged(nameof(HasCharacterContext)); OnPropertyChanged(nameof(PaletteContextStatus)); OnPropertyChanged(nameof(PaletteEmptyMessage));
+        OnPropertyChanged(nameof(SelectedPalette)); OnPropertyChanged(nameof(PaletteContextDetail));
+        RefreshPaletteNameDraft();
     }
     partial void AttachTimelineV04()
     {
@@ -115,12 +122,13 @@ public sealed partial class PlacerViewModel
     partial void DetachTimelineV04()
     {
         if (timeline != null) timeline.PropertyChanged -= PaletteSelectionChanged;
-        contextCharacterPaletteId = null; selectedCharacterNotice = "";
+        contextCharacterPaletteId = null; selectedCharacterNotice = ""; explicitPaletteSelection = false;
     }
     private void PaletteSelectionChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(Timeline.SelectedItems) && e.PropertyName != nameof(Timeline.SelectedItem)) return;
         var old = contextCharacterPaletteId;
+        explicitPaletteSelection = false;
         ReadSelectionContext();
         if (old != contextCharacterPaletteId) RefreshPaletteEntries();
         else OnPropertyChanged(nameof(PaletteContextStatus));
@@ -130,7 +138,7 @@ public sealed partial class PlacerViewModel
     private void ReadSelectionContext()
     {
         contextCharacterPaletteId = null; selectedCharacterNotice = "";
-        if (timeline?.SelectedItems.Count != 1) return;
+        if (explicitPaletteSelection || timeline?.SelectedItems.Count != 1) return;
         var selected = timeline.SelectedItems[0];
         if (!timeline.Items.Contains(selected)) return;
         var character = ItemCharacters.Get(selected);
@@ -145,16 +153,18 @@ public sealed partial class PlacerViewModel
     }
     public PaletteDefinition CreatePalette()
     {
-        var kind = ActivePaletteKind;
-        var character = kind == PaletteKind.Character ? NewPaletteCharacter?.Name : null;
+        var character = NewPaletteCharacter?.Name;
+        var kind = character == null ? PaletteKind.Style : PaletteKind.Character;
         if (kind == PaletteKind.Character && (character == null || ItemCharacters.ResolveUnique(timeline, character) == null))
             throw new InvalidOperationException("パレットに対応するキャラクターを一意に選んでください。同名キャラクターは自動で区別しません。");
         if (kind == PaletteKind.Character && settings.Palettes.Any(x => x.Kind == kind && x.CharacterName == character))
             throw new InvalidOperationException("このキャラクターのパレットは登録済みです。キャラクターパレット一覧から選んでください。");
         var name = string.IsNullOrWhiteSpace(NewPaletteName) && character != null ? character : NewPaletteName.Trim();
+        if (name.Length == 0 || name.Length > 256) throw new InvalidOperationException("パレット名は1〜256文字で入力してください。");
         var palette = new PaletteDefinition(Guid.NewGuid(), kind, name, character, []);
-        EditSettings(next => { next.Palettes.Add(palette); if (kind == PaletteKind.Character) next.ManualCharacterPaletteId = palette.Id; else next.ManualStylePaletteId = palette.Id; });
-        HasError = false; Status = $"「{name}」のパレットを作りました。登録済みテンプレートから使いたいものを追加してください。";
+        EditSettings(next => { next.Palettes.Add(palette); next.PaletteMode = kind; if (kind == PaletteKind.Character) next.ManualCharacterPaletteId = palette.Id; else next.ManualStylePaletteId = palette.Id; });
+        IsCreatingPalette = false;
+        HasError = false; Status = $"「{name}」を作りました。［＋ テンプレートを追加］で使いたいものを追加できます。";
         return palette;
     }
     public void DeleteCurrentPalette()
@@ -197,6 +207,6 @@ public sealed partial class PlacerViewModel
     private void UpdatePaletteCommands()
     {
         CreatePaletteCommand?.RaiseCanExecuteChanged(); DeletePaletteCommand?.RaiseCanExecuteChanged();
-        AddPaletteEntryCommand?.RaiseCanExecuteChanged(); RemovePaletteEntryCommand?.RaiseCanExecuteChanged(); UpdateQuickDropCommands();
+        AddPaletteEntryCommand?.RaiseCanExecuteChanged(); RemovePaletteEntryCommand?.RaiseCanExecuteChanged(); RenamePaletteCommand?.RaiseCanExecuteChanged(); UpdateQuickDropCommands();
     }
 }

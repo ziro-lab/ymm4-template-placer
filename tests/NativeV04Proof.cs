@@ -8,6 +8,7 @@ internal static partial class NativeProof
         await VerifyDirectTemplateAddition(timeline, undo);
         await VerifyLibrary(timeline);
         await VerifyPalettes(timeline);
+        await VerifyPaletteTask(timeline);
         await VerifyQuickDrop(timeline, undo);
         await VerifyExpressionPresets(timeline, undo);
         await VerifyAssociations(timeline, undo);

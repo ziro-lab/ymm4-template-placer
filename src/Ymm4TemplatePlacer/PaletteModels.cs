@@ -8,10 +8,21 @@ public sealed record PaletteDefinition(Guid Id, PaletteKind Kind, string Name, s
 {
     public LayerPolicy Layer { get; init; } = new();
 }
-public sealed record PaletteEntryView(Guid LibraryEntryId, LibraryEntry? Entry)
+public sealed record PaletteEntryView(Guid LibraryEntryId, LibraryEntry? Entry, string? PaletteCharacterName = null)
 {
     public string DisplayName => Entry?.DisplayName ?? "⚠ 登録済みテンプレートが見つかりません";
-    public string Status => Entry == null ? "このパレットから外すか、テンプレート管理で登録し直してください。" : TemplateResolver.Resolve(Entry).Message;
+    public string Status
+    {
+        get
+        {
+            if (Entry == null) return "このパレットから外すか、テンプレート管理で登録し直してください。";
+            var resolved = TemplateResolver.Resolve(Entry);
+            if (resolved.State != TemplateReferenceState.Resolved) return resolved.Message;
+            var actual = resolved.Item == null ? null : ItemCharacters.Get(resolved.Item)?.Name;
+            return PaletteCharacterName != null && ((Entry.CharacterName != null && Entry.CharacterName != PaletteCharacterName) ||
+                (actual != null && actual != PaletteCharacterName)) ? "⚠ パレットとテンプレートのキャラクターが違います。" : "";
+        }
+    }
 }
 public sealed partial class PlacerSettings
 {

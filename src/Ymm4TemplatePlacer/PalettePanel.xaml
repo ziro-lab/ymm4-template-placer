@@ -1,47 +1,41 @@
 <UserControl x:Class="Ymm4TemplatePlacer.PalettePanel"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <UserControl.Resources><Style x:Key="BrowseOnly" TargetType="FrameworkElement"><Style.Triggers><DataTrigger Binding="{Binding IsCreatingPalette}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></UserControl.Resources>
  <Grid Margin="6">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-  <WrapPanel Grid.Row="0" Margin="0,0,0,6">
-   <ComboBox ItemsSource="{Binding PaletteKinds}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding ActivePaletteKind,Mode=TwoWay}" Width="105" Margin="0,0,8,0"/>
-   <StackPanel Orientation="Horizontal">
-    <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding IsCharacterPaletteMode}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-    <TextBlock Text="キャラクターパレット " VerticalAlignment="Center"/>
-    <ComboBox x:Name="ManualCharacterCombo" ItemsSource="{Binding CharacterPalettes}" DisplayMemberPath="Name" SelectedItem="{Binding ManualCharacterPalette,Mode=TwoWay}" MinWidth="135" ToolTip="ここで選んだパレットは、一時的なキャラクター切替が終わると復帰します。"/>
-   </StackPanel>
-   <StackPanel Orientation="Horizontal">
-    <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding IsCharacterPaletteMode}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-    <TextBlock Text="スタイルパレット " VerticalAlignment="Center"/>
-    <ComboBox x:Name="ManualStyleCombo" ItemsSource="{Binding StylePalettes}" DisplayMemberPath="Name" SelectedItem="{Binding ManualStylePalette,Mode=TwoWay}" MinWidth="135"/>
-   </StackPanel>
-  </WrapPanel>
+  <DockPanel Grid.Row="0" Margin="0,0,0,6">
+   <Button x:Name="NewPaletteButton" Content="＋ パレット" Command="{Binding BeginCreatePaletteCommand}" DockPanel.Dock="Right" Padding="8,3" Margin="6,0,0,0"/>
+   <ComboBox x:Name="PaletteSelector" ItemsSource="{Binding PaletteChoices}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedPalette,Mode=TwoWay}" TextSearch.TextPath="Name" AutomationProperties.Name="パレット"/>
+  </DockPanel>
   <StackPanel Grid.Row="1" Margin="0,0,0,6">
-   <TextBlock Text="{Binding CurrentPaletteName}" FontWeight="SemiBold"/>
-   <TextBlock Text="{Binding PaletteContextStatus}" TextWrapping="Wrap" Opacity="0.75"/>
-   <TextBlock Text="{Binding PaletteEmptyMessage}" TextWrapping="Wrap"/>
-   <Button x:Name="AddTemplateButton" Content="＋ テンプレートを追加" Command="{Binding OpenAddTemplateCommand}" HorizontalAlignment="Left" Padding="10,5" Margin="0,5,0,0"/>
+   <TextBlock Text="{Binding PaletteContextStatus}" ToolTip="{Binding PaletteContextDetail}" TextWrapping="Wrap" Opacity="0.75">
+    <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding PaletteContextStatus}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+   </TextBlock>
+   <StackPanel x:Name="CreatePaletteForm" Margin="0,0,0,6">
+    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsCreatingPalette}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+    <TextBlock Text="パレット名"/><TextBox x:Name="NewPaletteNameBox" Text="{Binding NewPaletteName,UpdateSourceTrigger=PropertyChanged}" MaxLength="256" AutomationProperties.Name="新しいパレット名"/>
+    <TextBlock Text="連動キャラクター" Margin="0,4,0,0"/>
+    <ComboBox x:Name="NewCharacterCombo" ItemsSource="{Binding LibraryCharacters}" DisplayMemberPath="Label" SelectedItem="{Binding NewPaletteCharacter,Mode=TwoWay}" ToolTip="指定したキャラクターの音声・表情を単体選択すると自動で切り替わります。指定なしのパレットは手動で使います。"/>
+    <WrapPanel Margin="0,5,0,0"><Button x:Name="CreatePaletteButton" Content="作成" Command="{Binding CreatePaletteCommand}" Padding="12,4" Margin="0,0,6,0"/><Button Content="キャンセル" Command="{Binding CancelCreatePaletteCommand}" Padding="10,4"/></WrapPanel>
+   </StackPanel>
+   <Button x:Name="AddTemplateButton" Style="{StaticResource BrowseOnly}" Content="＋ テンプレートを追加" Command="{Binding OpenAddTemplateCommand}" HorizontalAlignment="Left" Padding="10,5"/>
   </StackPanel>
-  <ListBox x:Name="PaletteList" Grid.Row="2" ItemsSource="{Binding PaletteEntries}" SelectedItem="{Binding SelectedPaletteEntry,Mode=TwoWay}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
-   <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="5,4"><TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/><TextBlock Text="{Binding Status}" TextWrapping="Wrap" Opacity="0.75"/></StackPanel></DataTemplate></ListBox.ItemTemplate>
-  </ListBox>
-  <ContentControl x:Name="DropControls" Grid.Row="3"/>
-  <Expander x:Name="PaletteEditor" Grid.Row="4" Header="パレットを編集" Margin="0,6,0,0">
-   <ScrollViewer MaxHeight="170" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <Grid Grid.Row="2" Style="{StaticResource BrowseOnly}">
+   <ListBox x:Name="PaletteList" ItemsSource="{Binding PaletteEntries}" SelectedItem="{Binding SelectedPaletteEntry,Mode=TwoWay}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+    <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="5,4">
+     <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}"/>
+     <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Opacity="0.75"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Status}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+    </StackPanel></DataTemplate></ListBox.ItemTemplate>
+   </ListBox>
+   <TextBlock Text="{Binding PaletteEmptyMessage}" TextWrapping="Wrap" Margin="8" IsHitTestVisible="False"/>
+  </Grid>
+  <ContentControl x:Name="DropControls" Style="{StaticResource BrowseOnly}" Grid.Row="3"/>
+  <Expander x:Name="PaletteEditor" Style="{StaticResource BrowseOnly}" Grid.Row="4" Header="このパレットを編集" Margin="0,6,0,0">
+   <ScrollViewer MaxHeight="130" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="0,4,0,0">
-     <TextBlock Text="登録済みテンプレートを、このパレットへ追加"/>
-     <DockPanel>
-      <Button x:Name="AddEntryButton" Content="このパレットへ追加" Command="{Binding AddPaletteEntryCommand}" DockPanel.Dock="Right" Padding="8,4" Margin="6,0,0,0"/>
-      <ComboBox x:Name="LibraryChoiceCombo" ItemsSource="{Binding PaletteLibraryChoices}" SelectedItem="{Binding PaletteLibraryChoice,Mode=TwoWay}" TextSearch.TextPath="DisplayName">
-       <ComboBox.ItemTemplate><DataTemplate><StackPanel><TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/><TextBlock Text="{Binding CharacterName}" FontSize="11"/><TextBlock Text="{Binding SourceName}" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip="{Binding SourceName}"/></StackPanel></DataTemplate></ComboBox.ItemTemplate>
-      </ComboBox>
-     </DockPanel>
-     <WrapPanel Margin="0,4,0,8"><Button Content="選択したテンプレートをパレットから外す" Command="{Binding RemovePaletteEntryCommand}" Padding="8,4" Margin="0,0,6,0"/><Button Content="このパレットを削除" Command="{Binding DeletePaletteCommand}" Padding="8,4" ToolTip="テンプレート管理の登録・元テンプレート・タイムラインは削除しません。"/></WrapPanel>
-     <TextBlock Text="新しいパレットを作る" TextWrapping="Wrap"/>
-     <WrapPanel>
-      <StackPanel Margin="0,0,8,0"><TextBlock Text="パレット名"/><TextBox Text="{Binding NewPaletteName,UpdateSourceTrigger=PropertyChanged}" Width="140" MaxLength="256"/></StackPanel>
-      <StackPanel Margin="0,0,8,0" IsEnabled="{Binding IsCharacterPaletteMode}"><TextBlock Text="対応キャラクター"/><ComboBox x:Name="NewCharacterCombo" ItemsSource="{Binding LibraryCharacters}" DisplayMemberPath="Label" SelectedItem="{Binding NewPaletteCharacter,Mode=TwoWay}" Width="155"/></StackPanel>
-      <Button x:Name="CreatePaletteButton" Content="パレットを作る" Command="{Binding CreatePaletteCommand}" Padding="10,4" VerticalAlignment="Bottom"/>
-     </WrapPanel>
+     <TextBlock Text="パレット名"/>
+     <DockPanel><Button Content="変更" Command="{Binding RenamePaletteCommand}" DockPanel.Dock="Right" Padding="8,4" Margin="6,0,0,0"/><TextBox Text="{Binding PaletteNameDraft,UpdateSourceTrigger=PropertyChanged}" MaxLength="256"/></DockPanel>
+     <WrapPanel Margin="0,4,0,0"><Button Content="選択テンプレートを外す" Command="{Binding RemovePaletteEntryCommand}" Padding="8,4" Margin="0,0,6,4"/><Button Content="パレットを削除" Command="{Binding DeletePaletteCommand}" Padding="8,4" Margin="0,0,0,4" ToolTip="元テンプレート・登録・タイムラインは削除しません。"/></WrapPanel>
     </StackPanel>
    </ScrollViewer>
   </Expander>

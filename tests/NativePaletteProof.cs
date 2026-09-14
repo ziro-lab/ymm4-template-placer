@@ -26,12 +26,13 @@ internal static partial class NativeProof
         Assert(vm.CurrentPalette?.Id == pb.Id && vm.PaletteEntries.Single().LibraryEntryId == entryB.Id, "W4 Character shelves reference their Library entries");
         vm.PaletteLibraryChoice = vm.PaletteLibraryChoices.Single(x => x.Id == entryA.Id);
         RejectWithoutMutation(timeline, vm.AddPaletteEntry, "W4 other Character entry is not silently reassigned into a Character shelf");
-        vm.ActivePaletteKind = PaletteKind.Style; vm.NewPaletteName = "戦闘"; var battle = vm.CreatePalette();
+        vm.ActivePaletteKind = PaletteKind.Style; vm.NewPaletteCharacter = null; vm.NewPaletteName = "戦闘"; var battle = vm.CreatePalette();
         vm.PaletteLibraryChoice = vm.PaletteLibraryChoices.Single(x => x.Id == entryA.Id); vm.AddPaletteEntry();
         vm.NewPaletteName = "明るい"; var bright = vm.CreatePalette();
         vm.PaletteLibraryChoice = vm.PaletteLibraryChoices.Single(x => x.Id == entryA.Id);
-        panel.PaletteEditor.IsExpanded = true; await Idle();
-        ((IInvokeProvider)new ButtonAutomationPeer(panel.AddEntryButton).GetPattern(PatternInterface.Invoke)).Invoke(); await Idle();
+        await InvokeSelectionButton(panel.AddTemplateButton);
+        view.TemplateAdditionSurface.SourceList.SelectedItem = TemplateResolver.Resolve(entryA).Template; await Idle();
+        await InvokeSelectionButton(view.TemplateAdditionSurface.AddButton);
         var saved = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
         Assert(!vm.HasError && saved.Palettes.Single(x => x.Id == battle.Id).LibraryEntryIds.Single() == entryA.Id && saved.Palettes.Single(x => x.Id == bright.Id).LibraryEntryIds.Single() == entryA.Id,
             "W4 one Library entry persists in multiple Style palettes through real UI command");

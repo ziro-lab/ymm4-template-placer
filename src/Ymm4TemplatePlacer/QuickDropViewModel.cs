@@ -10,7 +10,7 @@ public sealed partial class PlacerViewModel
     private LayerPolicy? layerEditorPolicy;
     private bool loadingLayerEditor, paletteUseTemplateLayer = true;
     private string paletteMinimumText = "0", paletteMaximumText = "99", palettePreferredText = "15";
-    public IReadOnlyList<LayerModeChoice> QuickDropModes { get; } = [new(CharacterLayerMode.Base, "基準"), new(CharacterLayerMode.Front, "前面（大きいレイヤー番号）"), new(CharacterLayerMode.Back, "背面（小さいレイヤー番号）")];
+    public IReadOnlyList<LayerModeChoice> QuickDropModes { get; } = [new(CharacterLayerMode.Base, "基準"), new(CharacterLayerMode.Front, "前面"), new(CharacterLayerMode.Back, "背面")];
     public CharacterLayerMode QuickDropMode
     {
         get => settings.CharacterQuickDropMode;
@@ -28,7 +28,7 @@ public sealed partial class PlacerViewModel
         PaletteUseTemplateLayer != layerEditorPolicy.UseTemplateLayer || PaletteMinimumText != layerEditorPolicy.Minimum.ToString(CultureInfo.InvariantCulture) ||
         PaletteMaximumText != layerEditorPolicy.Maximum.ToString(CultureInfo.InvariantCulture) || PalettePreferredText != layerEditorPolicy.Preferred.ToString(CultureInfo.InvariantCulture));
     public string PaletteLayerSummary => CurrentPalette == null ? "" : CurrentPalette.Layer.UseTemplateLayer ? "基準：テンプレートのレイヤーを使用" : $"基準：レイヤー {CurrentPalette.Layer.Minimum}〜{CurrentPalette.Layer.Maximum} ／ 優先 {CurrentPalette.Layer.Preferred}";
-    public string PaletteLayerNotice => PaletteLayerDirty ? "レイヤー設定は未保存です。保存するまで配置しません。" : "ダブルクリックは再生位置へ配置。テンプレートの長さを保ち、再同期の関連付けは作りません。";
+    public string PaletteLayerNotice => PaletteLayerDirty ? "レイヤー設定は未保存です。保存するまで配置しません。" : "";
     public ActionCommand QuickDropCommand { get; private set; } = null!;
     public ActionCommand SavePaletteLayerCommand { get; private set; } = null!;
     partial void InitializeQuickDrop()
@@ -80,7 +80,7 @@ public sealed partial class PlacerViewModel
         // A successful save canonicalizes 015 to 15 even if the saved policy record is equal.
         layerEditorPolicy = null;
         UpdateQuickDropCommands();
-        HasError = false; Status = "このパレットのレイヤー設定を保存しました。前面・背面も、この探索範囲内だけで配置します。";
+        HasError = false; Status = "このパレットのレイヤー設定を保存しました。前面・背面も、保存した探索範囲内だけで配置します。";
     }
     public IItem QuickDrop()
     {

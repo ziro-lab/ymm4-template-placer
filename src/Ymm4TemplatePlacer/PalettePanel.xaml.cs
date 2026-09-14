@@ -9,6 +9,7 @@ public partial class PalettePanel : UserControl
     {
         InitializeComponent(); DropControls.Content = DropSurface;
         var style = new Style(typeof(ListBoxItem));
+        style.Setters.Add(new Setter(HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch));
         style.Setters.Add(new EventSetter(Control.MouseDoubleClickEvent, new MouseButtonEventHandler(OnPaletteEntryDoubleClick)));
         PaletteList.ItemContainerStyle = style;
     }

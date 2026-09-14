@@ -26,7 +26,7 @@ internal static partial class NativeProof
         var template = Template("W12/Overview", [source]); ItemSettings.Default.Templates.Add(template);
         vm.Refresh(); vm.SelectedSourceTemplate = template; vm.LibraryDisplayName = "強調";
         var entry = vm.RegisterLibrary();
-        vm.ActivePaletteKind = PaletteKind.Style; vm.NewPaletteName = "仕上げ確認"; var palette = vm.CreatePalette();
+        vm.ActivePaletteKind = PaletteKind.Style; vm.NewPaletteCharacter = null; vm.NewPaletteName = "仕上げ確認"; var palette = vm.CreatePalette();
         view.MainTabs.SelectedIndex = 2; await Idle();
         Assert(vm.PaletteEntries.Count == 0 && vm.PaletteEmptyMessage.Contains("空", StringComparison.Ordinal), "W12 empty palette gives a concrete Library-add next action");
         SaveNamedView(view, "ui-palette-empty.png");
