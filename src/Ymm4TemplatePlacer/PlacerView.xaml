@@ -11,7 +11,8 @@
    <Button x:Name="ResyncButton" Content="選択した表情を再同期" Command="{Binding ResyncCommand}" DockPanel.Dock="Right" Padding="8,4" Margin="8,0,0,0" ToolTip="YMM4のタイムラインで音声または関連表情を選択してください。現在の表情プリセットで再同期します。クイック配置・関連なしアイテムは変更しません。"/>
    <TextBlock Text="{Binding SceneName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
   </DockPanel>
-  <TabControl x:Name="MainTabs" Grid.Row="1">
+  <TabControl x:Name="MainTabs" Grid.Row="1" SelectedIndex="2">
+   <TabControl.Style><Style TargetType="TabControl"><Style.Triggers><DataTrigger Binding="{Binding IsAddingTemplate}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TabControl.Style>
    <TabItem Header="表情一覧">
     <Grid Margin="6">
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -40,6 +41,9 @@
    <TabItem Header="パレット"><local:PalettePanel x:Name="PaletteSurface"/></TabItem>
    <TabItem Header="テンプレート管理"><local:LibraryPanel x:Name="LibrarySurface"/></TabItem>
   </TabControl>
+  <local:TemplateAdditionPanel x:Name="TemplateAdditionSurface" Grid.Row="1">
+   <local:TemplateAdditionPanel.Style><Style TargetType="local:TemplateAdditionPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsAddingTemplate}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></local:TemplateAdditionPanel.Style>
+  </local:TemplateAdditionPanel>
   <ScrollViewer Grid.Row="2" MaxHeight="72" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,6,0,0">
    <TextBlock x:Name="StatusText" Text="{Binding Status}" TextWrapping="Wrap">
     <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding HasError}" Value="True"><Setter Property="FontWeight" Value="Bold"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>

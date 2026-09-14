@@ -5,6 +5,7 @@ internal static partial class NativeProof
 {
     private static async Task VerifyV04(Timeline timeline, UndoRedoManager undo)
     {
+        await VerifyDirectTemplateAddition(timeline, undo);
         await VerifyLibrary(timeline);
         await VerifyPalettes(timeline);
         await VerifyQuickDrop(timeline, undo);

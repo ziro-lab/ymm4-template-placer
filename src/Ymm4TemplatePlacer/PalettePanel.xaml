@@ -19,6 +19,7 @@
    <TextBlock Text="{Binding CurrentPaletteName}" FontWeight="SemiBold"/>
    <TextBlock Text="{Binding PaletteContextStatus}" TextWrapping="Wrap" Opacity="0.75"/>
    <TextBlock Text="{Binding PaletteEmptyMessage}" TextWrapping="Wrap"/>
+   <Button x:Name="AddTemplateButton" Content="＋ テンプレートを追加" Command="{Binding OpenAddTemplateCommand}" HorizontalAlignment="Left" Padding="10,5" Margin="0,5,0,0"/>
   </StackPanel>
   <ListBox x:Name="PaletteList" Grid.Row="2" ItemsSource="{Binding PaletteEntries}" SelectedItem="{Binding SelectedPaletteEntry,Mode=TwoWay}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
    <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="5,4"><TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/><TextBlock Text="{Binding Status}" TextWrapping="Wrap" Opacity="0.75"/></StackPanel></DataTemplate></ListBox.ItemTemplate>

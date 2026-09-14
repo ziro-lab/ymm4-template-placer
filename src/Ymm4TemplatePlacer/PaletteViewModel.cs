@@ -55,8 +55,8 @@ public sealed partial class PlacerViewModel
     public string PaletteContextStatus => ActivePaletteKind == PaletteKind.Style ? "スタイルパレットは手動で切り替えます。" :
         HasCharacterContext ? $"単体選択のキャラクターに一時切替中。解除すると「{ManualCharacterPalette?.Name ?? "未選択"}」へ戻ります。" :
         string.IsNullOrEmpty(selectedCharacterNotice) ? "手動で選んだキャラクターパレットです。音声・表情を1つだけ選んでいる間だけ自動で切り替わります。" : selectedCharacterNotice;
-    public string PaletteEmptyMessage => CurrentPalette == null ? "下の［パレットを作る］でキャラクターまたはスタイルのパレットを登録してください。" :
-        PaletteEntries.Count == 0 ? "このパレットは空です。登録済みテンプレートを選び、［このパレットへ追加］してください。" : "";
+    public string PaletteEmptyMessage => CurrentPalette == null ? "［＋ テンプレートを追加］から始められます。" :
+        PaletteEntries.Count == 0 ? "このパレットは空です。［＋ テンプレートを追加］で、よく使うものをまとめましょう。" : "";
     public string NewPaletteName { get => newPaletteName; set => Set(ref newPaletteName, value); }
     public CharacterOption? NewPaletteCharacter { get => newPaletteCharacter; set => Set(ref newPaletteCharacter, value); }
     public LibraryEntryView? PaletteLibraryChoice { get => paletteLibraryChoice; set { Set(ref paletteLibraryChoice, value); UpdatePaletteCommands(); } }
@@ -71,6 +71,7 @@ public sealed partial class PlacerViewModel
         DeletePaletteCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null, _ => Guard(DeleteCurrentPalette));
         AddPaletteEntryCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null && PaletteLibraryChoice != null, _ => Guard(AddPaletteEntry));
         RemovePaletteEntryCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null && SelectedPaletteEntry != null, _ => Guard(RemovePaletteEntry));
+        InitializeTemplateAddition();
         InitializeQuickDrop();
         RefreshPalettes();
     }
