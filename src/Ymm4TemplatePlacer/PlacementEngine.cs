@@ -40,11 +40,6 @@ public static class PlacementEngine
         return clone;
     }
 
-    public static int Add(Timeline timeline, UndoRedoManager undo, IReadOnlyList<AssignmentRow> rows)
-    {
-        ValidateSnapshot(timeline, rows.Select(x => x.Target).ToArray());
-        var additions = rows.Where(x => x.SelectedChoice.Template != null)
-            .Select(x => (IItem)CloneForVoice(x.Target, x.SelectedChoice.Template!)).ToArray();
-        return PlacementPlan.Create(timeline, additions).Commit(timeline, undo);
-    }
+    public static int Add(Timeline timeline, UndoRedoManager undo, IReadOnlyList<AssignmentRow> rows, ExpressionPreset? preset = null) =>
+        CharacterExpressionProfile.Create(timeline, rows, preset ?? ExpressionPreset.Default).Commit(timeline, undo);
 }
