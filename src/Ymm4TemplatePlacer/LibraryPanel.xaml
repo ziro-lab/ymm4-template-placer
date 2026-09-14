@@ -5,14 +5,14 @@
  <Grid Margin="6">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <StackPanel Grid.Row="0">
-   <TextBlock Text="YMM4 Templateへの参照を、短い名前で整理します。" TextWrapping="Wrap"/>
-   <TextBlock Text="単一ItemのTemplateをYMM4で登録し、一覧を更新してください。" TextWrapping="Wrap" Opacity="0.7"/>
+   <TextBlock Text="YMM4のテンプレートをパレットから使えるように登録します。ここは普段使う画面ではなく、追加・再リンク用の管理画面です。" TextWrapping="Wrap"/>
+   <TextBlock Text="アイテムを1つだけ含むテンプレートをYMM4で登録し、一覧を更新してください。" TextWrapping="Wrap" Opacity="0.7"/>
    <TextBlock Text="{Binding LibraryNotice}" TextWrapping="Wrap" FontWeight="Bold"/>
   </StackPanel>
   <DockPanel Grid.Row="1" Margin="0,6">
    <Button Content="一覧更新" Command="{Binding RefreshLibraryCommand}" DockPanel.Dock="Right" Padding="10,4" Margin="6,0,0,0"/>
    <TextBlock Text="検索 " VerticalAlignment="Center" DockPanel.Dock="Left"/>
-   <TextBox x:Name="LibrarySearchBox" Text="{Binding LibrarySearch,UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Library検索" ToolTip="表示名・元Template名で絞り込み。空欄で全登録を表示します。" VerticalContentAlignment="Center"/>
+   <TextBox x:Name="LibrarySearchBox" Text="{Binding LibrarySearch,UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="テンプレート管理の検索" ToolTip="表示名・元テンプレート名で絞り込みます。空欄で全登録を表示します。" VerticalContentAlignment="Center"/>
   </DockPanel>
   <Grid Grid.Row="2">
    <ListBox x:Name="EntryList" MinHeight="100" MaxHeight="220" ItemsSource="{Binding LibraryEntries}" SelectedItem="{Binding SelectedLibraryEntry,Mode=TwoWay}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
@@ -23,23 +23,23 @@
      <TextBlock Text="{Binding Status}" TextWrapping="Wrap"/>
     </StackPanel></DataTemplate></ListBox.ItemTemplate>
    </ListBox>
-   <TextBlock x:Name="LibraryEmptyNotice" Text="登録がないか、検索条件に一致していません。検索を空欄にするか、下からTemplateを新規登録してください。" TextWrapping="Wrap" Margin="12" VerticalAlignment="Center" IsHitTestVisible="False">
+   <TextBlock x:Name="LibraryEmptyNotice" Text="登録がないか、検索条件に一致していません。検索を空欄にするか、下からテンプレートを新規登録してください。" TextWrapping="Wrap" Margin="12" VerticalAlignment="Center" IsHitTestVisible="False">
     <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding LibraryEntries.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
    </TextBlock>
   </Grid>
   <StackPanel Grid.Row="3" Margin="0,6,0,0">
-   <TextBlock Text="元のYMM4 Template（追加・再リンク先）" TextWrapping="Wrap"/>
+   <TextBlock Text="元のYMM4テンプレート（追加・再リンク先）" TextWrapping="Wrap"/>
    <ComboBox x:Name="SourceCombo" ItemsSource="{Binding SourceTemplates}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSourceTemplate,Mode=TwoWay}" IsTextSearchEnabled="True" ToolTip="同名候補を自動で選びません。曖昧な場合はYMM4側で区別してください。"/>
   </StackPanel>
   <WrapPanel Grid.Row="4" Margin="0,6">
-   <StackPanel Margin="0,0,8,0"><TextBlock Text="Plugin表示名"/><TextBox x:Name="DisplayNameBox" Text="{Binding LibraryDisplayName,UpdateSourceTrigger=PropertyChanged}" Width="180" MaxLength="256"/></StackPanel>
-   <StackPanel><TextBlock Text="Character（任意）"/><ComboBox ItemsSource="{Binding LibraryCharacters}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedLibraryCharacter,Mode=TwoWay}" MinWidth="120"/></StackPanel>
+   <StackPanel Margin="0,0,8,0"><TextBlock Text="表示名"/><TextBox x:Name="DisplayNameBox" Text="{Binding LibraryDisplayName,UpdateSourceTrigger=PropertyChanged}" Width="180" MaxLength="256"/></StackPanel>
+   <StackPanel><TextBlock Text="キャラクター（任意）"/><ComboBox ItemsSource="{Binding LibraryCharacters}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedLibraryCharacter,Mode=TwoWay}" MinWidth="120"/></StackPanel>
   </WrapPanel>
   <WrapPanel Grid.Row="5">
    <Button x:Name="RegisterButton" Content="新規登録" Command="{Binding RegisterLibraryCommand}" Padding="10,5" Margin="0,0,6,4"/>
    <Button Content="名前等を保存" Command="{Binding SaveLibraryCommand}" Padding="10,5" Margin="0,0,6,4"/>
    <Button x:Name="RelinkButton" Content="再リンク" Command="{Binding RelinkLibraryCommand}" Padding="10,5" Margin="0,0,6,4"/>
-   <Button Content="登録解除" Command="{Binding UnregisterLibraryCommand}" Padding="10,5" Margin="0,0,0,4" ToolTip="Libraryから外すだけです。元TemplateとTimelineは削除しません。"/>
+   <Button Content="登録解除" Command="{Binding UnregisterLibraryCommand}" Padding="10,5" Margin="0,0,0,4" ToolTip="登録一覧から外すだけです。元テンプレートとタイムラインは削除しません。"/>
   </WrapPanel>
  </Grid>
  </ScrollViewer>
