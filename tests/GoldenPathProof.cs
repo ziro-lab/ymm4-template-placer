@@ -14,6 +14,13 @@ namespace Ymm4TemplatePlacer;
 
 internal static partial class NativeProof
 {
+    private static void DeleteFixtureGenerated(Timeline timeline, UndoRedoManager undo)
+    {
+        undo.Record();
+        timeline.Items = timeline.Items.RemoveAll(PlacementEngine.IsGenerated);
+        timeline.RefreshTimelineLengthAndMaxLayer();
+        undo.Record();
+    }
     private static async Task Run(object root, Timeline timeline, UndoRedoManager undo)
     {
         Assert(!timeline.Items.Any(), "isolated native Timeline is empty");
@@ -35,16 +42,16 @@ internal static partial class NativeProof
         undo.Record(); stage = "P2"; var voices = VoiceSnapshot.Capture(timeline);
         Assert(voices.Count == 3 && voices[0].Character == "TestA" && voices[0].Frame == 10 && voices[0].Length == 30 && voices[0].Serif == a.Serif, "P2 exact current Scene Voice snapshot");
         stage = "P3"; var rows = voices.Select((v, i) => new AssignmentRow(i + 1, v, catalog)).ToArray(); rows[0].SelectedChoice = rows[0].Choices.Single(x => x.Template?.Name == "TestA/Neutral");
-        Assert(PlacementEngine.Replace(timeline, undo, rows) == 1, "P3 shared Placement Engine insertion"); var placed = timeline.Items.OfType<TachieFaceItem>().Single(PlacementEngine.IsOwned);
+        Assert(PlacementEngine.Add(timeline, undo, rows) == 1, "P3 shared Placement Engine insertion"); var placed = timeline.Items.OfType<TachieFaceItem>().Single(PlacementEngine.IsGenerated);
         Assert(placed.Frame == 10 && placed.Length == 30 && placed.Layer == 3 && Equals(placed.Character, ca), "P3 native Timeline coordinates and Character");
         Assert(!ReferenceEquals(placed, fa) && fa.Frame == 0 && fa.Length == 100 && fa.Remark != PlacementEngine.Marker, "P3 independent clone and original Template preserved");
-        Log("P1=PASS\nP2=PASS\nP3=PASS"); stage = "P4"; Assert(OpenTool(root), "P4 invoke actual native Tool menu command");
+        DeleteFixtureGenerated(timeline, undo); Log("P1=PASS\nP2=PASS\nP3=PASS"); stage = "P4"; Assert(OpenTool(root), "P4 invoke actual native Tool menu command");
         for (var i = 0; i < 60 && (ViewModel == null || View == null || !View.IsLoaded); i++) await Task.Delay(100);
         var vm = ViewModel ?? throw new InvalidOperationException("Native Tool ViewModel was not created."); var view = View ?? throw new InvalidOperationException("Native Tool View was not created.");
         Assert(view.IsLoaded && ReferenceEquals(view.DataContext, vm), "P4 actual native-hosted View/DataContext"); vm.Refresh(); await Idle();
         Assert(vm.Rows.Count == 3 && vm.Rows[2].State == "候補なし", "P4 host-injected Timeline and missing-candidate UI");
         await SelectInDropdown(view, vm.Rows[0], "TestA/Neutral"); await SelectInDropdown(view, vm.Rows[1], "TestB/Neutral"); await ClickPlace(view);
-        Assert(!vm.HasError && timeline.Items.Count(PlacementEngine.IsOwned) == 2, "P4 dropdown -> actual WPF button command -> placement"); SaveView(view); Log("P4=PASS");
+        Assert(!vm.HasError && timeline.Items.Count(PlacementEngine.IsGenerated) == 2, "P4 dropdown -> actual WPF button command -> placement"); SaveView(view); Log("P4=PASS");
         stage = "P5"; var workbook = Path.Combine(output, "GoldenPath.xlsx"); vm.ExportTo(workbook);
         using (var doc = SpreadsheetDocument.Open(workbook, false))
         {
@@ -55,11 +62,11 @@ internal static partial class NativeProof
             Assert(book.Workbook!.GetFirstChild<S.Sheets>()!.Elements<S.Sheet>().Single(x => x.Name == "_Catalog").State?.Value == S.SheetStateValues.Hidden, "P5 hidden workbook-local Catalog");
             Assert(main.Descendants<S.Cell>().Single(x => x.CellReference == "E2").CellFormula == null, "P5 formula-looking Serif remains literal text");
         }
-        Log("P5=PASS"); stage = "P6"; EditCell(workbook, "F2", "TestA/Smile"); var beforeImport = Signature(timeline); vm.ImportFrom(workbook);
+        Log("P5=PASS"); stage = "P6"; DeleteFixtureGenerated(timeline, undo); EditCell(workbook, "F2", "TestA/Smile"); var beforeImport = Signature(timeline); vm.ImportFrom(workbook);
         Assert(Signature(timeline) == beforeImport && vm.Rows[0].SelectedChoice.Template?.Name == "TestA/Smile", "P6 import validates and previews without Timeline mutation"); await ClickPlace(view);
-        Assert(!vm.HasError && timeline.Items.Count(PlacementEngine.IsOwned) == 2 && timeline.Items.OfType<TachieFaceItem>().Single(x => PlacementEngine.IsOwned(x) && x.CharacterName == "TestA").Layer == 5, "P6 edited workbook -> same Placement Engine");
-        Log("P6=PASS"); stage = "P7"; var stable = Signature(timeline); vm.Place();
-        Assert(Signature(timeline) == stable && timeline.Items.Count(PlacementEngine.IsOwned) == 2, "P7 repeat placement does not duplicate");
+        Assert(!vm.HasError && timeline.Items.Count(PlacementEngine.IsGenerated) == 2 && timeline.Items.OfType<TachieFaceItem>().Single(x => PlacementEngine.IsGenerated(x) && x.CharacterName == "TestA").Layer == 5, "P6 edited workbook -> same Placement Engine");
+        Log("P6=PASS"); stage = "P7"; var stable = Signature(timeline); RejectWithoutMutation(timeline, () => vm.Place(), "P7 repeat add rejects occupied Layer without mutation");
+        Assert(Signature(timeline) == stable && timeline.Items.Count(PlacementEngine.IsGenerated) == 2, "P7 repeat placement does not duplicate");
         Assert(timeline.Items.Contains(manual) && manual.Remark == "manual fixture" && manual.Frame == 10 && manual.Length == 30 && manual.Layer == 8 && timeline.Items.Contains(nonFace), "P7 manual Face and same-marker non-Face preserved");
         var invalid = Path.Combine(output, "InvalidCharacter.xlsx"); File.Copy(workbook, invalid, true); EditCell(invalid, "F2", "TestB/Neutral"); RejectWithoutMutation(timeline, () => vm.ImportFrom(invalid), "P7 cross-Character workbook rejected before mutation");
         File.Copy(workbook, invalid, true); EditCell(invalid, "A3", "1"); RejectWithoutMutation(timeline, () => vm.ImportFrom(invalid), "P7 duplicate No rejected");
@@ -67,17 +74,16 @@ internal static partial class NativeProof
         ItemSettings.Default.Templates.Remove(tas); RejectWithoutMutation(timeline, () => vm.ImportFrom(workbook), "P7 missing live Template import rejected");
         RejectWithoutMutation(timeline, () => vm.Place(), "P7 missing live Template placement rejected"); ItemSettings.Default.Templates.Add(tas);
         a.Length++; RejectWithoutMutation(timeline, () => vm.ImportFrom(workbook), "P7 stale exported Voice rejected"); RejectWithoutMutation(timeline, () => vm.Place(), "P7 stale UI Voice rejected"); a.Length--;
-        sa.Layer = 8; RejectWithoutMutation(timeline, () => vm.Place(), "P7 collision rejected before deleting prior placements"); sa.Layer = 5;
+        sa.Layer = 8; RejectWithoutMutation(timeline, () => vm.Place(), "P7 collision rejected without replacing prior placements"); sa.Layer = 5;
         File.WriteAllText(invalid, "Not an XLSX"); RejectWithoutMutation(timeline, () => vm.ImportFrom(invalid), "P7 malformed workbook rejected"); File.Delete(invalid);
         Assert(ReferenceEquals(vm.Rows[0].SelectedChoice.Template?.Template, tas), "P7 failed import preserves prior assignment choices"); Log("P7=PASS");
-        stage = "P8"; undo.Record(); var before = Signature(timeline);
+        stage = "P8"; DeleteFixtureGenerated(timeline, undo); undo.Record(); var before = Signature(timeline);
         await SelectInDropdown(view, vm.Rows[0], "TestA/Neutral"); await SelectInDropdown(view, vm.Rows[1], "TestB/Smile"); await ClickPlace(view);
         var after = Signature(timeline); Assert(!vm.HasError && before != after && undo.IsUndoable, "P8 batch creates native undo history");
         await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == before, "P8 one native Undo restores entire preceding batch");
         await undo.RedoAsync(); await Idle(); Assert(Signature(timeline) == after, "P8 one native Redo restores entire new batch");
         foreach (var row in vm.Rows) row.SelectedChoice = row.Choices[0];
-        Assert(vm.Place() == 0 && !timeline.Items.Any(PlacementEngine.IsOwned) && timeline.Items.Contains(manual), "P8 all-unselected removes only owned Face items");
-        await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == after, "P8 empty-assignment replacement also undoes once");
+        Assert(vm.Place() == 0 && Signature(timeline) == after && timeline.Items.Contains(manual), "P8 all-unselected is a no-op; never deletes generated or manual Items");
         Log("P8=PASS");
         stage = "P9"; var lifecycleBefore = Signature(timeline);
         Assert(vm.CanSuspend, "P9 Timeline Tool allows native suspend/close");

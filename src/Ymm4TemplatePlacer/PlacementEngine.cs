@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
 using YukkuriMovieMaker.Settings;
@@ -9,7 +8,7 @@ namespace Ymm4TemplatePlacer;
 public static class PlacementEngine
 {
     public const string Marker = "CWT_TPL:face";
-    public static bool IsOwned(IItem item) => item is TachieFaceItem && item.Remark == Marker;
+    public static bool IsGenerated(IItem item) => item is TachieFaceItem && (item.Remark ?? "").Split('\n').Any(x => x.TrimEnd('\r') == Marker);
 
     public static void ValidateSnapshot(Timeline timeline, IReadOnlyList<VoiceSnapshot> snapshot)
     {
@@ -35,49 +34,17 @@ public static class PlacementEngine
             throw new InvalidOperationException("表情Templateを正しいCharacterの独立したItemとして複製できませんでした。");
         clone.Frame = target.Frame;
         clone.Length = target.Length;
-        clone.Remark = Marker;
+        clone.Remark = string.IsNullOrEmpty(source.Remark) ? Marker : source.Remark + "\n" + Marker;
         clone.Group = 0;
         if (clone.Layer < 0) throw new InvalidOperationException("TemplateのLayerが不正です。YMM4で登録し直してください。");
         return clone;
     }
 
-    public static int Replace(Timeline timeline, UndoRedoManager undo, IReadOnlyList<AssignmentRow> rows)
+    public static int Add(Timeline timeline, UndoRedoManager undo, IReadOnlyList<AssignmentRow> rows)
     {
         ValidateSnapshot(timeline, rows.Select(x => x.Target).ToArray());
-        // Every validation and clone precedes the first Timeline mutation.
         var additions = rows.Where(x => x.SelectedChoice.Template != null)
-            .Select(x => CloneForVoice(x.Target, x.SelectedChoice.Template!)).ToArray();
-        var before = timeline.Items;
-        var retained = before.Where(x => !IsOwned(x)).ToImmutableList();
-        if (additions.Length == 0 && retained.Count == before.Count) return 0;
-        ValidateCollisions(retained, additions);
-        var next = retained.AddRange(additions);
-        var selected = timeline.SelectedItems.Where(next.Contains).ToImmutableList();
-        // The native immutable-list property is UndoRedo-aware. One state swap avoids
-        // deleting groups or partially adding a batch. Never resolve/move manual items.
-        undo.Record();
-        timeline.Items = next;
-        timeline.SelectedItems = selected;
-        timeline.RefreshTimelineLengthAndMaxLayer();
-        undo.Record();
-        return additions.Length;
-    }
-
-    private static void ValidateCollisions(IEnumerable<IItem> retained, IReadOnlyList<TachieFaceItem> additions)
-    {
-        var newItems = additions.Cast<IItem>().ToHashSet();
-        foreach (var layer in retained.Concat(additions).GroupBy(x => x.Layer))
-        {
-            long latestEnd = -1, latestNewEnd = -1;
-            foreach (var item in layer.OrderBy(x => x.Frame))
-            {
-                var isNew = newItems.Contains(item);
-                if ((isNew && item.Frame < latestEnd) || (!isNew && item.Frame < latestNewEnd))
-                    throw new InvalidOperationException($"配置先が他のItemと重なります（Frame={item.Frame}, Layer={item.Layer}）。Templateを空いているLayerへ移して登録し直し、［更新］してください。Timelineは変更していません。");
-                var end = (long)item.Frame + item.Length;
-                latestEnd = Math.Max(latestEnd, end);
-                if (isNew) latestNewEnd = Math.Max(latestNewEnd, end);
-            }
-        }
+            .Select(x => (IItem)CloneForVoice(x.Target, x.SelectedChoice.Template!)).ToArray();
+        return PlacementPlan.Create(timeline, additions).Commit(timeline, undo);
     }
 }

@@ -34,12 +34,7 @@ public sealed class PlacerViewModel : Bindable, ITimelineToolViewModel, IToolVie
             if (Rows.Any(x => x.SelectedChoice.Template != null) && MessageBox.Show("更新すると現在の選択をクリアします。続けますか？", Title, MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
             Refresh();
         }));
-        PlaceCommand = new ActionCommand(_ => timeline != null && undo != null && (Rows.Count > 0 || timeline.Items.Any(PlacementEngine.IsOwned)), _ => Guard(() =>
-        {
-            if (!Rows.Any(x => x.SelectedChoice.Template != null) && timeline!.Items.Any(PlacementEngine.IsOwned) &&
-                MessageBox.Show("Templateは全件未選択です。このSceneのPlugin配置済み表情だけを削除します。続けますか？", Title, MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.OK) return;
-            Place();
-        }));
+        PlaceCommand = new ActionCommand(_ => timeline != null && undo != null && Rows.Any(x => x.SelectedChoice.Template != null), _ => Guard(() => Place()));
         ExportCommand = new ActionCommand(_ => timeline != null && Rows.Count > 0, _ => Guard(() =>
         {
             var dialog = new SaveFileDialog { Filter = "Excelブック (*.xlsx)|*.xlsx", DefaultExt = ".xlsx", AddExtension = true, FileName = "TemplateAssignments.xlsx", Title = "AssignmentをExcelへ出力" };
@@ -75,7 +70,7 @@ public sealed class PlacerViewModel : Bindable, ITimelineToolViewModel, IToolVie
     {
         var current = RequireTimeline();
         if (undo == null) throw new InvalidOperationException("YMM4のUndoに接続できません。Pluginを開き直してください。");
-        var count = PlacementEngine.Replace(current, undo, Rows.ToArray());
+        var count = PlacementEngine.Add(current, undo, Rows.ToArray());
         HasError = false;
         Status = $"{count}件を配置しました。手動Itemは保持しています。YMM4のUndoで戻せます。";
         UpdateCommands();
@@ -92,7 +87,6 @@ public sealed class PlacerViewModel : Bindable, ITimelineToolViewModel, IToolVie
     public void ImportFrom(string path)
     {
         var current = RequireTimeline();
-        // Fully validate before replacing the visible selections. Import never mutates Timeline.
         var next = WorkbookBridge.Import(path, current.Name, VoiceSnapshot.Capture(current), TemplateCatalog.Read());
         SetRows(next);
         HasError = false;
@@ -123,7 +117,7 @@ public sealed class PlacerViewModel : Bindable, ITimelineToolViewModel, IToolVie
     }
     public event EventHandler<CreateNewToolViewRequestedEventArgs>? CreateNewToolViewRequested { add { } remove { } }
     public ToolState SaveState() => new() { Title = Title };
-    public void LoadState(ToolState stateData) { /* Assignments intentionally have no persistent identity. */ }
+    public void LoadState(ToolState stateData) { }
     public void Dispose()
     {
         foreach (var row in Rows) row.PropertyChanged -= RowChanged;
