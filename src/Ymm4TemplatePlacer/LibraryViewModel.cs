@@ -68,9 +68,12 @@ public sealed partial class PlacerViewModel
         catch (Exception ex) { LibraryNotice = "設定を読み込めないため保存を停止しています。元ファイルは保持しています: " + ex.Message; }
         RefreshV04();
         InitializePalettes();
+        InitializePresets();
     }
     partial void InitializePalettes();
+    partial void InitializePresets();
     partial void RefreshPalettes();
+    partial void RefreshPresets();
     partial void OnLibraryUnregistered(PlacerSettings next, Guid id);
     partial void RefreshV04()
     {
@@ -83,7 +86,7 @@ public sealed partial class PlacerViewModel
         selectedSourceTemplate = source != null && SourceTemplates.Contains(source) ? source : null;
         SelectedLibraryCharacter = LibraryCharacters.FirstOrDefault(x => x.Name == character) ?? LibraryCharacters[0];
         OnPropertyChanged(nameof(SelectedSourceTemplate));
-        RefreshLibraryEntries(); RefreshPalettes(); UpdateLibraryCommands();
+        RefreshLibraryEntries(); RefreshPalettes(); RefreshPresets(); UpdateLibraryCommands();
     }
     private void RefreshLibraryEntries()
     {
