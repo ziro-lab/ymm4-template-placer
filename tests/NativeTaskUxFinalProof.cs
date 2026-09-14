@@ -92,6 +92,11 @@ internal static partial class NativeProof
         view.Width = 360; view.Height = 320;
         view.ExcelEditor.IsExpanded = true; view.PresetSurface.PresetEditor.IsExpanded = true; await Idle();
         Assert(!view.ExcelEditor.IsExpanded && InTaskViewport(view.PlaceButton, view), "WUX7 expression condition editor does not stack with Excel or push Place offscreen");
+        view.Width = 640; view.Height = 640; await Idle();
+        Assert(((ScrollViewer)view.PresetSurface.PresetEditor.Content).MaxHeight > 90 && InTaskViewport(view.PlaceButton, view),
+            "WUX7 a taller Tool offers more editor space without pushing the primary action outside its viewport");
+        SaveNamedView(view, "ux-final-expression-editor-tall.png");
+        view.Width = 360; view.Height = 320; await Idle();
         view.PresetSurface.PresetEditor.IsExpanded = false;
         var targets = timeline.Items.OfType<VoiceItem>().Take(3).Cast<IItem>().ToArray();
         for (var n = 1; n <= 3; n++)
@@ -122,14 +127,19 @@ internal static partial class NativeProof
         // The normal Tool lifecycle also gates the automatic preview, not just the first-use expression path.
         var root = Application.Current.Windows.Cast<Window>().Select(x => x.DataContext)
             .First(x => x?.GetType().FullName == "YukkuriMovieMaker.ViewModels.MainViewModel")!;
-        var count = vm.AutomaticPreviewCount;
+        var previousViewModel = vm; var count = vm.AutomaticPreviewCount;
         await SetToolVisible(root, false); timeline.SelectedItems = []; timeline.SelectedItems = targets.Take(2).ToImmutableList(); await Idle();
         Assert(vm.AutomaticPreviewCount == count && Signature(timeline) == before, "WUX7 native Tool close cancels invisible preview work without modifying Timeline");
         await SetToolVisible(root, true); await Idle();
         Log($"WUX7 reopen diagnostic: sameView={ReferenceEquals(View, view)}; sameVM={ReferenceEquals(ViewModel, vm)}; oldLoaded={view.IsLoaded}; newLoaded={View?.IsLoaded}; oldVisible={view.IsVisible}; newVisible={View?.IsVisible}; oldSelection={view.SelectionTab.IsSelected}; newSelection={View?.SelectionTab.IsSelected}; countBefore={count}; countAfter={vm.AutomaticPreviewCount}; newCount={ViewModel?.AutomaticPreviewCount}; oldTemplate={vm.SelectionTemplate?.Id}; newTemplate={ViewModel?.SelectionTemplate?.Id}; preview={vm.SelectionPreview}; unchanged={Signature(timeline) == before}");
         if (View?.IsLoaded == true) SaveNamedView(View, "ux-final-reopen-diagnostic.png");
-        Assert(view.IsLoaded && vm.AutomaticPreviewCount > count && vm.SelectionPreview.StartsWith("配置予定:", StringComparison.Ordinal) && Signature(timeline) == before,
+        vm = ViewModel ?? throw new InvalidOperationException("Reopened native ViewModel missing.");
+        Assert(view.IsLoaded && view.IsVisible && ReferenceEquals(view.DataContext, vm) && vm.SelectionTemplate?.Id == entry.Id &&
+            vm.AutomaticPreviewCount > (ReferenceEquals(vm, previousViewModel) ? count : 0) &&
+            vm.SelectionPreview.StartsWith("配置予定:", StringComparison.Ordinal) && Signature(timeline) == before,
             "WUX7 actual Tool reopen resumes live preview with the preserved Template and no Timeline mutation");
+        Assert(ReferenceEquals(vm, previousViewModel) || previousViewModel.AutomaticPreviewCount == count,
+            "WUX7 a replaced native ViewModel does not resume background preview work");
         ShowTask(view, "library"); await Idle();
         view.LibrarySurface.SourceCombo.SelectedItem = vm.SourceTemplates.First(x => x.Items.Count == 1 && x.Items[0] is TachieFaceItem);
         view.LibrarySurface.CharacterSummary.BringIntoView(); await Idle();
@@ -153,6 +163,7 @@ internal static partial class NativeProof
         var lines = File.ReadAllLines(Path.Combine(output, "proof-log.txt"));
         foreach (var required in Enumerable.Range(1, 7).Select(x => $"WUX{x}=PASS").Append("V04=PASS"))
             Assert(lines.Contains(required, StringComparer.Ordinal), "UX acceptance requires real native stage " + required);
+        Assert(!nativeFaultOccurred, "UX acceptance rejects any captured unhandled native fault");
         var requirements = new[]
         {
             "Direct Palette add, exact reference reuse and zero-write ambiguity rejection: WUX1",

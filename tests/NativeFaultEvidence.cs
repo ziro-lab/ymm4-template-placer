@@ -4,6 +4,7 @@ using System.Windows;
 namespace Ymm4TemplatePlacer;
 internal static partial class NativeProof
 {
+    private static bool nativeFaultOccurred;
     static NativeProof()
     {
         // Evidence only; never mark an exception handled or let a failed run continue as PASS.
@@ -12,6 +13,7 @@ internal static partial class NativeProof
     }
     private static void RecordNativeFault(string origin, object exception)
     {
+        nativeFaultOccurred = true;
         if (string.IsNullOrEmpty(output)) return;
         try
         {
