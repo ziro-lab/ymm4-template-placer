@@ -9,7 +9,7 @@ public sealed partial class PlacerViewModel
     public string ExpressionPlaceHint => ExpressionPresetDirty ? "配置範囲を保存するか、編集を戻してください。" :
         Rows.Count == 0 ? "YMM4で音声を追加して［更新］してください。" :
         !Rows.Any(x => x.SelectedChoice.Template != null) ? "表情一覧のテンプレート列で表情を選んでください。" :
-        "選んだ表情を追加します。未選択の行と既存アイテムは変更しません。";
+        "選んだ表情を追加します。未選択の行は何もしません。既存の配置は削除・移動・短縮しません。";
     public string SelectionPlaceHint => SelectionPresetDirty ? "配置条件を保存するか、編集を戻してください。" :
         timeline?.SelectedItems.Count is not > 0 ? "タイムラインで基準にするアイテムを選んでください。" :
         SelectionTemplate == null ? "配置するテンプレートを選んでください。" :

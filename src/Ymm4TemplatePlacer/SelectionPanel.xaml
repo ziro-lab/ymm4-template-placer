@@ -16,7 +16,7 @@
     <ComboBox.ItemTemplate><DataTemplate><StackPanel>
      <StackPanel.ToolTip><ToolTip><StackPanel MaxWidth="400"><TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/><TextBlock Text="{Binding CharacterName}"/><TextBlock Text="{Binding SourceName}" TextWrapping="Wrap"/><TextBlock Text="{Binding Status}" TextWrapping="Wrap"/></StackPanel></ToolTip></StackPanel.ToolTip>
      <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-     <TextBlock FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis"><Run Text="{Binding CharacterName}"/><Run Text=" ｜ "/><Run Text="{Binding SourceName}"/></TextBlock>
+     <TextBlock FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis"><Run Text="{Binding CharacterName,Mode=OneWay}"/><Run Text=" ｜ "/><Run Text="{Binding SourceName,Mode=OneWay}"/></TextBlock>
      <TextBlock Text="{Binding Status}" TextWrapping="Wrap"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Status}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
     </StackPanel></DataTemplate></ComboBox.ItemTemplate>
    </ComboBox>
