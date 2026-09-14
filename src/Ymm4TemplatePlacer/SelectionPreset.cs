@@ -15,16 +15,16 @@ public sealed record SelectionPreset(Guid Id, string Name, SelectionProfile Prof
     public static SelectionPreset Companion { get; } = new(Guid.Parse("42da693e-9b63-470c-bf7b-af47bf0c3a01"),
         "対象と同じ範囲", SelectionProfile.TargetCompanion, 0, 0, 0, 30, new());
     public static SelectionPreset Emphasis { get; } = new(Guid.Parse("42da693e-9b63-470c-bf7b-af47bf0c3a02"),
-        "中間を30frame強調", SelectionProfile.PointEmphasis, 0, 0, 50, 30, new());
+        "中間を30フレーム強調", SelectionProfile.PointEmphasis, 0, 0, 50, 30, new());
     public static SelectionPreset Range { get; } = new(Guid.Parse("42da693e-9b63-470c-bf7b-af47bf0c3a03"),
         "選択範囲を覆う", SelectionProfile.SelectionRange, 0, 0, 0, 30, new());
     public static SelectionPreset Cut { get; } = new(Guid.Parse("42da693e-9b63-470c-bf7b-af47bf0c3a04"),
-        "境界の前後15frame", SelectionProfile.Boundary, -15, 0, 0, 30, new());
+        "境界の前後15フレーム", SelectionProfile.Boundary, -15, 0, 0, 30, new());
     public void Validate()
     {
         if (Id == Guid.Empty || string.IsNullOrWhiteSpace(Name) || Name.Length > 128 || !Enum.IsDefined(Profile) ||
             AnchorPercent is not (0 or 25 or 50 or 75 or 100) || Duration < 1 || HeadPadding < 0 || TailPadding < 0 || Tolerance < 0 || Layer == null)
-            throw new InvalidOperationException("選択配置Presetが不正です。長さは1frame以上、前後の余白・境界の許容差は0以上にしてください。");
+            throw new InvalidOperationException("選択配置プリセットが不正です。長さは1フレーム以上、前後の余白・境界の許容差は0以上にしてください。");
         Layer.Validate();
     }
 }
@@ -59,10 +59,10 @@ public static class SelectionPresetSettings
             settings.SelectionPresets.Any(x => x == null) ||
             settings.SelectionPresets.Select(x => x.Id).Distinct().Count() != settings.SelectionPresets.Count ||
             !settings.SelectionPresets.Any(x => x.Id == settings.CurrentSelectionPresetId))
-            throw new InvalidDataException("選択配置Presetの版・一覧・ID・選択状態が不正です。元の設定は保持しています。");
+            throw new InvalidDataException("選択配置プリセットの版・一覧・ID・選択状態が不正です。元の設定は保持しています。");
         foreach (var preset in settings.SelectionPresets) preset.Validate();
         foreach (var profile in Enum.GetValues<SelectionProfile>())
             if (!settings.SelectionPresets.Any(x => x.Profile == profile))
-                throw new InvalidDataException("各選択配置Profileには少なくとも1つのPresetが必要です。");
+                throw new InvalidDataException("各配置方法には少なくとも1つのプリセットが必要です。");
     }
 }
