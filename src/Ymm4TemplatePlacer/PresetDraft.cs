@@ -27,10 +27,10 @@ public sealed class PresetDraft : Bindable
 
     public ExpressionPreset Read(Guid id)
     {
-        var preset = new ExpressionPreset(id, Name.Trim(), Duration, Number(MaxGap, "MaxGap"),
-            Number(StartOffset, "開始offset"), Number(EndOffset, "終了offset"),
-            new LayerPolicy { UseTemplateLayer = UseTemplateLayer, Minimum = Number(Minimum, "Layer最小"),
-                Maximum = Number(Maximum, "Layer最大"), Preferred = Number(Preferred, "優先Layer") });
+        var preset = new ExpressionPreset(id, Name.Trim(), Duration, Number(MaxGap, "最大間隔"),
+            Number(StartOffset, "開始位置の調整"), Number(EndOffset, "終了位置の調整"),
+            new LayerPolicy { UseTemplateLayer = UseTemplateLayer, Minimum = Number(Minimum, "最小レイヤー"),
+                Maximum = Number(Maximum, "最大レイヤー"), Preferred = Number(Preferred, "優先レイヤー") });
         preset.Validate();
         return preset;
     }
