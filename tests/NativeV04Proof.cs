@@ -13,5 +13,7 @@ internal static partial class NativeProof
         await VerifySelectionProfiles(timeline, undo);
         await VerifySelectionRange(timeline, undo);
         await VerifyBoundary(timeline, undo);
+        await VerifyFinalUi(timeline);
+        VerifyFinalAcceptance();
     }
 }
