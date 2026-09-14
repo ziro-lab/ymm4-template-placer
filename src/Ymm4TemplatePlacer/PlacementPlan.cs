@@ -16,7 +16,7 @@ public sealed class PlacementPlan
     private readonly ImmutableList<IItem> before;
     private readonly ImmutableList<IItem> after;
     private readonly PlannedItemUpdate[] updates;
-    private readonly (IItem Item, int Frame, int Length, int Layer, int Group, string? Remark, Character? Character)[] observed;
+    private readonly (IItem Item, int Frame, int Length, int Layer, int Group, string Remark, Character? Character)[] observed;
     public int Count { get; }
     public int UpdateCount => updates.Length;
 
