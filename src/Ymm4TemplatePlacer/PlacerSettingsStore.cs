@@ -45,6 +45,7 @@ public sealed class PlacerSettingsStore
             settings.Library.Select(x => x.Id).Distinct().Count() != settings.Library.Count)
             throw new InvalidDataException("Library ID・参照・表示名が不正です。");
         PaletteSettings.Validate(settings);
+        ExpressionPresetSettings.Validate(settings);
     }
     public void Save(PlacerSettings settings)
     {
