@@ -28,6 +28,14 @@
       <TextBlock Text="固定長（frame、1以上）"/>
       <TextBox Text="{Binding SelectionDraft.Duration,UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
      </StackPanel>
+     <StackPanel x:Name="BoundaryFields">
+      <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SelectedSelectionPreset.Profile}" Value="{x:Static local:SelectionProfile.Boundary}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+      <TextBlock Text="2Itemの終了と開始が許容差内のときだけ配置。基準は先に始まるItemの終了。同じ開始位置では停止します。" TextWrapping="Wrap"/>
+      <TextBlock Text="境界の許容差（frame、0なら隙間・重なりなし）" TextWrapping="Wrap"/>
+      <TextBox Text="{Binding SelectionDraft.Tolerance,UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
+      <TextBlock Text="固定長（frame、1以上）"/>
+      <TextBox Text="{Binding SelectionDraft.Duration,UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
+     </StackPanel>
      <StackPanel>
       <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding SelectedSelectionPreset.Profile}" Value="{x:Static local:SelectionProfile.SelectionRange}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
       <TextBlock Text="開始offset（frame）"/>
