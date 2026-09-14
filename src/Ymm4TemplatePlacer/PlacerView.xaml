@@ -33,7 +33,7 @@
     </Grid>
    </TabItem>
    <TabItem Header="選択配置"><TextBlock Text="配置Profileを準備中" Margin="8"/></TabItem>
-   <TabItem Header="パレット"><TextBlock Text="Paletteを準備中" Margin="8"/></TabItem>
+   <TabItem Header="パレット"><local:PalettePanel x:Name="PaletteSurface"/></TabItem>
    <TabItem Header="Library"><local:LibraryPanel x:Name="LibrarySurface"/></TabItem>
   </TabControl>
   <TextBlock x:Name="StatusText" Grid.Row="2" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,6,0,0">

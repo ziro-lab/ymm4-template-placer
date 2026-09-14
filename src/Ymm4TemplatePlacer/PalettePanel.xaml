@@ -1,0 +1,43 @@
+<UserControl x:Class="Ymm4TemplatePlacer.PalettePanel"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <Grid Margin="6">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <WrapPanel Grid.Row="0" Margin="0,0,0,6">
+   <ComboBox ItemsSource="{Binding PaletteKinds}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding ActivePaletteKind,Mode=TwoWay}" Width="105" Margin="0,0,8,0"/>
+   <StackPanel Orientation="Horizontal">
+    <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding IsCharacterPaletteMode}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+    <TextBlock Text="手動の棚 " VerticalAlignment="Center"/>
+    <ComboBox x:Name="ManualCharacterCombo" ItemsSource="{Binding CharacterPalettes}" DisplayMemberPath="Name" SelectedItem="{Binding ManualCharacterPalette,Mode=TwoWay}" MinWidth="135" ToolTip="ここで選んだ棚は、一時的なCharacter切替が終わると復帰します。"/>
+   </StackPanel>
+   <StackPanel Orientation="Horizontal">
+    <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding IsCharacterPaletteMode}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+    <TextBlock Text="Styleの棚 " VerticalAlignment="Center"/>
+    <ComboBox x:Name="ManualStyleCombo" ItemsSource="{Binding StylePalettes}" DisplayMemberPath="Name" SelectedItem="{Binding ManualStylePalette,Mode=TwoWay}" MinWidth="135"/>
+   </StackPanel>
+  </WrapPanel>
+  <StackPanel Grid.Row="1" Margin="0,0,0,6">
+   <TextBlock Text="{Binding CurrentPaletteName}" FontWeight="SemiBold"/>
+   <TextBlock Text="{Binding PaletteContextStatus}" TextWrapping="Wrap" Opacity="0.75"/>
+   <TextBlock Text="{Binding PaletteEmptyMessage}" TextWrapping="Wrap"/>
+  </StackPanel>
+  <ListBox x:Name="PaletteList" Grid.Row="2" ItemsSource="{Binding PaletteEntries}" SelectedItem="{Binding SelectedPaletteEntry,Mode=TwoWay}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+   <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="5,4"><TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/><TextBlock Text="{Binding Status}" TextWrapping="Wrap" Opacity="0.75"/></StackPanel></DataTemplate></ListBox.ItemTemplate>
+  </ListBox>
+  <ContentControl x:Name="DropControls" Grid.Row="3"/>
+  <Expander x:Name="PaletteEditor" Grid.Row="4" Header="棚を編集（登録・追加・削除）" Margin="0,6,0,0">
+   <ScrollViewer MaxHeight="170" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="0,4,0,0">
+     <TextBlock Text="Libraryの登録を、この棚へ追加"/>
+     <DockPanel><Button x:Name="AddEntryButton" Content="この棚へ追加" Command="{Binding AddPaletteEntryCommand}" DockPanel.Dock="Right" Padding="8,4" Margin="6,0,0,0"/><ComboBox x:Name="LibraryChoiceCombo" ItemsSource="{Binding PaletteLibraryChoices}" DisplayMemberPath="DisplayName" SelectedItem="{Binding PaletteLibraryChoice,Mode=TwoWay}"/></DockPanel>
+     <WrapPanel Margin="0,4,0,8"><Button Content="選択した登録を棚から外す" Command="{Binding RemovePaletteEntryCommand}" Padding="8,4" Margin="0,0,6,0"/><Button Content="この棚を削除" Command="{Binding DeletePaletteCommand}" Padding="8,4" ToolTip="Library・元Template・Timelineは削除しません。"/></WrapPanel>
+     <TextBlock Text="新しい棚（上で選んだCharacter / Styleの種類）"/>
+     <WrapPanel>
+      <StackPanel Margin="0,0,8,0"><TextBlock Text="棚の名前"/><TextBox Text="{Binding NewPaletteName,UpdateSourceTrigger=PropertyChanged}" Width="140" MaxLength="256"/></StackPanel>
+      <StackPanel Margin="0,0,8,0" IsEnabled="{Binding IsCharacterPaletteMode}"><TextBlock Text="Character棚の対応Character"/><ComboBox x:Name="NewCharacterCombo" ItemsSource="{Binding LibraryCharacters}" DisplayMemberPath="Label" SelectedItem="{Binding NewPaletteCharacter,Mode=TwoWay}" Width="155"/></StackPanel>
+      <Button x:Name="CreatePaletteButton" Content="棚を作る" Command="{Binding CreatePaletteCommand}" Padding="10,4" VerticalAlignment="Bottom"/>
+     </WrapPanel>
+    </StackPanel>
+   </ScrollViewer>
+  </Expander>
+ </Grid>
+</UserControl>

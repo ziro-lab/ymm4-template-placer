@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Ymm4TemplatePlacer;
 
-public sealed class PlacerSettings
+public sealed partial class PlacerSettings
 {
     public int Schema { get; set; } = 4;
     public List<LibraryEntry> Library { get; set; } = [];
@@ -44,15 +44,18 @@ public sealed class PlacerSettingsStore
         if (settings.Library.Any(x => x == null || x.Id == Guid.Empty || x.Source == null || x.Source.Name == null || x.Source.PathJson == null || string.IsNullOrWhiteSpace(x.DisplayName) || x.DisplayName.Length > 256) ||
             settings.Library.Select(x => x.Id).Distinct().Count() != settings.Library.Count)
             throw new InvalidDataException("Library ID・参照・表示名が不正です。");
+        PaletteSettings.Validate(settings);
     }
     public void Save(PlacerSettings settings)
     {
         if (!loaded) throw new InvalidOperationException("設定の読み込みに成功していないため保存しません。元ファイルを確認してToolを開き直してください。");
         Validate(settings);
-        if (Digest(ReadBytes()) != expectedDigest) throw new InvalidOperationException("別のToolまたはYMM4で設定が変更されました。Toolを開き直してください。外部変更は上書きしていません。");
         var bytes = JsonSerializer.SerializeToUtf8Bytes(settings, Options);
         if (bytes.Length > MaximumBytes) throw new InvalidOperationException("設定が1 MiBを超えるため保存できません。");
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        // Cooperating Tool instances cannot pass the digest check concurrently.
+        using var saveLock = new FileStream(path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+        if (Digest(ReadBytes()) != expectedDigest) throw new InvalidOperationException("別のToolまたはYMM4で設定が変更されました。Toolを開き直してください。外部変更は上書きしていません。");
         var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {

@@ -50,7 +50,7 @@ internal static partial class NativeProof
                     InspectTemplateRegistration(timeline);
                     await Run(root, timeline, undo);
                     VerifyWorkbookVariants(timeline);
-                    await VerifyLibrary(timeline);
+                    await VerifyV04(timeline, undo);
                     File.WriteAllText(Path.Combine(output, "proof-result.txt"), "PASS P1 P2 P3 P4 P5 P6 P7 P8 P9\n"); return;
                 }
                 if (ticks >= 45) throw new InvalidOperationException("Pinned native host adapter could not obtain the current Timeline / Undo manager.");
