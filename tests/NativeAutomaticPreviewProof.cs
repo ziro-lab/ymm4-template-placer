@@ -23,10 +23,12 @@ internal static partial class NativeProof
         var source = new TextItem { Length = 9, Layer = 130, Remark = "UX6 source" };
         var template = Template("UX6/Highlight", [source]); ItemSettings.Default.Templates.Add(template);
         undo.Record(); timeline.Items = timeline.Items.Add(target).AddRange(voices); timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
-        vm.Refresh(); vm.SelectedSourceTemplate = template; vm.LibraryDisplayName = "ひかり"; var entry = vm.RegisterLibrary();
+        vm.Refresh(); ShowTask(view, "library"); await Idle();
+        vm.SelectedSourceTemplate = template; vm.LibraryDisplayName = "ひかり"; var entry = vm.RegisterLibrary();
         timeline.SelectedItems = [target]; ShowTask(view, "selection");
         vm.SelectedSelectionProfile = vm.SelectionProfiles.Single(x => x.Value == SelectionProfile.TargetCompanion);
         panel.TemplateSelector.SelectedItem = vm.SelectionTemplates.Single(x => x.Id == entry.Id); await Idle();
+        Log($"WUX6 preview probe: count={vm.AutomaticPreviewCount}; preview={vm.SelectionPreview}; status={vm.Status}; error={vm.HasError}");
         Assert(vm.AutomaticPreviewCount > 0 && vm.SelectionPreview.Contains("9000", StringComparison.Ordinal) && vm.Status == "",
             "WUX6 real Template selection automatically displays planned geometry without a Preview click or global success");
         var stable = Signature(timeline); var saved = File.ReadAllText(PlacerSettingsStore.DefaultPath);
