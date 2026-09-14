@@ -32,7 +32,11 @@ public static class CharacterExpressionProfile
         return ((int)start, (int)(end - start));
     }
 
-    public static PlacementPlan Create(Timeline timeline, IReadOnlyList<AssignmentRow> rows, ExpressionPreset preset)
+    public static PlacementPlan Create(Timeline timeline, IReadOnlyList<AssignmentRow> rows, ExpressionPreset preset) =>
+        PlacementPlan.Create(timeline, PlanItems(timeline, rows, preset));
+
+    internal static IReadOnlyList<IItem> PlanItems(Timeline timeline, IReadOnlyList<AssignmentRow> rows,
+        ExpressionPreset preset, Action<AssignmentRow, TachieFaceItem>? prepare = null)
     {
         PlacementEngine.ValidateSnapshot(timeline, rows.Select(x => x.Target).ToArray());
         preset.Validate();
@@ -47,8 +51,9 @@ public static class CharacterExpressionProfile
             clone.Frame = span.Frame; clone.Length = span.Length;
             clone.Layer = LayerPlanner.Find(clone.Frame, clone.Length, clone.Layer, preset.Layer,
                 CharacterLayerMode.Base, row.Target.Voice.Character, occupancy);
+            prepare?.Invoke(row, clone);
             occupancy.Add(clone); additions.Add(clone);
         }
-        return PlacementPlan.Create(timeline, additions);
+        return additions;
     }
 }
