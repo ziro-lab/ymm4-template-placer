@@ -29,7 +29,7 @@ public sealed record AssociatedExpressionPlacement(PlacementPlan Plan, long Next
             var voice = row.Target.Voice;
             var state = AssociationTag.Voice(voice.Remark, out var id);
             if (state == AssociationTagState.Invalid)
-                throw new InvalidOperationException("対象Voiceの関連付けタグが重複または不正です。自動修復せず配置を停止しました。");
+                throw new InvalidOperationException("対象音声の関連付けタグが重複または不正です。自動修復せず配置を停止しました。");
             if (state == AssociationTagState.None)
             {
                 id = Allocate();
@@ -37,10 +37,10 @@ public sealed record AssociatedExpressionPlacement(PlacementPlan Plan, long Next
             }
             else if (timeline.Items.OfType<VoiceItem>().Count(x => Equals(x.Character, voice.Character) &&
                 AssociationTag.Voice(x.Remark, out var candidate) == AssociationTagState.Valid && candidate == id) != 1)
-                throw new InvalidOperationException("IDとCharacterが一致するVoiceが複数あります。コピーされたIDを推測・修復せず配置を停止しました。");
+                throw new InvalidOperationException("IDとキャラクターが一致する音声が複数あります。コピーされたIDを推測・修復せず配置を停止しました。");
             if (timeline.Items.Any(x => Equals(ItemCharacters.Get(x), voice.Character) &&
                 AssociationTag.Source(x.Remark, out var source) == AssociationTagState.Valid && source!.Serial == id))
-                throw new InvalidOperationException("このVoiceには関連する表情が既にあります。追加で置き換えず、関連表情またはVoiceを選択して［再同期］してください。");
+                throw new InvalidOperationException("この音声には関連する表情が既にあります。追加で置き換えず、関連表情または音声を選択して［再同期］してください。");
             clone.Remark = PluginRemarks.Append(PluginRemarks.Append(PluginRemarks.WithoutAssociation(clone.Remark), PlacementEngine.Marker), AssociationTag.SourceLine(id));
         });
         return new(PlacementPlan.Create(timeline, additions, updates), serial);
