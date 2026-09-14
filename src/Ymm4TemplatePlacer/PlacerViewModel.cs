@@ -9,7 +9,7 @@ using YukkuriMovieMaker.UndoRedo;
 
 namespace Ymm4TemplatePlacer;
 
-public sealed class PlacerViewModel : Bindable, ITimelineToolViewModel, IToolViewModel, IDisposable
+public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, IToolViewModel, IDisposable
 {
     private Timeline? timeline;
     private UndoRedoManager? undo;
@@ -45,16 +45,23 @@ public sealed class PlacerViewModel : Bindable, ITimelineToolViewModel, IToolVie
             var dialog = new OpenFileDialog { Filter = "Excelブック (*.xlsx)|*.xlsx", CheckFileExists = true, Title = "AssignmentをExcelから読み込み" };
             if (dialog.ShowDialog() == true) ImportFrom(dialog.FileName);
         }));
+        InitializeV04();
 #if YMM4_PROOF
         NativeProof.ViewModel = this;
 #endif
     }
+    partial void InitializeV04();
+    partial void RefreshV04();
+    partial void AttachTimelineV04();
+    partial void DetachTimelineV04();
+    partial void DisposeV04();
     public void SetTimelineToolInfo(TimelineToolInfo info)
     {
         var changed = !ReferenceEquals(timeline, info.Timeline);
+        if (changed) DetachTimelineV04();
         timeline = info.Timeline;
         undo = info.UndoRedoManager;
-        if (changed) Guard(Refresh);
+        if (changed) { AttachTimelineV04(); Guard(Refresh); }
         UpdateCommands();
     }
     public void Refresh()
@@ -62,6 +69,7 @@ public sealed class PlacerViewModel : Bindable, ITimelineToolViewModel, IToolVie
         var current = RequireTimeline();
         var catalog = TemplateCatalog.Read();
         SetRows(VoiceSnapshot.Capture(current).Select((x, i) => new AssignmentRow(i + 1, x, catalog)).ToArray());
+        RefreshV04();
         HasError = false;
         Status = Rows.Count == 0 ? "このSceneにはVoiceItemがありません。" : "Templateを選んで［配置］。未選択の行には何も配置しません。";
         OnPropertyChanged(nameof(SceneName));
@@ -120,6 +128,7 @@ public sealed class PlacerViewModel : Bindable, ITimelineToolViewModel, IToolVie
     public void LoadState(ToolState stateData) { }
     public void Dispose()
     {
+        DetachTimelineV04(); DisposeV04();
         foreach (var row in Rows) row.PropertyChanged -= RowChanged;
         Rows.Clear(); timeline = null; undo = null;
     }
