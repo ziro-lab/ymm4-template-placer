@@ -25,11 +25,11 @@ public sealed class SelectionPresetDraft : Bindable
         CultureInfo.InvariantCulture, out var value) ? value : throw new InvalidOperationException(label + "は整数で入力してください。");
     public SelectionPreset Read(SelectionPreset current)
     {
-        var result = current with { Name = Name.Trim(), StartOffset = Number(StartOffset, "開始offset"),
-            EndOffset = Number(EndOffset, "終了offset"), Duration = Number(Duration, "固定長"), AnchorPercent = AnchorPercent,
+        var result = current with { Name = Name.Trim(), StartOffset = Number(StartOffset, "開始位置の調整"),
+            EndOffset = Number(EndOffset, "終了位置の調整"), Duration = Number(Duration, "固定長"), AnchorPercent = AnchorPercent,
             HeadPadding = Number(HeadPadding, "開始前の余白"), TailPadding = Number(TailPadding, "終了後の余白"), Tolerance = Number(Tolerance, "境界の許容差"),
-            Layer = new LayerPolicy { UseTemplateLayer = UseTemplateLayer, Minimum = Number(Minimum, "Layer最小"),
-                Maximum = Number(Maximum, "Layer最大"), Preferred = Number(Preferred, "優先Layer") } };
+            Layer = new LayerPolicy { UseTemplateLayer = UseTemplateLayer, Minimum = Number(Minimum, "最小レイヤー"),
+                Maximum = Number(Maximum, "最大レイヤー"), Preferred = Number(Preferred, "優先レイヤー") } };
         result.Validate(); return result;
     }
     public bool Matches(SelectionPreset current)
