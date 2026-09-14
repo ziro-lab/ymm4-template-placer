@@ -4,7 +4,9 @@
 
 YMM4 Template Placer is a YukkuriMovieMaker4 plugin for organizing registered YMM4 Item Templates into a small plugin-side Library / Palette and placing them through a finite set of semantic Target relationships.
 
-Implemented baseline is v0.3.0. Current implementation target is **v0.4**. Read `docs/DESIGN.md` first, then `docs/ROADMAP.md`. `docs/IMPLEMENTATION.md` and `docs/VERIFICATION.md` describe the already-proven v0.3 baseline and must not be mistaken for the v0.4 target design.
+Implemented baseline is v0.3.0. Current implementation target is **v0.4**. Read `docs/DESIGN.md` first, then `docs/NATIVE_VALIDATION_V0.4.md`, then `docs/ROADMAP.md`. `docs/IMPLEMENTATION.md` and `docs/VERIFICATION.md` describe the already-proven v0.3 baseline and must not be mistaken for the v0.4 target design.
+
+`docs/NATIVE_VALIDATION_V0.4.md` records pre-implementation behavior proved against the real pinned YMM4 host. For covered paths, use the proved public host surface instead of rediscovering private Timeline ViewModel internals unless a later native test demonstrates that the public route is insufficient.
 
 ## v0.4 product boundary
 
@@ -23,13 +25,14 @@ It must not become a general rule language or a second timeline engine.
 - YMM4 `ItemSettings.Default.Templates` remains the Template source of truth.
 - The plugin Library stores references, plugin display names and optional Character association; it does **not** copy Template bodies into a second template database.
 - Library and Palette are separate. One LibraryEntry may appear in multiple Palettes.
+- YMM4 `ItemTemplate.SceneId` is **not** a unique Template ID. Native restart validation proved duplicate Name / Path / SceneId entries can persist. Resolve stored source metadata only when exactly one live Template matches; 0 or multiple matches stay unresolved and require explicit relink/removal. Never fuzzy-pick a candidate.
 
 ### Main interaction models
 
 - **Expression list:** bulk VoiceItem → Character-compatible Face Template assignment. Excel remains a secondary bridge for this path.
-- **Character Palette:** selected VoiceItem / TachieFaceItem temporarily selects the matching Character palette; clearing that context returns to the previously manually selected Character palette.
+- **Character Palette:** selected VoiceItem / TachieFaceItem temporarily selects the matching Character palette; clearing that context returns to the previously manually selected Character palette. Native proof shows this can subscribe to public `Timeline.PropertyChanged` and read public `SelectedItem` / `SelectedItems`; polling/private Timeline ViewModel reflection is not required on YMM4 4.55.1.1.
 - **Style Palette:** manually selected editing vocabulary such as bright / dark / battle effects.
-- **Quick Drop:** double-click a Palette entry to place the Template at `Timeline.CurrentFrame` using the Template intrinsic Length. Quick Drop has no Target association and is not resynced.
+- **Quick Drop:** double-click a Palette entry to place the Template at public `Timeline.CurrentFrame` using the Template intrinsic Length. Quick Drop has no Target association and is not resynced.
 - **Selection placement:** apply a finite semantic Profile to selected Timeline Items.
 
 ## CURRENT semantic Profiles
@@ -59,6 +62,8 @@ Back  = smaller Layer number than overlapping same-Character related Items
 ```
 
 YMM4 display priority follows Layer number, so do not rename these modes to ambiguous timeline-screen terms without explanation. Collision checks use the full planned Item duration, not only its first frame.
+
+Native proof confirmed the intended rule: same-Character Layers define the Front/Back baseline, unrelated Characters do not alter that baseline, and any Timeline Item may block a candidate Layer during any part of the proposed duration.
 
 Layer search is deterministic. Existing Items are never moved or shortened to make room. Planned Items in the same batch reserve occupancy before commit.
 
@@ -128,7 +133,7 @@ Do not add these to v0.4 unless the design is explicitly changed:
 
 ## Implementation order
 
-Follow `docs/ROADMAP.md`. Do not implement all UI surfaces at once. First convert the placement path to add-only planned commits, then prove Library / Character Palette / Quick Drop / Front-Back Layer planning, then semantic Profiles and lightweight Resync.
+Follow `docs/ROADMAP.md`. Do not implement all UI surfaces at once. First convert the placement path to add-only planned commits, then implement Library / Character Palette / Quick Drop / Front-Back Layer planning using the public host surfaces already proved in `docs/NATIVE_VALIDATION_V0.4.md`, then semantic Profiles and lightweight Resync.
 
 ## External references
 
