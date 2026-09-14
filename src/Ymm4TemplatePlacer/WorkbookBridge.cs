@@ -22,8 +22,8 @@ public static partial class WorkbookBridge
             new SheetFormatProperties { DefaultRowHeight = 24 },
             new Columns(widths.Select((width, i) => new Column { Min = (uint)i + 1, Max = (uint)i + 1, Width = width, CustomWidth = true })), new SheetData());
         part.Worksheet = worksheet;
-        var workbook = book.Workbook ?? throw Bad("Workbookがありません。");
-        var sheets = workbook.GetFirstChild<Sheets>() ?? throw Bad("Sheetsがありません。");
+        var workbook = book.Workbook ?? throw Bad("Excelファイルのブック情報がありません。");
+        var sheets = workbook.GetFirstChild<Sheets>() ?? throw Bad("Excelファイルにシート一覧がありません。");
         sheets.Append(new Sheet { Id = book.GetIdOfPart(part), SheetId = (uint)sheets.ChildElements.Count + 1, Name = name, State = hidden ? SheetStateValues.Hidden : SheetStateValues.Visible });
         return worksheet;
     }
@@ -47,7 +47,7 @@ public static partial class WorkbookBridge
     }
     private static Worksheet GetSheet(WorkbookPart book, string name)
     {
-        var workbook = book.Workbook ?? throw Bad("Workbookがありません。");
+        var workbook = book.Workbook ?? throw Bad("Excelファイルのブック情報がありません。");
         var matches = workbook.GetFirstChild<Sheets>()?.Elements<Sheet>().Where(x => x.Name?.Value == name).ToArray() ?? [];
         if (matches.Length != 1 || matches[0].Id?.Value is not string id || book.GetPartById(id) is not WorksheetPart part)
             throw Bad($"必要なシートがありません: {name}。Excelを再出力してください。");
@@ -69,7 +69,7 @@ public static partial class WorkbookBridge
                 if (letters.Length != 1 || letters[0] < 'A' || letters[0] >= 'A' + columns) continue;
                 var c = letters[0] - 'A';
                 if (!used.Add(c) || reference[letters.Length..] != index.ToString(Invariant)) throw Bad("セル番地が重複または不正です。");
-                if (cell.CellFormula != null) throw Bad($"{reference}: 数式は読み込めません。Templateを候補の文字列として保存してください。");
+                if (cell.CellFormula != null) throw Bad($"{reference}: 数式は読み込めません。テンプレートを候補の文字列として保存してください。");
                 string text;
                 if (cell.DataType?.Value == CellValues.SharedString)
                 {
@@ -77,7 +77,7 @@ public static partial class WorkbookBridge
                     if (n < 0 || n >= shared.Length) throw Bad("共有文字列の参照が不正です。"); text = shared[n];
                 }
                 else if (cell.DataType?.Value == CellValues.InlineString) text = cell.InlineString == null ? "" : RichText(cell.InlineString);
-                else if (cell.DataType?.Value == CellValues.Error) throw Bad("Workbookにエラー値があります。");
+                else if (cell.DataType?.Value == CellValues.Error) throw Bad("Excelファイルにエラー値があります。");
                 else text = cell.CellValue?.Text ?? "";
                 ValidateText(text); values[c] = text;
             }
@@ -87,7 +87,7 @@ public static partial class WorkbookBridge
         return result;
     }
     private static string RichText(OpenXmlElement value) => string.Concat(value.Descendants<Text>().Where(x => !x.Ancestors<PhoneticRun>().Any()).Select(x => x.Text));
-    private static int Integer(string text) => int.TryParse(text, NumberStyles.Integer, Invariant, out var value) ? value : throw Bad("No / Frame / Length / Layerに整数以外の値があります。");
+    private static int Integer(string text) => int.TryParse(text, NumberStyles.Integer, Invariant, out var value) ? value : throw Bad("No / 開始 / 長さ / レイヤーに整数以外の値があります。");
     private static void ValidateText(string text)
     {
         if (text.Length > 32767) throw Bad("セルの文字数がExcelの上限を超えています。"); XmlConvert.VerifyXmlChars(text);
