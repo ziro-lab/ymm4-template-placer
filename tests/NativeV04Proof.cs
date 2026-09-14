@@ -10,6 +10,7 @@ internal static partial class NativeProof
         await VerifyPalettes(timeline);
         await VerifyPaletteTask(timeline);
         await VerifyExpressionRecovery(timeline);
+        await VerifyPalettePickerRefresh(timeline);
         await VerifyQuickDrop(timeline, undo);
         await VerifyExpressionPresets(timeline, undo);
         await VerifyAssociations(timeline, undo);

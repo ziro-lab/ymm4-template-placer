@@ -43,10 +43,10 @@ internal static partial class NativeProof
         panel.PaletteSelector.SelectedItem = vm.PaletteChoices.Single(x => x.Id == pb); await Idle();
         var persisted = File.ReadAllText(PlacerSettingsStore.DefaultPath);
         timeline.SelectedItems = [a]; await Idle();
-        Assert(vm.CurrentPalette?.Id == pa && (panel.PaletteSelector.SelectedItem as PaletteDefinition)?.Id == pa && vm.PaletteContextStatus.Contains("連動中", StringComparison.Ordinal),
+        Assert(vm.CurrentPalette?.Id == pa && (panel.PaletteSelector.SelectedItem as PaletteChoice)?.Id == pa && vm.PaletteContextStatus.Contains("連動中", StringComparison.Ordinal),
             "WUX2 automatic Character context updates the actual unified picker and identifies the reason");
         timeline.SelectedItems = []; await Idle();
-        Assert(vm.CurrentPalette?.Id == pb && (panel.PaletteSelector.SelectedItem as PaletteDefinition)?.Id == pb &&
+        Assert(vm.CurrentPalette?.Id == pb && (panel.PaletteSelector.SelectedItem as PaletteChoice)?.Id == pb &&
             File.ReadAllText(PlacerSettingsStore.DefaultPath) == persisted,
             "WUX2 context clear visibly restores the manual choice without persisting transient context");
         timeline.SelectedItems = [a]; await Idle();

@@ -4,15 +4,17 @@ using YukkuriMovieMaker.Commons;
 namespace Ymm4TemplatePlacer;
 
 // The persisted Character/Style split is an implementation detail of the unified Palette task.
+public sealed record PaletteChoice(Guid Id, string Name, PaletteKind Kind, string? CharacterName);
+
 public sealed partial class PlacerViewModel
 {
     private bool explicitPaletteSelection, isCreatingPalette;
     private Guid? paletteNameDraftId;
     private string paletteNameDraft = "", savedPaletteName = "";
-    public ObservableCollection<PaletteDefinition> PaletteChoices { get; } = [];
-    public PaletteDefinition? SelectedPalette
+    public ObservableCollection<PaletteChoice> PaletteChoices { get; } = [];
+    public PaletteChoice? SelectedPalette
     {
-        get => CurrentPalette;
+        get => PaletteChoices.FirstOrDefault(x => x.Id == CurrentPalette?.Id);
         set
         {
             if (refreshingPalettes || value == null || value.Id == CurrentPalette?.Id) return;
@@ -50,6 +52,15 @@ public sealed partial class PlacerViewModel
         });
         CancelCreatePaletteCommand = new ActionCommand(_ => true, _ => IsCreatingPalette = false);
         RenamePaletteCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null, _ => Guard(RenamePalette));
+    }
+    private void RefreshPaletteTaskChoices()
+    {
+        // Do not reset a live WPF picker because a preset/serial save deep-copied the storage model.
+        // The picker needs stable identity and labels, not mutable membership or Layer records.
+        var choices = settings.Palettes.Select(x => new PaletteChoice(x.Id, x.Name, x.Kind, x.CharacterName)).ToArray();
+        if (PaletteChoices.SequenceEqual(choices)) return;
+        PaletteChoices.Clear();
+        foreach (var choice in choices) PaletteChoices.Add(choice);
     }
     private void RefreshPaletteNameDraft()
     {

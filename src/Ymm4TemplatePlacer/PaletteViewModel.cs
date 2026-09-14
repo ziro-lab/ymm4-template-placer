@@ -87,12 +87,12 @@ public sealed partial class PlacerViewModel
         {
             var choiceId = paletteLibraryChoice?.Id;
             var createCharacter = newPaletteCharacter?.Name;
-            CharacterPalettes.Clear(); StylePalettes.Clear(); PaletteLibraryChoices.Clear(); PaletteChoices.Clear();
+            CharacterPalettes.Clear(); StylePalettes.Clear(); PaletteLibraryChoices.Clear();
             foreach (var palette in settings.Palettes)
             {
                 (palette.Kind == PaletteKind.Character ? CharacterPalettes : StylePalettes).Add(palette);
-                PaletteChoices.Add(palette);
             }
+            RefreshPaletteTaskChoices();
             foreach (var entry in settings.Library) PaletteLibraryChoices.Add(new(entry));
             PaletteLibraryChoice = PaletteLibraryChoices.FirstOrDefault(x => x.Id == choiceId);
             NewPaletteCharacter = LibraryCharacters.FirstOrDefault(x => x.Name == createCharacter);
