@@ -4,7 +4,9 @@
 
 YMM4 Template Placer is a YukkuriMovieMaker4 plugin for organizing registered YMM4 Item Templates into a small plugin-side Library / Palette and placing them through a finite set of semantic Target relationships.
 
-Implemented baseline is **v0.3.1**. It is the v0.3.0 functional baseline plus the native-verified Timeline Tool lifecycle hotfix (`CanSuspend=true`, hide/reopen without Timeline mutation). Current implementation target is **v0.4**. Read `docs/DESIGN.md` first, then `docs/NATIVE_VALIDATION_V0.4.md`, then `docs/ROADMAP.md`. `docs/IMPLEMENTATION.md` and `docs/VERIFICATION.md` describe the already-proven v0.3.0 functional baseline; preserve those behaviors plus the v0.3.1 P9 lifecycle regression while implementing v0.4.
+Current branch is the **integrated v0.4.0 Candidate**. The historical regression baseline is **v0.3.1**: v0.3.0 functionality plus the native-verified Timeline Tool lifecycle hotfix (`CanSuspend=true`, hide/reopen without Timeline mutation). Read `docs/DESIGN.md`, `docs/NATIVE_VALIDATION_V0.4.md`, `docs/ROADMAP.md`, then `docs/V0.4_ACCEPTANCE.md` and the latest PR/checkpoint evidence. Do not reimplement already native-verified W checkpoints. `docs/IMPLEMENTATION.md` and `docs/VERIFICATION.md` are historical v0.3 records; current user behavior is `docs/USAGE.md`, including add-only placement instead of the old replacement path.
+
+Final completion requires the full native ladder and 18-item acceptance manifest, zero compiler warnings/errors, exact release DLL native smoke and versioned package checks. A source edit or successful build alone is not completion. Keep PR #6 Draft and main unchanged unless the user explicitly authorizes a later merge. Small staging file commits may defer CI until their integration commit; every completed W still requires the whole native lane before promotion.
 
 `docs/NATIVE_VALIDATION_V0.4.md` records pre-implementation behavior proved against the real pinned YMM4 host. For covered paths, use the proved public host surface instead of rediscovering private Timeline ViewModel internals unless a later native test demonstrates that the public route is insufficient.
 
@@ -33,11 +35,11 @@ It must not become a general rule language or a second timeline engine.
 - **Character Palette:** selected VoiceItem / TachieFaceItem temporarily selects the matching Character palette; clearing that context returns to the previously manually selected Character palette. Native proof shows this can subscribe to public `Timeline.PropertyChanged` and read public `SelectedItem` / `SelectedItems`; polling/private Timeline ViewModel reflection is not required on YMM4 4.55.1.1.
 - **Style Palette:** manually selected editing vocabulary such as bright / dark / battle effects.
 - **Quick Drop:** double-click a Palette entry to place the Template at public `Timeline.CurrentFrame` using the Template intrinsic Length. Quick Drop has no Target association and is not resynced.
-- **Selection placement:** apply a finite semantic Profile to selected Timeline Items.
+- **Selection placement:** apply a finite semantic Profile to selected Timeline Items. Selection Profiles add independent Items; association/Resync is the explicit expression path. See `docs/SELECTION_PLACEMENT.md` for rounding, padding and agreed boundary position.
 
 ## CURRENT semantic Profiles
 
-v0.4 may implement only these Profile families unless the design is explicitly revised:
+v0.4 implements only these Profile families unless the design is explicitly revised:
 
 ```text
 Character Expression
@@ -128,12 +130,13 @@ Do not add these to v0.4 unless the design is explicitly changed:
 - Heavy native YMM4 work must run only for source/project/XAML/test/fixture/workflow changes plus manual dispatch.
 - Documentation-only changes must not download or launch YMM4.
 - Keep fixtures tiny, deterministic and redistribution-safe.
-- Prefer direct state assertions over screenshot-only assertions.
-- Preserve v0.3.1 regression tests, including P9 Tool hide/reopen, while adding v0.4 proof steps.
+- Prefer direct state assertions over screenshot-only assertions; also inspect UI captures for display regressions.
+- Preserve v0.3.1 regression tests, including P9 Tool hide/reopen, while maintaining v0.4 proof steps.
+- Use small auditable file edits. If a tool safety check rejects a write, do not reroute it: record the exact operation, file and last successful commit.
 
 ## Implementation order
 
-Follow `docs/ROADMAP.md`. Do not implement all UI surfaces at once. First convert the placement path to add-only planned commits, then implement Library / Character Palette / Quick Drop / Front-Back Layer planning using the public host surfaces already proved in `docs/NATIVE_VALIDATION_V0.4.md`, then semantic Profiles and lightweight Resync.
+Follow `docs/ROADMAP.md` as the historical implementation/proof ladder, and continue from the latest verified checkpoint rather than rebuilding it. Keep the placement core, host surface evidence and finite-profile boundary intact. Changes to a completed W need corresponding regression proof before they are promoted.
 
 ## External references
 
