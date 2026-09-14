@@ -5,7 +5,7 @@
   <DockPanel>
    <TextBlock Text="表情Preset" VerticalAlignment="Center" Margin="0,0,8,0"/>
    <ComboBox x:Name="PresetSelector" ItemsSource="{Binding ExpressionPresets}" DisplayMemberPath="Name"
-    SelectedItem="{Binding SelectedExpressionPreset,Mode=TwoWay}" MinWidth="140"/>
+    SelectedItem="{Binding SelectedExpressionPreset,Mode=TwoWay}" MinWidth="140" ToolTip="{Binding ExpressionPresetNotice}"/>
   </DockPanel>
   <TextBlock Text="{Binding ExpressionPresetSummary}" TextWrapping="Wrap" Opacity="0.8" Margin="0,3,0,0"/>
   <Expander x:Name="PresetEditor" Header="Presetを編集" Margin="0,3,0,0">
@@ -35,6 +35,8 @@
     </StackPanel>
    </ScrollViewer>
   </Expander>
-  <TextBlock Text="{Binding ExpressionPresetNotice}" TextWrapping="Wrap" Opacity="0.8" Margin="0,2,0,0"/>
+  <TextBlock Text="{Binding ExpressionPresetNotice}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,2,0,0">
+   <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ExpressionPresetDirty}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+  </TextBlock>
  </StackPanel>
 </UserControl>
