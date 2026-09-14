@@ -15,7 +15,7 @@ public sealed partial class PlacerViewModel
     private ExpressionPreset CurrentExpressionPreset => settings.ExpressionPresets.Single(x => x.Id == settings.CurrentExpressionPresetId);
     public ExpressionPreset? SelectedExpressionPreset
     {
-        get => CurrentExpressionPreset;
+        get => ExpressionPresets.FirstOrDefault(x => x.Id == settings.CurrentExpressionPresetId);
         set
         {
             if (refreshingPresets || value == null || value.Id == settings.CurrentExpressionPresetId) return;
@@ -51,8 +51,12 @@ public sealed partial class PlacerViewModel
         refreshingPresets = true;
         try
         {
-            ExpressionPresets.Clear();
-            foreach (var preset in settings.ExpressionPresets) ExpressionPresets.Add(preset);
+            // Do not reset a WPF selector merely because unrelated settings were copied.
+            if (!ExpressionPresets.SequenceEqual(settings.ExpressionPresets))
+            {
+                ExpressionPresets.Clear();
+                foreach (var preset in settings.ExpressionPresets) ExpressionPresets.Add(preset);
+            }
             if (loadedExpressionPreset != CurrentExpressionPreset) LoadExpressionDraft();
             OnPropertyChanged(nameof(SelectedExpressionPreset));
             OnPropertyChanged(nameof(ExpressionPresetSummary));
