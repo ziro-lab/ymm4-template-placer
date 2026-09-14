@@ -16,7 +16,7 @@ public static class PlacementEngine
         if (current.Count != snapshot.Count || snapshot.Select(x => x.Voice).Distinct().Count() != snapshot.Count ||
             snapshot.Any(x => !current.Contains(x.Voice) || x.Voice.CharacterName != x.Character ||
                 x.Voice.Frame != x.Frame || x.Voice.Length != x.Length || x.Voice.Layer != x.Layer || (x.Voice.Serif ?? "") != x.Serif))
-            throw new InvalidOperationException("Voice一覧が現在のSceneと一致しません。［更新］を押してください。Excelを使う場合は再出力してください。");
+            throw new InvalidOperationException("音声一覧が現在のシーンと一致しません。［更新］を押してください。Excelを使う場合は再出力してください。");
     }
 
     public static TachieFaceItem CloneForVoice(VoiceSnapshot target, FaceTemplate template)
@@ -25,18 +25,18 @@ public static class PlacementEngine
         if (!ItemSettings.Default.Templates.Contains(template.Template) || template.Template.Name != template.Name ||
             items.Length != 1 || items[0] is not TachieFaceItem source ||
             !ReferenceEquals(source, template.Face) || target.Voice.Character == null || !Equals(source.Character, target.Voice.Character))
-            throw new InvalidOperationException("参照Templateが変更・削除されています。［更新］またはExcelの再出力を行ってください。");
+            throw new InvalidOperationException("参照テンプレートが変更・削除されています。［更新］またはExcelの再出力を行ってください。");
         if (target.Frame < 0 || target.Length <= 0 || (long)target.Frame + target.Length > int.MaxValue)
-            throw new InvalidOperationException("VoiceのFrame / Lengthが不正です。YMM4上で修正して更新してください。");
+            throw new InvalidOperationException("音声の開始位置 / 長さが不正です。YMM4上で修正して更新してください。");
         var clone = source.GetClone() as TachieFaceItem
-            ?? throw new InvalidOperationException("表情Templateの複製に失敗しました。");
+            ?? throw new InvalidOperationException("表情テンプレートの複製に失敗しました。");
         if (ReferenceEquals(source, clone) || !Equals(clone.Character, target.Voice.Character))
-            throw new InvalidOperationException("表情Templateを正しいCharacterの独立したItemとして複製できませんでした。");
+            throw new InvalidOperationException("表情テンプレートを正しいキャラクターの独立したアイテムとして複製できませんでした。");
         clone.Frame = target.Frame;
         clone.Length = target.Length;
         clone.Remark = string.IsNullOrEmpty(source.Remark) ? Marker : source.Remark + "\n" + Marker;
         clone.Group = 0;
-        if (clone.Layer < 0) throw new InvalidOperationException("TemplateのLayerが不正です。YMM4で登録し直してください。");
+        if (clone.Layer < 0) throw new InvalidOperationException("テンプレートのレイヤーが不正です。YMM4で登録し直してください。");
         return clone;
     }
 

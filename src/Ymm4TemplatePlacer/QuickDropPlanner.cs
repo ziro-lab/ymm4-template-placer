@@ -13,10 +13,10 @@ public static class QuickDropPlanner
         if (palette.Kind == PaletteKind.Character)
         {
             character = ItemCharacters.ResolveUnique(timeline, palette.CharacterName ?? "")
-                ?? throw new InvalidOperationException("棚のCharacterを一意に特定できません。Character名とTemplate登録を確認してください。");
+                ?? throw new InvalidOperationException("パレットのキャラクターを一意に特定できません。キャラクター名とテンプレート登録を確認してください。");
             var sourceCharacter = ItemCharacters.Get(clone);
             if ((sourceCharacter != null && !Equals(sourceCharacter, character)) || (entry.CharacterName != null && entry.CharacterName != character.Name))
-                throw new InvalidOperationException("TemplateのCharacterは現在のCharacter棚と違います。自動でCharacterを書き換えません。");
+                throw new InvalidOperationException("テンプレートのキャラクターは現在のキャラクターパレットと違います。自動でキャラクターを書き換えません。");
         }
         else mode = CharacterLayerMode.Base;
         clone.Frame = timeline.CurrentFrame;

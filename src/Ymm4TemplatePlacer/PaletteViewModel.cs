@@ -19,7 +19,7 @@ public sealed partial class PlacerViewModel
     public ObservableCollection<PaletteDefinition> StylePalettes { get; } = [];
     public ObservableCollection<PaletteEntryView> PaletteEntries { get; } = [];
     public ObservableCollection<LibraryEntryView> PaletteLibraryChoices { get; } = [];
-    public IReadOnlyList<PaletteKindChoice> PaletteKinds { get; } = [new(PaletteKind.Character, "Character"), new(PaletteKind.Style, "Style")];
+    public IReadOnlyList<PaletteKindChoice> PaletteKinds { get; } = [new(PaletteKind.Character, "キャラクター"), new(PaletteKind.Style, "スタイル")];
     public PaletteKind ActivePaletteKind
     {
         get => settings.PaletteMode;
@@ -49,14 +49,14 @@ public sealed partial class PlacerViewModel
     }
     public PaletteDefinition? CurrentPalette => settings.Palettes.FirstOrDefault(x => x.Id ==
         (ActivePaletteKind == PaletteKind.Style ? settings.ManualStylePaletteId : contextCharacterPaletteId ?? settings.ManualCharacterPaletteId));
-    public string CurrentPaletteName => CurrentPalette?.Name ?? "棚が未選択です";
+    public string CurrentPaletteName => CurrentPalette?.Name ?? "パレットが未選択です";
     public bool HasCharacterContext => contextCharacterPaletteId != null;
     public bool IsCharacterPaletteMode => ActivePaletteKind == PaletteKind.Character;
-    public string PaletteContextStatus => ActivePaletteKind == PaletteKind.Style ? "Styleの棚は手動で切り替えます。" :
-        HasCharacterContext ? $"単体選択のCharacterに一時切替中。解除すると「{ManualCharacterPalette?.Name ?? "未選択"}」へ戻ります。" :
-        string.IsNullOrEmpty(selectedCharacterNotice) ? "手動で選んだCharacterの棚です。Voice・表情の単体選択中だけ一時切替します。" : selectedCharacterNotice;
-    public string PaletteEmptyMessage => CurrentPalette == null ? "下の［棚を作る］でCharacterまたはStyleの棚を登録してください。" :
-        PaletteEntries.Count == 0 ? "この棚は空です。Library登録を選び、［この棚へ追加］してください。" : "";
+    public string PaletteContextStatus => ActivePaletteKind == PaletteKind.Style ? "スタイルパレットは手動で切り替えます。" :
+        HasCharacterContext ? $"単体選択のキャラクターに一時切替中。解除すると「{ManualCharacterPalette?.Name ?? "未選択"}」へ戻ります。" :
+        string.IsNullOrEmpty(selectedCharacterNotice) ? "手動で選んだキャラクターパレットです。音声・表情を1つだけ選んでいる間だけ自動で切り替わります。" : selectedCharacterNotice;
+    public string PaletteEmptyMessage => CurrentPalette == null ? "下の［パレットを作る］でキャラクターまたはスタイルのパレットを登録してください。" :
+        PaletteEntries.Count == 0 ? "このパレットは空です。登録済みテンプレートを選び、［このパレットへ追加］してください。" : "";
     public string NewPaletteName { get => newPaletteName; set => Set(ref newPaletteName, value); }
     public CharacterOption? NewPaletteCharacter { get => newPaletteCharacter; set => Set(ref newPaletteCharacter, value); }
     public LibraryEntryView? PaletteLibraryChoice { get => paletteLibraryChoice; set { Set(ref paletteLibraryChoice, value); UpdatePaletteCommands(); } }
@@ -136,58 +136,58 @@ public sealed partial class PlacerViewModel
         if (character == null) return;
         if (!ReferenceEquals(ItemCharacters.ResolveUnique(timeline, character.Name), character))
         {
-            selectedCharacterNotice = "同名Characterを一意に特定できないため、自動切替していません。"; return;
+            selectedCharacterNotice = "同名キャラクターを一意に特定できないため、自動切替していません。"; return;
         }
         var palettes = settings.Palettes.Where(x => x.Kind == PaletteKind.Character && string.Equals(x.CharacterName, character.Name, StringComparison.Ordinal)).Take(2).ToArray();
         if (palettes.Length == 1) contextCharacterPaletteId = palettes[0].Id;
-        else selectedCharacterNotice = $"「{character.Name}」の棚は未登録です。手動の棚を表示しています。";
+        else selectedCharacterNotice = $"「{character.Name}」のキャラクターパレットは未登録です。手動で選んだパレットを表示しています。";
     }
     public PaletteDefinition CreatePalette()
     {
         var kind = ActivePaletteKind;
         var character = kind == PaletteKind.Character ? NewPaletteCharacter?.Name : null;
         if (kind == PaletteKind.Character && (character == null || ItemCharacters.ResolveUnique(timeline, character) == null))
-            throw new InvalidOperationException("棚に対応するCharacterを一意に選んでください。同名Characterは自動で区別しません。");
+            throw new InvalidOperationException("パレットに対応するキャラクターを一意に選んでください。同名キャラクターは自動で区別しません。");
         if (kind == PaletteKind.Character && settings.Palettes.Any(x => x.Kind == kind && x.CharacterName == character))
-            throw new InvalidOperationException("このCharacterの棚は登録済みです。手動Characterの一覧から選んでください。");
+            throw new InvalidOperationException("このキャラクターのパレットは登録済みです。キャラクターパレット一覧から選んでください。");
         var name = string.IsNullOrWhiteSpace(NewPaletteName) && character != null ? character : NewPaletteName.Trim();
         var palette = new PaletteDefinition(Guid.NewGuid(), kind, name, character, []);
         EditSettings(next => { next.Palettes.Add(palette); if (kind == PaletteKind.Character) next.ManualCharacterPaletteId = palette.Id; else next.ManualStylePaletteId = palette.Id; });
-        HasError = false; Status = $"「{name}」の棚を作りました。Libraryから使いたい登録を追加してください。";
+        HasError = false; Status = $"「{name}」のパレットを作りました。登録済みテンプレートから使いたいものを追加してください。";
         return palette;
     }
     public void DeleteCurrentPalette()
     {
-        var id = CurrentPalette?.Id ?? throw new InvalidOperationException("棚を選んでください。");
+        var id = CurrentPalette?.Id ?? throw new InvalidOperationException("パレットを選んでください。");
         EditSettings(next =>
         {
             next.Palettes.RemoveAll(x => x.Id == id);
             if (next.ManualCharacterPaletteId == id) next.ManualCharacterPaletteId = null;
             if (next.ManualStylePaletteId == id) next.ManualStylePaletteId = null;
         });
-        HasError = false; Status = "棚を削除しました。Library・元Template・Timelineは変更していません。";
+        HasError = false; Status = "パレットを削除しました。テンプレート管理の登録・元テンプレート・タイムラインは変更していません。";
     }
     public void AddPaletteEntry()
     {
-        var palette = CurrentPalette ?? throw new InvalidOperationException("棚を選んでください。");
-        var entry = PaletteLibraryChoice?.Entry ?? throw new InvalidOperationException("追加するLibrary登録を選んでください。");
-        if (palette.LibraryEntryIds.Contains(entry.Id)) throw new InvalidOperationException("この登録は既に棚にあります。");
+        var palette = CurrentPalette ?? throw new InvalidOperationException("パレットを選んでください。");
+        var entry = PaletteLibraryChoice?.Entry ?? throw new InvalidOperationException("追加する登録済みテンプレートを選んでください。");
+        if (palette.LibraryEntryIds.Contains(entry.Id)) throw new InvalidOperationException("このテンプレートは既にパレットにあります。");
         if (palette.Kind == PaletteKind.Character)
         {
             var sourceCharacter = TemplateResolver.Resolve(entry).Item is IItem source ? ItemCharacters.Get(source)?.Name : null;
             if ((entry.CharacterName != null && entry.CharacterName != palette.CharacterName) || (sourceCharacter != null && sourceCharacter != palette.CharacterName))
-                throw new InvalidOperationException("このTemplateのCharacterは、表示中のCharacter棚と違います。");
+                throw new InvalidOperationException("このテンプレートのキャラクターは、表示中のキャラクターパレットと違います。");
         }
         EditSettings(next => next.Palettes.Single(x => x.Id == palette.Id).LibraryEntryIds.Add(entry.Id));
         SelectedPaletteEntry = PaletteEntries.Single(x => x.LibraryEntryId == entry.Id);
-        HasError = false; Status = $"「{entry.DisplayName}」を「{palette.Name}」へ追加しました。同じLibrary登録を他の棚にも使えます。";
+        HasError = false; Status = $"「{entry.DisplayName}」を「{palette.Name}」へ追加しました。同じ登録済みテンプレートを他のパレットにも使えます。";
     }
     public void RemovePaletteEntry()
     {
-        var palette = CurrentPalette ?? throw new InvalidOperationException("棚を選んでください。");
-        var id = SelectedPaletteEntry?.LibraryEntryId ?? throw new InvalidOperationException("棚の登録を選んでください。");
+        var palette = CurrentPalette ?? throw new InvalidOperationException("パレットを選んでください。");
+        var id = SelectedPaletteEntry?.LibraryEntryId ?? throw new InvalidOperationException("パレットから外すテンプレートを選んでください。");
         EditSettings(next => next.Palettes.Single(x => x.Id == palette.Id).LibraryEntryIds.Remove(id));
-        HasError = false; Status = "この棚から外しました。他の棚・Library・Timelineは変更していません。";
+        HasError = false; Status = "このパレットから外しました。他のパレット・テンプレート管理・タイムラインは変更していません。";
     }
     partial void OnLibraryUnregistered(PlacerSettings next, Guid id)
     {

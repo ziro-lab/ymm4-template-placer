@@ -30,7 +30,7 @@ internal static partial class NativeProof
         undo.Record();
         foreach (var item in fixture) Assert(timeline.TryAddItems([item], item.Frame, item.Layer), "W7 native fixture insertion");
         undo.Record(); vm.Refresh(); view.MainTabs.SelectedIndex = 0; await Idle();
-        Assert(vm.Rows.Single(x => x.Character == "TestA").Choices[1].Label.Contains("（棚）", StringComparison.Ordinal),
+        Assert(vm.Rows.Single(x => x.Character == "TestA").Choices[1].Label.Contains("（パレット）", StringComparison.Ordinal),
             "W7 Character Palette entries precede other compatible Face choices without removing candidates");
         foreach (var row in vm.Rows.Where(x => ReferenceEquals(x.Target.Voice.Character, ca)))
             row.SelectedChoice = row.Choices.Single(x => ReferenceEquals(x.Template?.Template, template));

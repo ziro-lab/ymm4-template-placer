@@ -93,7 +93,7 @@ internal static partial class NativeProof
         }
         finally { view.Width = width; view.Height = height; await Idle(); }
         timeline.SelectedItems = []; view.MainTabs.SelectedIndex = 1; await Idle();
-        Assert(vm.SelectionProfiles.Count == 0 && !vm.PlaceSelectionCommand.CanExecute(null) && vm.SelectionContext.Contains("Timeline", StringComparison.Ordinal),
+        Assert(vm.SelectionProfiles.Count == 0 && !vm.PlaceSelectionCommand.CanExecute(null) && vm.SelectionContext.Contains("タイムライン", StringComparison.Ordinal),
             "W12 empty Timeline selection names the correct selection surface and disables placement");
         SaveNamedView(view, "ui-selection-empty.png");
         vm.ActivePaletteKind = PaletteKind.Style; vm.ManualStylePalette = vm.StylePalettes.Single(x => x.Id == palette.Id); vm.DeleteCurrentPalette();

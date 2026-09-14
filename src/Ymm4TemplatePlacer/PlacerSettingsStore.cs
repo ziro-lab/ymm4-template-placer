@@ -41,24 +41,24 @@ public sealed class PlacerSettingsStore
     public static void Validate(PlacerSettings settings)
     {
         if (settings.Schema != 4 || settings.Library == null || settings.Library.Count > 2048 || settings.NextAssociationId < 1)
-            throw new InvalidDataException("未対応または不正なPlugin設定です。元ファイルは保持しています。");
+            throw new InvalidDataException("未対応または不正なプラグイン設定です。元ファイルは保持しています。");
         if (settings.Library.Any(x => x == null || x.Id == Guid.Empty || x.Source == null || x.Source.Name == null || x.Source.PathJson == null || string.IsNullOrWhiteSpace(x.DisplayName) || x.DisplayName.Length > 256) ||
             settings.Library.Select(x => x.Id).Distinct().Count() != settings.Library.Count)
-            throw new InvalidDataException("Library ID・参照・表示名が不正です。");
+            throw new InvalidDataException("テンプレート管理のID・参照・表示名が不正です。");
         PaletteSettings.Validate(settings);
         ExpressionPresetSettings.Validate(settings);
         SelectionPresetSettings.Validate(settings);
     }
     public void Save(PlacerSettings settings)
     {
-        if (!loaded) throw new InvalidOperationException("設定の読み込みに成功していないため保存しません。元ファイルを確認してToolを開き直してください。");
+        if (!loaded) throw new InvalidOperationException("設定の読み込みに成功していないため保存しません。元ファイルを確認してツールを開き直してください。");
         Validate(settings);
         var bytes = JsonSerializer.SerializeToUtf8Bytes(settings, Options);
         if (bytes.Length > MaximumBytes) throw new InvalidOperationException("設定が1 MiBを超えるため保存できません。");
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         // Cooperating Tool instances cannot pass the digest check concurrently.
         using var saveLock = new FileStream(path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-        if (Digest(ReadBytes()) != expectedDigest) throw new InvalidOperationException("別のToolまたはYMM4で設定が変更されました。Toolを開き直してください。外部変更は上書きしていません。");
+        if (Digest(ReadBytes()) != expectedDigest) throw new InvalidOperationException("別のツールまたはYMM4で設定が変更されました。ツールを開き直してください。外部変更は上書きしていません。");
         var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {

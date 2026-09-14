@@ -15,7 +15,7 @@ public sealed partial class PlacerViewModel
     public ObservableCollection<SelectionPreset> SelectionPresets { get; } = [];
     public ObservableCollection<LibraryEntryView> SelectionTemplates { get; } = [];
     public IReadOnlyList<AnchorChoice> SelectionAnchors { get; } =
-        [new(0, "開始"), new(25, "25%"), new(50, "50%"), new(75, "75%"), new(100, "終了（末尾の次frame）")];
+        [new(0, "開始"), new(25, "25%"), new(50, "50%"), new(75, "75%"), new(100, "終了（末尾の次フレーム）")];
     private SelectionPreset CurrentSelectionPreset => settings.SelectionPresets.Single(x => x.Id == settings.CurrentSelectionPresetId);
     public SelectionProfileChoice? SelectedSelectionProfile
     {
@@ -45,11 +45,11 @@ public sealed partial class PlacerViewModel
     public bool SelectionPresetDirty => !SelectionDraft.Matches(CurrentSelectionPreset);
     public bool IsCompanionProfile => CurrentSelectionPreset.Profile == SelectionProfile.TargetCompanion;
     public bool IsPointProfile => CurrentSelectionPreset.Profile == SelectionProfile.PointEmphasis;
-    public string SelectionContext => timeline == null ? "対象Sceneを開いてください。" :
-        timeline.SelectedItems.Count == 0 ? "YMM4のTimelineで対象Itemを選択してください。表情一覧の行選択は対象外です。" :
-        $"Timelineで{timeline.SelectedItems.Count}件選択中。" + (SelectionProfiles.Count == 0 ? "この選択に使えるProfileはありません。" : "関係・Preset・Library Templateを選んで配置します。");
-    public string SelectionPresetNotice => SelectionPresetDirty ? "Presetは未保存です。保存または［編集を戻す］を選んでください。" :
-        "単位はframe。選択配置は追加のみ・関連付けなしです。再同期は表情一覧から関連付けた表情が対象です。";
+    public string SelectionContext => timeline == null ? "対象シーンを開いてください。" :
+        timeline.SelectedItems.Count == 0 ? "YMM4のタイムラインで対象アイテムを選択してください。表情一覧の行選択は対象外です。" :
+        $"タイムラインで{timeline.SelectedItems.Count}件選択中。" + (SelectionProfiles.Count == 0 ? "この選択に使える配置方法はありません。" : "配置方法・プリセット・テンプレートを選んで配置します。");
+    public string SelectionPresetNotice => SelectionPresetDirty ? "プリセットは未保存です。保存または［編集を戻す］を選んでください。" :
+        "単位はフレーム。選択配置は追加のみ・関連付けなしです。再同期は表情一覧から関連付けた表情が対象です。";
     public string SelectionPreview { get => selectionPreview; private set => Set(ref selectionPreview, value); }
     public ActionCommand PreviewSelectionCommand { get; private set; } = null!;
     public ActionCommand PlaceSelectionCommand { get; private set; } = null!;
@@ -120,7 +120,7 @@ public sealed partial class PlacerViewModel
         OnPropertyChanged(nameof(SelectionPresetDirty)); OnPropertyChanged(nameof(SelectionPresetNotice));
         InvalidateSelectionPreview(); RaiseSelectionCommands();
     }
-    private void InvalidateSelectionPreview() => SelectionPreview = "［予定を確認］で再確認してください。配置時には最新のTimelineで再計算します。";
+    private void InvalidateSelectionPreview() => SelectionPreview = "［予定を確認］で再確認してください。配置時には最新のタイムラインで再計算します。";
     private void RaiseSelectionCommands()
     {
         PreviewSelectionCommand?.RaiseCanExecuteChanged(); PlaceSelectionCommand?.RaiseCanExecuteChanged();
@@ -132,34 +132,34 @@ public sealed partial class PlacerViewModel
     private void RequireCleanSelectionDraft()
     {
         if (!settingsAvailable) throw new InvalidOperationException(LibraryNotice);
-        if (SelectionPresetDirty) throw new InvalidOperationException("選択配置Presetを保存するか［編集を戻す］を押してください。");
+        if (SelectionPresetDirty) throw new InvalidOperationException("選択配置プリセットを保存するか［編集を戻す］を押してください。");
     }
     private SelectionPlacement PlanSelection()
     {
         RequireCleanSelectionDraft();
-        var entry = selectionTemplate?.Entry ?? throw new InvalidOperationException("Library登録から配置するTemplateを選んでください。");
-        if (!settings.Library.Contains(entry)) throw new InvalidOperationException("Library登録が変更されています。選び直してください。");
+        var entry = selectionTemplate?.Entry ?? throw new InvalidOperationException("テンプレート管理の登録から、配置するテンプレートを選んでください。");
+        if (!settings.Library.Contains(entry)) throw new InvalidOperationException("テンプレート管理の登録が変更されています。選び直してください。");
         return SelectionPlacement.Create(RequireTimeline(), entry, CurrentSelectionPreset);
     }
     public SelectionPlacement PreviewSelection()
     {
         var planned = PlanSelection(); HasError = false;
-        SelectionPreview = $"予定: Frame {planned.Item.Frame} / Length {planned.Item.Length} / Layer {planned.Item.Layer}。配置時に再計算します。";
-        Status = "配置予定を確認しました。Timelineは変更していません。"; return planned;
+        SelectionPreview = $"予定: 開始 {planned.Item.Frame} / 長さ {planned.Item.Length} / レイヤー {planned.Item.Layer}。配置時に再計算します。";
+        Status = "配置予定を確認しました。タイムラインは変更していません。"; return planned;
     }
     public int PlaceSelection()
     {
-        if (undo == null) throw new InvalidOperationException("YMM4のUndoに接続できません。");
+        if (undo == null) throw new InvalidOperationException("YMM4の「元に戻す」に接続できません。");
         var planned = PlanSelection(); var count = planned.Plan.Commit(RequireTimeline(), undo);
         HasError = false; SelectionPreview = "配置済み。続けて配置する場合は予定を再確認してください。";
-        Status = $"「{selectionTemplate!.DisplayName}」をPreset「{CurrentSelectionPreset.Name}」で追加: Frame {planned.Item.Frame} / Length {planned.Item.Length} / Layer {planned.Item.Layer}。Undo 1回で戻せます。";
+        Status = $"「{selectionTemplate!.DisplayName}」をプリセット「{CurrentSelectionPreset.Name}」で追加: 開始 {planned.Item.Frame} / 長さ {planned.Item.Length} / レイヤー {planned.Item.Layer}。「元に戻す」1回で戻せます。";
         return count;
     }
     public void SaveSelectionPreset()
     {
         var preset = SelectionDraft.Read(CurrentSelectionPreset);
         EditSettings(next => next.SelectionPresets[next.SelectionPresets.FindIndex(x => x.Id == preset.Id)] = preset);
-        LoadSelectionDraft(); HasError = false; Status = "選択配置Presetを保存しました。Timelineは変更していません。";
+        LoadSelectionDraft(); HasError = false; Status = "選択配置プリセットを保存しました。タイムラインは変更していません。";
     }
     public void CopySelectionPreset()
     {
@@ -169,15 +169,15 @@ public sealed partial class PlacerViewModel
         do { name = $"{stem}（コピー {number++}）"; } while (settings.SelectionPresets.Any(x => x.Profile == current.Profile && x.Name == name));
         var copy = current with { Id = Guid.NewGuid(), Name = name };
         EditSettings(next => { next.SelectionPresets.Add(copy); next.CurrentSelectionPresetId = copy.Id; });
-        HasError = false; Status = "選択配置Presetを複製しました。名前や条件を編集して保存してください。";
+        HasError = false; Status = "選択配置プリセットを複製しました。名前や条件を編集して保存してください。";
     }
     public void DeleteSelectionPreset()
     {
         RequireCleanSelectionDraft(); var current = CurrentSelectionPreset;
         if (settings.SelectionPresets.Count(x => x.Profile == current.Profile) <= 1)
-            throw new InvalidOperationException("このProfileの最後のPresetは削除できません。");
+            throw new InvalidOperationException("この配置方法の最後のプリセットは削除できません。");
         EditSettings(next => { next.SelectionPresets.RemoveAll(x => x.Id == current.Id); next.CurrentSelectionPresetId = next.SelectionPresets.First(x => x.Profile == current.Profile).Id; });
-        HasError = false; Status = "選択配置Presetを削除しました。既存Itemは変更していません。";
+        HasError = false; Status = "選択配置プリセットを削除しました。既存アイテムは変更していません。";
     }
     private void DisposeSelectionPresets() => SelectionDraft.PropertyChanged -= SelectionDraftChanged;
 }

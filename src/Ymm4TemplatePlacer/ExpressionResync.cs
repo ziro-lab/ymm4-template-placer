@@ -13,12 +13,12 @@ public sealed record ResyncPlan(PlacementPlan Plan, int Unchanged, int Ignored, 
         var ignored = 0;
         foreach (var selected in timeline.SelectedItems.Distinct())
         {
-            if (!timeline.Items.Contains(selected)) { skipped.Add("現在のTimelineにない選択Item"); continue; }
+            if (!timeline.Items.Contains(selected)) { skipped.Add("現在のタイムラインにない選択アイテム"); continue; }
             if (selected is VoiceItem voice)
             {
                 var state = AssociationTag.Voice(voice.Remark, out var id);
                 if (state == AssociationTagState.None) { ignored++; continue; }
-                if (state == AssociationTagState.Invalid) { skipped.Add("Voiceの関連付けタグが不正または重複"); continue; }
+                if (state == AssociationTagState.Invalid) { skipped.Add("音声の関連付けタグが不正または重複"); continue; }
                 foreach (var face in timeline.Items.OfType<TachieFaceItem>().Where(x => Equals(x.Character, voice.Character) &&
                     AssociationTag.Source(x.Remark, out var source) == AssociationTagState.Valid && source!.Serial == id))
                     candidates.Add(face);
@@ -36,10 +36,10 @@ public sealed record ResyncPlan(PlacementPlan Plan, int Unchanged, int Ignored, 
             try
             {
                 if (AssociationTag.Source(face.Remark, out var source) != AssociationTagState.Valid || face.Character == null)
-                    throw new InvalidOperationException("関連表情のタグまたはCharacterが不正");
+                    throw new InvalidOperationException("関連表情のタグまたはキャラクターが不正");
                 var targets = snapshots.Where(x => Equals(x.Voice.Character, face.Character) &&
                     AssociationTag.Voice(x.Voice.Remark, out var id) == AssociationTagState.Valid && id == source!.Serial).Take(2).ToArray();
-                if (targets.Length != 1) throw new InvalidOperationException(targets.Length == 0 ? "対応Voiceが見つかりません" : "対応Voiceが複数あります");
+                if (targets.Length != 1) throw new InvalidOperationException(targets.Length == 0 ? "対応音声が見つかりません" : "対応音声が複数あります");
                 if (face.Group != 0) throw new InvalidOperationException("関連表情がグループ化されています。YMM4でグループを解除してから再同期してください");
                 var span = CharacterExpressionProfile.Span(targets[0], snapshots, preset);
                 // No historical Template snapshot is stored. Template-Layer policy retains this Item's current Layer on resync.
@@ -51,7 +51,7 @@ public sealed record ResyncPlan(PlacementPlan Plan, int Unchanged, int Ignored, 
                 updates.Add(new(face, span.Frame, span.Length, layer, face.Remark ?? ""));
                 occupancy.Remove(face); occupancy.Add(reservation);
             }
-            catch (InvalidOperationException ex) { skipped.Add($"Frame {face.Frame} / Layer {face.Layer}: {ex.Message}"); }
+            catch (InvalidOperationException ex) { skipped.Add($"開始 {face.Frame} / レイヤー {face.Layer}: {ex.Message}"); }
         }
         return new(PlacementPlan.Create(timeline, [], updates), unchanged, ignored, skipped);
     }

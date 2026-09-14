@@ -3,28 +3,30 @@
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
  <StackPanel Margin="0,4,0,0">
   <DockPanel>
-   <TextBlock Text="表情Preset" VerticalAlignment="Center" Margin="0,0,8,0"/>
+   <TextBlock Text="表情プリセット" VerticalAlignment="Center" Margin="0,0,8,0"/>
    <ComboBox x:Name="PresetSelector" ItemsSource="{Binding ExpressionPresets}" DisplayMemberPath="Name"
     SelectedItem="{Binding SelectedExpressionPreset,Mode=TwoWay}" MinWidth="140" ToolTip="{Binding ExpressionPresetNotice}"/>
   </DockPanel>
   <TextBlock Text="{Binding ExpressionPresetSummary}" TextWrapping="Wrap" Opacity="0.8" Margin="0,3,0,0"/>
-  <Expander x:Name="PresetEditor" Header="Presetを編集" Margin="0,3,0,0">
+  <Expander x:Name="PresetEditor" Header="プリセットを編集" Margin="0,3,0,0">
    <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="4">
+     <TextBlock Text="表情をどの長さ・位置・レイヤーで置くかを決めます。迷ったら『音声と同じ』、位置調整0、テンプレートのレイヤーのままで使えます。" TextWrapping="Wrap" Opacity="0.75" Margin="0,0,0,6"/>
      <DockPanel Margin="0,2"><TextBlock Text="名前" Width="72" VerticalAlignment="Center"/><TextBox Text="{Binding ExpressionDraft.Name,UpdateSourceTrigger=PropertyChanged}"/></DockPanel>
-     <DockPanel Margin="0,2"><TextBlock Text="期間" Width="72" VerticalAlignment="Center"/>
+     <DockPanel Margin="0,2"><TextBlock Text="配置する長さ" Width="72" VerticalAlignment="Center"/>
       <ComboBox ItemsSource="{Binding ExpressionDurations}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding ExpressionDraft.Duration,Mode=TwoWay}"/>
      </DockPanel>
      <WrapPanel Margin="0,2">
-      <TextBlock Text="MaxGap" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.MaxGap,UpdateSourceTrigger=PropertyChanged}" Width="55" Margin="0,0,10,0" ToolTip="次の同Character Voiceまで伸ばすときの最大空白frame。重なる次Voiceでは短縮しません。"/>
-      <TextBlock Text="開始offset" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.StartOffset,UpdateSourceTrigger=PropertyChanged}" Width="55" Margin="0,0,10,0"/>
-      <TextBlock Text="終了offset" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.EndOffset,UpdateSourceTrigger=PropertyChanged}" Width="55"/>
+      <TextBlock Text="次の音声までの最大間隔（フレーム）" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.MaxGap,UpdateSourceTrigger=PropertyChanged}" Width="55" Margin="0,0,10,0" ToolTip="次の同じキャラクターの音声まで伸ばすときの最大空白フレーム。次の音声が重なっていても短縮しません。"/>
+      <TextBlock Text="開始位置の調整（フレーム）" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.StartOffset,UpdateSourceTrigger=PropertyChanged}" Width="55" Margin="0,0,10,0"/>
+      <TextBlock Text="終了位置の調整（フレーム）" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.EndOffset,UpdateSourceTrigger=PropertyChanged}" Width="55"/>
      </WrapPanel>
-     <CheckBox Content="TemplateのLayerを使用（オフで下のLayer範囲）" IsChecked="{Binding ExpressionDraft.UseTemplateLayer}" Margin="0,4"/>
+     <CheckBox Content="テンプレートのレイヤーをそのまま使う" IsChecked="{Binding ExpressionDraft.UseTemplateLayer}" Margin="0,4"/>
+     <TextBlock Text="オフの場合は、空いているレイヤーをこの範囲から探します。" TextWrapping="Wrap" Opacity="0.75" Margin="0,2,0,4"/>
      <WrapPanel>
-      <TextBlock Text="Layer最小" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.Minimum,UpdateSourceTrigger=PropertyChanged}" Width="48" Margin="0,0,10,0"/>
-      <TextBlock Text="最大" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.Maximum,UpdateSourceTrigger=PropertyChanged}" Width="48" Margin="0,0,10,0"/>
-      <TextBlock Text="優先" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.Preferred,UpdateSourceTrigger=PropertyChanged}" Width="48"/>
+      <TextBlock Text="最小レイヤー" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.Minimum,UpdateSourceTrigger=PropertyChanged}" Width="48" Margin="0,0,10,0"/>
+      <TextBlock Text="最大レイヤー" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.Maximum,UpdateSourceTrigger=PropertyChanged}" Width="48" Margin="0,0,10,0"/>
+      <TextBlock Text="優先レイヤー" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.Preferred,UpdateSourceTrigger=PropertyChanged}" Width="48"/>
      </WrapPanel>
      <WrapPanel Margin="0,6,0,0">
       <Button x:Name="SavePresetButton" Content="保存" Command="{Binding SaveExpressionPresetCommand}" Padding="10,3" Margin="0,0,6,0"/>
