@@ -78,7 +78,13 @@ internal static partial class NativeProof
         foreach (var row in vm.Rows) row.SelectedChoice = row.Choices[0];
         Assert(vm.Place() == 0 && !timeline.Items.Any(PlacementEngine.IsOwned) && timeline.Items.Contains(manual), "P8 all-unselected removes only owned Face items");
         await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == after, "P8 empty-assignment replacement also undoes once");
-        Log("P8=PASS"); File.WriteAllText(Path.Combine(output, "final-timeline.txt"), Signature(timeline)); var dist = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_DIST_DIR");
+        Log("P8=PASS");
+        stage = "P9"; var lifecycleBefore = Signature(timeline);
+        Assert(vm.CanSuspend, "P9 Timeline Tool allows native suspend/close");
+        await SetToolVisible(root, false); Assert(Signature(timeline) == lifecycleBefore, "P9 hiding Tool leaves Timeline unchanged");
+        await SetToolVisible(root, true); Assert(Signature(timeline) == lifecycleBefore, "P9 reopening Tool leaves Timeline unchanged");
+        Log("P9=PASS");
+        File.WriteAllText(Path.Combine(output, "final-timeline.txt"), Signature(timeline)); var dist = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_DIST_DIR");
         if (!string.IsNullOrWhiteSpace(dist))
         {
             using var file = File.OpenRead(Path.Combine(dist, "Ymm4TemplatePlacer.dll")); using var pe = new PEReader(file); var metadata = pe.GetMetadataReader();
