@@ -1,0 +1,40 @@
+<UserControl x:Class="Ymm4TemplatePlacer.ExpressionPresetPanel"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <StackPanel Margin="0,4,0,0">
+  <DockPanel>
+   <TextBlock Text="表情Preset" VerticalAlignment="Center" Margin="0,0,8,0"/>
+   <ComboBox x:Name="PresetSelector" ItemsSource="{Binding ExpressionPresets}" DisplayMemberPath="Name"
+    SelectedItem="{Binding SelectedExpressionPreset,Mode=TwoWay}" MinWidth="140"/>
+  </DockPanel>
+  <TextBlock Text="{Binding ExpressionPresetSummary}" TextWrapping="Wrap" Opacity="0.8" Margin="0,3,0,0"/>
+  <Expander x:Name="PresetEditor" Header="Presetを編集" Margin="0,3,0,0">
+   <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="4">
+     <DockPanel Margin="0,2"><TextBlock Text="名前" Width="72" VerticalAlignment="Center"/><TextBox Text="{Binding ExpressionDraft.Name,UpdateSourceTrigger=PropertyChanged}"/></DockPanel>
+     <DockPanel Margin="0,2"><TextBlock Text="期間" Width="72" VerticalAlignment="Center"/>
+      <ComboBox ItemsSource="{Binding ExpressionDurations}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding ExpressionDraft.Duration,Mode=TwoWay}"/>
+     </DockPanel>
+     <WrapPanel Margin="0,2">
+      <TextBlock Text="MaxGap" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.MaxGap,UpdateSourceTrigger=PropertyChanged}" Width="55" Margin="0,0,10,0" ToolTip="次の同Character Voiceまで伸ばすときの最大空白frame。重なる次Voiceでは短縮しません。"/>
+      <TextBlock Text="開始offset" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.StartOffset,UpdateSourceTrigger=PropertyChanged}" Width="55" Margin="0,0,10,0"/>
+      <TextBlock Text="終了offset" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.EndOffset,UpdateSourceTrigger=PropertyChanged}" Width="55"/>
+     </WrapPanel>
+     <CheckBox Content="TemplateのLayerを使用（オフで下のLayer範囲）" IsChecked="{Binding ExpressionDraft.UseTemplateLayer}" Margin="0,4"/>
+     <WrapPanel>
+      <TextBlock Text="Layer最小" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.Minimum,UpdateSourceTrigger=PropertyChanged}" Width="48" Margin="0,0,10,0"/>
+      <TextBlock Text="最大" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.Maximum,UpdateSourceTrigger=PropertyChanged}" Width="48" Margin="0,0,10,0"/>
+      <TextBlock Text="優先" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.Preferred,UpdateSourceTrigger=PropertyChanged}" Width="48"/>
+     </WrapPanel>
+     <WrapPanel Margin="0,6,0,0">
+      <Button x:Name="SavePresetButton" Content="保存" Command="{Binding SaveExpressionPresetCommand}" Padding="10,3" Margin="0,0,6,0"/>
+      <Button Content="複製" Command="{Binding CopyExpressionPresetCommand}" Padding="10,3" Margin="0,0,6,0"/>
+      <Button Content="削除" Command="{Binding DeleteExpressionPresetCommand}" Padding="10,3" Margin="0,0,6,0"/>
+      <Button Content="編集を戻す" Command="{Binding RevertExpressionPresetCommand}" Padding="10,3"/>
+     </WrapPanel>
+    </StackPanel>
+   </ScrollViewer>
+  </Expander>
+  <TextBlock Text="{Binding ExpressionPresetNotice}" TextWrapping="Wrap" Opacity="0.8" Margin="0,2,0,0"/>
+ </StackPanel>
+</UserControl>
