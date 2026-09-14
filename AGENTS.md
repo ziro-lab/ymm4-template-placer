@@ -4,7 +4,7 @@
 
 YMM4 Template Placer is a YukkuriMovieMaker4 plugin for organizing registered YMM4 Item Templates into a small plugin-side Library / Palette and placing them through a finite set of semantic Target relationships.
 
-Implemented baseline is v0.3.0. Current implementation target is **v0.4**. Read `docs/DESIGN.md` first, then `docs/NATIVE_VALIDATION_V0.4.md`, then `docs/ROADMAP.md`. `docs/IMPLEMENTATION.md` and `docs/VERIFICATION.md` describe the already-proven v0.3 baseline and must not be mistaken for the v0.4 target design.
+Implemented baseline is **v0.3.1**. It is the v0.3.0 functional baseline plus the native-verified Timeline Tool lifecycle hotfix (`CanSuspend=true`, hide/reopen without Timeline mutation). Current implementation target is **v0.4**. Read `docs/DESIGN.md` first, then `docs/NATIVE_VALIDATION_V0.4.md`, then `docs/ROADMAP.md`. `docs/IMPLEMENTATION.md` and `docs/VERIFICATION.md` describe the already-proven v0.3.0 functional baseline; preserve those behaviors plus the v0.3.1 P9 lifecycle regression while implementing v0.4.
 
 `docs/NATIVE_VALIDATION_V0.4.md` records pre-implementation behavior proved against the real pinned YMM4 host. For covered paths, use the proved public host surface instead of rediscovering private Timeline ViewModel internals unless a later native test demonstrates that the public route is insufficient.
 
@@ -129,7 +129,7 @@ Do not add these to v0.4 unless the design is explicitly changed:
 - Documentation-only changes must not download or launch YMM4.
 - Keep fixtures tiny, deterministic and redistribution-safe.
 - Prefer direct state assertions over screenshot-only assertions.
-- Preserve v0.3 regression tests while adding v0.4 proof steps.
+- Preserve v0.3.1 regression tests, including P9 Tool hide/reopen, while adding v0.4 proof steps.
 
 ## Implementation order
 
