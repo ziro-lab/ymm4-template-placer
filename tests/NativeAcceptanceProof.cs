@@ -14,7 +14,7 @@ internal static partial class NativeProof
         foreach (var required in stages) Assert(lines.Contains(required, StringComparer.Ordinal), "W12 integrated lane includes completed native stage " + required);
         var requirements = new (string Requirement, string Evidence)[]
         {
-            ("v0.3.1 regression, Voice/Excel/Safety/Undo and tool hide/reopen", "P1-P9; NativeProof.cs; NativeScenarioProof.cs"),
+            ("v0.3.1 regression, Voice/Excel/Safety/Undo and tool hide/reopen", "P1-P9; NativeProof.cs; GoldenPathProof.cs; NativeUiProof.cs"),
             ("Library display name is independent of host Template name", "W3; NativeLibraryProof.cs"),
             ("one Library entry belongs to multiple palettes", "W4; NativePaletteProof.cs"),
             ("missing/ambiguous Template refs require explicit relink", "W3; NativeLibraryProof.cs"),
@@ -24,12 +24,12 @@ internal static partial class NativeProof
             ("Front/Back use same-Character Layer ordering", "W6; NativeQuickDropProof.cs"),
             ("Front/Back inspect the whole proposed duration", "W6; NativeQuickDropProof.cs"),
             ("multiple same-Character Faces coexist on separate Layers", "W6; NativeQuickDropProof.cs"),
-            ("Next Same Character/MaxGap never shorten for an overlapping next Voice", "W7; NativeExpressionProof.cs"),
+            ("Next Same Character/MaxGap never shorten for an overlapping next Voice", "W7; NativeExpressionPresetProof.cs"),
             ("existing and planned occupancy determine Layers before commit", "P3/W6/W7/W8; PlacementPlan.cs; native logs"),
             ("associated expression placement gives Voice a weak serial", "W8; NativeAssociationProof.cs"),
-            ("Resync resolves exactly one serial plus actual Character, otherwise skips", "W8; NativeAssociationProof.cs"),
-            ("Resync uses the currently saved expression preset", "W8; NativeAssociationProof.cs"),
-            ("successful subset of Resync is one native Undo operation", "W8; NativeAssociationProof.cs"),
+            ("Resync resolves exactly one serial plus actual Character, otherwise skips", "W8; NativeResyncProof.cs"),
+            ("Resync uses the currently saved expression preset", "W8; NativeResyncProof.cs"),
+            ("successful subset of Resync is one native Undo operation", "W8; NativeResyncProof.cs"),
             ("normal placement never automatically deletes existing items", "P3/P8/W5-W11; native state assertions"),
             ("invalid input, no Layer and broken references do not partially mutate", "P7/W3/W7-W11; native rejection assertions")
         };
