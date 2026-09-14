@@ -45,11 +45,9 @@ public sealed partial class PlacerViewModel
     public bool SelectionPresetDirty => !SelectionDraft.Matches(CurrentSelectionPreset);
     public bool IsCompanionProfile => CurrentSelectionPreset.Profile == SelectionProfile.TargetCompanion;
     public bool IsPointProfile => CurrentSelectionPreset.Profile == SelectionProfile.PointEmphasis;
-    public string SelectionContext => timeline == null ? "対象シーンを開いてください。" :
-        timeline.SelectedItems.Count == 0 ? "YMM4のタイムラインで対象アイテムを選択してください。表情一覧の行選択は対象外です。" :
-        $"タイムラインで{timeline.SelectedItems.Count}件選択中。" + (SelectionProfiles.Count == 0 ? "この選択に使える配置方法はありません。" : "配置方法・プリセット・テンプレートを選んで配置します。");
-    public string SelectionPresetNotice => SelectionPresetDirty ? "プリセットは未保存です。保存または［編集を戻す］を選んでください。" :
-        "単位はフレーム。選択配置は追加のみ・関連付けなしです。再同期は表情一覧から関連付けた表情が対象です。";
+    public string SelectionContext => timeline?.SelectedItems.Count is > 0 and var count
+        ? $"タイムライン: {count}個選択中"
+        : "タイムラインで、配置の基準にするアイテムを選んでください。";
     public string SelectionPreview { get => selectionPreview; private set => Set(ref selectionPreview, value); }
     public ActionCommand PreviewSelectionCommand { get; private set; } = null!;
     public ActionCommand PlaceSelectionCommand { get; private set; } = null!;

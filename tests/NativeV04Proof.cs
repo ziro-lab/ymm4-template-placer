@@ -18,6 +18,7 @@ internal static partial class NativeProof
         await VerifySelectionProfiles(timeline, undo);
         await VerifySelectionRange(timeline, undo);
         await VerifyBoundary(timeline, undo);
+        await VerifySelectionTask(timeline, undo);
         await VerifyFinalUi(timeline);
         await VerifyPresetSelectorRefresh(timeline);
         VerifyFinalAcceptance();

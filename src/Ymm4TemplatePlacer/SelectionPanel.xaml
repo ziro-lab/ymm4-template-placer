@@ -1,27 +1,38 @@
 <UserControl x:Class="Ymm4TemplatePlacer.SelectionPanel"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
- xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- xmlns:local="clr-namespace:Ymm4TemplatePlacer">
- <UserControl.Resources><BooleanToVisibilityConverter x:Key="BoolVisibility"/></UserControl.Resources>
- <Grid>
- <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
- <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-  <StackPanel Margin="8">
-   <TextBlock Text="タイムラインで選んだアイテムを基準に配置" FontWeight="SemiBold" TextWrapping="Wrap"/>
-   <TextBlock Text="{Binding SelectionContext}" TextWrapping="Wrap" Margin="0,4,0,8"/>
-   <TextBlock Text="配置方法"/>
-   <ComboBox x:Name="ProfileSelector" ItemsSource="{Binding SelectionProfiles}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedSelectionProfile,Mode=TwoWay}" Margin="0,2,0,6"/>
-   <TextBlock Text="配置プリセット"/>
-   <ComboBox x:Name="SelectionPresetSelector" ItemsSource="{Binding SelectionPresets}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSelectionPreset,Mode=TwoWay}" Margin="0,2,0,6"/>
-   <TextBlock Text="配置するテンプレート（未登録なら「テンプレート管理」で追加）" TextWrapping="Wrap"/>
-   <ComboBox x:Name="TemplateSelector" ItemsSource="{Binding SelectionTemplates}" SelectedItem="{Binding SelectionTemplate,Mode=TwoWay}" TextSearch.TextPath="DisplayName" Margin="0,2,0,6">
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Ymm4TemplatePlacer">
+ <UserControl.Resources>
+  <BooleanToVisibilityConverter x:Key="BoolVisibility"/>
+  <local:PlacementPurposeConverter x:Key="Purpose"/>
+  <Style x:Key="SavedChoices" TargetType="Control"><Setter Property="ToolTipService.ShowOnDisabled" Value="True"/><Style.Triggers><DataTrigger Binding="{Binding SelectionPresetDirty}" Value="True"><Setter Property="IsEnabled" Value="False"/><Setter Property="ToolTip" Value="編集中の配置条件を保存するか、編集を戻してください。"/></DataTrigger></Style.Triggers></Style>
+ </UserControl.Resources>
+ <Grid Margin="6">
+  <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel>
+   <TextBlock Text="{Binding SelectionContext}" TextWrapping="Wrap" Margin="0,0,0,5" Opacity="0.75"/>
+   <TextBlock Text="何を置く？" FontWeight="SemiBold"/>
+   <ComboBox x:Name="TemplateSelector" ItemsSource="{Binding SelectionTemplates}" SelectedItem="{Binding SelectionTemplate,Mode=TwoWay}" TextSearch.TextPath="DisplayName" Margin="0,3,0,6" AutomationProperties.Name="配置するテンプレート">
     <ComboBox.ItemTemplate><DataTemplate><StackPanel>
-     <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
-     <TextBlock Text="{Binding CharacterName}" FontSize="11" Opacity="0.8"/>
-     <TextBlock Text="{Binding SourceName}" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip="{Binding SourceName}"/>
-     <TextBlock Text="{Binding Status}" FontSize="11" Opacity="0.7"/>
+     <StackPanel.ToolTip><ToolTip><StackPanel MaxWidth="400"><TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/><TextBlock Text="{Binding CharacterName}"/><TextBlock Text="{Binding SourceName}" TextWrapping="Wrap"/><TextBlock Text="{Binding Status}" TextWrapping="Wrap"/></StackPanel></ToolTip></StackPanel.ToolTip>
+     <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+     <TextBlock Text="{Binding Status}" TextWrapping="Wrap"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Status}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
     </StackPanel></DataTemplate></ComboBox.ItemTemplate>
    </ComboBox>
+   <TextBlock Text="パレットの［＋ テンプレートを追加］で、使いたいものを追加してください。" TextWrapping="Wrap" Margin="0,0,0,5">
+    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SelectionTemplates.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+   </TextBlock>
+   <TextBlock Text="どこに置く？" FontWeight="SemiBold"/>
+   <ListBox x:Name="ProfileSelector" Style="{StaticResource SavedChoices}" ItemsSource="{Binding SelectionProfiles}" SelectedItem="{Binding SelectedSelectionProfile,Mode=TwoWay}" SelectionMode="Single" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="0,3,0,6" AutomationProperties.Name="配置する位置と範囲">
+    <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
+    <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="Padding" Value="4,4"/><Setter Property="Margin" Value="0,0,6,0"/></Style></ListBox.ItemContainerStyle>
+    <ListBox.ItemTemplate><DataTemplate><RadioButton Content="{Binding Value,Converter={StaticResource Purpose}}" IsChecked="{Binding IsSelected,RelativeSource={RelativeSource AncestorType=ListBoxItem},Mode=TwoWay}"/></DataTemplate></ListBox.ItemTemplate>
+   </ListBox>
+   <DockPanel Margin="0,0,0,4">
+    <TextBlock Text="条件 " VerticalAlignment="Center" DockPanel.Dock="Left"/>
+    <ComboBox x:Name="SelectionPresetSelector" Style="{StaticResource SavedChoices}" ItemsSource="{Binding SelectionPresets}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSelectionPreset,Mode=TwoWay}" ToolTip="保存した配置条件を切り替えます。"/>
+   </DockPanel>
+   <TextBlock Text="{Binding SelectionPresetNotice}" TextWrapping="Wrap" FontWeight="SemiBold"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding SelectionPresetNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
    <Expander x:Name="SelectionPresetEditor" Header="配置条件を編集" Margin="0,2,0,6">
     <StackPanel Margin="4">
      <TextBlock Text="ここでは、選択したアイテムに対してどこへ・どの長さで置くかを調整します。0は調整なしです。" TextWrapping="Wrap" Opacity="0.75" Margin="0,0,0,6"/>
@@ -76,15 +87,14 @@
      </WrapPanel>
     </StackPanel>
    </Expander>
-   <TextBlock Text="{Binding SelectionPresetNotice}" TextWrapping="Wrap" Opacity="0.8" Margin="0,0,0,8"/>
   </StackPanel>
- </ScrollViewer>
- <StackPanel Grid.Row="1" Margin="8,0,8,8">
-   <WrapPanel>
-    <Button x:Name="PreviewSelectionButton" Content="予定を確認" Command="{Binding PreviewSelectionCommand}" Padding="12,5" Margin="0,0,8,4"/>
-    <Button x:Name="PlaceSelectionButton" Content="選択対象へ配置（追加）" Command="{Binding PlaceSelectionCommand}" Padding="12,5" Margin="0,0,0,4"/>
+  </ScrollViewer>
+  <StackPanel Grid.Row="1" Margin="0,6,0,0">
+   <ScrollViewer MaxHeight="54" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><TextBlock Text="{Binding SelectionPreview}" TextWrapping="Wrap"/></ScrollViewer>
+   <WrapPanel Margin="0,4,0,0">
+    <Button x:Name="PlaceSelectionButton" Content="配置する" Command="{Binding PlaceSelectionCommand}" Padding="12,5" Margin="0,0,8,0" ToolTip="最新状態を検証して追加します。選択対象を移動・削除・短縮しません。"/>
+    <Button x:Name="PreviewSelectionButton" Content="予定を確認" Command="{Binding PreviewSelectionCommand}" Padding="8,3" VerticalAlignment="Center" ToolTip="確認だけでタイムラインは変更しません。配置前の必須操作ではありません。"/>
    </WrapPanel>
-   <TextBlock Text="{Binding SelectionPreview}" TextWrapping="Wrap" Margin="0,6,0,0"/>
- </StackPanel>
+  </StackPanel>
  </Grid>
 </UserControl>
