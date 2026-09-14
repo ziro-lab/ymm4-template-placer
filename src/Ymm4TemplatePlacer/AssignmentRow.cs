@@ -47,7 +47,7 @@ public sealed class AssignmentRow : INotifyPropertyChanged
             if (resolution.State != TemplateReferenceState.Resolved) continue;
             var choice = Choices.FirstOrDefault(x => x.Template != null && ReferenceEquals(x.Template.Template, resolution.Template));
             if (choice?.Template is FaceTemplate template)
-                preferred.TryAdd(template, (preferred.Count, entry.DisplayName + "（棚）"));
+                preferred.TryAdd(template, (preferred.Count, entry.DisplayName + "（パレット）"));
         }
         var candidates = Choices.Skip(1).Select(x => x.Template!).ToArray();
         Choices = new[] { Choices[0] }.Concat(candidates
