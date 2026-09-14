@@ -11,6 +11,8 @@ public partial class PlacerView : UserControl
     {
         InitializeComponent();
         SizeChanged += (_, _) => RefreshExpressionDetail();
+        PresetSurface.PresetEditor.Expanded += (_, _) => ExcelEditor.IsExpanded = false;
+        ExcelEditor.Expanded += (_, _) => PresetSurface.PresetEditor.IsExpanded = false;
         VoiceGrid.SelectionChanged += (_, _) => RefreshExpressionDetail();
         MainTabs.SelectionChanged += (_, e) => { if (ReferenceEquals(e.OriginalSource, MainTabs)) SynchronizeTask(); };
         DataContextChanged += (_, _) => { ObserveViewModel(IsLoaded ? DataContext as PlacerViewModel : null); SynchronizeTask(); };

@@ -36,12 +36,15 @@
        </Grid></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
       </DataGrid.Columns>
      </DataGrid>
+     <TextBlock x:Name="ExpressionEmptyNotice" Grid.Row="1" Text="このシーンには音声がありません。YMM4で音声を追加し、［更新］してください。" TextWrapping="Wrap" Margin="8,28,8,8" IsHitTestVisible="False">
+      <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Rows.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+     </TextBlock>
      <ScrollViewer x:Name="ExpressionRowDetail" Grid.Row="2" DataContext="{Binding SelectedItem,ElementName=VoiceGrid}" Visibility="Collapsed" MaxHeight="58" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="2,4,2,0">
       <TextBlock x:Name="ExpressionSelectedSerif" Text="{Binding Serif}" TextWrapping="Wrap"><TextBlock.ToolTip><ToolTip><StackPanel><TextBlock Text="{Binding Frame,StringFormat=開始: {0} フレーム}"/><TextBlock Text="{Binding Length,StringFormat=長さ: {0} フレーム}"/></StackPanel></ToolTip></TextBlock.ToolTip></TextBlock>
      </ScrollViewer>
      <StackPanel Grid.Row="3" Margin="0,5,0,0">
       <WrapPanel>
-       <Button x:Name="PlaceButton" Content="表情を配置" Command="{Binding PlaceCommand}" Padding="12,5" Margin="0,0,8,0" ToolTip="選んだ表情を追加します。未選択の行は何もせず、既存アイテムは削除・移動・短縮しません。"/>
+       <Button x:Name="PlaceButton" Content="表情を配置" Command="{Binding PlaceCommand}" Padding="12,5" Margin="0,0,8,0" ToolTip="{Binding ExpressionPlaceHint}" ToolTipService.ShowOnDisabled="True"/>
        <Button x:Name="ResyncButton" Content="選択した表情を再同期" Command="{Binding ResyncCommand}" Padding="8,3" VerticalAlignment="Center" ToolTip="{Binding ResyncHint}" ToolTipService.ShowOnDisabled="True"/>
       </WrapPanel>
       <Expander x:Name="ExcelEditor" Header="Excelでまとめて編集" Margin="0,4,0,0">
@@ -61,7 +64,8 @@
    <DockPanel Margin="6,0,6,4"><Button x:Name="BackFromManagementButton" Content="戻る" Command="{Binding CloseTemplateManagementCommand}" DockPanel.Dock="Left" Padding="10,4" Margin="0,0,8,0"/><TextBlock Text="テンプレート管理" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
    <local:LibraryPanel x:Name="LibrarySurface" Grid.Row="1"/>
   </Grid>
-  <ScrollViewer Grid.Row="2" MaxHeight="72" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,6,0,0">
+  <ScrollViewer Grid.Row="2" MaxHeight="48" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,6,0,0">
+   <ScrollViewer.Style><Style TargetType="ScrollViewer"><Style.Triggers><DataTrigger Binding="{Binding Status}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></ScrollViewer.Style>
    <TextBlock x:Name="StatusText" Text="{Binding Status}" TextWrapping="Wrap">
     <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding HasError}" Value="True"><Setter Property="FontWeight" Value="Bold"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
    </TextBlock>

@@ -8,7 +8,7 @@
    <ComboBox.Style><Style TargetType="ComboBox"><Style.Triggers><DataTrigger Binding="{Binding ExpressionPresets.Count}" Value="1"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></ComboBox.Style>
   </ComboBox>
   <Expander x:Name="PresetEditor" Header="{Binding SelectedExpressionPreset,Converter={StaticResource ExpressionRange}}" ToolTip="{Binding ExpressionPresetSummary}">
-   <ScrollViewer MaxHeight="140" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+   <ScrollViewer MaxHeight="90" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="4">
      <DockPanel Margin="0,2"><TextBlock Text="名前" Width="72" VerticalAlignment="Center"/><TextBox Text="{Binding ExpressionDraft.Name,UpdateSourceTrigger=PropertyChanged}"/></DockPanel>
      <DockPanel Margin="0,2"><TextBlock Text="配置する長さ" Width="72" VerticalAlignment="Center"/>

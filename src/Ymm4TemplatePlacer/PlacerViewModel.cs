@@ -116,6 +116,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     }
     private void UpdateCommands()
     {
+        OnPropertyChanged(nameof(ExpressionPlaceHint));
         RefreshCommand?.RaiseCanExecuteChanged(); PlaceCommand?.RaiseCanExecuteChanged();
         ExportCommand?.RaiseCanExecuteChanged(); ImportCommand?.RaiseCanExecuteChanged();
         resyncCommand?.RaiseCanExecuteChanged();

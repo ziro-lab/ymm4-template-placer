@@ -46,7 +46,7 @@ public sealed partial class PlacerViewModel
     private void LayerEditorChanged()
     {
         if (loadingLayerEditor) return;
-        OnPropertyChanged(nameof(PaletteLayerDirty)); OnPropertyChanged(nameof(PaletteLayerNotice));
+        OnPropertyChanged(nameof(PaletteLayerDirty)); OnPropertyChanged(nameof(PaletteLayerNotice)); OnPropertyChanged(nameof(QuickDropHint));
         QuickDropCommand?.RaiseCanExecuteChanged();
     }
     partial void UpdateQuickDropCommands()
@@ -67,7 +67,7 @@ public sealed partial class PlacerViewModel
             finally { loadingLayerEditor = false; }
         }
         OnPropertyChanged(nameof(QuickDropMode)); OnPropertyChanged(nameof(PaletteLayerSummary));
-        OnPropertyChanged(nameof(PaletteLayerDirty)); OnPropertyChanged(nameof(PaletteLayerNotice));
+        OnPropertyChanged(nameof(PaletteLayerDirty)); OnPropertyChanged(nameof(PaletteLayerNotice)); OnPropertyChanged(nameof(QuickDropHint));
         QuickDropCommand?.RaiseCanExecuteChanged(); SavePaletteLayerCommand?.RaiseCanExecuteChanged();
     }
     public void SavePaletteLayer()

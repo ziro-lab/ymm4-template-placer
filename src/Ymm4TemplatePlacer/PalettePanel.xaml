@@ -34,7 +34,7 @@
   </Grid>
   <ContentControl x:Name="DropControls" Style="{StaticResource BrowseOnly}" Grid.Row="3"/>
   <Expander x:Name="PaletteEditor" Style="{StaticResource BrowseOnly}" Grid.Row="4" Header="このパレットを編集" Margin="0,6,0,0">
-   <ScrollViewer MaxHeight="130" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+   <ScrollViewer MaxHeight="90" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="0,4,0,0">
      <TextBlock Text="パレット名"/>
      <DockPanel><Button Content="変更" Command="{Binding RenamePaletteCommand}" DockPanel.Dock="Right" Padding="8,4" Margin="6,0,0,0"/><TextBox Text="{Binding PaletteNameDraft,UpdateSourceTrigger=PropertyChanged}" MaxLength="256"/></DockPanel>

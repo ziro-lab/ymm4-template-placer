@@ -8,6 +8,8 @@ public partial class PalettePanel : UserControl
     public PalettePanel()
     {
         InitializeComponent(); DropControls.Content = DropSurface;
+        PaletteEditor.Expanded += (_, _) => DropSurface.LayerEditor.IsExpanded = false;
+        DropSurface.LayerEditor.Expanded += (_, _) => PaletteEditor.IsExpanded = false;
         var style = new Style(typeof(ListBoxItem));
         style.Setters.Add(new Setter(HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch));
         style.Setters.Add(new EventSetter(Control.MouseDoubleClickEvent, new MouseButtonEventHandler(OnPaletteEntryDoubleClick)));

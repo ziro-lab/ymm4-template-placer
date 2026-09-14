@@ -16,6 +16,7 @@
     <ComboBox.ItemTemplate><DataTemplate><StackPanel>
      <StackPanel.ToolTip><ToolTip><StackPanel MaxWidth="400"><TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/><TextBlock Text="{Binding CharacterName}"/><TextBlock Text="{Binding SourceName}" TextWrapping="Wrap"/><TextBlock Text="{Binding Status}" TextWrapping="Wrap"/></StackPanel></ToolTip></StackPanel.ToolTip>
      <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+     <TextBlock FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis"><Run Text="{Binding CharacterName}"/><Run Text=" ｜ "/><Run Text="{Binding SourceName}"/></TextBlock>
      <TextBlock Text="{Binding Status}" TextWrapping="Wrap"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Status}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
     </StackPanel></DataTemplate></ComboBox.ItemTemplate>
    </ComboBox>
@@ -92,7 +93,7 @@
   <StackPanel Grid.Row="1" Margin="0,6,0,0">
    <ScrollViewer MaxHeight="54" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><TextBlock Text="{Binding SelectionPreview}" TextWrapping="Wrap"/></ScrollViewer>
    <WrapPanel Margin="0,4,0,0">
-    <Button x:Name="PlaceSelectionButton" Content="配置する" Command="{Binding PlaceSelectionCommand}" Padding="12,5" Margin="0,0,8,0" ToolTip="最新状態を検証して追加します。選択対象を移動・削除・短縮しません。"/>
+    <Button x:Name="PlaceSelectionButton" Content="配置する" Command="{Binding PlaceSelectionCommand}" Padding="12,5" Margin="0,0,8,0" ToolTip="{Binding SelectionPlaceHint}" ToolTipService.ShowOnDisabled="True"/>
     <Button x:Name="PreviewSelectionButton" Content="予定を更新" Command="{Binding PreviewSelectionCommand}" Padding="8,3" VerticalAlignment="Center" ToolTip="通常は選択・テンプレート・保存条件の変更で自動更新します。元アイテムを編集した後などはここで更新できます。配置時には必ず最新状態で再検証します。"/>
    </WrapPanel>
   </StackPanel>

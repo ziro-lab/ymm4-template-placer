@@ -124,6 +124,7 @@ public sealed partial class PlacerViewModel
     private void InvalidateSelectionPreview() => RequestSelectionPreview();
     private void RaiseSelectionCommands()
     {
+        OnPropertyChanged(nameof(SelectionPlaceHint));
         PreviewSelectionCommand?.RaiseCanExecuteChanged(); PlaceSelectionCommand?.RaiseCanExecuteChanged();
         SaveSelectionPresetCommand?.RaiseCanExecuteChanged(); CopySelectionPresetCommand?.RaiseCanExecuteChanged();
         DeleteSelectionPresetCommand?.RaiseCanExecuteChanged();
