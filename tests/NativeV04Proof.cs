@@ -10,5 +10,6 @@ internal static partial class NativeProof
         await VerifyQuickDrop(timeline, undo);
         await VerifyExpressionPresets(timeline, undo);
         await VerifyAssociations(timeline, undo);
+        await VerifySelectionProfiles(timeline, undo);
     }
 }
