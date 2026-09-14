@@ -13,7 +13,7 @@ public sealed class AssignmentRow : INotifyPropertyChanged
     public string Serif => Target.Serif;
     public int Frame => Target.Frame;
     public int Length => Target.Length;
-    public IReadOnlyList<TemplateChoice> Choices { get; }
+    public IReadOnlyList<TemplateChoice> Choices { get; private set; }
     public bool HasCandidates => Choices.Count > 1;
     public string State => !HasCandidates ? "候補なし" : SelectedChoice.Template == null ? "未選択" : "選択済み";
     private TemplateChoice selectedChoice;
@@ -33,6 +33,29 @@ public sealed class AssignmentRow : INotifyPropertyChanged
         Choices = new[] { new TemplateChoice(null, candidates.Count == 0 ? "— 候補なし —" : "— 配置しない —") }
             .Concat(candidates.Select(x => new TemplateChoice(x, x.Name))).ToArray();
         selectedChoice = Choices[0];
+    }
+    public void PreferPalette(PlacerSettings settings)
+    {
+        var selected = SelectedChoice.Template;
+        var preferred = new Dictionary<FaceTemplate, (int Order, string Label)>();
+        var palette = settings.Palettes.SingleOrDefault(x => x.Kind == PaletteKind.Character && x.CharacterName == Character);
+        foreach (var id in palette?.LibraryEntryIds ?? [])
+        {
+            var entry = settings.Library.SingleOrDefault(x => x.Id == id);
+            if (entry == null || (entry.CharacterName != null && entry.CharacterName != Character)) continue;
+            var resolution = TemplateResolver.Resolve(entry);
+            if (resolution.State != TemplateReferenceState.Resolved) continue;
+            var choice = Choices.FirstOrDefault(x => x.Template != null && ReferenceEquals(x.Template.Template, resolution.Template));
+            if (choice?.Template is FaceTemplate template)
+                preferred.TryAdd(template, (preferred.Count, entry.DisplayName + "（棚）"));
+        }
+        var candidates = Choices.Skip(1).Select(x => x.Template!).ToArray();
+        Choices = new[] { Choices[0] }.Concat(candidates
+            .OrderBy(x => preferred.TryGetValue(x, out var item) ? item.Order : int.MaxValue)
+            .ThenBy(x => x.Name, StringComparer.Ordinal)
+            .Select(x => new TemplateChoice(x, preferred.TryGetValue(x, out var item) ? item.Label : x.Name))).ToArray();
+        selectedChoice = Choices.First(x => ReferenceEquals(x.Template, selected));
+        Changed(nameof(Choices)); Changed(nameof(SelectedChoice)); Changed(nameof(State));
     }
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
