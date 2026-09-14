@@ -34,7 +34,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
             if (Rows.Any(x => x.SelectedChoice.Template != null) && MessageBox.Show("更新すると現在の選択をクリアします。続けますか？", Title, MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
             Refresh();
         }));
-        PlaceCommand = new ActionCommand(_ => timeline != null && undo != null && Rows.Any(x => x.SelectedChoice.Template != null), _ => Guard(() => Place()));
+        PlaceCommand = new ActionCommand(_ => timeline != null && undo != null && settingsAvailable && !ExpressionPresetDirty && Rows.Any(x => x.SelectedChoice.Template != null), _ => Guard(() => Place()));
         ExportCommand = new ActionCommand(_ => timeline != null && Rows.Count > 0, _ => Guard(() =>
         {
             var dialog = new SaveFileDialog { Filter = "Excelブック (*.xlsx)|*.xlsx", DefaultExt = ".xlsx", AddExtension = true, FileName = "TemplateAssignments.xlsx", Title = "AssignmentをExcelへ出力" };
@@ -71,16 +71,17 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         SetRows(VoiceSnapshot.Capture(current).Select((x, i) => new AssignmentRow(i + 1, x, catalog)).ToArray());
         RefreshV04();
         HasError = false;
-        Status = Rows.Count == 0 ? "このSceneにはVoiceItemがありません。" : "Templateを選んで［配置］。未選択の行には何も配置しません。";
+        Status = Rows.Count == 0 ? "このSceneにはVoiceItemがありません。" : "Templateと表情Presetを選んで［配置］。未選択の行には何も配置しません。";
         OnPropertyChanged(nameof(SceneName));
     }
     public int Place()
     {
         var current = RequireTimeline();
         if (undo == null) throw new InvalidOperationException("YMM4のUndoに接続できません。Pluginを開き直してください。");
-        var count = PlacementEngine.Add(current, undo, Rows.ToArray());
+        var preset = RequireExpressionPreset();
+        var count = PlacementEngine.Add(current, undo, Rows.ToArray(), preset);
         HasError = false;
-        Status = $"{count}件を配置しました。手動Itemは保持しています。YMM4のUndoで戻せます。";
+        Status = $"{count}件をPreset「{preset.Name}」で配置しました。既存Itemは保持しています。YMM4のUndoで戻せます。";
         UpdateCommands();
         return count;
     }
@@ -98,14 +99,14 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         var next = WorkbookBridge.Import(path, current.Name, VoiceSnapshot.Capture(current), TemplateCatalog.Read());
         SetRows(next);
         HasError = false;
-        Status = "Excelを読み込みました。選択内容を確認して［配置］してください。Timelineはまだ変更していません。";
+        Status = $"Excelを読み込みました。選択内容と現在のPreset「{CurrentExpressionPreset.Name}」を確認して［配置］してください。Timelineはまだ変更していません。";
     }
     private Timeline RequireTimeline() => timeline ?? throw new InvalidOperationException("対象Sceneを開き、Pluginを開き直してください。");
     private void SetRows(IReadOnlyList<AssignmentRow> rows)
     {
         foreach (var row in Rows) row.PropertyChanged -= RowChanged;
         Rows.Clear();
-        foreach (var row in rows) { row.PropertyChanged += RowChanged; Rows.Add(row); }
+        foreach (var row in rows) { row.PreferPalette(settings); row.PropertyChanged += RowChanged; Rows.Add(row); }
         OnPropertyChanged(nameof(Summary));
         UpdateCommands();
     }
