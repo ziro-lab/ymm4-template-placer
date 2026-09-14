@@ -14,6 +14,7 @@ internal static partial class NativeProof
         await VerifySelectionRange(timeline, undo);
         await VerifyBoundary(timeline, undo);
         await VerifyFinalUi(timeline);
+        await VerifyPresetSelectorRefresh(timeline);
         VerifyFinalAcceptance();
     }
 }
