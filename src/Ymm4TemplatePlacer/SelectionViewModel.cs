@@ -29,7 +29,7 @@ public sealed partial class PlacerViewModel
     }
     public SelectionPreset? SelectedSelectionPreset
     {
-        get => CurrentSelectionPreset;
+        get => SelectionPresets.FirstOrDefault(x => x.Id == settings.CurrentSelectionPresetId);
         set
         {
             if (refreshingSelection || value == null || value.Id == settings.CurrentSelectionPresetId) return;
@@ -79,8 +79,12 @@ public sealed partial class PlacerViewModel
             SelectionTemplates.Clear();
             foreach (var entry in settings.Library) SelectionTemplates.Add(new(entry));
             SelectionTemplate = SelectionTemplates.FirstOrDefault(x => x.Id == id);
-            SelectionPresets.Clear();
-            foreach (var preset in settings.SelectionPresets.Where(x => x.Profile == CurrentSelectionPreset.Profile)) SelectionPresets.Add(preset);
+            var presets = settings.SelectionPresets.Where(x => x.Profile == CurrentSelectionPreset.Profile).ToArray();
+            if (!SelectionPresets.SequenceEqual(presets))
+            {
+                SelectionPresets.Clear();
+                foreach (var preset in presets) SelectionPresets.Add(preset);
+            }
             if (loadedSelectionPreset != CurrentSelectionPreset) LoadSelectionDraft();
             OnPropertyChanged(nameof(SelectedSelectionPreset)); OnPropertyChanged(nameof(IsCompanionProfile)); OnPropertyChanged(nameof(IsPointProfile));
             RefreshSelectionProfiles();
@@ -92,8 +96,12 @@ public sealed partial class PlacerViewModel
         var old = refreshingSelection; refreshingSelection = true;
         try
         {
-            SelectionProfiles.Clear();
-            foreach (var profile in SelectionPlacement.Profiles(timeline?.SelectedItems.Count ?? 0)) SelectionProfiles.Add(profile);
+            var profiles = SelectionPlacement.Profiles(timeline?.SelectedItems.Count ?? 0);
+            if (!SelectionProfiles.SequenceEqual(profiles))
+            {
+                SelectionProfiles.Clear();
+                foreach (var profile in profiles) SelectionProfiles.Add(profile);
+            }
             OnPropertyChanged(nameof(SelectedSelectionProfile)); OnPropertyChanged(nameof(SelectionContext));
             InvalidateSelectionPreview(); RaiseSelectionCommands();
         }
