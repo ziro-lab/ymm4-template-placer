@@ -19,10 +19,10 @@ public sealed record TemplateResolution(TemplateReferenceState State, ItemTempla
     public string Message => State switch
     {
         TemplateReferenceState.Resolved => "利用可能",
-        TemplateReferenceState.Missing => "⚠ 元Templateが見つかりません。再リンクしてください。",
-        TemplateReferenceState.Ambiguous => "⚠ Templateを一意に特定できません。YMM4側の名前・配置を区別して再リンクしてください。",
-        TemplateReferenceState.CharacterMismatch => "⚠ 登録Characterと元TemplateのCharacterが違います。再リンクまたはCharacter設定を確認してください。",
-        _ => "⚠ 単一ItemのTemplateだけに対応しています。"
+        TemplateReferenceState.Missing => "⚠ 元テンプレートが見つかりません。再リンクしてください。",
+        TemplateReferenceState.Ambiguous => "⚠ テンプレートを一意に特定できません。YMM4側の名前・配置を区別して再リンクしてください。",
+        TemplateReferenceState.CharacterMismatch => "⚠ 登録キャラクターと元テンプレートのキャラクターが違います。再リンクまたはキャラクター設定を確認してください。",
+        _ => "⚠ アイテムを1つだけ含むテンプレートに対応しています。"
     };
 }
 public static class TemplateResolver
@@ -41,7 +41,7 @@ public static class TemplateResolver
     }
     public static LibraryEntry Reference(ItemTemplate template, string displayName, string? characterName, Guid? id = null)
     {
-        if (!ItemSettings.Default.Templates.Contains(template)) throw new InvalidOperationException("元Templateが削除されています。一覧を更新してください。");
+        if (!ItemSettings.Default.Templates.Contains(template)) throw new InvalidOperationException("元テンプレートが削除されています。一覧を更新してください。");
         var name = displayName.Trim();
         if (name.Length == 0 || name.Length > 256) throw new InvalidOperationException("表示名は1〜256文字で入力してください。");
         var entry = new LibraryEntry(id ?? Guid.NewGuid(), TemplateLocator.Capture(template), name, string.IsNullOrEmpty(characterName) ? null : characterName);
@@ -56,7 +56,7 @@ public static class TemplateResolver
         var source = resolved.Item;
         var clone = source.GetClone();
         if (clone == null || ReferenceEquals(clone, source) || clone.GetType() != source.GetType() || !Equals(ItemCharacters.Get(source), ItemCharacters.Get(clone)))
-            throw new InvalidOperationException("Templateを独立したItemとして複製できませんでした。");
+            throw new InvalidOperationException("テンプレートを独立したアイテムとして複製できませんでした。");
         clone.Group = 0;
         return clone;
     }
