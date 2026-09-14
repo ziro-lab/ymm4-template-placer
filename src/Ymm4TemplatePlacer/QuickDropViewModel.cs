@@ -77,6 +77,9 @@ public sealed partial class PlacerViewModel
             Minimum = ReadFrameNumber(PaletteMinimumText, "Layer最小"), Maximum = ReadFrameNumber(PaletteMaximumText, "Layer最大"), Preferred = ReadFrameNumber(PalettePreferredText, "優先Layer") };
         policy.Validate();
         EditSettings(next => { var index = next.Palettes.FindIndex(x => x.Id == palette.Id); next.Palettes[index] = next.Palettes[index] with { Layer = policy }; });
+        // A successful save canonicalizes 015 to 15 even if the saved policy record is equal.
+        layerEditorPolicy = null;
+        UpdateQuickDropCommands();
         HasError = false; Status = "この棚のLayer設定を保存しました。前面・背面も、この探索範囲内だけで配置します。";
     }
     public IItem QuickDrop()
