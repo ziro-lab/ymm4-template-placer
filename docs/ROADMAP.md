@@ -1,33 +1,263 @@
-# ROADMAP — native YMM4 proof ladder
+# ROADMAP — v0.4 implementation and native YMM4 proof ladder
 
-CURRENT v0.3.0: P0〜P8を実装し、native YMM4で全段階の通過を確認。証拠・検証境界は [VERIFICATION.md](VERIFICATION.md) を参照。
+## Baseline
 
-後の段階で前のAPI失敗を隠さず、次の順序を維持します。
+v0.3.0 P0〜P8 is already implemented and verified on native YMM4 4.55.1.1 Lite. `docs/VERIFICATION.md` records the proven baseline. v0.4 must preserve those Golden Paths while changing the product from one Voice→Face replacement flow into Library / Palette / semantic add-only placement.
 
-| Phase | Exit condition |
-|---|---|
-| P0 Plugin load | Windowsでbuild、実YMM4起動、callback marker |
-| P1 Live Template catalog | 実ItemSettingsの単一Face TemplateとCharacter別候補 |
-| P2 VoiceItem access | 現在TimelineからCharacter / Frame / Length / Serif |
-| P3 Clone and placement | 独立Clone、元Template保持、配置後のnative Item状態 |
-| P4 Assignment UI | 実YMM4内のVoice一覧、dropdown選択、配置ボタン |
-| P5 Excel Export | COMを使わない.xlsx、非表示Catalog、Character別候補、schema検査 |
-| P6 Excel Import | fixtureのTemplate列編集、Assignment読込、同じEngineで配置 |
-| P7 Safety | 再配置、手動Face保持、無効Workbook・Template欠落でゼロ変更 |
-| P8 Undo | 複数Faceの配置を標準Undo 1回で復元、Redoも確認 |
+The v0.4 target design is `docs/DESIGN.md`.
 
-## CI policy
+## W1 — Freeze v0.3 regression
 
-Native Windows YMM4 proofが主検証経路です。YMM4 4.55.1.1 LiteをSHA256固定で取得します。Linux / Wineは通常レーンにしません。
+Keep existing tests for:
 
-重い処理の対象変更:
+- plugin load
+- live Template catalog
+- Voice snapshot
+- Face clone / placement
+- YMM4-hosted assignment UI
+- Excel export/import
+- error atomicity
+- native Undo/Redo
+
+Exit: the old Golden Path remains green before structural changes continue.
+
+## W2 — Add-only Placement Plan foundation
+
+Refactor the old replacement-oriented path into:
+
+```text
+request
+→ plan Frame / Length
+→ plan Layer
+→ validate existing + planned occupancy
+→ commit add/update
+```
+
+Do not delete all plugin-generated Items as part of normal placement.
+
+Exit:
+
+- planned result is deterministic before Timeline mutation
+- required-plan failure produces zero partial mutation
+- one operation maps to one native Undo unit
+
+## W3 — Plugin Library
+
+Implement the thin Library over live YMM4 Templates.
+
+Required:
+
+- add an existing YMM4 Template by reference
+- plugin-local `DisplayName`
+- optional Character association
+- stable LibraryEntry ID
+- broken-reference state
+- explicit re-link / unregister
+- no copied Template body
+
+Exit: YMM4's long management name and the short plugin display name are independent in the real plugin UI.
+
+## W4 — Palette model and Character context
+
+Separate Library from Palette and allow one LibraryEntry in multiple Palettes.
+
+Implement:
+
+- Character Palette
+- Style Palette
+- manual Character palette selection
+- temporary VoiceItem / TachieFaceItem single-selection context override
+- restore prior manual Character palette when the context ends
+
+Exit: selecting a Character Item in actual YMM4 changes only the temporary Character palette context and restores correctly.
+
+## W5 — Quick Drop / Base layer
+
+Palette double-click means exactly:
+
+```text
+Frame  = Timeline.CurrentFrame
+Length = Template intrinsic Length
+Layer  = Base Layer Policy
+```
+
+No Target association is created.
+
+Exit:
+
+- actual Palette entry double-click places the expected native Item
+- feedback reports Template / Frame / Layer
+- Undo 1回で戻る
+
+## W6 — Character Front / Back planning
+
+For Character Palette Quick Drop, add:
+
+```text
+Base
+Front = greater Layer number side
+Back  = smaller Layer number side
+```
+
+Use overlapping same-Character Voice / Face / safely readable Tachie Items as the ordering context.
+
+Rules:
+
+- check the entire planned duration
+- deterministic one-direction search
+- no wraparound to the opposite side
+- if no same-Character context exists, fall back to Base
+- existing Items are never moved or shortened
+
+Exit: PSD-style multiple Face Items can coexist on different Layers and Front / Back ordering is deterministic.
+
+## W7 — Character Expression Presets
+
+Migrate the v0.3 expression path to the new Profile/Preset model.
+
+Implement at least:
+
+```text
+Voice span
+Next Same Character + MaxGap
+Start / End offset
+Layer Policy / Band / Preferred
+```
+
+Next Same Character must never shorten a Face below the current Voice span merely because the next Voice overlaps.
+
+Exit: a multi-Voice native fixture proves semantic next-Character resolution, MaxGap and planned Layer reservations.
+
+## W8 — Lightweight Voice association + manual Resync
+
+Add weak plugin tags to Remark only when Target association is required.
+
+Concept:
+
+```text
+Voice:     CWT_TPL:V=<serial>
+Generated: CWT_TPL:S=<serial>;P=<profile>
+```
+
+Do not destroy user Remark content.
+
+Resync lookup:
+
+```text
+serial match
+→ Character guard
+→ exactly one Target = use
+→ otherwise skip
+```
+
+No fuzzy recovery.
+
+Exit:
+
+- moving a Voice then explicitly resyncing recomputes related Item geometry using the current Preset
+- missing / ambiguous Target is skipped without mutation
+- successful subset is one Undo operation
+- Quick Drop remains unassociated
+
+## W9 — Target Companion + Point Emphasis
+
+Add single-Target Profiles without a new generic rule language.
+
+Target Companion:
+
+```text
+Target span + optional head/tail padding
+```
+
+Point Emphasis:
+
+```text
+Anchor = Start / 25 / 50 / 75 / End
++ Offset
++ Fixed Duration
+```
+
+Exit: both are implemented through the existing Planner / LayerPlanner without special Timeline mutation code.
+
+## W10 — Selection Range
+
+Add the multi-target scope:
+
+```text
+Start = min(selected.Start)
+End   = max(selected.End)
+```
+
+with optional padding and normal Layer planning.
+
+Exit: multiple selected native Items produce exactly one planned overlay Item and preserve unrelated Items.
+
+## W11 — Boundary
+
+Add Adjacent Pair as a thin Profile.
+
+```text
+Exactly 2 selected Items
+abs(A.End - B.Start) <= Tolerance
+```
+
+Do not search for a nearby cut when the condition is not satisfied.
+
+Exit: Boundary is added without redesigning Core planning or mutation. If it requires a new engine layer, stop and re-evaluate the architecture.
+
+## W12 — Style Palette and UX polish
+
+Finish practical UI:
+
+- Style Palette manual switching
+- Library search / add / re-link UX
+- Profile/Preset selection without exposing low-level resolver primitives
+- placement preview where useful
+- clear empty states
+- clear failure guidance
+- Quick Drop feedback
+
+Do not add advanced favorites, icon systems, automatic name classification or general tagging unless concrete use proves it necessary.
+
+---
+
+# Native proof requirements
+
+v0.4 is not complete on model/unit tests alone. Final proof must run in native Windows YMM4.
+
+At minimum verify:
+
+1. v0.3 regression Golden Paths.
+2. Library DisplayName differs from the YMM4 Template name.
+3. one LibraryEntry can appear in multiple Palettes.
+4. broken Template references are not silently rebound.
+5. Voice / Face single selection temporarily changes Character Palette and restores manual selection afterwards.
+6. Quick Drop uses CurrentFrame and intrinsic Length.
+7. Quick Drop creates no association tag.
+8. Front / Back uses Character-related Layer ordering and the whole placement interval.
+9. multiple Face Items can be intentionally stacked on distinct Layers.
+10. Next Same Character + MaxGap behaves as designed.
+11. Layer Band accounts for existing Items and already planned Items.
+12. associated Voice placement can be explicitly resynced.
+13. missing / ambiguous resync Targets are skipped, not guessed.
+14. resync uses the current Preset.
+15. successful placement/resync operations use native Undo as a single operation.
+16. normal placement never automatically deletes existing Timeline Items.
+
+---
+
+# CI policy
+
+Native Windows YMM4 proof remains the main validation lane. YMM4 4.55.1.1 Lite stays the fixed compatibility baseline until explicitly revised.
+
+Heavy native work is relevant for changes to:
 
 - `src/**/*.cs`, `src/**/*.csproj`, `src/**/*.xaml`
 - `tests/**/*.cs`, `tests/**/*.csproj`, `tests/**/*.ps1`
-- `fixtures/**/*.json`, `fixtures/**/*.ymmp`, `fixtures/**/*.png`, `fixtures/**/*.xlsx`
-- native workflow自身
-- 明示的なworkflow_dispatch
+- fixture data
+- native workflow
+- explicit `workflow_dispatch`
 
-**Documentation-only commits must not download or launch YMM4.** push / pull_requestのpath filterに加え、PR synchronizeでは直前headからの差分をCiScope.ps1で検査します。PR全体に過去のコード変更が含まれていても、最新更新がdocsだけならnative処理をスキップします。対象判定自体に小さい自動テストがあります。
+**Documentation-only changes must not download or launch YMM4.** Keep the existing docs-only guard / scope self-tests.
 
-成功artifactに通常配布物、source、native結果、UI、Workbook、provenanceを保存します。YMM4本体と検証DLLは配布パッケージへ入れません。
+Successful implementation artifacts should continue to include the normal distributable, source, native proof, provenance and deterministic assertions. Do not package YMM4 itself or proof-only fixture code into the user distribution.

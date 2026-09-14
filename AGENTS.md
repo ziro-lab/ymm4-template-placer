@@ -2,32 +2,117 @@
 
 ## Project intent
 
-YMM4 Template Placer is a small YukkuriMovieMaker4 plugin for placing registered YMM4 item templates according to target-item conditions.
+YMM4 Template Placer is a YukkuriMovieMaker4 plugin for organizing registered YMM4 Item Templates into a small plugin-side Library / Palette and placing them through a finite set of semantic Target relationships.
 
-CURRENT profile only:
+Implemented baseline is v0.3.0. Current implementation target is **v0.4**. Read `docs/DESIGN.md` first, then `docs/ROADMAP.md`. `docs/IMPLEMENTATION.md` and `docs/VERIFICATION.md` describe the already-proven v0.3 baseline and must not be mistaken for the v0.4 target design.
+
+## v0.4 product boundary
+
+The plugin should help the user:
 
 ```text
-VoiceItem -> TachieFaceItem Template
+find the relevant YMM4 Template quickly
+→ place it through a meaningful relationship
+→ optionally re-apply that relationship later
 ```
 
-The product name is intentionally broader than the first use case, but implementation must stay narrow until the current profile is complete.
+It must not become a general rule language or a second timeline engine.
 
-## Product constraints
+### Source of truth
 
-- Primary path is YMM4-only: list VoiceItems, choose a template from a dropdown, place it.
-- Excel is a secondary bridge for bulk human/AI assignment, not the primary UX.
-- YMM4 `ItemSettings.Default.Templates` is the template source of truth.
-- Do not create a plugin-owned expression database in CURRENT.
-- Do not add a generic rule engine, DSL, multi-scene batch, AI API integration, persistent Voice IDs, sync engine, or PSD-specific logic unless explicitly promoted from FUTURE.
-- Exported Excel is a snapshot. If YMM4 items/templates change after export, re-export instead of reconciling.
-- Plugin-created face items are identified only by a simple Remark marker: `CWT_TPL:face`.
-- Re-placement may replace all plugin-marked face items for the current scope; differential reconciliation is not required.
-- Preserve manually placed face items.
-- Prefer YMM4-native Undo/Redo over custom rollback machinery.
+- YMM4 `ItemSettings.Default.Templates` remains the Template source of truth.
+- The plugin Library stores references, plugin display names and optional Character association; it does **not** copy Template bodies into a second template database.
+- Library and Palette are separate. One LibraryEntry may appear in multiple Palettes.
+
+### Main interaction models
+
+- **Expression list:** bulk VoiceItem → Character-compatible Face Template assignment. Excel remains a secondary bridge for this path.
+- **Character Palette:** selected VoiceItem / TachieFaceItem temporarily selects the matching Character palette; clearing that context returns to the previously manually selected Character palette.
+- **Style Palette:** manually selected editing vocabulary such as bright / dark / battle effects.
+- **Quick Drop:** double-click a Palette entry to place the Template at `Timeline.CurrentFrame` using the Template intrinsic Length. Quick Drop has no Target association and is not resynced.
+- **Selection placement:** apply a finite semantic Profile to selected Timeline Items.
+
+## CURRENT semantic Profiles
+
+v0.4 may implement only these Profile families unless the design is explicitly revised:
+
+```text
+Character Expression
+Target Companion
+Point Emphasis
+Selection Range
+Boundary
+```
+
+Profiles are thin strategies over shared planning primitives. Do not expose arbitrary start/end predicates or build a generic resolver graph.
+
+## Layer rules
+
+Layer placement is important and must be planned before mutation.
+
+Character Quick Drop supports:
+
+```text
+Base  = configured normal Layer policy
+Front = greater Layer number than overlapping same-Character related Items
+Back  = smaller Layer number than overlapping same-Character related Items
+```
+
+YMM4 display priority follows Layer number, so do not rename these modes to ambiguous timeline-screen terms without explanation. Collision checks use the full planned Item duration, not only its first frame.
+
+Layer search is deterministic. Existing Items are never moved or shortened to make room. Planned Items in the same batch reserve occupancy before commit.
+
+## Placement / mutation rules
+
+- v0.4 placement is **add-only**. Do not delete all generated Items and rebuild them.
+- Deletion is a normal YMM4 user operation.
+- Preserve all unrelated/manual Items.
+- Build and validate PlacementPlans before mutating Timeline state.
+- If a required placement cannot be planned safely, do not partially mutate the operation.
+- Use YMM4-native Undo/Redo; do not build a custom undo stack.
+
+## Lightweight association / resync
+
+Persistent connected clips are out of scope. Association is only a weak marker for explicit, user-triggered re-sync.
+
+- Give a target Voice a simple plugin-wide serial only when association is needed.
+- Store plugin tags inside Remark without destroying user-authored Remark text.
+- Resync lookup: source serial → Character guard → exactly one target.
+- 0 matches or multiple matches: skip. Do not infer by Frame, Serif, ordering or similarity.
+- Resync is best effort and uses the **current Preset**, never a historical Preset snapshot.
+- Quick Drop has no association.
+- No continuous event monitoring, automatic target-delete handling, copy/paste ID repair, or whole-scene sync in v0.4.
+
+## Excel
+
+Excel remains a secondary bulk Assignment bridge for Voice Expression only. Do not turn the workbook into a generic Placement Profile editor.
+
+- `.xlsx` generation/read must not require Excel COM automation.
+- Import validates first and does not mutate Timeline by itself.
+- Placement after import uses the currently selected Character Expression Preset.
+
+## Explicit non-goals
+
+Do not add these to v0.4 unless the design is explicitly changed:
+
+- Series Set as a core concept
+- plugin-owned copies of YMM4 Template bodies
+- generic Rule Engine / DSL / node editor / arbitrary predicates
+- automatic delete-and-rebuild placement
+- continuous synchronization or Voice move event tracking
+- copy/paste ID repair or fuzzy target recovery
+- historical Preset snapshots
+- persistent Connected Clip semantics
+- multi-item Template generalization
+- protected Intro / Outro time remapping
+- Parent / Follow / Track Matte engines
+- audio/beat analysis, word timing or STT
+- direct AI API integration
+- multi-scene batch
 
 ## Technical target
 
-- YMM4 4.55.1.1 Lite
+- YMM4 4.55.1.1 Lite baseline
 - .NET 10
 - `net10.0-windows10.0.19041.0`
 - WPF plugin
@@ -35,15 +120,16 @@ The product name is intentionally broader than the first use case, but implement
 
 ## CI rules
 
-- Heavy YMM4 runtime CI must run only when plugin source/project files or the workflow itself change, plus manual dispatch.
-- Documentation-only changes must not trigger YMM4 download/launch.
-- Keep fixtures tiny, deterministic, and redistribution-safe. A trivial black image is sufficient when pixels are irrelevant.
-- Prefer direct state assertions over screenshots.
+- Heavy native YMM4 work must run only for source/project/XAML/test/fixture/workflow changes plus manual dispatch.
+- Documentation-only changes must not download or launch YMM4.
+- Keep fixtures tiny, deterministic and redistribution-safe.
+- Prefer direct state assertions over screenshot-only assertions.
+- Preserve v0.3 regression tests while adding v0.4 proof steps.
 
 ## Implementation order
 
-Follow `docs/ROADMAP.md`. Do not skip directly to Excel or generic abstractions before P1-P3 establish the YMM4 runtime path.
+Follow `docs/ROADMAP.md`. Do not implement all UI surfaces at once. First convert the placement path to add-only planned commits, then prove Library / Character Palette / Quick Drop / Front-Back Layer planning, then semantic Profiles and lightweight Resync.
 
 ## External references
 
-Existing YMM4 projects are implementation evidence, not a license to copy blindly. Review source licenses before copying code. Prefer reimplementing the small required behavior against YMM4 APIs.
+Existing YMM4 projects and cross-editor research are implementation/design evidence, not permission to copy blindly. Review licenses before reusing source. Prefer implementing only the required behavior against YMM4 APIs.
