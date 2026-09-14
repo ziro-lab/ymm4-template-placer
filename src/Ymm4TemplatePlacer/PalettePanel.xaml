@@ -28,9 +28,14 @@
    <ScrollViewer MaxHeight="170" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="0,4,0,0">
      <TextBlock Text="Libraryの登録を、この棚へ追加"/>
-     <DockPanel><Button x:Name="AddEntryButton" Content="この棚へ追加" Command="{Binding AddPaletteEntryCommand}" DockPanel.Dock="Right" Padding="8,4" Margin="6,0,0,0"/><ComboBox x:Name="LibraryChoiceCombo" ItemsSource="{Binding PaletteLibraryChoices}" DisplayMemberPath="DisplayName" SelectedItem="{Binding PaletteLibraryChoice,Mode=TwoWay}"/></DockPanel>
+     <DockPanel>
+      <Button x:Name="AddEntryButton" Content="この棚へ追加" Command="{Binding AddPaletteEntryCommand}" DockPanel.Dock="Right" Padding="8,4" Margin="6,0,0,0"/>
+      <ComboBox x:Name="LibraryChoiceCombo" ItemsSource="{Binding PaletteLibraryChoices}" SelectedItem="{Binding PaletteLibraryChoice,Mode=TwoWay}" TextSearch.TextPath="DisplayName">
+       <ComboBox.ItemTemplate><DataTemplate><StackPanel><TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/><TextBlock Text="{Binding CharacterName}" FontSize="11"/><TextBlock Text="{Binding SourceName}" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip="{Binding SourceName}"/></StackPanel></DataTemplate></ComboBox.ItemTemplate>
+      </ComboBox>
+     </DockPanel>
      <WrapPanel Margin="0,4,0,8"><Button Content="選択した登録を棚から外す" Command="{Binding RemovePaletteEntryCommand}" Padding="8,4" Margin="0,0,6,0"/><Button Content="この棚を削除" Command="{Binding DeletePaletteCommand}" Padding="8,4" ToolTip="Library・元Template・Timelineは削除しません。"/></WrapPanel>
-     <TextBlock Text="新しい棚（上で選んだCharacter / Styleの種類）"/>
+     <TextBlock Text="新しい棚（上で選んだCharacter / Styleの種類）" TextWrapping="Wrap"/>
      <WrapPanel>
       <StackPanel Margin="0,0,8,0"><TextBlock Text="棚の名前"/><TextBox Text="{Binding NewPaletteName,UpdateSourceTrigger=PropertyChanged}" Width="140" MaxLength="256"/></StackPanel>
       <StackPanel Margin="0,0,8,0" IsEnabled="{Binding IsCharacterPaletteMode}"><TextBlock Text="Character棚の対応Character"/><ComboBox x:Name="NewCharacterCombo" ItemsSource="{Binding LibraryCharacters}" DisplayMemberPath="Label" SelectedItem="{Binding NewPaletteCharacter,Mode=TwoWay}" Width="155"/></StackPanel>
