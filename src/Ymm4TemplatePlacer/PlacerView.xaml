@@ -6,6 +6,7 @@
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <DockPanel Grid.Row="0" Margin="0,0,0,6">
    <Button x:Name="RefreshButton" Content="更新" Command="{Binding RefreshCommand}" DockPanel.Dock="Left" Padding="12,4" Margin="0,0,8,0" ToolTip="現在SceneのVoiceとTemplateを読み直します。表情一覧の選択はクリアされます。"/>
+   <Button x:Name="ResyncButton" Content="選択した表情を再同期" Command="{Binding ResyncCommand}" DockPanel.Dock="Right" Padding="8,4" Margin="8,0,0,0" ToolTip="YMM4のTimelineでVoiceまたは関連表情を選択してください。現在の表情Presetで再同期します。Quick Drop・関連なしItemは変更しません。"/>
    <TextBlock Text="{Binding SceneName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
   </DockPanel>
   <TabControl x:Name="MainTabs" Grid.Row="1">
