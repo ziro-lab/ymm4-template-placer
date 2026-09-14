@@ -49,8 +49,8 @@ internal static partial class NativeProof
         for (var i = 0; i < 60 && (ViewModel == null || View == null || !View.IsLoaded); i++) await Task.Delay(100);
         var vm = ViewModel ?? throw new InvalidOperationException("Native Tool ViewModel was not created."); var view = View ?? throw new InvalidOperationException("Native Tool View was not created.");
         Assert(view.IsLoaded && ReferenceEquals(view.DataContext, vm), "P4 actual native-hosted View/DataContext");
-        Assert(view.MainTabs.SelectedIndex == 2, "WUX1 first open starts with Palette rather than internal registration");
-        view.MainTabs.SelectedIndex = 0; vm.Refresh(); await Idle();
+        Assert(view.PaletteTab.IsSelected, "WUX1 first open starts with Palette rather than internal registration");
+        ShowTask(view, "expression"); vm.Refresh(); await Idle();
         Assert(vm.Rows.Count == 3 && vm.Rows[2].State == "候補なし", "P4 host-injected Timeline and missing-candidate UI");
         await SelectInDropdown(view, vm.Rows[0], "TestA/Neutral"); await SelectInDropdown(view, vm.Rows[1], "TestB/Neutral"); await ClickPlace(view);
         Assert(!vm.HasError && timeline.Items.Count(PlacementEngine.IsGenerated) == 2, "P4 dropdown -> actual WPF button command -> placement"); SaveView(view); Log("P4=PASS");

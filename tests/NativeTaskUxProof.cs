@@ -16,7 +16,7 @@ internal static partial class NativeProof
             "WUX1 first-use fixture has no Library or Palette setup");
         var source = new TextItem { Length = 17, Layer = 110, Remark = "UX fixture source" };
         var template = Template("UX1/Flash", [source]); ItemSettings.Default.Templates.Add(template);
-        view.MainTabs.SelectedIndex = 2; await Idle();
+        ShowTask(view, "palette"); await Idle();
         Assert(view.PaletteSurface.AddTemplateButton.IsVisible && view.PaletteSurface.AddTemplateButton.IsEnabled,
             "WUX1 empty Palette exposes an enabled direct add action without opening management");
         await InvokeSelectionButton(view.PaletteSurface.AddTemplateButton);
@@ -76,7 +76,7 @@ internal static partial class NativeProof
         await InvokeSelectionButton(add.AddButton);
         Assert(vm.HasError && ReferenceEquals(vm.AddTemplateSource, template) && File.ReadAllText(PlacerSettingsStore.DefaultPath) == settingsBefore,
             "WUX1 source removed while adding is not silently repaired and input remains available");
-        await InvokeSelectionButton(add.CancelButton); vm.Refresh(); view.MainTabs.SelectedIndex = 0; await Idle();
+        await InvokeSelectionButton(add.CancelButton); vm.Refresh(); ShowTask(view, "expression"); await Idle();
         Assert(Signature(timeline) == original && vm.LibraryEntries.Count == 0 && vm.StylePalettes.Count == 0,
             "WUX1 fixture cleanup leaves the frozen regression ladder's starting state intact");
         Log("WUX1=PASS");

@@ -11,9 +11,10 @@
    <Button x:Name="ResyncButton" Content="選択した表情を再同期" Command="{Binding ResyncCommand}" DockPanel.Dock="Right" Padding="8,4" Margin="8,0,0,0" ToolTip="YMM4のタイムラインで音声または関連表情を選択してください。現在の表情プリセットで再同期します。クイック配置・関連なしアイテムは変更しません。"/>
    <TextBlock Text="{Binding SceneName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
   </DockPanel>
-  <TabControl x:Name="MainTabs" Grid.Row="1" SelectedIndex="2">
-   <TabControl.Style><Style TargetType="TabControl"><Style.Triggers><DataTrigger Binding="{Binding IsAddingTemplate}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TabControl.Style>
-   <TabItem Header="表情一覧">
+  <TabControl x:Name="MainTabs" Grid.Row="1" SelectedIndex="0">
+   <TabControl.Style><Style TargetType="TabControl"><Style.Triggers><DataTrigger Binding="{Binding IsAddingTemplate}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding IsManagingTemplates}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TabControl.Style>
+   <TabItem x:Name="PaletteTab" Header="パレット"><local:PalettePanel x:Name="PaletteSurface"/></TabItem>
+   <TabItem x:Name="ExpressionTab" Header="表情一覧">
     <Grid Margin="6">
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
      <StackPanel Grid.Row="0" Margin="0,0,0,6">
@@ -28,7 +29,14 @@
        <DataGridTemplateColumn Header="セリフ" Width="*" MinWidth="100" SortMemberPath="Serif"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Serif}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="5,0" ToolTip="{Binding Serif}" ToolTipService.ShowDuration="60000"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
        <DataGridTextColumn Header="開始" Binding="{Binding Frame}" IsReadOnly="True" Width="56"/>
        <DataGridTextColumn Header="長さ" Binding="{Binding Length}" IsReadOnly="True" Width="56"/>
-       <DataGridTemplateColumn Header="テンプレート ▼" Width="1.2*" MinWidth="160"><DataGridTemplateColumn.CellTemplate><DataTemplate><ComboBox ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedChoice,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding HasCandidates}" Margin="2" VerticalContentAlignment="Center" ToolTip="{Binding SelectedChoice.Label}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+       <DataGridTemplateColumn Header="テンプレート ▼" Width="1.2*" MinWidth="160"><DataGridTemplateColumn.CellTemplate><DataTemplate><Grid>
+        <ComboBox ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedChoice,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="2" VerticalContentAlignment="Center" ToolTip="{Binding SelectedChoice.Label}">
+         <ComboBox.Style><Style TargetType="ComboBox"><Style.Triggers><DataTrigger Binding="{Binding HasCandidates}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></ComboBox.Style>
+        </ComboBox>
+        <Button Content="＋ 表情を追加" Command="{Binding DataContext.AddExpressionTemplateCommand,RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Margin="2" ToolTip="このキャラクターの表情テンプレートがありません。ここから追加できます。">
+         <Button.Style><Style TargetType="Button"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasCandidates}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Button.Style>
+        </Button>
+       </Grid></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
       </DataGrid.Columns>
      </DataGrid>
      <StackPanel Grid.Row="2" Margin="0,6,0,0">
@@ -37,13 +45,17 @@
      </StackPanel>
     </Grid>
    </TabItem>
-   <TabItem Header="選択配置"><local:SelectionPanel x:Name="SelectionSurface"/></TabItem>
-   <TabItem Header="パレット"><local:PalettePanel x:Name="PaletteSurface"/></TabItem>
-   <TabItem Header="テンプレート管理"><local:LibraryPanel x:Name="LibrarySurface"/></TabItem>
+   <TabItem x:Name="SelectionTab" Header="選択配置"><local:SelectionPanel x:Name="SelectionSurface"/></TabItem>
   </TabControl>
   <local:TemplateAdditionPanel x:Name="TemplateAdditionSurface" Grid.Row="1">
-   <local:TemplateAdditionPanel.Style><Style TargetType="local:TemplateAdditionPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsAddingTemplate}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></local:TemplateAdditionPanel.Style>
+   <local:TemplateAdditionPanel.Style><Style TargetType="local:TemplateAdditionPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsAddingTemplate}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding IsManagingTemplates}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></local:TemplateAdditionPanel.Style>
   </local:TemplateAdditionPanel>
+  <Grid x:Name="LibraryTaskSurface" Grid.Row="1">
+   <Grid.Style><Style TargetType="Grid"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsManagingTemplates}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Grid.Style>
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+   <DockPanel Margin="6,0,6,4"><Button x:Name="BackFromManagementButton" Content="戻る" Command="{Binding CloseTemplateManagementCommand}" DockPanel.Dock="Left" Padding="10,4" Margin="0,0,8,0"/><TextBlock Text="テンプレート管理" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
+   <local:LibraryPanel x:Name="LibrarySurface" Grid.Row="1"/>
+  </Grid>
   <ScrollViewer Grid.Row="2" MaxHeight="72" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,6,0,0">
    <TextBlock x:Name="StatusText" Text="{Binding Status}" TextWrapping="Wrap">
     <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding HasError}" Value="True"><Setter Property="FontWeight" Value="Bold"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>

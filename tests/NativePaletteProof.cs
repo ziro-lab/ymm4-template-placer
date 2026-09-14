@@ -16,7 +16,7 @@ internal static partial class NativeProof
         var entryA = vm.LibraryEntries.Single(x => x.DisplayName == "どや").Entry;
         vm.SelectedSourceTemplate = vm.SourceTemplates.Single(x => x.Name == "TestB/Neutral"); vm.LibraryDisplayName = "笑顔";
         var entryB = vm.RegisterLibrary();
-        view.MainTabs.SelectedIndex = 2; await Idle(); var panel = view.PaletteSurface;
+        ShowTask(view, "palette"); await Idle(); var panel = view.PaletteSurface;
         Assert(panel.IsLoaded && ReferenceEquals(panel.DataContext, vm), "W4 actual native Palette surface is hosted");
         vm.ActivePaletteKind = PaletteKind.Character; vm.NewPaletteName = "TestA棚";
         vm.NewPaletteCharacter = vm.LibraryCharacters.Single(x => x.Name == "TestA"); var pa = vm.CreatePalette();
@@ -63,7 +63,7 @@ internal static partial class NativeProof
         }
         finally { ItemSettings.Default.Templates.Remove(duplicateCharacter); timeline.SelectedItems = []; }
         Assert(Signature(timeline) == before, "W4 palette creation membership and context switching never mutate Timeline Items");
-        panel.PaletteEditor.IsExpanded = false; await Idle(); SaveView(view); view.MainTabs.SelectedIndex = 0; await Idle();
+        panel.PaletteEditor.IsExpanded = false; await Idle(); SaveView(view); ShowTask(view, "expression"); await Idle();
         Log("W4=PASS");
     }
 }

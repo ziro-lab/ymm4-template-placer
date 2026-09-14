@@ -34,6 +34,20 @@ public sealed class AssignmentRow : INotifyPropertyChanged
             .Concat(candidates.Select(x => new TemplateChoice(x, x.Name))).ToArray();
         selectedChoice = Choices[0];
     }
+    public void RefreshCandidates(IReadOnlyList<FaceTemplate> catalog, PlacerSettings settings)
+    {
+        var selected = SelectedChoice.Template;
+        var candidates = TemplateCatalog.ForVoice(Target.Voice, catalog);
+        bool SameSnapshot(FaceTemplate value) => selected != null && ReferenceEquals(value.Template, selected.Template) &&
+            ReferenceEquals(value.Face, selected.Face) && value.Name == selected.Name && value.Character == selected.Character;
+        // Adding a source is not permission to heal a changed/missing assignment. Keep its original snapshot for the existing guard.
+        if (selected != null && !candidates.Any(SameSnapshot)) return;
+        Choices = new[] { new TemplateChoice(null, candidates.Count == 0 ? "— 候補なし —" : "— 配置しない —") }
+            .Concat(candidates.Select(x => new TemplateChoice(SameSnapshot(x) ? selected : x, x.Name))).ToArray();
+        selectedChoice = Choices.First(x => ReferenceEquals(x.Template, selected));
+        PreferPalette(settings);
+        Changed(nameof(HasCandidates));
+    }
     public void PreferPalette(PlacerSettings settings)
     {
         var selected = SelectedChoice.Template;

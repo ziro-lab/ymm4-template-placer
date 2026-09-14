@@ -5,7 +5,7 @@
  <Grid Margin="6">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <StackPanel Grid.Row="0">
-   <TextBlock Text="YMM4のテンプレートをパレットから使えるように登録します。ここは普段使う画面ではなく、追加・再リンク用の管理画面です。" TextWrapping="Wrap"/>
+   <TextBlock Text="元テンプレートの参照を確認・修正します。普段の追加はパレットの［＋ テンプレートを追加］から行えます。" TextWrapping="Wrap"/>
    <TextBlock Text="アイテムを1つだけ含むテンプレートをYMM4で登録し、一覧を更新してください。" TextWrapping="Wrap" Opacity="0.7"/>
    <TextBlock Text="{Binding LibraryNotice}" TextWrapping="Wrap" FontWeight="Bold"/>
   </StackPanel>

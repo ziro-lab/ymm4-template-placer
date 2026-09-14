@@ -14,7 +14,7 @@ internal static partial class NativeProof
         stage = "W3 Library";
         var vm = ViewModel!; var view = View!;
         var before = Signature(timeline);
-        vm.RefreshLibraryCommand.Execute(null); view.MainTabs.SelectedIndex = 3; await Idle();
+        vm.RefreshLibraryCommand.Execute(null); ShowTask(view, "library"); await Idle();
         var panel = view.LibrarySurface;
         Assert(panel.IsLoaded && ReferenceEquals(panel.DataContext, vm), "W3 Library tab is hosted in the real plugin UI");
         var source = vm.SourceTemplates.Single(x => x.Name == "TestA/Smile");
@@ -58,7 +58,7 @@ internal static partial class NativeProof
         Assert(rejected && File.ReadAllText(damaged) == "{", "W3 corrupt settings are reported and preserved");
         RejectWithoutMutation(timeline, () => badStore.Save(new()), "W3 failed settings load cannot overwrite the original");
         Assert(Signature(timeline) == before, "W3 all Library operations leave Timeline unchanged");
-        SaveView(view); view.MainTabs.SelectedIndex = 0; await Idle();
+        SaveView(view); ShowTask(view, "expression"); await Idle();
         Log("W3=PASS");
     }
 }

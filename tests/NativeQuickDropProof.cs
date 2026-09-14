@@ -22,7 +22,7 @@ internal static partial class NativeProof
         vm.ActivePaletteKind = PaletteKind.Character; vm.ManualCharacterPalette = vm.CharacterPalettes.Single(x => x.CharacterName == "TestA");
         vm.PaletteLibraryChoice = vm.PaletteLibraryChoices.Single(x => x.Id == entry.Id); vm.AddPaletteEntry();
         vm.QuickDropMode = CharacterLayerMode.Base;
-        timeline.CurrentFrame = 321; view.MainTabs.SelectedIndex = 2; await Idle();
+        timeline.CurrentFrame = 321; ShowTask(view, "palette"); await Idle();
         var panel = view.PaletteSurface; var row = vm.PaletteEntries.Single(x => x.LibraryEntryId == entry.Id);
         panel.PaletteList.ScrollIntoView(row); await Idle(); panel.PaletteList.UpdateLayout();
         var container = panel.PaletteList.ItemContainerGenerator.ContainerFromItem(row) as ListBoxItem;
@@ -90,7 +90,7 @@ internal static partial class NativeProof
         undo.Record(); timeline.Items = timeline.Items.RemoveAll(x => fixture.Contains(x)); timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
         timeline.CurrentFrame = originalFrame;
         Assert(Signature(timeline) == initial, "W6 all original Items retain geometry and remarks after placement/undo proof");
-        panel.DropSurface.LayerEditor.IsExpanded = false; panel.PaletteEditor.IsExpanded = false; await Idle(); SaveView(view); view.MainTabs.SelectedIndex = 0; await Idle();
+        panel.DropSurface.LayerEditor.IsExpanded = false; panel.PaletteEditor.IsExpanded = false; await Idle(); SaveView(view); ShowTask(view, "expression"); await Idle();
         Log("W6=PASS");
     }
 }

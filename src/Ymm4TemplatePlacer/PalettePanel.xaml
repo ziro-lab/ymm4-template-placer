@@ -18,7 +18,10 @@
     <ComboBox x:Name="NewCharacterCombo" ItemsSource="{Binding LibraryCharacters}" DisplayMemberPath="Label" SelectedItem="{Binding NewPaletteCharacter,Mode=TwoWay}" ToolTip="指定したキャラクターの音声・表情を単体選択すると自動で切り替わります。指定なしのパレットは手動で使います。"/>
     <WrapPanel Margin="0,5,0,0"><Button x:Name="CreatePaletteButton" Content="作成" Command="{Binding CreatePaletteCommand}" Padding="12,4" Margin="0,0,6,0"/><Button Content="キャンセル" Command="{Binding CancelCreatePaletteCommand}" Padding="10,4"/></WrapPanel>
    </StackPanel>
-   <Button x:Name="AddTemplateButton" Style="{StaticResource BrowseOnly}" Content="＋ テンプレートを追加" Command="{Binding OpenAddTemplateCommand}" HorizontalAlignment="Left" Padding="10,5"/>
+   <WrapPanel Style="{StaticResource BrowseOnly}">
+    <Button x:Name="AddTemplateButton" Content="＋ テンプレートを追加" Command="{Binding OpenAddTemplateCommand}" Padding="10,5" Margin="0,0,6,0"/>
+    <Button x:Name="ManageTemplatesButton" Content="テンプレート管理…" Command="{Binding OpenTemplateManagementCommand}" Padding="6,4" ToolTip="元の参照確認・名前変更・再リンク・登録解除"/>
+   </WrapPanel>
   </StackPanel>
   <Grid Grid.Row="2" Style="{StaticResource BrowseOnly}">
    <ListBox x:Name="PaletteList" ItemsSource="{Binding PaletteEntries}" SelectedItem="{Binding SelectedPaletteEntry,Mode=TwoWay}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">

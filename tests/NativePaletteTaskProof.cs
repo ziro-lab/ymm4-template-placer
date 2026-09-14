@@ -11,7 +11,7 @@ internal static partial class NativeProof
     {
         stage = "WUX2 unified Palette task";
         var vm = ViewModel!; var view = View!; var panel = view.PaletteSurface;
-        timeline.SelectedItems = []; view.MainTabs.SelectedIndex = 2; await Idle();
+        timeline.SelectedItems = []; ShowTask(view, "palette"); await Idle();
         var before = Signature(timeline);
         var originalKind = vm.ActivePaletteKind; var originalCharacter = vm.ManualCharacterPalette?.Id; var originalStyle = vm.ManualStylePalette?.Id;
         Assert(vm.PaletteChoices.Count == vm.CharacterPalettes.Count + vm.StylePalettes.Count &&
@@ -82,6 +82,6 @@ internal static partial class NativeProof
         vm.ManualCharacterPalette = vm.CharacterPalettes.FirstOrDefault(x => x.Id == originalCharacter);
         vm.ManualStylePalette = vm.StylePalettes.FirstOrDefault(x => x.Id == originalStyle); vm.ActivePaletteKind = originalKind;
         Assert(Signature(timeline) == before, "WUX2 creation, renaming, switching, warnings and context do not mutate Timeline Items");
-        view.MainTabs.SelectedIndex = 0; await Idle(); Log("WUX2=PASS");
+        ShowTask(view, "expression"); await Idle(); Log("WUX2=PASS");
     }
 }

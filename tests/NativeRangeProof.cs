@@ -24,7 +24,7 @@ internal static partial class NativeProof
         foreach (var item in new IItem[] { a, b, c, blocker }) Assert(timeline.TryAddItems([item], item.Frame, item.Layer), "W10 native fixture insertion");
         undo.Record(); vm.Refresh(); vm.SelectedSourceTemplate = template; vm.LibraryDisplayName = "範囲の飾り";
         var entry = vm.RegisterLibrary(); vm.SelectionTemplate = vm.SelectionTemplates.Single(x => x.Id == entry.Id);
-        timeline.SelectedItems = [b, a, c]; view.MainTabs.SelectedIndex = 1; await Idle();
+        timeline.SelectedItems = [b, a, c]; ShowTask(view, "selection"); await Idle();
         Assert(vm.SelectionProfiles.Count == 1 && vm.SelectionProfiles[0].Value == SelectionProfile.SelectionRange,
             "W10 three selected native items offer the Range profile only");
         vm.SelectedSelectionProfile = vm.SelectionProfiles[0]; vm.CopySelectionPreset();
