@@ -2,9 +2,9 @@
 
 ## Status
 
-- **Implemented baseline:** v0.3.0. Native YMM4 4.55.1.1 LiteでVoice一覧 / Face Template配置 / Excel / Safety / Undo/Redoまで検証済み。
+- **Implemented baseline:** v0.3.1. Native YMM4 4.55.1.1 Liteでv0.3.0のVoice一覧 / Face Template配置 / Excel / Safety / Undo/Redoを維持し、P9としてTimeline Toolの非表示→再表示とTimeline不変まで検証済み。
 - **Current implementation target:** v0.4。
-- `docs/IMPLEMENTATION.md` / `docs/VERIFICATION.md` はv0.3.0で実証済みの事実を記録する。v0.4実装は本書と `docs/ROADMAP.md` を正本とする。
+- `docs/IMPLEMENTATION.md` / `docs/VERIFICATION.md` はv0.3.0で実証済みの機能事実を記録する。v0.3.1はその機能BaselineへTool lifecycle hotfixを追加した現在の回帰Baseline。v0.4実装は本書と `docs/ROADMAP.md` を正本とする。
 
 ## Product definition
 
@@ -603,7 +603,7 @@ Settings
 
 v0.4完了には少なくとも以下をnative Windows上の実YMM4で確認する。
 
-1. v0.3のVoice一覧 / Excel / Safety / native Undo/Redo主要Golden Pathが回帰しない。
+1. v0.3.1のVoice一覧 / Excel / Safety / native Undo/Redo主要Golden PathとTool hide/reopen(P9)が回帰しない。
 2. Library上のDisplayNameをYMM4 Template名と独立して設定できる。
 3. 同じLibraryEntryを複数Paletteで利用できる。
 4. YMM4 Template参照切れを自動推測せず、再リンク/登録解除へ案内できる。
