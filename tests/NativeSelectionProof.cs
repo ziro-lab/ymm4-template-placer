@@ -65,7 +65,7 @@ internal static partial class NativeProof
         var added = timeline.Items.Except(before).Single();
         Assert(!vm.HasError && added is TachieItem && added.Frame == 2995 && added.Length == 56 && added.Layer == 81,
             "W9 actual Companion Place uses target span plus offsets and full-span Layer planning");
-        Assert(added.Group == 0 && added.Remark == "source prose" && target.Remark == "keep target prose", "W9 singleton non-Face clone is independent and selection placement creates no association");
+        Assert(added.Group == 0 && added.Remark == "source prose\n" && target.Remark == "keep target prose", "W9 singleton non-Face clone preserves user prose and newline and creates no association");
         Assert(source.Frame == 7 && source.Length == 9 && source.Layer == 80 && source.Group == 17 && source.Remark.Contains("CWT_TPL:", StringComparison.Ordinal),
             "W9 source Template and its copied association remain unchanged");
         var placed = Signature(timeline); await undo.UndoAsync(); await Idle();
