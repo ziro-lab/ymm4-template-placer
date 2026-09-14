@@ -18,7 +18,10 @@ Remove-Item $marker -ErrorAction SilentlyContinue
 $env:YMM4_TEMPLATE_PLACER_CI_MARKER=$marker
 $env:YMM4_TEMPLATE_PLACER_DIST_DIR=$DistributionDir
 if ($ReleaseSmoke) { Remove-Item Env:YMM4_TEMPLATE_PLACER_PROOF_DIR -ErrorAction SilentlyContinue }
-else { $env:YMM4_TEMPLATE_PLACER_PROOF_DIR=$OutputDir; Remove-Item $result -ErrorAction SilentlyContinue }
+else {
+ $env:YMM4_TEMPLATE_PLACER_PROOF_DIR=$OutputDir
+ foreach ($name in @('proof-result.txt','proof-log.txt','v04-acceptance.json')) { Remove-Item (Join-Path $OutputDir $name) -ErrorAction SilentlyContinue }
+}
 $p=Start-Process (Join-Path $Ymm4Dir 'YukkuriMovieMaker.exe') -WorkingDirectory $Ymm4Dir -PassThru
 try {
  for ($i=0; $i -lt 150; $i++) {
@@ -53,8 +56,12 @@ if ($ReleaseSmoke) {
  if ($text -notmatch '(?m)^build=distribution\r?$' -or $text -notmatch "(?m)^sha256=$expected\r?`$") { throw 'Loaded assembly is not the exact distribution DLL' }
  Get-Content $marker
 } else {
- if (Test-Path (Join-Path $OutputDir 'proof-log.txt')) { Get-Content (Join-Path $OutputDir 'proof-log.txt') }
+ $log=Join-Path $OutputDir 'proof-log.txt'
+ if (Test-Path $log) { Get-Content $log }
  if (-not (Test-Path $result)) { throw 'Native proof did not finish; inspect windows-seen and build evidence' }
  Get-Content $result
  if (-not (Select-String -Path $result -Pattern '^PASS P1 P2 P3 P4 P5 P6 P7 P8 P9$')) { throw 'Native functional proof failed' }
+ if (-not (Select-String -Path $log -Pattern '^V04=PASS$')) { throw 'Integrated v0.4 native proof is incomplete' }
+ $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
+ if ($acceptance.version -ne '0.4.0' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4 acceptance evidence' }
 }
