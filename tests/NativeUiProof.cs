@@ -36,6 +36,37 @@ internal static partial class NativeProof
         for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++) if (Descendant<T>(VisualTreeHelper.GetChild(root, i)) is T child) return child;
         return null;
     }
+    private static object? FindToolArea(object main)
+    {
+        var items = main.GetType().GetProperty("ToolMenuItems")?.GetValue(main) as IEnumerable;
+        if (items == null) return null;
+        object? Visit(object item, int depth)
+        {
+            if (depth > 5) return null;
+            var type = item.GetType();
+            if (type.FullName == "YukkuriMovieMaker.ViewModels.ToolAreaViewModel" &&
+                type.GetProperty("ViewModelType")?.GetValue(item) is Type vmType && vmType == typeof(PlacerViewModel)) return item;
+            var children = (type.GetProperty("Children")?.GetValue(item) ?? type.GetProperty("Items")?.GetValue(item)) as IEnumerable;
+            if (children != null) foreach (var child in children) if (child != null && Visit(child, depth + 1) is { } found) return found;
+            return null;
+        }
+        foreach (var item in items) if (item != null && Visit(item, 0) is { } found) return found;
+        return null;
+    }
+    private static async Task SetToolVisible(object main, bool visible)
+    {
+        var area = FindToolArea(main) ?? throw new InvalidOperationException("YMM4 Template Placer ToolArea was not found.");
+        var type = area.GetType();
+        var isVisible = type.GetProperty("IsVisible") ?? throw new InvalidOperationException("ToolArea IsVisible was not found.");
+        isVisible.SetValue(area, visible);
+        if (visible)
+        {
+            type.GetProperty("IsSelected")?.SetValue(area, true);
+            type.GetProperty("IsActive")?.SetValue(area, true);
+        }
+        await Idle(); await Task.Delay(100); await Idle();
+        Assert(Equals(isVisible.GetValue(area), visible), visible ? "native ToolArea can reopen" : "native ToolArea can hide");
+    }
     private static bool OpenTool(object main)
     {
         var items = main.GetType().GetProperty("ToolMenuItems")?.GetValue(main) as IEnumerable; if (items == null) return false;

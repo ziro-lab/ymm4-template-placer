@@ -16,7 +16,7 @@ public sealed class PlacerViewModel : Bindable, ITimelineToolViewModel, IToolVie
     private string status = "対象Sceneを開いてください。";
     private bool hasError;
     public string Title => "YMM4 Template Placer";
-    public bool CanSuspend => false;
+    public bool CanSuspend => true;
     public string SceneName => timeline?.Name ?? "Sceneなし";
     public ObservableCollection<AssignmentRow> Rows { get; } = [];
     public string Summary => $"{Rows.Count}件 / 選択 {Rows.Count(x => x.SelectedChoice.Template != null)}件 / 未選択 {Rows.Count(x => x.HasCandidates && x.SelectedChoice.Template == null)}件 / 候補なし {Rows.Count(x => !x.HasCandidates)}件";

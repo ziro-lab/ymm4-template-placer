@@ -56,5 +56,5 @@ if ($ReleaseSmoke) {
  if (Test-Path (Join-Path $OutputDir 'proof-log.txt')) { Get-Content (Join-Path $OutputDir 'proof-log.txt') }
  if (-not (Test-Path $result)) { throw 'Native proof did not finish; inspect windows-seen and build evidence' }
  Get-Content $result
- if (-not (Select-String -Path $result -Pattern '^PASS P1 P2 P3 P4 P5 P6 P7 P8$')) { throw 'Native functional proof failed' }
+ if (-not (Select-String -Path $result -Pattern '^PASS P1 P2 P3 P4 P5 P6 P7 P8 P9$')) { throw 'Native functional proof failed' }
 }
