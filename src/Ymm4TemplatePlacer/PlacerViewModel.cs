@@ -13,14 +13,14 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
 {
     private Timeline? timeline;
     private UndoRedoManager? undo;
-    private string status = "対象シーンを開いてください。";
+    private string status = "";
     private bool hasError;
     public string Title => "YMM4 Template Placer";
     public bool CanSuspend => true;
     public string SceneName => timeline?.Name ?? "シーンなし";
     public ObservableCollection<AssignmentRow> Rows { get; } = [];
     public string Summary => $"{Rows.Count}件 / 選択 {Rows.Count(x => x.SelectedChoice.Template != null)}件 / 未選択 {Rows.Count(x => x.HasCandidates && x.SelectedChoice.Template == null)}件 / 候補なし {Rows.Count(x => !x.HasCandidates)}件";
-    public string Status { get => status; private set => Set(ref status, value); }
+    public string Status { get => status; private set { keepPartialStatus = false; Set(ref status, value); } }
     public bool HasError { get => hasError; private set => Set(ref hasError, value); }
     public ActionCommand RefreshCommand { get; }
     public ActionCommand PlaceCommand { get; }
@@ -71,7 +71,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         SetRows(VoiceSnapshot.Capture(current).Select((x, i) => new AssignmentRow(i + 1, x, catalog)).ToArray());
         RefreshV04();
         HasError = false;
-        Status = Rows.Count == 0 ? "このシーンには音声アイテムがありません。" : "テンプレートと表情プリセットを選んで［配置］。未選択の行には何も配置しません。";
+        Status = "";
         OnPropertyChanged(nameof(SceneName));
     }
     public int Place()

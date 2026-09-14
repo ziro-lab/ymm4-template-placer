@@ -93,7 +93,7 @@
    <ScrollViewer MaxHeight="54" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><TextBlock Text="{Binding SelectionPreview}" TextWrapping="Wrap"/></ScrollViewer>
    <WrapPanel Margin="0,4,0,0">
     <Button x:Name="PlaceSelectionButton" Content="配置する" Command="{Binding PlaceSelectionCommand}" Padding="12,5" Margin="0,0,8,0" ToolTip="最新状態を検証して追加します。選択対象を移動・削除・短縮しません。"/>
-    <Button x:Name="PreviewSelectionButton" Content="予定を確認" Command="{Binding PreviewSelectionCommand}" Padding="8,3" VerticalAlignment="Center" ToolTip="確認だけでタイムラインは変更しません。配置前の必須操作ではありません。"/>
+    <Button x:Name="PreviewSelectionButton" Content="予定を更新" Command="{Binding PreviewSelectionCommand}" Padding="8,3" VerticalAlignment="Center" ToolTip="通常は選択・テンプレート・保存条件の変更で自動更新します。元アイテムを編集した後などはここで更新できます。配置時には必ず最新状態で再検証します。"/>
    </WrapPanel>
   </StackPanel>
  </Grid>

@@ -9,7 +9,7 @@ public sealed partial class PlacerViewModel
     private bool refreshingSelection, loadingSelectionDraft;
     private SelectionPreset? loadedSelectionPreset;
     private LibraryEntryView? selectionTemplate;
-    private string selectionPreview = "配置予定は［予定を確認］で表示します。";
+    private string selectionPreview = "";
     public SelectionPresetDraft SelectionDraft { get; } = new();
     public ObservableCollection<SelectionProfileChoice> SelectionProfiles { get; } = [];
     public ObservableCollection<SelectionPreset> SelectionPresets { get; } = [];
@@ -74,8 +74,11 @@ public sealed partial class PlacerViewModel
         try
         {
             var id = selectionTemplate?.Id;
-            SelectionTemplates.Clear();
-            foreach (var entry in settings.Library) SelectionTemplates.Add(new(entry));
+            if (!SelectionTemplates.Select(x => x.Entry).SequenceEqual(settings.Library))
+            {
+                SelectionTemplates.Clear();
+                foreach (var entry in settings.Library) SelectionTemplates.Add(new(entry));
+            }
             SelectionTemplate = SelectionTemplates.FirstOrDefault(x => x.Id == id);
             var presets = settings.SelectionPresets.Where(x => x.Profile == CurrentSelectionPreset.Profile).ToArray();
             if (!SelectionPresets.SequenceEqual(presets))
@@ -118,7 +121,7 @@ public sealed partial class PlacerViewModel
         OnPropertyChanged(nameof(SelectionPresetDirty)); OnPropertyChanged(nameof(SelectionPresetNotice));
         InvalidateSelectionPreview(); RaiseSelectionCommands();
     }
-    private void InvalidateSelectionPreview() => SelectionPreview = "［予定を確認］で再確認してください。配置時には最新のタイムラインで再計算します。";
+    private void InvalidateSelectionPreview() => RequestSelectionPreview();
     private void RaiseSelectionCommands()
     {
         PreviewSelectionCommand?.RaiseCanExecuteChanged(); PlaceSelectionCommand?.RaiseCanExecuteChanged();
@@ -135,21 +138,21 @@ public sealed partial class PlacerViewModel
     private SelectionPlacement PlanSelection()
     {
         RequireCleanSelectionDraft();
-        var entry = selectionTemplate?.Entry ?? throw new InvalidOperationException("テンプレート管理の登録から、配置するテンプレートを選んでください。");
+        var entry = selectionTemplate?.Entry ?? throw new InvalidOperationException("配置するテンプレートを選んでください。");
         if (!settings.Library.Contains(entry)) throw new InvalidOperationException("テンプレート管理の登録が変更されています。選び直してください。");
         return SelectionPlacement.Create(RequireTimeline(), entry, CurrentSelectionPreset);
     }
     public SelectionPlacement PreviewSelection()
     {
         var planned = PlanSelection(); HasError = false;
-        SelectionPreview = $"予定: 開始 {planned.Item.Frame} / 長さ {planned.Item.Length} / レイヤー {planned.Item.Layer}。配置時に再計算します。";
-        Status = "配置予定を確認しました。タイムラインは変更していません。"; return planned;
+        CancelSelectionPreview(); SelectionPreview = DescribeSelectionPreview(planned);
+        Status = "配置予定を更新しました。タイムラインは変更していません。"; return planned;
     }
     public int PlaceSelection()
     {
         if (undo == null) throw new InvalidOperationException("YMM4の「元に戻す」に接続できません。");
         var planned = PlanSelection(); var count = planned.Plan.Commit(RequireTimeline(), undo);
-        HasError = false; SelectionPreview = "配置済み。続けて配置する場合は予定を再確認してください。";
+        HasError = false; CancelSelectionPreview(); SelectionPreview = "配置しました。対象を選び直すと次の予定を表示します。";
         Status = $"「{selectionTemplate!.DisplayName}」をプリセット「{CurrentSelectionPreset.Name}」で追加: 開始 {planned.Item.Frame} / 長さ {planned.Item.Length} / レイヤー {planned.Item.Layer}。「元に戻す」1回で戻せます。";
         return count;
     }
@@ -177,5 +180,9 @@ public sealed partial class PlacerViewModel
         EditSettings(next => { next.SelectionPresets.RemoveAll(x => x.Id == current.Id); next.CurrentSelectionPresetId = next.SelectionPresets.First(x => x.Profile == current.Profile).Id; });
         HasError = false; Status = "選択配置プリセットを削除しました。既存アイテムは変更していません。";
     }
-    private void DisposeSelectionPresets() => SelectionDraft.PropertyChanged -= SelectionDraftChanged;
+    private void DisposeSelectionPresets()
+    {
+        selectionPreviewActive = false; CancelSelectionPreview();
+        SelectionDraft.PropertyChanged -= SelectionDraftChanged;
+    }
 }

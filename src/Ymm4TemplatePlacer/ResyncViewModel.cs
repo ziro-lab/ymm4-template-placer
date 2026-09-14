@@ -62,6 +62,7 @@ public sealed partial class PlacerViewModel
         Status = $"プリセット「{preset.Name}」で表情を再同期: {result.Plan.UpdateCount}件更新 / {result.Unchanged}件変更なし / {result.Skipped.Count}件スキップ / 関連なし{result.Ignored}件。" +
             (result.Skipped.Count == 0 ? "" : " " + string.Join(" / ", result.Skipped.Take(3))) +
             " 更新分は「元に戻す」1回で戻せます。テンプレートのレイヤーを使う設定では、現在のレイヤーを維持します。";
+        keepPartialStatus = result.Skipped.Count > 0;
         UpdateCommands();
         return result;
     }
