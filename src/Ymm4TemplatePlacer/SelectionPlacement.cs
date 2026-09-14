@@ -18,6 +18,15 @@ public static class PointEmphasisProfile
         return SelectionPlacement.CheckedSpan(start, start + preset.Duration);
     }
 }
+public static class SelectionRangeProfile
+{
+    public static (int Frame, int Length) Span(IReadOnlyList<IItem> targets, SelectionPreset preset)
+    {
+        if (targets.Count < 2) throw new InvalidOperationException("範囲配置には2つ以上のItemを選択してください。");
+        return SelectionPlacement.CheckedSpan(targets.Min(x => (long)x.Frame) - preset.HeadPadding,
+            targets.Max(x => (long)x.Frame + x.Length) + preset.TailPadding);
+    }
+}
 
 public sealed record SelectionPlacement(IItem Item, PlacementPlan Plan)
 {
@@ -27,18 +36,25 @@ public sealed record SelectionPlacement(IItem Item, PlacementPlan Plan)
             throw new InvalidOperationException("配置範囲が不正です。開始は0以上、長さは1frame以上、終了は整数範囲内にしてください。Timelineは変更していません。");
         return ((int)start, (int)(end - start));
     }
-    public static bool Supports(SelectionProfile profile, int count) =>
-        Enum.IsDefined(profile) && count == 1;
-    public static IReadOnlyList<SelectionProfileChoice> Profiles(int count) => count == 1
-        ? [new(SelectionProfile.TargetCompanion, "対象に合わせる"), new(SelectionProfile.PointEmphasis, "基準点を強調")]
-        : [];
+    public static bool Supports(SelectionProfile profile, int count) => profile switch
+    {
+        SelectionProfile.TargetCompanion or SelectionProfile.PointEmphasis => count == 1,
+        SelectionProfile.SelectionRange => count >= 2,
+        _ => false
+    };
+    public static IReadOnlyList<SelectionProfileChoice> Profiles(int count) => count switch
+    {
+        1 => [new(SelectionProfile.TargetCompanion, "対象に合わせる"), new(SelectionProfile.PointEmphasis, "基準点を強調")],
+        >= 2 => [new(SelectionProfile.SelectionRange, "選択範囲を覆う")],
+        _ => []
+    };
 
     public static SelectionPlacement Create(Timeline timeline, LibraryEntry entry, SelectionPreset preset)
     {
         preset.Validate();
         var targets = timeline.SelectedItems.ToArray();
         if (!Supports(preset.Profile, targets.Length) || targets.Distinct().Count() != targets.Length)
-            throw new InvalidOperationException("このProfileではTimelineのItemを1つだけ選択してください。");
+            throw new InvalidOperationException("このProfileに必要な数のItemをTimelineで選択してください。対象・基準点は1つ、範囲は2つ以上です。");
         foreach (var target in targets)
         {
             if (!timeline.Items.Contains(target)) throw new InvalidOperationException("選択Itemが現在のTimelineにありません。選び直してください。");
@@ -49,6 +65,7 @@ public sealed record SelectionPlacement(IItem Item, PlacementPlan Plan)
         {
             SelectionProfile.TargetCompanion => TargetCompanionProfile.Span(first, preset),
             SelectionProfile.PointEmphasis => PointEmphasisProfile.Span(first, preset),
+            SelectionProfile.SelectionRange => SelectionRangeProfile.Span(targets, preset),
             _ => throw new InvalidOperationException("未対応の選択配置Profileです。")
         };
         var clone = TemplateResolver.Clone(entry);
