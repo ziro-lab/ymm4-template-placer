@@ -44,6 +44,7 @@ public sealed partial class PlacerViewModel
         RevertExpressionPresetCommand = new ActionCommand(_ => true, _ => LoadExpressionDraft());
         ExpressionDraft.PropertyChanged += ExpressionDraftChanged;
         RefreshPresets();
+        InitializeSelectionPresets();
     }
     partial void RefreshPresets()
     {
@@ -57,6 +58,7 @@ public sealed partial class PlacerViewModel
             OnPropertyChanged(nameof(ExpressionPresetSummary));
             foreach (var row in Rows) row.PreferPalette(settings);
             ExpressionDraftChanged(null, new PropertyChangedEventArgs(null));
+            RefreshSelectionPresets();
         }
         finally { refreshingPresets = false; }
     }
@@ -105,5 +107,9 @@ public sealed partial class PlacerViewModel
         EditSettings(next => { next.ExpressionPresets.RemoveAll(x => x.Id == id); next.CurrentExpressionPresetId = next.ExpressionPresets[0].Id; });
         HasError = false; Status = "Presetを削除しました。既存のTimeline Itemは変更していません。";
     }
-    partial void DisposeV04() => ExpressionDraft.PropertyChanged -= ExpressionDraftChanged;
+    partial void DisposeV04()
+    {
+        ExpressionDraft.PropertyChanged -= ExpressionDraftChanged;
+        DisposeSelectionPresets();
+    }
 }
