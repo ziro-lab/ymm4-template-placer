@@ -40,6 +40,8 @@ internal static partial class NativeProof
         Assert(staged.Plan.Count == 3 && staged.Plan.UpdateCount == 3 && staged.NextSerial > nextId && Signature(timeline) == before && ReferenceEquals(timeline.Items, beforeList),
             "W8 all clones and target tags are staged before Timeline mutation");
         Assert(new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().NextAssociationId == nextId, "W8 planning alone never consumes persisted IDs");
+        Assert(vm.PlaceCommand.CanExecute(null), "W8 saved preset and selected rows make the placement command ready");
+        await Idle();
         await ClickPlace(view);
         Assert(!vm.HasError && AssociationTag.Voice(a.Remark, out _) == AssociationTagState.Valid && AssociationTag.Voice(b.Remark, out _) == AssociationTagState.Valid,
             "W8 actual expression Place command creates weak target tags");
