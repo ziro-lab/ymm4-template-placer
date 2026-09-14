@@ -157,7 +157,9 @@ public sealed partial class PlacerViewModel
     {
         RequireCleanSelectionDraft(); var current = CurrentSelectionPreset;
         var stem = current.Name.Length > 100 ? current.Name[..100] : current.Name;
-        var copy = current with { Id = Guid.NewGuid(), Name = stem + "（コピー）" };
+        var number = 1; string name;
+        do { name = $"{stem}（コピー {number++}）"; } while (settings.SelectionPresets.Any(x => x.Profile == current.Profile && x.Name == name));
+        var copy = current with { Id = Guid.NewGuid(), Name = name };
         EditSettings(next => { next.SelectionPresets.Add(copy); next.CurrentSelectionPresetId = copy.Id; });
         HasError = false; Status = "選択配置Presetを複製しました。名前や条件を編集して保存してください。";
     }
