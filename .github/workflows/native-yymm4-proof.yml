@@ -63,7 +63,7 @@ jobs:
           New-Item -ItemType Directory -Force $dest | Out-Null
           Copy-Item "$proof/*.dll" $dest
           Copy-Item "$proof/*.deps.json" $dest
-      - name: Run P1-P8 in actual native YMM4
+      - name: Run P1-P9 in actual native YMM4
         if: steps.scope.outputs.run == 'true'
         shell: pwsh
         run: |
@@ -98,8 +98,8 @@ jobs:
           Copy-Item out/provenance.json out/package/
           $forbidden=@(Get-ChildItem out/package -Filter '*.dll' | Where-Object { $_.Name -notin @('Ymm4TemplatePlacer.dll','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll') })
           if ($forbidden.Count) { throw 'Unexpected DLL in distributable' }
-          Compress-Archive -Path out/package/* -DestinationPath out/Ymm4TemplatePlacer-v0.3.0.zip
-          Move-Item out/Ymm4TemplatePlacer-v0.3.0.zip out/Ymm4TemplatePlacer-v0.3.0.ymme
+          Compress-Archive -Path out/package/* -DestinationPath out/Ymm4TemplatePlacer-v0.3.1.zip
+          Move-Item out/Ymm4TemplatePlacer-v0.3.1.zip out/Ymm4TemplatePlacer-v0.3.1.ymme
           Copy-Item out/package/Ymm4TemplatePlacer.dll out/Ymm4TemplatePlacer.dll
           git archive --format=zip -o out/Ymm4TemplatePlacer-source.zip HEAD
           if ($LASTEXITCODE -ne 0) { throw 'Source archive failed' }
