@@ -36,7 +36,7 @@
      </StackPanel>
     </Grid>
    </TabItem>
-   <TabItem Header="選択配置"><TextBlock Text="配置Profileを準備中" Margin="8"/></TabItem>
+   <TabItem Header="選択配置"><local:SelectionPanel x:Name="SelectionSurface"/></TabItem>
    <TabItem Header="パレット"><local:PalettePanel x:Name="PaletteSurface"/></TabItem>
    <TabItem Header="Library"><local:LibraryPanel x:Name="LibrarySurface"/></TabItem>
   </TabControl>
