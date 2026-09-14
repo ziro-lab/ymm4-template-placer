@@ -3,7 +3,9 @@
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:local="clr-namespace:Ymm4TemplatePlacer">
  <UserControl.Resources><BooleanToVisibilityConverter x:Key="BoolVisibility"/></UserControl.Resources>
- <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+ <Grid>
+ <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+ <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
   <StackPanel Margin="8">
    <TextBlock Text="Timelineの選択Itemとの関係で配置" FontWeight="SemiBold" TextWrapping="Wrap"/>
    <TextBlock Text="{Binding SelectionContext}" TextWrapping="Wrap" Margin="0,4,0,8"/>
@@ -74,11 +76,14 @@
     </StackPanel>
    </Expander>
    <TextBlock Text="{Binding SelectionPresetNotice}" TextWrapping="Wrap" Opacity="0.8" Margin="0,0,0,8"/>
+  </StackPanel>
+ </ScrollViewer>
+ <StackPanel Grid.Row="1" Margin="8,0,8,8">
    <WrapPanel>
     <Button x:Name="PreviewSelectionButton" Content="予定を確認" Command="{Binding PreviewSelectionCommand}" Padding="12,5" Margin="0,0,8,4"/>
     <Button x:Name="PlaceSelectionButton" Content="選択対象へ配置（追加）" Command="{Binding PlaceSelectionCommand}" Padding="12,5" Margin="0,0,0,4"/>
    </WrapPanel>
    <TextBlock Text="{Binding SelectionPreview}" TextWrapping="Wrap" Margin="0,6,0,0"/>
-  </StackPanel>
- </ScrollViewer>
+ </StackPanel>
+ </Grid>
 </UserControl>
