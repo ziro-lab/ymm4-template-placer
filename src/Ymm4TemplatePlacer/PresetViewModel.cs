@@ -11,7 +11,7 @@ public sealed partial class PlacerViewModel
     public PresetDraft ExpressionDraft { get; } = new();
     public ObservableCollection<ExpressionPreset> ExpressionPresets { get; } = [];
     public IReadOnlyList<ExpressionDurationChoice> ExpressionDurations { get; } =
-        [new(ExpressionDuration.VoiceSpan, "Voiceと同じ"), new(ExpressionDuration.NextSameCharacter, "次の同Character Voiceまで")];
+        [new(ExpressionDuration.VoiceSpan, "音声と同じ"), new(ExpressionDuration.NextSameCharacter, "次の同じキャラクターの音声まで")];
     private ExpressionPreset CurrentExpressionPreset => settings.ExpressionPresets.Single(x => x.Id == settings.CurrentExpressionPresetId);
     public ExpressionPreset? SelectedExpressionPreset
     {
@@ -21,7 +21,7 @@ public sealed partial class PlacerViewModel
             if (refreshingPresets || value == null || value.Id == settings.CurrentExpressionPresetId) return;
             Guard(() =>
             {
-                if (ExpressionPresetDirty) throw new InvalidOperationException("編集中のPresetを保存するか［編集を戻す］を押してから切り替えてください。");
+                if (ExpressionPresetDirty) throw new InvalidOperationException("編集中のプリセットを保存するか［編集を戻す］を押してから切り替えてください。");
                 EditSettings(next => next.CurrentExpressionPresetId = value.Id);
             });
             OnPropertyChanged(nameof(SelectedExpressionPreset));
@@ -29,8 +29,8 @@ public sealed partial class PlacerViewModel
     }
     public bool ExpressionPresetDirty => !ExpressionDraft.Matches(CurrentExpressionPreset);
     public string ExpressionPresetSummary => CurrentExpressionPreset.Describe();
-    public string ExpressionPresetNotice => ExpressionPresetDirty ? "Presetは未保存です。保存するまで配置しません。" :
-        "配置・Excel読込後の配置には、このPresetを使います。時間の単位はframeです。";
+    public string ExpressionPresetNotice => ExpressionPresetDirty ? "プリセットは未保存です。保存するまで配置しません。" :
+        "配置・Excel読込後の配置には、このプリセットを使います。時間の単位はフレームです。";
     public ActionCommand SaveExpressionPresetCommand { get; private set; } = null!;
     public ActionCommand CopyExpressionPresetCommand { get; private set; } = null!;
     public ActionCommand DeleteExpressionPresetCommand { get; private set; } = null!;
@@ -84,7 +84,7 @@ public sealed partial class PlacerViewModel
     private ExpressionPreset RequireExpressionPreset()
     {
         if (!settingsAvailable) throw new InvalidOperationException(LibraryNotice);
-        if (ExpressionPresetDirty) throw new InvalidOperationException("編集中の表情Presetを保存してから配置してください。");
+        if (ExpressionPresetDirty) throw new InvalidOperationException("編集中の表情プリセットを保存してから配置してください。");
         return CurrentExpressionPreset;
     }
     public void SaveExpressionPreset()
@@ -92,7 +92,7 @@ public sealed partial class PlacerViewModel
         var preset = ExpressionDraft.Read(CurrentExpressionPreset.Id);
         EditSettings(next => next.ExpressionPresets[next.ExpressionPresets.FindIndex(x => x.Id == preset.Id)] = preset);
         LoadExpressionDraft();
-        HasError = false; Status = $"表情Preset「{preset.Name}」を保存しました。Timelineは変更していません。";
+        HasError = false; Status = $"表情プリセット「{preset.Name}」を保存しました。タイムラインは変更していません。";
     }
     public void CopyExpressionPreset()
     {
@@ -102,14 +102,14 @@ public sealed partial class PlacerViewModel
         do { name = $"{stem}（コピー {number++}）"; } while (settings.ExpressionPresets.Any(x => x.Name == name));
         var copy = current with { Id = Guid.NewGuid(), Name = name };
         EditSettings(next => { next.ExpressionPresets.Add(copy); next.CurrentExpressionPresetId = copy.Id; });
-        HasError = false; Status = "Presetを複製しました。名前や配置条件を編集して保存してください。";
+        HasError = false; Status = "プリセットを複製しました。名前や配置条件を編集して保存してください。";
     }
     public void DeleteExpressionPreset()
     {
         var id = RequireExpressionPreset().Id;
-        if (settings.ExpressionPresets.Count <= 1) throw new InvalidOperationException("最後の表情Presetは削除できません。");
+        if (settings.ExpressionPresets.Count <= 1) throw new InvalidOperationException("最後の表情プリセットは削除できません。");
         EditSettings(next => { next.ExpressionPresets.RemoveAll(x => x.Id == id); next.CurrentExpressionPresetId = next.ExpressionPresets[0].Id; });
-        HasError = false; Status = "Presetを削除しました。既存のTimeline Itemは変更していません。";
+        HasError = false; Status = "プリセットを削除しました。既存のタイムラインアイテムは変更していません。";
     }
     partial void DisposeV04()
     {
