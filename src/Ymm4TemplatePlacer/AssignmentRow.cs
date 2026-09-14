@@ -3,7 +3,10 @@ using System.Runtime.CompilerServices;
 
 namespace Ymm4TemplatePlacer;
 
-public sealed record TemplateChoice(FaceTemplate? Template, string Label);
+public sealed record TemplateChoice(FaceTemplate? Template, string Label, string? ShortName = null)
+{
+    public string DisplayName => ShortName ?? Label;
+}
 
 public sealed class AssignmentRow : INotifyPropertyChanged
 {
@@ -67,7 +70,8 @@ public sealed class AssignmentRow : INotifyPropertyChanged
         Choices = new[] { Choices[0] }.Concat(candidates
             .OrderBy(x => preferred.TryGetValue(x, out var item) ? item.Order : int.MaxValue)
             .ThenBy(x => x.Name, StringComparer.Ordinal)
-            .Select(x => new TemplateChoice(x, preferred.TryGetValue(x, out var item) ? item.Label : x.Name))).ToArray();
+            .Select(x => new TemplateChoice(x, preferred.TryGetValue(x, out var item) ? item.Label : x.Name,
+                preferred.TryGetValue(x, out item) ? item.Label[..^"（パレット）".Length] : null))).ToArray();
         selectedChoice = Choices.First(x => ReferenceEquals(x.Template, selected));
         Changed(nameof(Choices)); Changed(nameof(SelectedChoice)); Changed(nameof(State));
     }
