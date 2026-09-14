@@ -76,12 +76,12 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     }
     public int Place()
     {
-        var current = RequireTimeline();
+        RequireTimeline();
         if (undo == null) throw new InvalidOperationException("YMM4のUndoに接続できません。Pluginを開き直してください。");
         var preset = RequireExpressionPreset();
-        var count = PlacementEngine.Add(current, undo, Rows.ToArray(), preset);
+        var count = PlaceAssociatedExpression(preset);
         HasError = false;
-        Status = $"{count}件をPreset「{preset.Name}」で配置しました。既存Itemは保持しています。YMM4のUndoで戻せます。";
+        Status = $"{count}件をPreset「{preset.Name}」で関連付けて配置しました。既存Itemは保持しています。YMM4のUndoで戻せます。";
         UpdateCommands();
         return count;
     }
@@ -118,6 +118,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     {
         RefreshCommand?.RaiseCanExecuteChanged(); PlaceCommand?.RaiseCanExecuteChanged();
         ExportCommand?.RaiseCanExecuteChanged(); ImportCommand?.RaiseCanExecuteChanged();
+        resyncCommand?.RaiseCanExecuteChanged();
     }
     private void Guard(Action action)
     {
