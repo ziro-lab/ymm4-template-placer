@@ -57,6 +57,9 @@ internal static partial class NativeProof
         ShowTask(view, "expression"); ShowTask(view, "palette"); await Idle();
         Assert(InTaskViewport(palette.AddTemplateButton, view) && InTaskViewport(palette.DropSurface.DropButton, view),
             "WUX7 narrow Palette retains direct addition and Quick Drop in the visible task");
+        Assert(vm.PaletteEntries.Select(x => x.SourceDetail).ToHashSet(StringComparer.Ordinal)
+            .SetEquals(new[] { template.Name, otherTemplate.Name }),
+            "WUX7 duplicate Palette aliases expose distinct source labels without adding normal ready status");
         SaveNamedView(view, "ux-final-palette-narrow.png");
         view.Width = width; view.Height = height; await Idle(); SaveNamedView(view, "ux-final-palette-normal.png");
         view.Width = 360; view.Height = 320;
@@ -108,6 +111,12 @@ internal static partial class NativeProof
         Assert(actualChoice != null && Descendant<TextBlock>(actualChoice) != null &&
             vm.SelectionTemplates.Count(x => x.DisplayName == "枠") == 2,
             "WUX7 both identically named Templates remain distinct actual choices; source/Character detail is shown instead of guessing");
+        var labelPanel = (StackPanel)selection.TemplateSelector.ItemTemplate.LoadContent();
+        labelPanel.DataContext = vm.SelectionTemplates.Single(x => x.Id == otherEntry.Id);
+        var detail = labelPanel.Children.OfType<TextBlock>().Single(x => x.Inlines.Count == 3);
+        var runs = detail.Inlines.OfType<System.Windows.Documents.Run>().Where(x => x.GetBindingExpression(System.Windows.Documents.Run.TextProperty) != null).ToArray();
+        Assert(runs.Length == 2 && runs.All(x => x.GetBindingExpression(System.Windows.Documents.Run.TextProperty)!.ParentBinding.Mode == System.Windows.Data.BindingMode.OneWay),
+            "WUX7 source labels bind read-only values one-way instead of requesting an invalid write-back");
         selection.TemplateSelector.IsDropDownOpen = false;
         view.Width = width; view.Height = height; await Idle(); SaveNamedView(view, "ux-final-selection-normal.png");
         // The normal Tool lifecycle also gates the automatic preview, not just the first-use expression path.
@@ -117,6 +126,8 @@ internal static partial class NativeProof
         await SetToolVisible(root, false); timeline.SelectedItems = []; timeline.SelectedItems = targets.Take(2).ToImmutableList(); await Idle();
         Assert(vm.AutomaticPreviewCount == count && Signature(timeline) == before, "WUX7 native Tool close cancels invisible preview work without modifying Timeline");
         await SetToolVisible(root, true); await Idle();
+        Log($"WUX7 reopen diagnostic: sameView={ReferenceEquals(View, view)}; sameVM={ReferenceEquals(ViewModel, vm)}; oldLoaded={view.IsLoaded}; newLoaded={View?.IsLoaded}; oldVisible={view.IsVisible}; newVisible={View?.IsVisible}; oldSelection={view.SelectionTab.IsSelected}; newSelection={View?.SelectionTab.IsSelected}; countBefore={count}; countAfter={vm.AutomaticPreviewCount}; newCount={ViewModel?.AutomaticPreviewCount}; oldTemplate={vm.SelectionTemplate?.Id}; newTemplate={ViewModel?.SelectionTemplate?.Id}; preview={vm.SelectionPreview}; unchanged={Signature(timeline) == before}");
+        if (View?.IsLoaded == true) SaveNamedView(View, "ux-final-reopen-diagnostic.png");
         Assert(view.IsLoaded && vm.AutomaticPreviewCount > count && vm.SelectionPreview.StartsWith("配置予定:", StringComparison.Ordinal) && Signature(timeline) == before,
             "WUX7 actual Tool reopen resumes live preview with the preserved Template and no Timeline mutation");
         ShowTask(view, "library"); await Idle();

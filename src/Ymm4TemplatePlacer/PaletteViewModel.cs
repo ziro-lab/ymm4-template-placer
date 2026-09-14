@@ -107,7 +107,15 @@ public sealed partial class PlacerViewModel
         var selectedId = SelectedPaletteEntry?.LibraryEntryId;
         PaletteEntries.Clear();
         var library = settings.Library.ToDictionary(x => x.Id);
-        foreach (var id in CurrentPalette?.LibraryEntryIds ?? []) PaletteEntries.Add(new(id, library.GetValueOrDefault(id), CurrentPalette?.CharacterName));
+        var ids = CurrentPalette?.LibraryEntryIds ?? [];
+        var duplicateNames = ids.Select(id => library.GetValueOrDefault(id)).OfType<LibraryEntry>()
+            .GroupBy(x => x.DisplayName, StringComparer.Ordinal).Where(x => x.Count() > 1)
+            .Select(x => x.Key).ToHashSet(StringComparer.Ordinal);
+        foreach (var id in ids)
+        {
+            var entry = library.GetValueOrDefault(id);
+            PaletteEntries.Add(new(id, entry, CurrentPalette?.CharacterName, entry != null && duplicateNames.Contains(entry.DisplayName)));
+        }
         SelectedPaletteEntry = PaletteEntries.FirstOrDefault(x => x.LibraryEntryId == selectedId);
         OnPropertyChanged(nameof(CurrentPalette)); OnPropertyChanged(nameof(CurrentPaletteName));
         OnPropertyChanged(nameof(HasCharacterContext)); OnPropertyChanged(nameof(PaletteContextStatus)); OnPropertyChanged(nameof(PaletteEmptyMessage));

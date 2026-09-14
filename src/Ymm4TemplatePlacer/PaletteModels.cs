@@ -8,9 +8,10 @@ public sealed record PaletteDefinition(Guid Id, PaletteKind Kind, string Name, s
 {
     public LayerPolicy Layer { get; init; } = new();
 }
-public sealed record PaletteEntryView(Guid LibraryEntryId, LibraryEntry? Entry, string? PaletteCharacterName = null)
+public sealed record PaletteEntryView(Guid LibraryEntryId, LibraryEntry? Entry, string? PaletteCharacterName = null, bool ShowSourceDetail = false)
 {
     public string DisplayName => Entry?.DisplayName ?? "⚠ 登録済みテンプレートが見つかりません";
+    public string SourceDetail => ShowSourceDetail && Entry != null ? Entry.Source.Name : "";
     public string Status
     {
         get

@@ -27,6 +27,7 @@
    <ListBox x:Name="PaletteList" ItemsSource="{Binding PaletteEntries}" SelectedItem="{Binding SelectedPaletteEntry,Mode=TwoWay}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
     <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="5,4">
      <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}"/>
+     <TextBlock Text="{Binding SourceDetail}" FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis" ToolTip="{Binding SourceDetail}"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding SourceDetail}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
      <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Opacity="0.75"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Status}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
     </StackPanel></DataTemplate></ListBox.ItemTemplate>
    </ListBox>
