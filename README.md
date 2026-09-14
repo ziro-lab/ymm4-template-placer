@@ -1,114 +1,68 @@
-# YMM4 Template Placer — v0.3.1 implemented / v0.4 designed
+# YMM4 Template Placer v0.4.0 Candidate
 
-YMM4の登録済みItem Templateを、編集作業で使いやすい形に整理・配置するための支援Pluginです。
+YMM4の登録済みItem Templateを、短い名前・Character / Styleの棚で整理し、再生位置や選択Itemとの関係で安全に配置するWPF Pluginです。
 
-## Current state
+**使い方・インストール:** [ユーザーガイド](docs/USAGE.md)  
+**配置の数値の意味:** [選択配置](docs/SELECTION_PLACEMENT.md)  
+**検証方法:** [テスト](tests/README.md) / [v0.4 Acceptance](docs/V0.4_ACCEPTANCE.md)
 
-**v0.3.1 is implemented and verified.** v0.3.0のVoice一覧 / Character対応Face Template / 配置 / Excel / Safety / 標準Undo/Redoを維持したまま、Timeline Toolを閉じて再表示できるlifecycle hotfixを追加しました。GitHub Actionsのnative Windows runner上の実YMM4 4.55.1.1 LiteでP1〜P9を通し、P9ではToolAreaの非表示→再表示とTimeline不変を確認しています。
+## このbranchについて
 
-**v0.4 is the current implementation target.** v0.4では、v0.3のVoice→Faceだけを一般化するのではなく、YMM4 TemplateをPlugin Library / Paletteで整理し、有限のsemantic Placement Profileで安全に配置する構造へ拡張します。正本は [DESIGN](docs/DESIGN.md)、実装・実機検証順は [ROADMAP](docs/ROADMAP.md) です。
+v0.4の統合Candidateです。PR #6はDraftのまま維持し、mainへのmergeは行いません。検証済みcheckpointは各Wの記録とPR本文を参照してください。個々のstaging commitは検証完了を意味しません。
 
-v0.3.0で実証済みの実装詳細と検証境界は [IMPLEMENTATION](docs/IMPLEMENTATION.md) / [VERIFICATION](docs/VERIFICATION.md) に残しています。v0.3.1はそこへTool lifecycle hotfixとP9を追加した現在の回帰Baselineです。
+最終配布物は実YMM4内のP1〜P9、W3〜W12、全18Acceptance、release/proof Warning 0 / Error 0、通常DLLの実ホストロード、package内容・hash確認を通したときだけ生成します。`provenance.json`のsource/runと`v04-acceptance.json`を確認してください。
 
-## v0.4 product direction
+v0.3.1は保持すべき回帰baselineです。[IMPLEMENTATION](docs/IMPLEMENTATION.md) / [VERIFICATION](docs/VERIFICATION.md) はv0.3の歴史的記録であり、v0.4の現在の使い方ではありません。特に旧版の削除・置換操作は廃止しています。[DESIGN](docs/DESIGN.md) / [ROADMAP](docs/ROADMAP.md) はv0.4の設計と検証順の正本です。
 
-```text
-YMM4 Template
-    ↓ reference only
-Plugin Library
-    ↓ short display name / optional Character
-Palette
-    ↓
-Placement Profile + Preset
-    ↓
-preflight Placement Plan
-    ↓
-Timeline
-```
+## 主な操作
 
-主な操作は次の4系統です。
+| 画面 | 用途 |
+| --- | --- |
+| 表情一覧 | VoiceへCharacter対応Face Templateを割り当て、保存済みExpression Presetで追加する。Excelはこの割り当て専用のサブ経路。 |
+| 選択配置 | 1 ItemのTarget Companion / Point Emphasis、複数ItemのSelection Range、2 ItemのBoundary。 |
+| パレット | Character棚の一時自動切替・手動Style棚・ダブルクリックQuick Drop。 |
+| Library | YMM4 Templateへの厳密な参照、短い表示名、Character対応、再リンク・登録解除。 |
 
-- **表情一覧** — VoiceごとにCharacter Paletteの表情Templateを割り当てる。Excel / AI bridgeもここに限定。
-- **選択配置** — 選択ItemへTarget Companion / Point Emphasis / Selection Range / Boundaryなどの定型関係でTemplateを置く。
-- **Character Palette** — VoiceItem / TachieFaceItemの単体選択からCharacterを一時自動判定し、そのCharacter用Templateだけを表示。Context終了後は以前の手動Paletteへ戻る。
-- **Style Palette** — 明るい / 暗い / 戦闘など、現在使いたい演出語彙を手動で切り替える。
+LibraryはTemplate本体を保存しません。同じ登録を複数の棚へ置けます。参照先が0件・複数件なら推測せず、明示的な再リンクへ案内します。
 
-Palette Entryの**ダブルクリックは現在再生位置へのQuick Drop**です。Quick DropはTemplate本来のLengthで追加し、Targetとの関連付けは作りません。
+Quick Dropは現在再生位置とTemplate本来のLengthを使います。Character棚は基準 / 前面（大きいLayer番号） / 背面（小さいLayer番号）を選択でき、予定区間の全長でLayer衝突を確認します。既存Itemを空けるために動かしたり短くしたりしません。
 
-Character PaletteのQuick Dropでは、Layer位置を次から選べる設計です。
+表情PresetはVoiceと同じ、またはNext Same Character + MaxGap、開始/終了offset、Layer範囲・優先番号を保存できます。次Voiceが重なっていることだけを理由に現在Voiceより短縮しません。
+
+## 追加・再同期・削除
 
 ```text
-基準
-前面（大きいLayer番号）
-背面（小さいLayer番号）
+配置   = 全体を計画してから追加
+再同期 = 選択した関連表情へ現在のExpression Presetを再適用
+削除   = YMM4標準操作
 ```
 
-PSD立ち絵Pluginで表情Itemを複数Layerへ重ねる用途を想定しています。既存Itemを動かさず、予定区間全体を見て空きLayerを探索します。
+関連付けは表情一覧からのVoice Expression配置だけです。Remark本文を残して単純な連番を付け、手動再同期時に連番＋実際のCharacterでTargetが一意な場合だけ更新します。特定不能はスキップし、成功分は1回のnative Undoへまとめます。Quick Dropと選択配置は独立Itemで、関連付けを持ちません。
 
-## Lightweight resync
+通常配置はadd-onlyです。全行未選択でも既存Itemを削除しません。Presetの未保存編集、入力不正、空きLayerなし、Template参照切れなどでは追加前に停止します。
 
-v0.4ではFinal Cut型の常時Connected Clipは作りません。
+## ビルドと配布
 
-Target Voiceへ関連付き配置した場合だけ、Remarkへ単純な連番を目印として追加し、ユーザーが明示的に「再同期」した時だけ現在のPresetで関係を再計算します。
-
-```text
-ID一致
-→ Character一致
-→ 一意なら再同期
-→ 0件 / 複数件なら推測せずSkip
-```
-
-Quick Dropは再同期対象外です。通常Placementも既存Itemを勝手に削除しません。削除はYMM4標準操作で行います。
-
-## v0.3.x usage
-
-現在のBaseline v0.3.1では、対象Sceneを開いてツールからYMM4 Template Placerを開き、Voice一覧のTemplateを選んで配置します。ToolはYMM4側で閉じて、必要な時に再表示できます。
-
-```text
-対象Sceneを開く
-→ YMM4 Template Placer
-→ Voice一覧のTemplateを選ぶ
-→ 配置
-```
-
-Excelは任意のサブ経路です。
-
-```text
-Excelへ出力
-→ Template列を編集
-→ Excelから読み込み
-→ 一覧を確認
-→ 配置
-```
-
-.xlsxの生成・読込にMicrosoft ExcelやCOM Automationは不要です。
-
-## Build baseline
-
-Windows、.NET 10 SDK、YMM4 4.55.1.1 Liteを使用します。
+検証baselineはWindows / .NET 10 SDK / YMM4 4.55.1.1 Liteです。
 
 ```powershell
 dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release `
   "-p:YMM4DirPath=C:\Tools\YMM4\" -p:Ymm4Proof=false --nologo -warnaserror
 ```
 
-Targetは `net10.0-windows10.0.19041.0`、ExcelライブラリはOpen XML SDK 3.5.1です。native実機テストと配布生成は `.github/workflows/native-yymm4-proof.yml` を正本とします。
+Targetは`net10.0-windows10.0.19041.0`、ExcelはOpen XML SDK 3.5.1です。Excel本体やCOM automationは不要です。通常DLLにはproofコードを含めません。
 
-## Design boundaries
+`native-yymm4-proof` artifactの主要成果物:
 
-v0.4では次を作りません。
+- `Ymm4TemplatePlacer-v0.4.0.ymme`: Pluginと必要なOpen XML DLL、説明・検証metadata。
+- `Ymm4TemplatePlacer-source.zip`: 検証したcheckoutのソース一式。
+- `provenance.json` / `SHA256.json` / `package-checks.json`: 対応するsource、run、DLL、archiveの照合情報。
+- `proof-log.txt` / `v04-acceptance.json` / buildログ / release smoke記録 / UI画像: 実行Evidence。
 
-- YMM4 Template本体をコピーする第二のTemplate DB
-- Generic Rule Engine / DSL / Node Editor
-- 自動全削除→再配置
-- 常時同期 / Voice移動event監視
-- Copy/Paste ID自動修復や曖昧Target推測
-- 過去Preset Snapshot
-- Persistent Connected Clip
-- Multi-item Template一般化
-- Protected Intro/Outro retiming
-- Parent / Follow / Track Matte
-- Beat / 音声解析 / word timing
-- AI API直接連携
+YMM4本体や第三者のキャラクター素材は同梱しません。通常DLLが実YMM4でロードされたことと、`.ymme`内DLLがそのDLLと一致することを検査します。物理的なインストーラ操作やユーザー固有PSD素材の見た目まで検証済みとは主張しません。
 
-重いCIはソース・XAML・プロジェクト・テスト・fixture・workflow変更時と手動実行時だけ動かします。**docs-only変更ではYMM4のダウンロード・ビルド・起動を行いません。**
+## 境界
+
+汎用Rule Engine / DSL、Template本体の第二DB、常時同期、copy/paste ID修復、曖昧Target推測、過去Preset Snapshot、自動削除・再生成、複数Item Template一般化、音声解析、AI API直接連携は実装しません。
+
+CIの重い処理はソース・XAML・project・test・fixture・workflow変更または明示的な手動実行時だけです。**docs-onlyの通常変更ではYMM4をダウンロード・起動しません。** 個別staging編集をまとめる場合も、次のWへ進む前にそのW全体のnative proofを必要とします。
