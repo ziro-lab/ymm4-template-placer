@@ -7,8 +7,8 @@
  <Grid Margin="8">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <DockPanel Grid.Row="0" Margin="0,0,0,6">
-   <Button x:Name="RefreshButton" Content="更新" Command="{Binding RefreshCommand}" DockPanel.Dock="Left" Padding="12,4" Margin="0,0,8,0" ToolTip="現在SceneのVoiceとTemplateを読み直します。表情一覧の選択はクリアされます。"/>
-   <Button x:Name="ResyncButton" Content="選択した表情を再同期" Command="{Binding ResyncCommand}" DockPanel.Dock="Right" Padding="8,4" Margin="8,0,0,0" ToolTip="YMM4のTimelineでVoiceまたは関連表情を選択してください。現在の表情Presetで再同期します。Quick Drop・関連なしItemは変更しません。"/>
+   <Button x:Name="RefreshButton" Content="更新" Command="{Binding RefreshCommand}" DockPanel.Dock="Left" Padding="12,4" Margin="0,0,8,0" ToolTip="現在のシーンの音声とテンプレートを読み直します。表情一覧の選択はクリアされます。"/>
+   <Button x:Name="ResyncButton" Content="選択した表情を再同期" Command="{Binding ResyncCommand}" DockPanel.Dock="Right" Padding="8,4" Margin="8,0,0,0" ToolTip="YMM4のタイムラインで音声または関連表情を選択してください。現在の表情プリセットで再同期します。クイック配置・関連なしアイテムは変更しません。"/>
    <TextBlock Text="{Binding SceneName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
   </DockPanel>
   <TabControl x:Name="MainTabs" Grid.Row="1">
@@ -16,29 +16,29 @@
     <Grid Margin="6">
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
      <StackPanel Grid.Row="0" Margin="0,0,0,6">
-      <TextBlock Text="Characterに合うTemplateを選択 → 配置" FontWeight="SemiBold" TextWrapping="Wrap"/>
+      <TextBlock Text="キャラクターに合うテンプレートを選んで配置" FontWeight="SemiBold" TextWrapping="Wrap"/>
       <TextBlock Text="{Binding Summary}" Opacity="0.75" TextWrapping="Wrap"/>
       <local:ExpressionPresetPanel x:Name="PresetSurface"/>
      </StackPanel>
      <DataGrid x:Name="VoiceGrid" Grid.Row="1" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="True" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" SelectionUnit="FullRow" SelectionMode="Single" RowHeight="36" HeadersVisibility="Column" GridLinesVisibility="Horizontal">
       <DataGrid.Columns>
        <DataGridTextColumn Header="No" Binding="{Binding No}" IsReadOnly="True" Width="36"/>
-       <DataGridTextColumn Header="Character" Binding="{Binding Character}" IsReadOnly="True" Width="80"/>
-       <DataGridTemplateColumn Header="Serif" Width="*" MinWidth="100" SortMemberPath="Serif"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Serif}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="5,0" ToolTip="{Binding Serif}" ToolTipService.ShowDuration="60000"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-       <DataGridTextColumn Header="Frame" Binding="{Binding Frame}" IsReadOnly="True" Width="56"/>
-       <DataGridTextColumn Header="Length" Binding="{Binding Length}" IsReadOnly="True" Width="56"/>
-       <DataGridTemplateColumn Header="Template ▼" Width="1.2*" MinWidth="160"><DataGridTemplateColumn.CellTemplate><DataTemplate><ComboBox ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedChoice,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding HasCandidates}" Margin="2" VerticalContentAlignment="Center" ToolTip="{Binding SelectedChoice.Label}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+       <DataGridTextColumn Header="キャラクター" Binding="{Binding Character}" IsReadOnly="True" Width="80"/>
+       <DataGridTemplateColumn Header="セリフ" Width="*" MinWidth="100" SortMemberPath="Serif"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Serif}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="5,0" ToolTip="{Binding Serif}" ToolTipService.ShowDuration="60000"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+       <DataGridTextColumn Header="開始" Binding="{Binding Frame}" IsReadOnly="True" Width="56"/>
+       <DataGridTextColumn Header="長さ" Binding="{Binding Length}" IsReadOnly="True" Width="56"/>
+       <DataGridTemplateColumn Header="テンプレート ▼" Width="1.2*" MinWidth="160"><DataGridTemplateColumn.CellTemplate><DataTemplate><ComboBox ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedChoice,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding HasCandidates}" Margin="2" VerticalContentAlignment="Center" ToolTip="{Binding SelectedChoice.Label}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
       </DataGrid.Columns>
      </DataGrid>
      <StackPanel Grid.Row="2" Margin="0,6,0,0">
       <TextBlock Text="追加のみ。未選択は何もしません。削除はYMM4標準操作で行ってください。" TextWrapping="Wrap" Opacity="0.75"/>
-      <WrapPanel Margin="0,6,0,0"><Button x:Name="PlaceButton" Content="配置（追加）" Command="{Binding PlaceCommand}" Padding="10,4" Margin="0,0,8,0" ToolTip="全行を検証して追加します。既存Itemは削除・移動・短縮しません。"/><Button Content="Excelへ出力" Command="{Binding ExportCommand}" Padding="10,4" Margin="0,0,8,0"/><Button Content="Excelから読み込み" Command="{Binding ImportCommand}" Padding="10,4"/></WrapPanel>
+      <WrapPanel Margin="0,6,0,0"><Button x:Name="PlaceButton" Content="配置（追加）" Command="{Binding PlaceCommand}" Padding="10,4" Margin="0,0,8,0" ToolTip="全行を検証して追加します。既存アイテムは削除・移動・短縮しません。"/><Button Content="Excelへ出力" Command="{Binding ExportCommand}" Padding="10,4" Margin="0,0,8,0"/><Button Content="Excelから読み込み" Command="{Binding ImportCommand}" Padding="10,4"/></WrapPanel>
      </StackPanel>
     </Grid>
    </TabItem>
    <TabItem Header="選択配置"><local:SelectionPanel x:Name="SelectionSurface"/></TabItem>
    <TabItem Header="パレット"><local:PalettePanel x:Name="PaletteSurface"/></TabItem>
-   <TabItem Header="Library"><local:LibraryPanel x:Name="LibrarySurface"/></TabItem>
+   <TabItem Header="テンプレート管理"><local:LibraryPanel x:Name="LibrarySurface"/></TabItem>
   </TabControl>
   <ScrollViewer Grid.Row="2" MaxHeight="72" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,6,0,0">
    <TextBlock x:Name="StatusText" Text="{Binding Status}" TextWrapping="Wrap">
