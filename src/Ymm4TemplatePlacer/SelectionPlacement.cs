@@ -40,12 +40,14 @@ public sealed record SelectionPlacement(IItem Item, PlacementPlan Plan)
     {
         SelectionProfile.TargetCompanion or SelectionProfile.PointEmphasis => count == 1,
         SelectionProfile.SelectionRange => count >= 2,
+        SelectionProfile.Boundary => count == 2,
         _ => false
     };
     public static IReadOnlyList<SelectionProfileChoice> Profiles(int count) => count switch
     {
         1 => [new(SelectionProfile.TargetCompanion, "対象に合わせる"), new(SelectionProfile.PointEmphasis, "基準点を強調")],
-        >= 2 => [new(SelectionProfile.SelectionRange, "選択範囲を覆う")],
+        2 => [new(SelectionProfile.SelectionRange, "選択範囲を覆う"), new(SelectionProfile.Boundary, "2Itemの境界（許容差を確認）")],
+        > 2 => [new(SelectionProfile.SelectionRange, "選択範囲を覆う")],
         _ => []
     };
 
@@ -54,7 +56,7 @@ public sealed record SelectionPlacement(IItem Item, PlacementPlan Plan)
         preset.Validate();
         var targets = timeline.SelectedItems.ToArray();
         if (!Supports(preset.Profile, targets.Length) || targets.Distinct().Count() != targets.Length)
-            throw new InvalidOperationException("このProfileに必要な数のItemをTimelineで選択してください。対象・基準点は1つ、範囲は2つ以上です。");
+            throw new InvalidOperationException("このProfileに必要な数のItemをTimelineで選択してください。対象・基準点は1つ、範囲は2つ以上、境界は2つだけです。");
         foreach (var target in targets)
         {
             if (!timeline.Items.Contains(target)) throw new InvalidOperationException("選択Itemが現在のTimelineにありません。選び直してください。");
@@ -66,6 +68,7 @@ public sealed record SelectionPlacement(IItem Item, PlacementPlan Plan)
             SelectionProfile.TargetCompanion => TargetCompanionProfile.Span(first, preset),
             SelectionProfile.PointEmphasis => PointEmphasisProfile.Span(first, preset),
             SelectionProfile.SelectionRange => SelectionRangeProfile.Span(targets, preset),
+            SelectionProfile.Boundary => BoundaryProfile.Span(targets, preset),
             _ => throw new InvalidOperationException("未対応の選択配置Profileです。")
         };
         var clone = TemplateResolver.Clone(entry);
