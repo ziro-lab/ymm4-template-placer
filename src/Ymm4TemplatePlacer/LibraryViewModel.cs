@@ -104,34 +104,34 @@ public sealed partial class PlacerViewModel
     }
     public LibraryEntry RegisterLibrary()
     {
-        var source = SelectedSourceTemplate ?? throw new InvalidOperationException("元のYMM4 Templateを選んでください。");
+        var source = SelectedSourceTemplate ?? throw new InvalidOperationException("元のYMM4テンプレートを選んでください。");
         var entry = TemplateResolver.Reference(source, LibraryDisplayName, SelectedLibraryCharacter?.Name);
         EditSettings(next => next.Library.Add(entry));
         SelectedLibraryEntry = LibraryEntries.FirstOrDefault(x => x.Id == entry.Id);
-        HasError = false; Status = $"「{entry.DisplayName}」をLibraryへ登録しました。YMM4のTemplate本体は変更していません。";
+        HasError = false; Status = $"「{entry.DisplayName}」をテンプレート管理へ登録しました。YMM4のテンプレート本体は変更していません。";
         return entry;
     }
     public void SaveLibrary()
     {
-        var entry = SelectedLibraryEntry?.Entry ?? throw new InvalidOperationException("Libraryの登録を選んでください。");
+        var entry = SelectedLibraryEntry?.Entry ?? throw new InvalidOperationException("テンプレート管理の登録を選んでください。");
         var updated = entry with { DisplayName = LibraryDisplayName.Trim(), CharacterName = SelectedLibraryCharacter?.Name };
-        if (TemplateResolver.Resolve(updated).State == TemplateReferenceState.CharacterMismatch) throw new InvalidOperationException("元TemplateとCharacterが一致していません。");
+        if (TemplateResolver.Resolve(updated).State == TemplateReferenceState.CharacterMismatch) throw new InvalidOperationException("元テンプレートとキャラクターが一致していません。");
         EditSettings(next => next.Library[next.Library.FindIndex(x => x.Id == entry.Id)] = updated);
-        HasError = false; Status = "Libraryの表示名・Characterを保存しました。元Template名は変更していません。";
+        HasError = false; Status = "表示名・キャラクターを保存しました。元テンプレート名は変更していません。";
     }
     public void RelinkLibrary()
     {
-        var old = SelectedLibraryEntry?.Entry ?? throw new InvalidOperationException("再リンクするLibrary登録を選んでください。");
-        var source = SelectedSourceTemplate ?? throw new InvalidOperationException("再リンク先のYMM4 Templateを選んでください。");
+        var old = SelectedLibraryEntry?.Entry ?? throw new InvalidOperationException("再リンクする登録を選んでください。");
+        var source = SelectedSourceTemplate ?? throw new InvalidOperationException("再リンク先のYMM4テンプレートを選んでください。");
         var entry = TemplateResolver.Reference(source, LibraryDisplayName, SelectedLibraryCharacter?.Name, old.Id);
         EditSettings(next => next.Library[next.Library.FindIndex(x => x.Id == old.Id)] = entry);
-        HasError = false; Status = "明示したTemplateへ再リンクしました。Library IDは維持しています。";
+        HasError = false; Status = "指定したテンプレートへ再リンクしました。登録IDは維持しています。";
     }
     public void UnregisterLibrary()
     {
-        var id = SelectedLibraryEntry?.Id ?? throw new InvalidOperationException("登録解除するLibrary項目を選んでください。");
+        var id = SelectedLibraryEntry?.Id ?? throw new InvalidOperationException("登録解除するテンプレートを選んでください。");
         EditSettings(next => { next.Library.RemoveAll(x => x.Id == id); OnLibraryUnregistered(next, id); });
-        HasError = false; Status = "Libraryから登録解除しました。YMM4のTemplateとTimelineは変更していません。";
+        HasError = false; Status = "テンプレート管理から登録解除しました。YMM4のテンプレートとタイムラインは変更していません。";
     }
     private void UpdateLibraryCommands()
     {
