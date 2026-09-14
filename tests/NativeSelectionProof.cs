@@ -32,10 +32,12 @@ internal static partial class NativeProof
         undo.Record(); vm.Refresh();
         vm.SelectedSourceTemplate = template; vm.LibraryDisplayName = "飾り"; var entry = vm.RegisterLibrary();
         vm.SelectionTemplate = vm.SelectionTemplates.Single(x => x.Id == entry.Id);
+        // TryAddItems selects inserted Items in the host. Establish the intended empty context explicitly.
+        timeline.SelectedItems = [];
         view.MainTabs.SelectedIndex = 1; await Idle();
         var surface = view.SelectionSurface;
         Assert(surface.IsLoaded && ReferenceEquals(surface.DataContext, vm), "W9 actual Selection panel is hosted in native YMM4");
-        Assert(vm.SelectionProfiles.Count == 0 && !vm.PlaceSelectionCommand.CanExecute(null), "W9 no selection exposes no unusable profiles");
+        Assert(timeline.SelectedItems.Count == 0 && vm.SelectionProfiles.Count == 0 && !vm.PlaceSelectionCommand.CanExecute(null), "W9 no selection exposes no unusable profiles");
         timeline.SelectedItems = [target]; await Idle();
         Assert(vm.SelectionProfiles.Count == 2 && surface.ProfileSelector.Items.Count == 2, "W9 single native target exposes only Companion and Point");
         var defaultCompanion = vm.SelectedSelectionPreset!.Id;
@@ -69,14 +71,14 @@ internal static partial class NativeProof
         var placed = Signature(timeline); await undo.UndoAsync(); await Idle();
         Assert(Signature(timeline) == stable, "W9 Companion is one native Undo");
         await undo.RedoAsync(); await Idle(); Assert(Signature(timeline) == placed, "W9 Companion is one native Redo");
-        await undo.UndoAsync(); await Idle();
+        await undo.UndoAsync(); await Idle(); timeline.SelectedItems = [target];
         RejectWithoutMutation(timeline, () => SelectionPlacement.Create(timeline, entry, companion with { StartOffset = int.MinValue }), "W9 negative start rejects without partial addition");
         RejectWithoutMutation(timeline, () => SelectionPlacement.Create(timeline, entry, companion with { EndOffset = int.MaxValue }), "W9 overflow rejects without partial addition");
         RejectWithoutMutation(timeline, () => SelectionPlacement.Create(timeline, entry, companion with { Layer = companion.Layer with { Maximum = 80 } }), "W9 exhausted Layer band preserves all existing items");
         var stale = SelectionPlacement.Create(timeline, entry, companion); target.Frame++;
         RejectWithoutMutation(timeline, () => stale.Plan.Commit(timeline, undo), "W9 existing stale-plan guard covers target changes"); target.Frame--;
         timeline.SelectedItems = [target, blocker]; await Idle();
-        Assert(vm.SelectionProfiles.Count == 0 && !vm.PlaceSelectionCommand.CanExecute(null), "W9 multiple selection does not offer single-target profiles");
+        Assert(vm.SelectionProfiles.All(x => x.Value is not (SelectionProfile.TargetCompanion or SelectionProfile.PointEmphasis)) && !vm.PlaceSelectionCommand.CanExecute(null), "W9 multiple selection does not offer single-target profiles");
         RejectWithoutMutation(timeline, () => vm.PlaceSelection(), "W9 invalid multi-target cardinality is enforced before mutation");
         timeline.SelectedItems = [blocker]; await Idle();
         RejectWithoutMutation(timeline, () => vm.PlaceSelection(), "W9 another Character target is never silently rewritten");
@@ -102,6 +104,7 @@ internal static partial class NativeProof
         added = timeline.Items.Except(before).Single();
         Assert(!vm.HasError && added.Frame == 3027 && added.Length == 7 && added.Layer == 80, "W9 actual Point WPF Place uses current point preset");
         await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == stable, "W9 Point is one native Undo preserving unrelated items");
+        timeline.SelectedItems = [target];
         vm.DeleteSelectionPreset();
         RejectWithoutMutation(timeline, vm.DeleteSelectionPreset, "W9 each Profile retains at least one saved preset");
         vm.SelectedSelectionProfile = vm.SelectionProfiles.Single(x => x.Value == SelectionProfile.TargetCompanion);
