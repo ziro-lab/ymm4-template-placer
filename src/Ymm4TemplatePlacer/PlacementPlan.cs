@@ -26,20 +26,20 @@ public sealed class PlacementPlan
         Count = additions.Count;
         updates = itemUpdates?.ToArray() ?? [];
         if (additions.Distinct().Count() != Count || additions.Any(before.Contains))
-            throw new InvalidOperationException("追加Itemが独立していません。Timelineは変更していません。");
+            throw new InvalidOperationException("追加アイテムが独立していません。タイムラインは変更していません。");
         if (updates.Select(x => x.Item).Distinct().Count() != updates.Length || updates.Any(x => !before.Contains(x.Item)))
-            throw new InvalidOperationException("更新対象が現在のTimelineで一意ではありません。Timelineは変更していません。");
+            throw new InvalidOperationException("更新対象が現在のタイムラインで一意ではありません。タイムラインは変更していません。");
         foreach (var item in additions) PlacementMath.ValidateSpan(item.Frame, item.Length);
         foreach (var update in updates) PlacementMath.ValidateSpan(update.Frame, update.Length);
         if (additions.Any(x => x.Layer < 0) || updates.Any(x => x.Layer < 0))
-            throw new InvalidOperationException("配置Layerは0以上にしてください。");
+            throw new InvalidOperationException("配置レイヤーは0以上にしてください。");
         var geometryUpdates = updates.Where(x => x.Frame != x.Item.Frame || x.Length != x.Item.Length || x.Layer != x.Item.Layer).ToArray();
         var moving = geometryUpdates.Select(x => x.Item).ToHashSet();
         var occupancy = before.Where(x => !moving.Contains(x)).Select(x => (x.Frame, x.Length, x.Layer)).ToList();
         void Reserve(int frame, int length, int layer)
         {
             if (occupancy.Any(x => x.Layer == layer && PlacementMath.Overlaps(x.Frame, x.Length, frame, length)))
-                throw new InvalidOperationException($"配置先が重なります（Frame={frame}, Layer={layer}）。空きLayerを指定してください。Timelineは変更していません。");
+                throw new InvalidOperationException($"配置先が重なります（開始={frame}, レイヤー={layer}）。空きレイヤーを指定してください。タイムラインは変更していません。");
             occupancy.Add((frame, length, layer));
         }
         foreach (var update in geometryUpdates) Reserve(update.Frame, update.Length, update.Layer);
@@ -52,7 +52,7 @@ public sealed class PlacementPlan
     {
         if (!ReferenceEquals(before, timeline.Items) || observed.Any(x => x.Item.Frame != x.Frame || x.Item.Length != x.Length || x.Item.Layer != x.Layer ||
             x.Item.Group != x.Group || x.Item.Remark != x.Remark || !Equals(ItemCharacters.Get(x.Item), x.Character)))
-            throw new InvalidOperationException("計画後にTimelineまたは配置Itemが変更されました。操作をやり直してください。");
+            throw new InvalidOperationException("計画後にタイムラインまたは配置アイテムが変更されました。操作をやり直してください。");
         if (Count == 0 && updates.Length == 0) return 0;
         undo.Record();
         foreach (var update in updates)
@@ -72,7 +72,7 @@ public static class PlacementMath
     public static void ValidateSpan(int frame, int length)
     {
         if (frame < 0 || length <= 0 || (long)frame + length > int.MaxValue)
-            throw new InvalidOperationException("配置Frame / Lengthが範囲外です。Frameは0以上、Lengthは1以上にしてください。");
+            throw new InvalidOperationException("配置の開始位置 / 長さが範囲外です。開始位置は0以上、長さは1以上にしてください。");
     }
     public static bool Overlaps(int frameA, int lengthA, int frameB, int lengthB) =>
         (long)frameA < (long)frameB + lengthB && (long)frameB < (long)frameA + lengthA;
