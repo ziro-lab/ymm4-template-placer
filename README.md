@@ -1,14 +1,14 @@
-# YMM4 Template Placer — v0.3.0 implemented / v0.4 designed
+# YMM4 Template Placer — v0.3.1 implemented / v0.4 designed
 
 YMM4の登録済みItem Templateを、編集作業で使いやすい形に整理・配置するための支援Pluginです。
 
 ## Current state
 
-**v0.3.0 is implemented and verified.** GitHub Actionsのnative Windows runner上の実YMM4 4.55.1.1 Liteで、Voice一覧 / Character対応Face Template / 配置 / Excel / Safety / 標準Undo/RedoまでP0〜P8を通しています。
+**v0.3.1 is implemented and verified.** v0.3.0のVoice一覧 / Character対応Face Template / 配置 / Excel / Safety / 標準Undo/Redoを維持したまま、Timeline Toolを閉じて再表示できるlifecycle hotfixを追加しました。GitHub Actionsのnative Windows runner上の実YMM4 4.55.1.1 LiteでP1〜P9を通し、P9ではToolAreaの非表示→再表示とTimeline不変を確認しています。
 
 **v0.4 is the current implementation target.** v0.4では、v0.3のVoice→Faceだけを一般化するのではなく、YMM4 TemplateをPlugin Library / Paletteで整理し、有限のsemantic Placement Profileで安全に配置する構造へ拡張します。正本は [DESIGN](docs/DESIGN.md)、実装・実機検証順は [ROADMAP](docs/ROADMAP.md) です。
 
-v0.3で実証済みの実装詳細と検証境界は [IMPLEMENTATION](docs/IMPLEMENTATION.md) / [VERIFICATION](docs/VERIFICATION.md) に残しています。
+v0.3.0で実証済みの実装詳細と検証境界は [IMPLEMENTATION](docs/IMPLEMENTATION.md) / [VERIFICATION](docs/VERIFICATION.md) に残しています。v0.3.1はそこへTool lifecycle hotfixとP9を追加した現在の回帰Baselineです。
 
 ## v0.4 product direction
 
@@ -60,9 +60,9 @@ ID一致
 
 Quick Dropは再同期対象外です。通常Placementも既存Itemを勝手に削除しません。削除はYMM4標準操作で行います。
 
-## v0.3 usage
+## v0.3.x usage
 
-現在配布済みのv0.3.0では、対象Sceneを開いてツールからYMM4 Template Placerを開き、Voice一覧のTemplateを選んで配置します。
+現在のBaseline v0.3.1では、対象Sceneを開いてツールからYMM4 Template Placerを開き、Voice一覧のTemplateを選んで配置します。ToolはYMM4側で閉じて、必要な時に再表示できます。
 
 ```text
 対象Sceneを開く
