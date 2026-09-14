@@ -12,8 +12,13 @@
    <TextBlock Text="Preset"/>
    <ComboBox x:Name="SelectionPresetSelector" ItemsSource="{Binding SelectionPresets}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSelectionPreset,Mode=TwoWay}" Margin="0,2,0,6"/>
    <TextBlock Text="Library Template（未登録ならLibraryタブで追加）" TextWrapping="Wrap"/>
-   <ComboBox x:Name="TemplateSelector" ItemsSource="{Binding SelectionTemplates}" SelectedItem="{Binding SelectionTemplate,Mode=TwoWay}" Margin="0,2,0,6">
-    <ComboBox.ItemTemplate><DataTemplate><StackPanel><TextBlock Text="{Binding DisplayName}"/><TextBlock Text="{Binding Status}" FontSize="11" Opacity="0.7"/></StackPanel></DataTemplate></ComboBox.ItemTemplate>
+   <ComboBox x:Name="TemplateSelector" ItemsSource="{Binding SelectionTemplates}" SelectedItem="{Binding SelectionTemplate,Mode=TwoWay}" TextSearch.TextPath="DisplayName" Margin="0,2,0,6">
+    <ComboBox.ItemTemplate><DataTemplate><StackPanel>
+     <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+     <TextBlock Text="{Binding CharacterName}" FontSize="11" Opacity="0.8"/>
+     <TextBlock Text="{Binding SourceName}" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip="{Binding SourceName}"/>
+     <TextBlock Text="{Binding Status}" FontSize="11" Opacity="0.7"/>
+    </StackPanel></DataTemplate></ComboBox.ItemTemplate>
    </ComboBox>
    <Expander x:Name="SelectionPresetEditor" Header="Presetの条件を編集" Margin="0,2,0,6">
     <StackPanel Margin="4">
