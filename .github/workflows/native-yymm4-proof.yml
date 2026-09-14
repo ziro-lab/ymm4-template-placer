@@ -52,8 +52,7 @@ jobs:
           $proof=Join-Path $env:RUNNER_TEMP 'placer-proof-build'
           dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release "-p:YMM4DirPath=$env:YMM4_DIR" -p:Ymm4Proof=true -o $proof --nologo -warnaserror 2>&1 | Tee-Object out/build-proof.txt
           if ($LASTEXITCODE -ne 0) { throw 'Proof build failed' }
-          # Shared platform assemblies already belong to the YMM4 host. Test and ship
-          # only this plugin and the Open XML runtime dependencies, not SDK copies.
+          # Shared platform assemblies belong to YMM4, not this distributable.
           foreach ($folder in @('out/package',$proof)) {
             foreach ($file in @('Microsoft.Windows.SDK.NET.dll','WinRT.Runtime.dll')) {
               Remove-Item (Join-Path $folder $file) -ErrorAction SilentlyContinue
@@ -63,11 +62,10 @@ jobs:
           New-Item -ItemType Directory -Force $dest | Out-Null
           Copy-Item "$proof/*.dll" $dest
           Copy-Item "$proof/*.deps.json" $dest
-      - name: Run P1-P9 in actual native YMM4
+      - name: Run P1-P9 and integrated v0.4 acceptance in actual YMM4
         if: steps.scope.outputs.run == 'true'
         shell: pwsh
-        run: |
-          ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -DistributionDir (Join-Path $PWD 'out/package')
+        run: ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -DistributionDir (Join-Path $PWD 'out/package')
       - name: Native release DLL identity smoke test
         if: steps.scope.outputs.run == 'true'
         shell: pwsh
@@ -77,33 +75,10 @@ jobs:
           Copy-Item out/package/*.dll $dest
           Copy-Item out/package/*.deps.json $dest
           ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -ReleaseSmoke
-      - name: Package verified distributable
+      - name: Package verified v0.4 distributable and source
         if: steps.scope.outputs.run == 'true'
         shell: pwsh
-        run: |
-          Copy-Item docs/USAGE.md out/package/README.md
-          Copy-Item THIRD_PARTY_NOTICES.md out/package/
-          Remove-Item out/package/*.pdb -ErrorAction SilentlyContinue
-          $event=Get-Content -Raw $env:GITHUB_EVENT_PATH | ConvertFrom-Json
-          $sourceHead=if ($env:GITHUB_EVENT_NAME -eq 'pull_request') { $event.pull_request.head.sha } else { $env:GITHUB_SHA }
-          [ordered]@{
-            schema='YMM4-Template-Placer-Provenance/1'; repository=$env:GITHUB_REPOSITORY
-            source_head=$sourceHead; checkout_commit=(git rev-parse HEAD); checkout_tree=(git rev-parse 'HEAD^{tree}')
-            run_id=$env:GITHUB_RUN_ID; run_url="https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
-            ymm4_version='4.55.1.1 Lite'; ymm4_zip_sha256='125860147cc33b831fc1a6d6ea996958001c2ead3b0d37f7d900251d5617db9b'
-            result=(Get-Content -Raw out/proof-result.txt).Trim()
-            native_assertions=@(Select-String -Path out/proof-log.txt -Pattern '^ASSERT PASS:').Count
-            distribution_dll_sha256=(Get-FileHash out/package/Ymm4TemplatePlacer.dll -Algorithm SHA256).Hash.ToLowerInvariant()
-          } | ConvertTo-Json | Set-Content out/provenance.json
-          Copy-Item out/provenance.json out/package/
-          $forbidden=@(Get-ChildItem out/package -Filter '*.dll' | Where-Object { $_.Name -notin @('Ymm4TemplatePlacer.dll','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll') })
-          if ($forbidden.Count) { throw 'Unexpected DLL in distributable' }
-          Compress-Archive -Path out/package/* -DestinationPath out/Ymm4TemplatePlacer-v0.3.1.zip
-          Move-Item out/Ymm4TemplatePlacer-v0.3.1.zip out/Ymm4TemplatePlacer-v0.3.1.ymme
-          Copy-Item out/package/Ymm4TemplatePlacer.dll out/Ymm4TemplatePlacer.dll
-          git archive --format=zip -o out/Ymm4TemplatePlacer-source.zip HEAD
-          if ($LASTEXITCODE -ne 0) { throw 'Source archive failed' }
-          Get-FileHash out/Ymm4TemplatePlacer* -Algorithm SHA256 | Select-Object @{Name='File';Expression={Split-Path $_.Path -Leaf}},Hash | ConvertTo-Json | Set-Content out/SHA256.json
+        run: ./tests/PackageVerified.ps1 -OutputDir out
       - name: Upload native proof and distributable
         if: always() && steps.scope.outputs.run == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
