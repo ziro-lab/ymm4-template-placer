@@ -97,8 +97,14 @@ internal static partial class NativeProof
     private static void SaveView(PlacerView view)
     {
         view.UpdateLayout(); Assert(view.ActualWidth > 0 && view.ActualHeight > 0, "native UI has measured visible dimensions");
-        var bitmap = new RenderTargetBitmap((int)Math.Ceiling(view.ActualWidth), (int)Math.Ceiling(view.ActualHeight), 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(view); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        var bounds = new Rect(0, 0, view.ActualWidth, view.ActualHeight);
+        var bitmap = new RenderTargetBitmap((int)Math.Ceiling(bounds.Width), (int)Math.Ceiling(bounds.Height), 96, 96, PixelFormats.Pbgra32);
+        // The host can center a narrow Tool inside a wider slot. Capture the control's
+        // local rectangle, not its parent's offset, without rearranging the live UI.
+        var visual = new DrawingVisual();
+        using (var drawing = visual.RenderOpen())
+            drawing.DrawRectangle(new VisualBrush(view) { ViewboxUnits = BrushMappingMode.Absolute, Viewbox = bounds, Stretch = Stretch.Fill }, null, bounds);
+        bitmap.Render(visual); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
         using var file = File.Create(Path.Combine(output, "native-plugin-ui.png")); encoder.Save(file);
     }
     private static S.Worksheet Sheet(WorkbookPart book, string name)
