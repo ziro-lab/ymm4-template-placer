@@ -1,6 +1,7 @@
 <UserControl x:Class="Ymm4TemplatePlacer.SelectionPanel"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
- xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:local="clr-namespace:Ymm4TemplatePlacer">
  <UserControl.Resources><BooleanToVisibilityConverter x:Key="BoolVisibility"/></UserControl.Resources>
  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
   <StackPanel Margin="8">
@@ -27,11 +28,22 @@
       <TextBlock Text="固定長（frame、1以上）"/>
       <TextBox Text="{Binding SelectionDraft.Duration,UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
      </StackPanel>
-     <TextBlock Text="開始offset（frame）"/>
-     <TextBox Text="{Binding SelectionDraft.StartOffset,UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
+     <StackPanel>
+      <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding SelectedSelectionPreset.Profile}" Value="{x:Static local:SelectionProfile.SelectionRange}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+      <TextBlock Text="開始offset（frame）"/>
+      <TextBox Text="{Binding SelectionDraft.StartOffset,UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
+     </StackPanel>
      <StackPanel Visibility="{Binding IsCompanionProfile,Converter={StaticResource BoolVisibility}}">
       <TextBlock Text="終了offset（frame）"/>
       <TextBox Text="{Binding SelectionDraft.EndOffset,UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
+     </StackPanel>
+     <StackPanel x:Name="RangePaddingFields">
+      <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SelectedSelectionPreset.Profile}" Value="{x:Static local:SelectionProfile.SelectionRange}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+      <TextBlock Text="選択Item全体を1つで覆います。余白は0以上のframe数です。" TextWrapping="Wrap"/>
+      <TextBlock Text="開始前の余白"/>
+      <TextBox Text="{Binding SelectionDraft.HeadPadding,UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
+      <TextBlock Text="終了後の余白"/>
+      <TextBox Text="{Binding SelectionDraft.TailPadding,UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6"/>
      </StackPanel>
      <CheckBox Content="TemplateのLayerを使う（衝突時は停止）" IsChecked="{Binding SelectionDraft.UseTemplateLayer}" Margin="0,2,0,6"/>
      <TextBlock Text="Layer範囲を使う場合は上のチェックを外す。探索上限はPlugin側の9999。" TextWrapping="Wrap"/>
