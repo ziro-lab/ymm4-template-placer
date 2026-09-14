@@ -7,5 +7,6 @@ internal static partial class NativeProof
     {
         await VerifyLibrary(timeline);
         await VerifyPalettes(timeline);
+        await VerifyQuickDrop(timeline, undo);
     }
 }
