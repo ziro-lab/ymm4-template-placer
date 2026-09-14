@@ -9,5 +9,6 @@ internal static partial class NativeProof
         await VerifyPalettes(timeline);
         await VerifyQuickDrop(timeline, undo);
         await VerifyExpressionPresets(timeline, undo);
+        await VerifyAssociations(timeline, undo);
     }
 }
