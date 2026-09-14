@@ -1,5 +1,11 @@
 # ROADMAP — v0.4 implementation and native YMM4 proof ladder
 
+## Completed integrated Candidate
+
+**W1-W12 are complete at the native-verified v0.4.0 checkpoint.** See `docs/W12_NATIVE_CHECKPOINT.md`: verified source `4938217471f183664ba40e5299fcd3bbb6432568`, run `34868820375`, 384 native assertions, all 18 Acceptance items, 0 compiler warnings/errors, release DLL smoke and versioned packaging PASS. PR #6 remains Draft; main is not merged.
+
+The sections below preserve the original implementation order and exit conditions. They are not an instruction to reimplement completed work. Current usage is `docs/USAGE.md`; exact Profile geometry is `docs/SELECTION_PLACEMENT.md`; verification mapping is `docs/V0.4_ACCEPTANCE.md`. Later documentation-only checkpoints or PR runs are identified by their own source/run provenance.
+
 ## Baseline
 
 v0.3.0 P0〜P8 is already implemented and verified on native YMM4 4.55.1.1 Lite. `docs/VERIFICATION.md` records the proven baseline. v0.4 must preserve those Golden Paths while changing the product from one Voice→Face replacement flow into Library / Palette / semantic add-only placement.
