@@ -99,11 +99,13 @@ internal static partial class NativeProof
         view.UpdateLayout(); Assert(view.ActualWidth > 0 && view.ActualHeight > 0, "native UI has measured visible dimensions");
         var bounds = new Rect(0, 0, view.ActualWidth, view.ActualHeight);
         var bitmap = new RenderTargetBitmap((int)Math.Ceiling(bounds.Width), (int)Math.Ceiling(bounds.Height), 96, 96, PixelFormats.Pbgra32);
-        // The host can center a narrow Tool inside a wider slot. Capture the control's
-        // local rectangle, not its parent's offset, without rearranging the live UI.
+        // VisualBrush retains the root visual's layout offset. Sample that exact
+        // source rectangle into a local-origin image without rearranging the host UI.
         var visual = new DrawingVisual();
+        var offset = VisualTreeHelper.GetOffset(view);
+        var sourceBounds = new Rect(offset.X, offset.Y, bounds.Width, bounds.Height);
         using (var drawing = visual.RenderOpen())
-            drawing.DrawRectangle(new VisualBrush(view) { ViewboxUnits = BrushMappingMode.Absolute, Viewbox = bounds, Stretch = Stretch.Fill }, null, bounds);
+            drawing.DrawRectangle(new VisualBrush(view) { ViewboxUnits = BrushMappingMode.Absolute, Viewbox = sourceBounds, Stretch = Stretch.Fill }, null, bounds);
         bitmap.Render(visual); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
         using var file = File.Create(Path.Combine(output, "native-plugin-ui.png")); encoder.Save(file);
     }
