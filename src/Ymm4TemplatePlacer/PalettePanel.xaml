@@ -5,7 +5,7 @@
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <DockPanel Grid.Row="0" Margin="0,0,0,6">
    <Button x:Name="NewPaletteButton" Content="＋ パレット" Command="{Binding BeginCreatePaletteCommand}" DockPanel.Dock="Right" Padding="8,3" Margin="6,0,0,0"/>
-   <ComboBox x:Name="PaletteSelector" ItemsSource="{Binding PaletteChoices}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedPalette,Mode=TwoWay}" TextSearch.TextPath="Name" AutomationProperties.Name="パレット"/>
+   <ComboBox x:Name="PaletteSelector" ItemsSource="{Binding PaletteChoices}" DisplayMemberPath="DisplayLabel" SelectedItem="{Binding SelectedPalette,Mode=TwoWay}" TextSearch.TextPath="DisplayLabel" AutomationProperties.Name="パレット"/>
   </DockPanel>
   <StackPanel Grid.Row="1" Margin="0,0,0,6">
    <TextBlock Text="{Binding PaletteContextStatus}" ToolTip="{Binding PaletteContextDetail}" TextWrapping="Wrap" Opacity="0.75">
