@@ -97,7 +97,7 @@ internal static partial class NativeProof
             "WUX8 changed Voice is not guessed back into an old assignment and the partial resume is truthful");
         Assert(Signature(timeline) == changedSignature && File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(settingsBytes),
             "WUX8 rejected stale resume does not mutate Timeline or settings");
-        voice.Serif = originalSerif; vm.Refresh();
+        voice.Serif = originalSerif ?? ""; vm.Refresh();
 
         // Restore persistent setup to the exact pre-proof configuration.
         timeline.SelectedItems = [];
