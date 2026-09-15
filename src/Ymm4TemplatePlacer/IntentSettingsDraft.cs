@@ -13,9 +13,10 @@ public abstract class IntentEditable : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
     public event EventHandler? Edited;
+    protected void Raise([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
     protected void Notify([CallerMemberName] string? name = null)
     {
-        PropertyChanged?.Invoke(this, new(name)); Edited?.Invoke(this, EventArgs.Empty);
+        Raise(name); Edited?.Invoke(this, EventArgs.Empty);
     }
     protected static int Number(string value, string label) => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n)
         ? n : throw new InvalidOperationException($"{label}は整数で入力してください。");
@@ -67,10 +68,25 @@ public sealed class IntentPaletteDraft : IntentEditable
     private IntentPalette model;
     private readonly Dictionary<string, string> text = new(StringComparer.Ordinal);
     private IntentEntryDraft? selectedEntry;
+    private bool characterRestricted;
     public Guid Id => model.Id;
     private string Get([CallerMemberName] string key = "") => text.GetValueOrDefault(key, "");
-    private void Put(string value, [CallerMemberName] string key = "") { text[key] = value; Notify(key); if (key == nameof(Name)) Notify(nameof(Label)); }
-    private void Change(IntentPalette value, [CallerMemberName] string name = "") { model = value; Notify(name); }
+    private void Put(string value, [CallerMemberName] string key = "")
+    {
+        text[key] = value; Notify(key);
+        if (key == nameof(Name)) Raise(nameof(Label));
+        RaiseUiState();
+    }
+    private void Change(IntentPalette value, [CallerMemberName] string name = "")
+    {
+        model = value; Notify(name); RaiseUiState();
+    }
+    private void RaiseUiState()
+    {
+        Raise(nameof(Summary)); Raise(nameof(ShowTypeMatch)); Raise(nameof(ShowFixedDuration)); Raise(nameof(ShowNeighborSettings));
+        Raise(nameof(ShowNeighborEdge)); Raise(nameof(ShowNeighborFallback)); Raise(nameof(ShowMaximumGap)); Raise(nameof(ShowBoundaryTolerance));
+        Raise(nameof(ShowAlignment)); Raise(nameof(ShowCharacterName)); Raise(nameof(CharacterRestrictionLabel));
+    }
     public string Name { get => Get(); set => Put(value); }
     public string Label => Name;
     public string Intent { get => Get(); set => Put(value); }
@@ -86,48 +102,151 @@ public sealed class IntentPaletteDraft : IntentEditable
     public string LayerMinimum { get => Get(); set => Put(value); }
     public string LayerMaximum { get => Get(); set => Put(value); }
     public IntentTypeMatch TypeMatch { get => model.Target.TypeMatch; set => Change(model with { Target = model.Target with { TypeMatch = value } }); }
-    public IntentAnchor Anchor { get => model.Relation.Anchor; set => Change(model with { Relation = model.Relation with { Anchor = value } }); }
+    public IntentAnchor Anchor
+    {
+        get => model.Relation.Anchor;
+        set
+        {
+            var relation = model.Relation with { Anchor = value };
+            if ((value is IntentAnchor.RelatedStart or IntentAnchor.RelatedEnd) && relation.Neighbor == IntentNeighbor.None)
+                relation = relation with { Neighbor = DefaultNeighbor() };
+            Change(model with { Relation = relation });
+            Raise(nameof(Neighbor));
+        }
+    }
     public IntentAlignment Alignment { get => model.Relation.Alignment; set => Change(model with { Relation = model.Relation with { Alignment = value } }); }
-    public IntentDuration Duration { get => model.Relation.Duration; set => Change(model with { Relation = model.Relation with { Duration = value } }); }
+    public IntentDuration Duration
+    {
+        get => model.Relation.Duration;
+        set
+        {
+            var relation = model.Relation with { Duration = value };
+            if (value == IntentDuration.UntilRelated)
+            {
+                if (relation.Neighbor == IntentNeighbor.None) relation = relation with { Neighbor = DefaultNeighbor() };
+                if (relation.Alignment != IntentAlignment.StartAtAnchor) relation = relation with { Alignment = IntentAlignment.StartAtAnchor };
+            }
+            Change(model with { Relation = relation });
+            Raise(nameof(Neighbor)); Raise(nameof(Alignment));
+        }
+    }
     public IntentNeighbor Neighbor { get => model.Relation.Neighbor; set => Change(model with { Relation = model.Relation with { Neighbor = value } }); }
     public IntentNeighborEdge NeighborEdge { get => model.Relation.NeighborEdge; set => Change(model with { Relation = model.Relation with { NeighborEdge = value } }); }
     public IntentFallback Fallback { get => model.Relation.Fallback; set => Change(model with { Relation = model.Relation with { Fallback = value } }); }
     public RelativeLayerDirection Direction { get => model.Relation.Layer.Direction; set => Change(model with { Relation = model.Relation with { Layer = model.Relation.Layer with { Direction = value } } }); }
     public bool ExpressionCandidates { get => model.ExpressionCandidates; set => Change(model with { ExpressionCandidates = value }); }
+    public bool CharacterRestricted
+    {
+        get => characterRestricted;
+        set
+        {
+            if (characterRestricted == value) return;
+            characterRestricted = value;
+            Notify(); RaiseUiState();
+        }
+    }
+    public string CharacterRestrictionLabel => CharacterRestricted && !string.IsNullOrWhiteSpace(CharacterName)
+        ? $"キャラクターを限定: {CharacterName.Trim()}" : "キャラクターを限定";
+    public bool ShowCharacterName => CharacterRestricted;
+    public bool ShowTypeMatch => TypeChoices.Count(x => x.Selected) > 1;
+    public bool ShowFixedDuration => Duration == IntentDuration.Fixed || (ShowNeighborFallback && Fallback == IntentFallback.FixedDuration);
+    public bool ShowNeighborSettings => Duration == IntentDuration.UntilRelated || (Anchor is IntentAnchor.RelatedStart or IntentAnchor.RelatedEnd);
+    public bool ShowNeighborEdge => Duration == IntentDuration.UntilRelated && Neighbor != IntentNeighbor.None;
+    public bool ShowNeighborFallback => ShowNeighborSettings && Neighbor != IntentNeighbor.None;
+    public bool ShowMaximumGap => ShowNeighborFallback;
+    public bool ShowBoundaryTolerance => Anchor == IntentAnchor.PairBoundary;
+    public bool ShowAlignment => Duration != IntentDuration.UntilRelated;
     public ObservableCollection<IntentTypeOption> TypeChoices { get; } = [];
     public ObservableCollection<IntentEntryDraft> Entries { get; } = [];
     public IntentEntryDraft? SelectedEntry { get => selectedEntry; set { selectedEntry = value; Notify(); } }
+    public string Summary => BuildSummary();
+
     public IntentPaletteDraft(IntentPalette source, IReadOnlyList<LibraryEntry> library, IReadOnlyDictionary<string, string> types)
     {
         model = IntentPaletteSettings.Copy(source);
-        Name = source.Name; Intent = source.Intent; CharacterName = source.Target.CharacterName ?? "";
-        MinimumCount = source.Target.MinimumCount.ToString(CultureInfo.InvariantCulture); MaximumCount = source.Target.MaximumCount.ToString(CultureInfo.InvariantCulture);
-        StartOffset = source.Relation.StartOffset.ToString(CultureInfo.InvariantCulture); EndOffset = source.Relation.EndOffset.ToString(CultureInfo.InvariantCulture);
-        FixedDuration = source.Relation.FixedDuration.ToString(CultureInfo.InvariantCulture); MaximumGap = source.Relation.MaximumNeighborGap?.ToString(CultureInfo.InvariantCulture) ?? "";
-        BoundaryTolerance = source.Relation.BoundaryTolerance.ToString(CultureInfo.InvariantCulture);
-        LayerOffset = source.Relation.Layer.Offset.ToString(CultureInfo.InvariantCulture); LayerMinimum = source.Relation.Layer.Minimum.ToString(CultureInfo.InvariantCulture);
-        LayerMaximum = source.Relation.Layer.Maximum.ToString(CultureInfo.InvariantCulture);
+        text[nameof(Name)] = source.Name; text[nameof(Intent)] = source.Intent; text[nameof(CharacterName)] = source.Target.CharacterName ?? "";
+        text[nameof(MinimumCount)] = source.Target.MinimumCount.ToString(CultureInfo.InvariantCulture);
+        text[nameof(MaximumCount)] = source.Target.MaximumCount.ToString(CultureInfo.InvariantCulture);
+        text[nameof(StartOffset)] = source.Relation.StartOffset.ToString(CultureInfo.InvariantCulture);
+        text[nameof(EndOffset)] = source.Relation.EndOffset.ToString(CultureInfo.InvariantCulture);
+        text[nameof(FixedDuration)] = source.Relation.FixedDuration.ToString(CultureInfo.InvariantCulture);
+        text[nameof(MaximumGap)] = source.Relation.MaximumNeighborGap?.ToString(CultureInfo.InvariantCulture) ?? "";
+        text[nameof(BoundaryTolerance)] = source.Relation.BoundaryTolerance.ToString(CultureInfo.InvariantCulture);
+        text[nameof(LayerOffset)] = source.Relation.Layer.Offset.ToString(CultureInfo.InvariantCulture);
+        text[nameof(LayerMinimum)] = source.Relation.Layer.Minimum.ToString(CultureInfo.InvariantCulture);
+        text[nameof(LayerMaximum)] = source.Relation.Layer.Maximum.ToString(CultureInfo.InvariantCulture);
+        characterRestricted = !string.IsNullOrWhiteSpace(source.Target.CharacterName);
         foreach (var key in types.Keys.Concat(source.Target.ItemTypeKeys).Distinct(StringComparer.Ordinal))
         {
-            var option = new IntentTypeOption(key, types.GetValueOrDefault(key) ?? "利用できない種類: " + key, source.Target.ItemTypeKeys.Contains(key));
-            option.Edited += (_, _) => Notify(nameof(TypeChoices)); TypeChoices.Add(option);
+            var option = new IntentTypeOption(key, types.GetValueOrDefault(key) ?? "利用できない種類", source.Target.ItemTypeKeys.Contains(key));
+            option.Edited += (_, _) => { Notify(nameof(TypeChoices)); RaiseUiState(); }; TypeChoices.Add(option);
         }
         foreach (var entry in source.Entries) AddEntry(entry, library);
         Entries.CollectionChanged += (_, _) => Notify(nameof(Entries));
     }
+    private IntentNeighbor DefaultNeighbor() => CharacterRestricted ? IntentNeighbor.NextSameTypeAndCharacter : IntentNeighbor.NextSameType;
+    private string BuildSummary()
+    {
+        var selectedTypes = TypeChoices.Where(x => x.Selected).Select(x => x.Name).ToArray();
+        var target = selectedTypes.Length switch { 0 => "対象アイテム", 1 => selectedTypes[0], _ => string.Join("・", selectedTypes) };
+        if (CharacterRestricted && !string.IsNullOrWhiteSpace(CharacterName)) target = $"{CharacterName.Trim()}の{target}";
+        var anchor = Anchor switch
+        {
+            IntentAnchor.SelectedStart => "選択アイテムの開始",
+            IntentAnchor.SelectedEnd => "選択アイテムの終了",
+            IntentAnchor.SelectedCenter => "選択アイテムの中央",
+            IntentAnchor.SelectionRangeStart => "選択範囲の開始",
+            IntentAnchor.SelectionRangeEnd => "選択範囲の終了",
+            IntentAnchor.PairBoundary => "選択した2アイテムの境界",
+            IntentAnchor.RelatedStart => NeighborPhrase() + "の開始",
+            IntentAnchor.RelatedEnd => NeighborPhrase() + "の終了",
+            _ => "選択位置"
+        };
+        var timing = Duration switch
+        {
+            IntentDuration.Template => Alignment == IntentAlignment.EndAtAnchor ? $"{anchor}で終わるようにテンプレートの長さで" : $"{anchor}からテンプレートの長さで",
+            IntentDuration.TargetSpan => Alignment == IntentAlignment.EndAtAnchor ? $"{anchor}で終わるように選択対象と同じ長さで" : $"{anchor}から選択対象と同じ長さで",
+            IntentDuration.Fixed => Alignment == IntentAlignment.EndAtAnchor ? $"{anchor}で終わるように{ReadableFixedDuration()}で" : $"{anchor}から{ReadableFixedDuration()}で",
+            IntentDuration.UntilRelated => $"{anchor}から{NeighborPhrase()}の{(NeighborEdge == IntentNeighborEdge.Start ? "開始" : "終了")}まで",
+            _ => anchor
+        };
+        var direction = Direction == RelativeLayerDirection.Up ? "上" : "下";
+        var fallback = ShowNeighborFallback ? Fallback switch
+        {
+            IntentFallback.CurrentTargetEnd => " 見つからなければ現在の対象の終了までにします。",
+            IntentFallback.TargetSpan => " 見つからなければ現在の対象と同じ範囲にします。",
+            IntentFallback.FixedDuration => $" 見つからなければ{ReadableFixedDuration()}で配置します。",
+            IntentFallback.DoNotPlace => " 見つからなければ配置しません。",
+            _ => ""
+        } : "";
+        return $"{target}を選んだとき、{timing}、対象より{direction}の空いているレイヤーへ配置します。塞がっていればさらに{direction}へ探します。{fallback}".Trim();
+    }
+    private string NeighborPhrase() => Neighbor switch
+    {
+        IntentNeighbor.NextSameType => "次の同じ種類のアイテム",
+        IntentNeighbor.PreviousSameType => "前の同じ種類のアイテム",
+        IntentNeighbor.NextSameCharacter => "次の同じキャラのアイテム",
+        IntentNeighbor.PreviousSameCharacter => "前の同じキャラのアイテム",
+        IntentNeighbor.NextSameTypeAndCharacter => "次の同じ種類・同じキャラのアイテム",
+        IntentNeighbor.PreviousSameTypeAndCharacter => "前の同じ種類・同じキャラのアイテム",
+        _ => "周囲のアイテム"
+    };
+    private string ReadableFixedDuration() => int.TryParse(FixedDuration, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n > 0 ? $"{n}フレーム" : "指定した長さ";
     public void AddEntry(IntentEntry entry, IReadOnlyList<LibraryEntry> library)
     {
         var draft = new IntentEntryDraft(entry, library); draft.Edited += (_, _) => Notify(nameof(Entries)); Entries.Add(draft);
     }
     public IntentPalette Build()
     {
-        var target = model.Target with { ItemTypeKeys = TypeChoices.Where(x => x.Selected).Select(x => x.Key).ToList(),
+        var selectedTypes = TypeChoices.Where(x => x.Selected).Select(x => x.Key).ToList();
+        var target = model.Target with { ItemTypeKeys = selectedTypes, TypeMatch = selectedTypes.Count > 1 ? model.Target.TypeMatch : IntentTypeMatch.UniformType,
             MinimumCount = Number(MinimumCount, "選択数の最小"), MaximumCount = Number(MaximumCount, "選択数の最大"),
-            CharacterName = string.IsNullOrWhiteSpace(CharacterName) ? null : CharacterName.Trim() };
+            CharacterName = CharacterRestricted && !string.IsNullOrWhiteSpace(CharacterName) ? CharacterName.Trim() : null };
         var relation = model.Relation with { StartOffset = Number(StartOffset, "開始のずらし"), EndOffset = Number(EndOffset, "終了のずらし"),
-            FixedDuration = Number(FixedDuration, "固定の長さ"), MaximumNeighborGap = OptionalNumber(MaximumGap, "周囲参照の最大間隔"),
-            BoundaryTolerance = Number(BoundaryTolerance, "境界の許容間隔"), Layer = model.Relation.Layer with {
-                Offset = Number(LayerOffset, "対象からの段数"), Minimum = Number(LayerMinimum, "探索レイヤーの最小"), Maximum = Number(LayerMaximum, "探索レイヤーの最大") } };
+            FixedDuration = ShowFixedDuration ? Number(FixedDuration, "固定の長さ") : model.Relation.FixedDuration,
+            MaximumNeighborGap = ShowMaximumGap ? OptionalNumber(MaximumGap, "周囲参照の最大間隔") : model.Relation.MaximumNeighborGap,
+            BoundaryTolerance = ShowBoundaryTolerance ? Number(BoundaryTolerance, "境界の許容間隔") : model.Relation.BoundaryTolerance,
+            Layer = model.Relation.Layer with { Offset = Number(LayerOffset, "対象からの段数"), Minimum = Number(LayerMinimum, "探索レイヤーの最小"), Maximum = Number(LayerMaximum, "探索レイヤーの最大") } };
         return model with { Name = Name.Trim(), Intent = Intent.Trim(), Target = target, Relation = relation, Entries = Entries.Select(x => x.Build()).ToList() };
     }
 }
@@ -158,7 +277,7 @@ public sealed class IntentSettingsSession : IntentEditable
         Palettes.CollectionChanged += (_, _) => MarkDirty();
     }
     public static string TypeLabel(Type type) => type.Name switch { "VoiceItem" => "ボイス", "TachieFaceItem" => "表情", "TachieItem" => "立ち絵", "TextItem" => "テキスト", "VideoItem" => "動画", "AudioItem" => "音声", "ShapeItem" => "図形", "ImageItem" => "画像", _ => type.Name };
-    private void MarkDirty() { HasChanges = true; Notify(nameof(HasChanges)); Notify(nameof(ChangeNotice)); }
+    private void MarkDirty() { HasChanges = true; Notify(nameof(HasChanges)); Raise(nameof(ChangeNotice)); }
     private IntentPaletteDraft AddDraft(IntentPalette palette)
     {
         var draft = new IntentPaletteDraft(palette, working.Library, KnownTypes);
@@ -171,12 +290,16 @@ public sealed class IntentSettingsSession : IntentEditable
     }
     public void Create(IReadOnlyList<IItem> selection)
     {
+        if (selection.Count == 0) throw new InvalidOperationException("タイムラインで、このセットを使う対象アイテムを選択してから作成してください。");
         var types = selection.Select(x => IntentSelectionContext.TypeKey(x.GetType())).Distinct(StringComparer.Ordinal).ToList();
-        if (types.Count == 0) types.Add(IntentSelectionContext.TypeKey(typeof(VoiceItem)));
         var names = selection.Select(x => ItemCharacters.Get(x)?.Name).Distinct(StringComparer.Ordinal).ToArray();
         var context = new IntentTargetContext { ItemTypeKeys = types, TypeMatch = types.Count > 1 ? IntentTypeMatch.ExactMixedTypes : IntentTypeMatch.UniformType,
-            MinimumCount = Math.Max(1, selection.Count), MaximumCount = Math.Max(1, selection.Count), CharacterName = names.Length == 1 ? names[0] : null };
-        SelectedPalette = AddDraft(new(Guid.NewGuid(), UniqueName("新しいセット"), "演出", context, new(), [])); MarkDirty();
+            MinimumCount = selection.Count, MaximumCount = selection.Count, CharacterName = names.Length == 1 ? names[0] : null };
+        var defaultName = names.Length == 1 && !string.IsNullOrWhiteSpace(names[0]) ? names[0]! : "新しいセット";
+        var relation = new IntentRelation();
+        if (types.Count == 1 && types[0] == IntentSelectionContext.TypeKey(typeof(VoiceItem)) && names.Length == 1 && !string.IsNullOrWhiteSpace(names[0]))
+            relation = relation with { Duration = IntentDuration.UntilRelated, Neighbor = IntentNeighbor.NextSameTypeAndCharacter, Fallback = IntentFallback.CurrentTargetEnd };
+        SelectedPalette = AddDraft(new(Guid.NewGuid(), UniqueName(defaultName), types.Count == 1 && types[0] == IntentSelectionContext.TypeKey(typeof(VoiceItem)) ? "表情" : "演出", context, relation, [])); MarkDirty();
     }
     private string UniqueName(string stem)
     {
@@ -221,10 +344,10 @@ public sealed class IntentSettingsSession : IntentEditable
             var entry = matches.FirstOrDefault() ?? TemplateResolver.Reference(option.Source, option.Name, null);
             var bundle = TemplateResolver.RequireBundle(entry);
             if (!ReferenceEquals(bundle.Template, option.Source)) throw new InvalidOperationException("元テンプレートを一意に特定できません。");
-            var character = palette.CharacterName.Trim();
+            var character = palette.CharacterRestricted ? palette.CharacterName.Trim() : "";
             if (character.Length != 0 && bundle.Items.Any(x => ItemCharacters.Get(x) is { } c && c.Name != character))
                 throw new InvalidOperationException($"「{option.Name}」のキャラクターがセットの条件と違います。全件追加していません。");
-            if (palette.ExpressionCandidates && !bundle.HasFace) throw new InvalidOperationException("表情一覧用セットには表情を含むテンプレートを追加してください。");
+            if (palette.ExpressionCandidates && !bundle.HasFace) throw new InvalidOperationException("「表情をまとめて」用のセットには表情を含むテンプレートを追加してください。");
             if (matches.Length == 0) nextLibrary.Add(entry);
             if (!palette.Entries.Any(x => x.LibraryEntryId == entry.Id) && !additions.Any(x => x.Entry.LibraryEntryId == entry.Id))
                 additions.Add((new IntentEntry(entry.Id) { UseTemplateDuration = bundle.Items.Count > 1 }, option.Locator));
