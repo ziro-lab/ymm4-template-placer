@@ -4,7 +4,11 @@ using YukkuriMovieMaker.Settings;
 
 namespace Ymm4TemplatePlacer;
 
-public sealed record FaceTemplate(ItemTemplate Template, TachieFaceItem Face, string Name, string Character);
+public sealed record FaceTemplate(ItemTemplate Template, TachieFaceItem Face, string Name, string Character)
+{
+    // The representative Face is for labels and old workbook keys only. Intent placement always uses the complete bundle.
+    public IntentExpressionSource? IntentSource { get; init; }
+}
 
 public static class TemplateCatalog
 {
@@ -19,9 +23,10 @@ public static class TemplateCatalog
         }
         return result.OrderBy(x => x.Character, StringComparer.Ordinal).ThenBy(x => x.Name, StringComparer.Ordinal).ToArray();
     }
-
     public static IReadOnlyList<FaceTemplate> ForVoice(VoiceItem voice, IReadOnlyList<FaceTemplate> catalog) =>
-        catalog.Where(x => voice.Character != null && Equals(x.Face.Character, voice.Character)).ToArray();
+        catalog.Where(x => voice.Character != null && (x.IntentSource is { } intent
+            ? x.Character == voice.Character.Name && intent.Matches(voice)
+            : Equals(x.Face.Character, voice.Character))).ToArray();
 }
 
 public sealed record VoiceSnapshot(VoiceItem Voice, string Character, int Frame, int Length, string Serif, int Layer)

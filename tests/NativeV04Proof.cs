@@ -43,5 +43,6 @@ internal static partial class NativeProof
         await VerifyIntentCore(timeline, undo);
         await VerifyIntentSurface(timeline, undo);
         await VerifyIntentSettings(timeline, undo);
+        await VerifyRelativeExpressions(timeline, undo);
     }
 }

@@ -19,20 +19,16 @@ public sealed class PlacementPlan
     private readonly (IItem Item, int Frame, int Length, int Layer, int Group, string Remark, Character? Character)[] observed;
     public int Count { get; }
     public int UpdateCount => updates.Length;
-
     private PlacementPlan(Timeline timeline, IReadOnlyList<IItem> additions, IReadOnlyList<PlannedItemUpdate>? itemUpdates)
     {
-        before = timeline.Items;
-        Count = additions.Count;
-        updates = itemUpdates?.ToArray() ?? [];
+        before = timeline.Items; Count = additions.Count; updates = itemUpdates?.ToArray() ?? [];
         if (additions.Distinct().Count() != Count || additions.Any(before.Contains))
             throw new InvalidOperationException("追加アイテムが独立していません。タイムラインは変更していません。");
         if (updates.Select(x => x.Item).Distinct().Count() != updates.Length || updates.Any(x => !before.Contains(x.Item)))
             throw new InvalidOperationException("更新対象が現在のタイムラインで一意ではありません。タイムラインは変更していません。");
         foreach (var item in additions) PlacementMath.ValidateSpan(item.Frame, item.Length);
         foreach (var update in updates) PlacementMath.ValidateSpan(update.Frame, update.Length);
-        if (additions.Any(x => x.Layer < 0) || updates.Any(x => x.Layer < 0))
-            throw new InvalidOperationException("配置レイヤーは0以上にしてください。");
+        if (additions.Any(x => x.Layer < 0) || updates.Any(x => x.Layer < 0)) throw new InvalidOperationException("配置レイヤーは0以上にしてください。");
         var geometryUpdates = updates.Where(x => x.Frame != x.Item.Frame || x.Length != x.Item.Length || x.Layer != x.Item.Layer).ToArray();
         var moving = geometryUpdates.Select(x => x.Item).ToHashSet();
         var occupancy = before.Where(x => !moving.Contains(x)).Select(x => (x.Frame, x.Length, x.Layer)).ToList();
@@ -48,11 +44,21 @@ public sealed class PlacementPlan
         observed = before.Concat(additions).Select(x => (x, x.Frame, x.Length, x.Layer, x.Group, x.Remark, ItemCharacters.Get(x))).ToArray();
     }
     public static PlacementPlan Create(Timeline timeline, IReadOnlyList<IItem> additions, IReadOnlyList<PlannedItemUpdate>? updates = null) => new(timeline, additions, updates);
-    public int Commit(Timeline timeline, UndoRedoManager undo)
+    public static PlacementPlan Combine(Timeline timeline, IReadOnlyList<PlacementPlan> plans)
+    {
+        // Re-run the same preflight across both families; never commit one family before validating the other.
+        foreach (var plan in plans) plan.ValidateCurrent(timeline);
+        return Create(timeline, plans.SelectMany(x => x.after.Skip(x.before.Count)).ToArray(), plans.SelectMany(x => x.updates).ToArray());
+    }
+    private void ValidateCurrent(Timeline timeline)
     {
         if (!ReferenceEquals(before, timeline.Items) || observed.Any(x => x.Item.Frame != x.Frame || x.Item.Length != x.Length || x.Item.Layer != x.Layer ||
             x.Item.Group != x.Group || x.Item.Remark != x.Remark || !Equals(ItemCharacters.Get(x.Item), x.Character)))
             throw new InvalidOperationException("計画後にタイムラインまたは配置アイテムが変更されました。操作をやり直してください。");
+    }
+    public int Commit(Timeline timeline, UndoRedoManager undo)
+    {
+        ValidateCurrent(timeline);
         if (Count == 0 && updates.Length == 0) return 0;
         undo.Record();
         foreach (var update in updates)
@@ -60,13 +66,10 @@ public sealed class PlacementPlan
             update.Item.Frame = update.Frame; update.Item.Length = update.Length;
             update.Item.Layer = update.Layer; update.Item.Remark = update.Remark;
         }
-        timeline.Items = after;
-        timeline.RefreshTimelineLengthAndMaxLayer();
-        undo.Record();
+        timeline.Items = after; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
         return Count + updates.Length;
     }
 }
-
 public static class PlacementMath
 {
     public static void ValidateSpan(int frame, int length)
