@@ -5,6 +5,9 @@ internal static partial class NativeProof
 {
     private static async Task VerifyV04(Timeline timeline, UndoRedoManager undo)
     {
+        // Preserve and exercise the explicitly retained v0.4.1 compatibility workspace.
+        // New normal-work behavior is separately asserted below, never substituted for these regressions.
+        ViewModel!.ActivateIntentWorkspace(); ViewModel.SetLegacyWorkspace(true);
         await VerifyDirectTemplateAddition(timeline, undo);
         await VerifyLibrary(timeline);
         await VerifyPalettes(timeline);
@@ -28,10 +31,9 @@ internal static partial class NativeProof
         await VerifyPaletteOrdering(timeline);
         await VerifySafetyIntent(timeline);
         await VerifyIdentityClarity(timeline);
-        VerifyFinalAcceptance();
-        VerifyTaskUxAcceptance();
-        VerifyWorkflowAcceptance();
+        VerifyFinalAcceptance(); VerifyTaskUxAcceptance(); VerifyWorkflowAcceptance();
         await VerifyRelativeFoundations(timeline, undo);
         await VerifyIntentCore(timeline, undo);
+        await VerifyIntentSurface(timeline, undo);
     }
 }
