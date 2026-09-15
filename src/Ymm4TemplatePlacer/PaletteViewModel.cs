@@ -74,7 +74,7 @@ public sealed partial class PlacerViewModel
     partial void InitializePalettes()
     {
         CreatePaletteCommand = new ActionCommand(_ => settingsAvailable, _ => Guard(() => CreatePalette()));
-        DeletePaletteCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null, _ => Guard(DeleteCurrentPalette));
+        DeletePaletteCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null, _ => Guard(DeleteCurrentPaletteFromUi));
         AddPaletteEntryCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null && PaletteLibraryChoice != null, _ => Guard(AddPaletteEntry));
         RemovePaletteEntryCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null && SelectedPaletteEntry != null, _ => Guard(RemovePaletteEntry));
         MovePaletteEntryCommand = new ActionCommand(x => settingsAvailable && CurrentPalette != null && x is PaletteMoveRequest request && CurrentPalette.LibraryEntryIds.Contains(request.LibraryEntryId),
