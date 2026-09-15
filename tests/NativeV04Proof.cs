@@ -1,3 +1,4 @@
+using System.Reflection;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.UndoRedo;
 namespace Ymm4TemplatePlacer;
@@ -5,9 +6,17 @@ internal static partial class NativeProof
 {
     private static async Task VerifyV04(Timeline timeline, UndoRedoManager undo)
     {
-        // Preserve and exercise the explicitly retained v0.4.1 compatibility workspace.
-        // New normal-work behavior is separately asserted below, never substituted for these regressions.
-        ViewModel!.ActivateIntentWorkspace(); ViewModel.SetLegacyWorkspace(true);
+        // The old first-use test deliberately starts without auto-imported references.
+        // Verify what is removed, then isolate only the fixture, not product behavior.
+        var settingsField = typeof(PlacerViewModel).GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var bootstrapped = (PlacerSettings)settingsField.GetValue(ViewModel!)!;
+        Assert(bootstrapped.Palettes.Count == 0 && bootstrapped.Library.All(x => bootstrapped.ImportedExpressionSources.Contains(x.Source)),
+            "R1 historical first-use fixture contains only new automatic-bootstrap references before isolation");
+        var legacyFixture = PlacerSettingsStore.Copy(bootstrapped);
+        legacyFixture.Library.Clear(); legacyFixture.IntentPalettes.Clear(); legacyFixture.ImportedExpressionSources.Clear();
+        legacyFixture.ExpressionBootstrapComplete = true; legacyFixture.LegacyWorkspace = true;
+        settingsField.SetValue(ViewModel!, legacyFixture);
+        ViewModel!.ActivateIntentWorkspace(); ViewModel.SetLegacyWorkspace(true); ViewModel.Refresh();
         await VerifyDirectTemplateAddition(timeline, undo);
         await VerifyLibrary(timeline);
         await VerifyPalettes(timeline);
