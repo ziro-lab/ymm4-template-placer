@@ -86,8 +86,8 @@ internal static partial class NativeProof
         panel.PaletteList.ScrollIntoView(vm.PaletteEntries.Single(x => x.LibraryEntryId == ids[2])); panel.PaletteList.UpdateLayout(); await Idle();
         var container = panel.PaletteList.ItemContainerGenerator.ContainerFromItem(vm.PaletteEntries.Single(x => x.LibraryEntryId == ids[2])) as ListBoxItem
             ?? throw new InvalidOperationException("WUX10 Palette row was not realized.");
-        var handle = FindDragHandle(container);
-        Assert(panel.PaletteList.AllowDrop && handle != null && handle.Cursor == Cursors.SizeAll,
+        var handle = FindDragHandle(container) ?? throw new InvalidOperationException("WUX10 Palette drag handle was not realized.");
+        Assert(panel.PaletteList.AllowDrop && handle.Cursor == Cursors.SizeAll,
             "WUX10 actual Palette row exposes a dedicated drag handle and drop surface instead of hijacking the whole row");
 
         // Existing Character-expression preference follows the user order immediately.
