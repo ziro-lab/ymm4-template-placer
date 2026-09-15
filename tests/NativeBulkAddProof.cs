@@ -79,6 +79,7 @@ internal static partial class NativeProof
 
         // One ambiguous registration invalidates the whole batch before any membership write.
         vm.ActivePaletteKind = PaletteKind.Style; vm.NewPaletteCharacter = null; vm.NewPaletteName = "WUX9 atomic"; var atomicPalette = vm.CreatePalette();
+        vm.LibrarySearch = "";
         vm.SelectedSourceTemplate = sources[0]; vm.LibraryDisplayName = "WUX9 duplicate ref"; var duplicate = vm.RegisterLibrary();
         await InvokeSelectionButton(view.PaletteSurface.AddTemplateButton);
         await SetAddSource(panel, sources[0]); await SetAddSource(panel, sources[1]);
@@ -88,7 +89,9 @@ internal static partial class NativeProof
             new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().Palettes.Single(x => x.Id == atomicPalette.Id).LibraryEntryIds.Count == 0,
             "WUX9 one ambiguous source rejects the complete batch with zero partial membership writes and preserves the selection");
         await InvokeSelectionButton(panel.CancelButton);
-        vm.SelectedLibraryEntry = vm.LibraryEntries.Single(x => x.Id == duplicate.Id); vm.UnregisterLibrary();
+        vm.LibrarySearch = "";
+        var duplicateView = vm.LibraryEntries.FirstOrDefault(x => x.Id == duplicate.Id);
+        if (duplicateView != null) { vm.SelectedLibraryEntry = duplicateView; vm.UnregisterLibrary(); }
 
         // A source removed after selection also rejects the whole batch and retains the user's choices.
         await InvokeSelectionButton(view.PaletteSurface.AddTemplateButton);
@@ -138,6 +141,7 @@ internal static partial class NativeProof
             if (!vm.PaletteChoices.Any(x => x.Id == paletteId)) continue;
             vm.SelectedPalette = vm.PaletteChoices.Single(x => x.Id == paletteId); vm.DeleteCurrentPalette();
         }
+        vm.LibrarySearch = "";
         foreach (var entry in vm.LibraryEntries.Where(x => sources.Concat(faceSources).Any(source => x.Entry.Source == TemplateLocator.Capture(source))).ToArray())
         {
             vm.SelectedLibraryEntry = entry; vm.UnregisterLibrary();
