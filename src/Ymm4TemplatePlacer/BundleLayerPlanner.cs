@@ -1,0 +1,62 @@
+using YukkuriMovieMaker.Project.Items;
+
+namespace Ymm4TemplatePlacer;
+
+public enum RelativeLayerDirection { Up, Down }
+public sealed record RelativeLayerPolicy
+{
+    public RelativeLayerDirection Direction { get; init; } = RelativeLayerDirection.Up;
+    public int Offset { get; init; } = 1;
+    public int Minimum { get; init; }
+    public int Maximum { get; init; } = 99;
+    public void Validate()
+    {
+        if (!Enum.IsDefined(Direction) || Offset < 1 || Offset > 9999 || Minimum < 0 || Maximum < Minimum || Maximum > 9999)
+            throw new InvalidOperationException("上下の配置は1〜9999段、探索範囲は0〜9999で設定してください。");
+    }
+}
+
+/// <summary>Translates a whole normalized bundle; no member is independently relocated.</summary>
+public static class BundleLayerPlanner
+{
+    public static IReadOnlyList<IItem> Plan(TemplateBundle source, int frame, int? singletonLength,
+        int targetMinimumLayer, int targetMaximumLayer, RelativeLayerPolicy policy, IEnumerable<IItem> occupancy)
+    {
+        policy.Validate(); source.ValidateCurrent();
+        if (targetMinimumLayer < 0 || targetMaximumLayer < targetMinimumLayer)
+            throw new InvalidOperationException("基準アイテムのレイヤー範囲が不正です。");
+        var clones = source.CloneNormalized();
+        if (clones.Count != 1 && singletonLength.HasValue)
+            throw new InvalidOperationException("複数アイテムの内部長さは変更できません。テンプレートの長さを維持してください。");
+        foreach (var clone in clones)
+        {
+            var start = (long)frame + clone.Frame;
+            var length = singletonLength ?? clone.Length;
+            if (start < 0 || start > int.MaxValue) throw new InvalidOperationException("テンプレート全体の開始位置が範囲外です。");
+            PlacementMath.ValidateSpan((int)start, length);
+            clone.Frame = (int)start; clone.Length = length;
+        }
+        for (var i = 0; i < clones.Count; i++)
+            for (var j = i + 1; j < clones.Count; j++)
+                if (clones[i].Layer == clones[j].Layer && PlacementMath.Overlaps(clones[i].Frame, clones[i].Length, clones[j].Frame, clones[j].Length))
+                    throw new InvalidOperationException("テンプレート内部で同じレイヤーのアイテムが重なっています。全件配置せず停止しました。");
+        var occupied = occupancy.ToArray();
+        var width = clones.Max(x => x.Layer);
+        long first = policy.Direction == RelativeLayerDirection.Up
+            ? (long)targetMinimumLayer - policy.Offset - width
+            : (long)targetMaximumLayer + policy.Offset;
+        var step = policy.Direction == RelativeLayerDirection.Up ? -1 : 1;
+        // Clamp only farther in the requested direction; never move back toward/across the target band.
+        first = step < 0 ? Math.Min(first, (long)policy.Maximum - width) : Math.Max(first, policy.Minimum);
+        for (var baseline = first; baseline >= policy.Minimum && baseline + width <= policy.Maximum; baseline += step)
+        {
+            var free = clones.All(clone => !occupied.Any(x => (long)x.Layer == baseline + clone.Layer &&
+                PlacementMath.Overlaps(clone.Frame, clone.Length, x.Frame, x.Length)));
+            if (!free) continue;
+            foreach (var clone in clones) clone.Layer = checked((int)(baseline + clone.Layer));
+            source.ValidateCurrent();
+            return clones;
+        }
+        throw new InvalidOperationException("指定した方向の探索範囲にテンプレート全体を置ける空きがありません。範囲を広げてください。反対方向・一部だけには配置していません。");
+    }
+}

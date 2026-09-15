@@ -25,7 +25,7 @@ public sealed record TemplateResolution(TemplateReferenceState State, ItemTempla
         _ => "⚠ アイテムを1つだけ含むテンプレートに対応しています。"
     };
 }
-public static class TemplateResolver
+public static partial class TemplateResolver
 {
     public static TemplateResolution Resolve(LibraryEntry entry)
     {
@@ -45,7 +45,7 @@ public static class TemplateResolver
         var name = displayName.Trim();
         if (name.Length == 0 || name.Length > 256) throw new InvalidOperationException("表示名は1〜256文字で入力してください。");
         var entry = new LibraryEntry(id ?? Guid.NewGuid(), TemplateLocator.Capture(template), name, string.IsNullOrEmpty(characterName) ? null : characterName);
-        var resolution = Resolve(entry);
+        var resolution = ResolveBundle(entry);
         if (resolution.State != TemplateReferenceState.Resolved) throw new InvalidOperationException(resolution.Message);
         return entry;
     }
@@ -88,7 +88,7 @@ public sealed record LibraryEntryView(LibraryEntry Entry)
     public string CharacterName => Entry.CharacterName ?? "指定なし";
     public string Status
     {
-        get { var result = TemplateResolver.Resolve(Entry); return result.State == TemplateReferenceState.Resolved ? "" : result.Message; }
+        get { var result = TemplateResolver.ResolveBundle(Entry); return result.State == TemplateReferenceState.Resolved ? "" : result.Message; }
     }
 }
 public sealed record CharacterOption(string? Name, string Label);
