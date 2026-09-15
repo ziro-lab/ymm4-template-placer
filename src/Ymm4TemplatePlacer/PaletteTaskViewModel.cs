@@ -4,7 +4,7 @@ using YukkuriMovieMaker.Commons;
 namespace Ymm4TemplatePlacer;
 
 // The persisted Character/Style split is an implementation detail of the unified Palette task.
-public sealed record PaletteChoice(Guid Id, string Name, PaletteKind Kind, string? CharacterName);
+public sealed record PaletteChoice(Guid Id, string Name, string DisplayLabel, PaletteKind Kind, string? CharacterName);
 
 public sealed partial class PlacerViewModel
 {
@@ -21,7 +21,7 @@ public sealed partial class PlacerViewModel
             Guard(() =>
             {
                 var palette = settings.Palettes.SingleOrDefault(x => x.Id == value.Id)
-                    ?? throw new InvalidOperationException("パレットが削除されています。一覧を更新してください。");
+                    ?? throw new InvalidOperationException("パレットが削除されています。一覧を［シーン更新］してください。");
                 var previous = explicitPaletteSelection;
                 try
                 {
@@ -53,11 +53,34 @@ public sealed partial class PlacerViewModel
         CancelCreatePaletteCommand = new ActionCommand(_ => true, _ => IsCreatingPalette = false);
         RenamePaletteCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null, _ => Guard(RenamePalette));
     }
+    private static string PaletteCollisionDescriptor(PaletteDefinition palette) =>
+        palette.Kind == PaletteKind.Character ? palette.CharacterName ?? "キャラクター" : "手動";
     private void RefreshPaletteTaskChoices()
     {
         // Do not reset a live WPF picker because a preset/serial save deep-copied the storage model.
         // The picker needs stable identity and labels, not mutable membership or Layer records.
-        var choices = settings.Palettes.Select(x => new PaletteChoice(x.Id, x.Name, x.Kind, x.CharacterName)).ToArray();
+        var labels = new Dictionary<Guid, string>();
+        foreach (var group in settings.Palettes.GroupBy(x => x.Name, StringComparer.Ordinal))
+        {
+            var palettes = group.ToArray();
+            if (palettes.Length == 1)
+            {
+                labels[palettes[0].Id] = palettes[0].Name;
+                continue;
+            }
+            var descriptorTotals = palettes.GroupBy(PaletteCollisionDescriptor, StringComparer.Ordinal)
+                .ToDictionary(x => x.Key, x => x.Count(), StringComparer.Ordinal);
+            var descriptorSeen = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var palette in palettes)
+            {
+                var descriptor = PaletteCollisionDescriptor(palette);
+                descriptorSeen.TryGetValue(descriptor, out var seen); seen++; descriptorSeen[descriptor] = seen;
+                labels[palette.Id] = descriptorTotals[descriptor] == 1
+                    ? $"{palette.Name} — {descriptor}"
+                    : $"{palette.Name} — {descriptor} {seen}";
+            }
+        }
+        var choices = settings.Palettes.Select(x => new PaletteChoice(x.Id, x.Name, labels[x.Id], x.Kind, x.CharacterName)).ToArray();
         if (PaletteChoices.SequenceEqual(choices)) return;
         PaletteChoices.Clear();
         foreach (var choice in choices) PaletteChoices.Add(choice);
