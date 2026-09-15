@@ -11,6 +11,9 @@ internal static partial class NativeProof
 {
     private static async Task VerifyIntentSettings(Timeline timeline, UndoRedoManager undo)
     {
+        stage = "R11 settings workspace";
+        var apiPath = Path.Combine(output, "relative-public-api.txt");
+        if (File.Exists(apiPath)) foreach (var line in File.ReadAllLines(apiPath)) Log("R10 public API: " + line);
         var vm = ViewModel!; var view = View!;
         var field = typeof(PlacerViewModel).GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic)!;
         var original = (PlacerSettings)field.GetValue(vm)!;
@@ -32,16 +35,19 @@ internal static partial class NativeProof
             Assert(ReferenceEquals(view.SelectionTab.Content, view.RelativeSettingsSurface) && view.RelativeSettingsSurface.IsVisible,
                 "R11 settings is a separate native workspace, not ordinary action-tile controls");
             var panel = view.RelativeSettingsSurface;
+            Log($"R11 before create: selected={timeline.SelectedItems.Count}; context={string.Join("|", timeline.SelectedItems.Select(x => x.GetType().Name + ":" + ItemCharacters.Get(x)?.Name))}; draftCount={vm.IntentSettings?.Palettes.Count}; sameVM={ReferenceEquals(panel.DataContext, vm)}");
             await InvokeSelectionButton(panel.NewPaletteButton);
             var session = vm.IntentSettings!; var draft = session.SelectedPalette!;
-            Assert(session.Palettes.Count == 1 && draft.TypeChoices.Single(x => x.Selected).Key == IntentSelectionContext.TypeKey(typeof(VoiceItem)) && draft.CharacterName == character.Name,
+            Log($"R11 after create: count={session.Palettes.Count}; target={draft?.CharacterName}; expected={character.Name}; keys={string.Join("|", draft?.TypeChoices.Where(x => x.Selected).Select(x => x.Key) ?? [])}; selection={timeline.SelectedItems.Count}; error={vm.HasError}; status={vm.Status}");
+            Assert(session.Palettes.Count == 1 && draft != null && draft.TypeChoices.Single(x => x.Selected).Key == IntentSelectionContext.TypeKey(typeof(VoiceItem)) && draft.CharacterName == character.Name,
                 "R11 create captures explicit live runtime type and logical CharacterName without a closed item enum");
+            draft = session.SelectedPalette!;
             panel.SetNameBox.Text = "表情セット"; panel.SetNameBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)!.UpdateSource();
             panel.IntentNameBox.Text = "表情"; panel.IntentNameBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)!.UpdateSource();
             draft.ExpressionCandidates = true;
             session.Sources.Single(x => ReferenceEquals(x.Source, sourceA)).Selected = true;
             session.Sources.Single(x => ReferenceEquals(x.Source, sourceB)).Selected = true;
-            session.SourceSearch = "Bundle";
+            session.SourceSearch = "R11/Bundle";
             Assert(session.Sources.Count(x => x.Selected) == 2 && session.VisibleSources.Cast<object>().Count() == 1,
                 "R11 filtering preserves checked sources across a bulk registration draft");
             panel.SourceEditor.IsExpanded = true; await Idle();
