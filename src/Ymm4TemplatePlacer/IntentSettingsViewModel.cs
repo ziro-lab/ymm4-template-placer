@@ -47,8 +47,6 @@ public sealed partial class PlacerViewModel
             {
                 var count = IntentSettings!.ImportNewExpressions(); HasError = false; Status = $"新しい表情{count}件を下書きへ取り込みました。［変更を保存］で確定します。";
             }));
-            // The Settings panel may already have evaluated its bindings before Loaded initializes these commands.
-            // CanExecuteChanged alone cannot replace an earlier null binding value.
             foreach (var property in new[] { nameof(SaveIntentSettingsCommand), nameof(DiscardIntentSettingsCommand),
                 nameof(CreateIntentPaletteCommand), nameof(DuplicateIntentPaletteCommand), nameof(DeleteIntentPaletteCommand),
                 nameof(MoveIntentPaletteCommand), nameof(MoveIntentEntryCommand), nameof(RemoveIntentEntryCommand),
@@ -86,5 +84,5 @@ public sealed partial class PlacerViewModel
     public IReadOnlyList<IntentOption<IntentNeighbor>> IntentNeighbors { get; } = [new(IntentNeighbor.None,"参照しない"),new(IntentNeighbor.NextSameType,"次の同種類"),new(IntentNeighbor.PreviousSameType,"前の同種類"),new(IntentNeighbor.NextSameCharacter,"次の同キャラ"),new(IntentNeighbor.PreviousSameCharacter,"前の同キャラ"),new(IntentNeighbor.NextSameTypeAndCharacter,"次の同種類・同キャラ"),new(IntentNeighbor.PreviousSameTypeAndCharacter,"前の同種類・同キャラ")];
     public IReadOnlyList<IntentOption<IntentNeighborEdge>> IntentNeighborEdges { get; } = [new(IntentNeighborEdge.Start,"開始まで"),new(IntentNeighborEdge.End,"終了まで")];
     public IReadOnlyList<IntentOption<IntentFallback>> IntentFallbacks { get; } = [new(IntentFallback.CurrentTargetEnd,"現在の対象の終了まで"),new(IntentFallback.FixedDuration,"固定の長さを使う"),new(IntentFallback.TargetSpan,"現在の対象と同じ範囲"),new(IntentFallback.DoNotPlace,"配置しない")];
-    public IReadOnlyList<IntentOption<RelativeLayerDirection>> IntentDirections { get; } = [new(RelativeLayerDirection.Up,"上（小さいレイヤー番号）"),new(RelativeLayerDirection.Down,"下（大きいレイヤー番号）")];
+    public IReadOnlyList<IntentOption<RelativeLayerDirection>> IntentDirections { get; } = [new(RelativeLayerDirection.Up,"上"),new(RelativeLayerDirection.Down,"下")];
 }
