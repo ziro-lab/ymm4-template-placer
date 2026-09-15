@@ -27,7 +27,7 @@ public sealed partial class PlacerViewModel
     private void OpenRelativeExpressionSettings(AssignmentRow row)
     {
         if (!Rows.Contains(row) || !RequireTimeline().Items.Contains(row.Target.Voice) || row.Character != row.Target.Voice.CharacterName)
-            throw new InvalidOperationException("表情一覧の音声が変わりました。シーンを更新してください。");
+            throw new InvalidOperationException("「表情をまとめて」の音声が変わりました。シーンを更新してください。");
         BeginIntentSettings();
         var session = IntentSettings!;
         var palette = session.Palettes.FirstOrDefault(x => x.ExpressionCandidates && x.CharacterName == row.Character);
