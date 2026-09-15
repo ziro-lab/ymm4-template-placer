@@ -100,7 +100,7 @@ internal static partial class NativeProof
             vm.ResetIntentSettings();
 
             timeline.SelectedItems = [voice]; field.SetValue(vm, fixture); vm.Refresh(); vm.BeginIntentSettings(); view.SelectionTab.IsSelected = true; await Idle();
-            var panel = view.RelativeSettingsSurface; var draft = vm.IntentSettings!.Palettes.Single(x => x.Id == first.Id); vm.IntentSettings.SelectedPalette = draft; await Idle();
+            var panel = view.RelativeSettingsSurface; var draft = vm.IntentSettings!.Palettes.Single(x => x.Id == first.Id); vm.IntentSettings!.SelectedPalette = draft; await Idle();
             Assert(panel.RelationSummaryText.Text.Contains("UX Character", StringComparison.Ordinal) && panel.RelationSummaryText.Text.Contains("次の同じ種類・同じキャラ", StringComparison.Ordinal) &&
                 panel.RelationSummaryText.Text.Contains("上", StringComparison.Ordinal) && panel.RelationSummaryText.Text.Contains("塞がっていれば", StringComparison.Ordinal),
                 "UIUX Settings explains the current relation in natural editing language");
