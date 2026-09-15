@@ -25,6 +25,7 @@ internal static partial class NativeProof
         await VerifyTaskUxFinal(timeline, undo);
         await VerifyResumeContinuity(timeline, undo);
         await VerifyBulkPaletteAdd(timeline);
+        await VerifyPaletteOrdering(timeline);
         VerifyFinalAcceptance();
         VerifyTaskUxAcceptance();
     }
