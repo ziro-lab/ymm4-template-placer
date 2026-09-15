@@ -77,8 +77,8 @@ internal static partial class NativeProof
                     "R11 failed batch preserves all checked sources and the previous draft");
             }
             finally { ItemSettings.Default.Templates.Remove(bad); }
-            draft.FixedDuration = "invalid";
-            RejectWithoutMutation(timeline, () => session.Build(), "R11 invalid numeric draft is rejected, not silently coerced");
+            draft.Duration = IntentDuration.Fixed; draft.FixedDuration = "invalid";
+            RejectWithoutMutation(timeline, () => session.Build(), "R11 invalid relevant numeric draft is rejected, not silently coerced");
             Assert(draft.FixedDuration == "invalid" && session.HasChanges, "R11 invalid draft text remains editable after failed validation");
             draft.FixedDuration = "30";
             var built = session.Build();
