@@ -18,7 +18,7 @@ public sealed partial class PlacerViewModel
         }
     }
     public string ResyncHint => !UsesRelativeExpressions && ExpressionPresetDirty ? "編集中の配置範囲を保存するか、編集を戻してください。" :
-        !HasSelectedAssociation ? "タイムラインで関連付け済みの音声または表情を選択してください。表情一覧の行選択やクイック配置は対象外です。" :
+        !HasSelectedAssociation ? "タイムラインで関連付け済みの音声または表情を選択してください。「表情をまとめて」の行選択やクイック配置は対象外です。" :
         UsesRelativeExpressions ? "選択した関連演出を、保存済みのパレット設定でまとめて合わせ直します。欠落・コピーされたBundleは推測復元しません。" :
         "選択した関連表情だけを、現在の配置範囲で合わせ直します。関連のないアイテムは変更しません。";
     public ActionCommand ResyncCommand
@@ -44,7 +44,7 @@ public sealed partial class PlacerViewModel
     {
         var current = RequireTimeline();
         if (undo == null) throw new InvalidOperationException("YMM4の「元に戻す」に接続できません。");
-        if (current.SelectedItems.Count == 0) throw new InvalidOperationException("YMM4のタイムラインで、関連表情または音声を選択してください。表情一覧の行選択は対象ではありません。");
+        if (current.SelectedItems.Count == 0) throw new InvalidOperationException("YMM4のタイムラインで、関連表情または音声を選択してください。「表情をまとめて」の行選択は対象ではありません。");
         if (UsesRelativeExpressions)
         {
             var staged = IntentAssociationResync.Create(current, settings, CurrentExpressionPreset);
