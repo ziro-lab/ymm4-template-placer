@@ -1,5 +1,6 @@
-param([Parameter(Mandatory=$true)][string]$Ymm4Dir, [Parameter(Mandatory=$true)][string]$OutputDir, [string]$DistributionDir, [switch]$ReleaseSmoke)
+param([Parameter(Mandatory=$true)][string]$Ymm4Dir, [Parameter(Mandatory=$true)][string]$OutputDir, [string]$DistributionDir, [switch]$ReleaseSmoke, [int]$TimeoutSeconds=300)
 $ErrorActionPreference='Stop'
+if ($TimeoutSeconds -lt 1) { throw 'TimeoutSeconds must be at least 1.' }
 Add-Type -TypeDefinition @'
 using System; using System.Text; using System.Runtime.InteropServices;
 public static class PlacerWin32 {
@@ -24,7 +25,7 @@ else {
 }
 $p=Start-Process (Join-Path $Ymm4Dir 'YukkuriMovieMaker.exe') -WorkingDirectory $Ymm4Dir -PassThru
 try {
- for ($i=0; $i -lt 150; $i++) {
+ for ($i=0; $i -lt $TimeoutSeconds; $i++) {
   if (($ReleaseSmoke -and (Test-Path $marker)) -or (-not $ReleaseSmoke -and (Test-Path $result)) -or $p.HasExited) { break }
   $cb=[PlacerWin32+EnumWindowsProc]{
    param([IntPtr]$h,[IntPtr]$l)
@@ -49,7 +50,7 @@ try {
  }
 } finally { if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } }
 if ($ReleaseSmoke) {
- if (-not (Test-Path $marker)) { throw 'Release DLL did not load in native YMM4' }
+ if (-not (Test-Path $marker)) { throw "Release DLL did not load in native YMM4 within $TimeoutSeconds seconds" }
  $text=Get-Content -Raw $marker
  $installed=Join-Path $Ymm4Dir 'user/plugin/Ymm4TemplatePlacer/Ymm4TemplatePlacer.dll'
  $expected=(Get-FileHash $installed -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -58,7 +59,7 @@ if ($ReleaseSmoke) {
 } else {
  $log=Join-Path $OutputDir 'proof-log.txt'
  if (Test-Path $log) { Get-Content $log }
- if (-not (Test-Path $result)) { throw 'Native proof did not finish; inspect windows-seen and build evidence' }
+ if (-not (Test-Path $result)) { throw "Native proof did not finish within $TimeoutSeconds seconds; inspect windows-seen and build evidence" }
  Get-Content $result
  if (-not (Select-String -Path $result -Pattern '^PASS P1 P2 P3 P4 P5 P6 P7 P8 P9$')) { throw 'Native functional proof failed' }
  if (-not (Select-String -Path $log -Pattern '^V04=PASS$')) { throw 'Integrated v0.4 native proof is incomplete' }
