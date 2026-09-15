@@ -2,10 +2,11 @@ param([string]$OutputDir='out')
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 $version='0.4.1'
+$installFolder='Ymm4TemplatePlacer'
 $package=Join-Path $OutputDir 'package'
 $logPath=Join-Path $OutputDir 'proof-log.txt'
 $log=Get-Content $logPath
-$stages=@('P1','P2','P3','P4','P5','P6','P7','P8','P9','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12_UI','W12','V04') + (1..13 | ForEach-Object { "WUX$_" }) + @('UX_ACCEPTANCE','UX_WORKFLOW_ACCEPTANCE')
+$stages=@('P1','P2','P3','P4','P5','P6','P7','P8','P9','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12_UI','W12_SELECTORS','W12','V04') + (1..13 | ForEach-Object { "WUX$_" }) + @('UX_ACCEPTANCE','UX_WORKFLOW_ACCEPTANCE')
 foreach ($stage in $stages) {
  if ($log -cnotcontains "$stage=PASS") { throw "Missing native success stage: $stage" }
 }
@@ -48,25 +49,42 @@ $sourceHead=if ($env:GITHUB_EVENT_NAME -eq 'pull_request') { $event.pull_request
  native_assertions=@(Select-String -Path $logPath -Pattern '^ASSERT PASS:').Count; acceptance_requirements=18
  base_task_ux_version=$ux.version; base_task_ux_requirements=12; base_task_ux_result=$ux.result
  ux_workflow_version=$workflow.version; ux_workflow_requirements=10; ux_workflow_result=$workflow.result
- distribution_dll_sha256=$dllHash
+ distribution_dll_sha256=$dllHash; ymme_install_folder=$installFolder
 } | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'provenance.json')
 Copy-Item (Join-Path $OutputDir 'provenance.json') $package
 $expected=@('Ymm4TemplatePlacer.dll','Ymm4TemplatePlacer.deps.json','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll','README.md','THIRD_PARTY_NOTICES.md','provenance.json','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json')
 $files=@(Get-ChildItem $package -File -Recurse)
 if ($files.Count -ne $expected.Count -or @($files | Where-Object { $_.Name -notin $expected -or $_.Directory.FullName -ne (Resolve-Path $package).Path }).Count -ne 0) { throw 'Unexpected, nested or missing distributable content' }
+
+# YMM4 uses the top-level directory inside .ymme as the plugin install directory.
+# Keep that directory stable across versions so upgrades replace the same plugin instead of
+# creating Ymm4TemplatePlacer-v0.x.y side-by-side folders.
 $archive=Join-Path $OutputDir "Ymm4TemplatePlacer-v$version.ymme"
 $temporary=Join-Path $OutputDir "Ymm4TemplatePlacer-v$version.zip"
-Compress-Archive -Path (Join-Path $package '*') -DestinationPath $temporary -Force
+$ymmeStage=Join-Path $OutputDir 'ymme-stage'
+$ymmeRoot=Join-Path $ymmeStage $installFolder
+Remove-Item $ymmeStage -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item $temporary -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force $ymmeRoot | Out-Null
+foreach ($name in $expected) { Copy-Item (Join-Path $package $name) (Join-Path $ymmeRoot $name) }
+[IO.Compression.ZipFile]::CreateFromDirectory((Resolve-Path $ymmeStage).Path, $temporary, [IO.Compression.CompressionLevel]::Optimal, $false)
 Move-Item $temporary $archive -Force
 $zip=[IO.Compression.ZipFile]::OpenRead((Resolve-Path $archive).Path)
+$expectedArchive=@($expected | ForEach-Object { "$installFolder/$_" })
 try {
- if ($zip.Entries.Count -ne $expected.Count -or @($zip.Entries | Where-Object { $_.FullName -notin $expected }).Count -ne 0) { throw 'Unexpected .ymme archive entries' }
- $entry=$zip.GetEntry('Ymm4TemplatePlacer.dll'); if ($null -eq $entry) { throw 'Missing archived plugin DLL' }
+ $archiveFiles=@($zip.Entries | Where-Object { -not [string]::IsNullOrEmpty($_.Name) } | ForEach-Object { $_.FullName.Replace('\\','/') })
+ if ($archiveFiles.Count -ne $expectedArchive.Count -or @(Compare-Object ($archiveFiles | Sort-Object) ($expectedArchive | Sort-Object)).Count -ne 0) {
+  throw "Unexpected .ymme archive layout. Every payload file must live under $installFolder/."
+ }
+ if ($zip.GetEntry('Ymm4TemplatePlacer.dll') -ne $null) { throw 'Flat .ymme root detected; this would install beside older version-named folders.' }
+ $entry=$zip.GetEntry("$installFolder/Ymm4TemplatePlacer.dll"); if ($null -eq $entry) { throw 'Missing archived plugin DLL under stable install folder' }
  $stream=$entry.Open(); $sha=[Security.Cryptography.SHA256]::Create()
  try { $archivedHash=[Convert]::ToHexString($sha.ComputeHash($stream)).ToLowerInvariant() }
  finally { $stream.Dispose(); $sha.Dispose() }
  if ($archivedHash -ne $dllHash) { throw 'Archived DLL does not match native-smoked release DLL' }
 } finally { $zip.Dispose() }
+Remove-Item $ymmeStage -Recurse -Force -ErrorAction SilentlyContinue
+
 Copy-Item $dll (Join-Path $OutputDir 'Ymm4TemplatePlacer.dll')
 $sourceArchive=Join-Path $OutputDir 'Ymm4TemplatePlacer-source.zip'
 git archive --format=zip -o $sourceArchive HEAD
@@ -77,7 +95,10 @@ try {
   if ($null -eq $sourceZip.GetEntry($name)) { throw "Missing source archive entry: $name" }
  }
 } finally { $sourceZip.Dispose() }
-[ordered]@{ result='PASS'; version=$version; native_stages='P1-P9,W3-W12,V04,WUX1-WUX13'; acceptance_requirements=18; base_task_ux_requirements=12; ux_workflow_requirements=10; payload_files=$expected; archived_dll_sha256=$archivedHash; source_archive='Ymm4TemplatePlacer-source.zip' } |
- ConvertTo-Json | Set-Content (Join-Path $OutputDir 'package-checks.json')
+[ordered]@{
+ result='PASS'; version=$version; native_stages='P1-P9,W3-W12,V04,WUX1-WUX13'; acceptance_requirements=18
+ base_task_ux_requirements=12; ux_workflow_requirements=10; payload_files=$expected; archived_dll_sha256=$archivedHash
+ source_archive='Ymm4TemplatePlacer-source.zip'; ymme_install_folder=$installFolder; ymme_file_entries=$expectedArchive
+} | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'package-checks.json')
 Get-FileHash (Join-Path $OutputDir 'Ymm4TemplatePlacer*') -Algorithm SHA256 | Select-Object @{Name='File';Expression={Split-Path $_.Path -Leaf}},Hash | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'SHA256.json')
-Write-Host 'Verified v0.4.1 .ymme / source / provenance packaging: PASS'
+Write-Host "Verified v0.4.1 .ymme stable install folder '$installFolder' / source / provenance packaging: PASS"
