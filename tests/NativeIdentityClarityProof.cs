@@ -62,6 +62,9 @@ internal static partial class NativeProof
             (ReferenceEquals(x.Template.Template, sourceA) || ReferenceEquals(x.Template.Template, sourceB))).ToArray();
         Assert(combo.DisplayMemberPath == nameof(TemplateChoice.DisplayName) && uiExact.Select(x => x.DisplayName).Distinct(StringComparer.Ordinal).Count() == 2,
             "WUX12 actual Expression ComboBox exposes two distinguishable choices without changing strict source identity");
+        row.SelectedChoice = uiExact[0]; await Idle();
+        Assert(ReferenceEquals(combo.SelectedItem, uiExact[0]) && combo.Text == uiExact[0].DisplayName,
+            "WUX12 collapsed Expression selector visibly presents the source-qualified alias after selection");
         var oldWidth = view.Width; var oldHeight = view.Height;
         try
         {
@@ -71,6 +74,7 @@ internal static partial class NativeProof
             SaveNamedView(view, "ux-identity-collisions-narrow.png");
         }
         finally { view.Width = oldWidth; view.Height = oldHeight; await Idle(); }
+        row.SelectedChoice = row.Choices[0];
         Assert(Signature(timeline) == beforeTimeline, "WUX12 all identity-only UI changes leave Timeline content unchanged");
 
         // Cleanup aliases and restore the original Palette names and manual selections.
