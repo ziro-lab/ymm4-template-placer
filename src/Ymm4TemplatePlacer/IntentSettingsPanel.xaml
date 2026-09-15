@@ -11,9 +11,9 @@
  <Grid Margin="6">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <StackPanel Grid.Row="0">
-   <ComboBox x:Name="PalettePicker" ItemsSource="{Binding IntentSettings.Palettes}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedPalette,Mode=TwoWay}" AutomationProperties.Name="編集するパレットセット"/>
+   <ComboBox x:Name="PalettePicker" ItemsSource="{Binding IntentSettings.Palettes}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedPalette,Mode=TwoWay}" AutomationProperties.Name="編集するセット"/>
    <WrapPanel>
-    <Button x:Name="NewPaletteButton" Content="＋ セット" Command="{Binding CreateIntentPaletteCommand}"/>
+    <Button x:Name="NewPaletteButton" Content="＋ セット" Command="{Binding CreateIntentPaletteCommand}" ToolTip="タイムラインで選択しているアイテムを対象に、新しいセットを作ります。"/>
     <Button x:Name="DuplicateButton" Content="複製" Command="{Binding DuplicateIntentPaletteCommand}"/>
     <Button Content="↑" ToolTip="セットを前へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="-1"/>
     <Button Content="↓" ToolTip="セットを後へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="1"/>
@@ -24,47 +24,107 @@
    <StackPanel>
     <StackPanel DataContext="{Binding IntentSettings.SelectedPalette}">
      <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+
+     <Border Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Padding="9" Margin="0,2,0,8" CornerRadius="3">
+      <StackPanel>
+       <TextBlock Text="このセットの動き" FontWeight="SemiBold" Margin="0,0,0,3"/>
+       <TextBlock x:Name="RelationSummaryText" Text="{Binding Summary}"/>
+      </StackPanel>
+     </Border>
+
      <TextBlock Text="セット名"/>
      <TextBox x:Name="SetNameBox" Text="{Binding Name,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
-     <TextBlock Text="やりたいこと（同じ名前は同じ用途タブにまとまります）"/>
-     <TextBox x:Name="IntentNameBox" Text="{Binding Intent,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
-     <Expander x:Name="TargetEditor" Header="使う対象" IsExpanded="True" Margin="0,4">
+     <TextBlock Text="やりたいこと"/>
+     <TextBox x:Name="IntentNameBox" Text="{Binding Intent,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" ToolTip="同じ名前のセットは、通常画面で同じ用途にまとまります。"/>
+
+     <Expander x:Name="TargetEditor" Header="どのアイテムで使うか" IsExpanded="True" Margin="0,4">
       <StackPanel Margin="8,5">
-       <ItemsControl ItemsSource="{Binding TypeChoices}">
+       <ItemsControl x:Name="TargetTypeChoices" ItemsSource="{Binding TypeChoices}">
         <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate><DataTemplate><CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}" Margin="0,3,12,5" ToolTip="{Binding Key}"/></DataTemplate></ItemsControl.ItemTemplate>
+        <ItemsControl.ItemTemplate><DataTemplate><CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}" Margin="0,3,12,5"/></DataTemplate></ItemsControl.ItemTemplate>
        </ItemsControl>
-       <ComboBox ItemsSource="{Binding DataContext.IntentTypeModes,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding TypeMatch,Mode=TwoWay}"/>
-       <WrapPanel><TextBlock Text="選択数" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding MinimumCount,UpdateSourceTrigger=PropertyChanged}" Width="54"/><TextBlock Text=" ～ " VerticalAlignment="Center"/><TextBox Text="{Binding MaximumCount,UpdateSourceTrigger=PropertyChanged}" Width="54"/></WrapPanel>
-       <TextBlock Text="キャラクター名（空欄なら指定なし）"/>
-       <TextBox Text="{Binding CharacterName,UpdateSourceTrigger=PropertyChanged}"/>
-       <CheckBox Content="このセットの表情を、表情一覧の候補にも使う" IsChecked="{Binding ExpressionCandidates,Mode=TwoWay}" Margin="0,3"/>
+       <StackPanel x:Name="TypeMatchPanel">
+        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowTypeMatch}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+        <TextBlock Text="複数種類を選んだとき"/>
+        <ComboBox ItemsSource="{Binding DataContext.IntentTypeModes,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding TypeMatch,Mode=TwoWay}"/>
+       </StackPanel>
+       <CheckBox x:Name="CharacterRestrictionCheck" Content="{Binding CharacterRestrictionLabel}" IsChecked="{Binding CharacterRestricted,Mode=TwoWay}" Margin="0,3,0,5"/>
+       <StackPanel x:Name="CharacterNamePanel">
+        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowCharacterName}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+        <TextBlock Text="キャラクター名"/>
+        <TextBox x:Name="CharacterNameBox" Text="{Binding CharacterName,UpdateSourceTrigger=PropertyChanged}"/>
+       </StackPanel>
+       <CheckBox Content="このセットの表情を、「表情をまとめて」の候補にも使う" IsChecked="{Binding ExpressionCandidates,Mode=TwoWay}" Margin="0,3"/>
+       <Expander x:Name="TargetAdvanced" Header="対象の詳細" Margin="0,4">
+        <StackPanel Margin="8,5">
+         <WrapPanel><TextBlock Text="選択数" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding MinimumCount,UpdateSourceTrigger=PropertyChanged}" Width="54"/><TextBlock Text=" ～ " VerticalAlignment="Center"/><TextBox Text="{Binding MaximumCount,UpdateSourceTrigger=PropertyChanged}" Width="54"/></WrapPanel>
+        </StackPanel>
+       </Expander>
       </StackPanel>
      </Expander>
+
      <Expander x:Name="RelationEditor" Header="どう置くか" IsExpanded="True" Margin="0,4">
       <StackPanel Margin="8,5">
-       <TextBlock Text="基準の位置"/>
-       <ComboBox ItemsSource="{Binding DataContext.IntentAnchors,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Anchor,Mode=TwoWay}"/>
-       <ComboBox ItemsSource="{Binding DataContext.IntentAlignments,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Alignment,Mode=TwoWay}"/>
-       <TextBlock Text="長さ"/>
-       <ComboBox ItemsSource="{Binding DataContext.IntentDurations,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Duration,Mode=TwoWay}"/>
-       <WrapPanel><TextBlock Text="固定長（フレーム）" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding FixedDuration,UpdateSourceTrigger=PropertyChanged}" Width="80"/></WrapPanel>
-       <TextBlock Text="周囲の何を見るか"/>
-       <ComboBox ItemsSource="{Binding DataContext.IntentNeighbors,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Neighbor,Mode=TwoWay}"/>
-       <ComboBox ItemsSource="{Binding DataContext.IntentNeighborEdges,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding NeighborEdge,Mode=TwoWay}"/>
-       <TextBlock Text="見つからなければ"/>
-       <ComboBox ItemsSource="{Binding DataContext.IntentFallbacks,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Fallback,Mode=TwoWay}"/>
-       <TextBlock Text="最大間隔（フレーム・空欄なら制限なし）"/>
-       <TextBox Text="{Binding MaximumGap,UpdateSourceTrigger=PropertyChanged}"/>
-       <WrapPanel><TextBlock Text="開始をずらす" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding StartOffset,UpdateSourceTrigger=PropertyChanged}" Width="72"/><TextBlock Text="終了をずらす" VerticalAlignment="Center" Margin="12,0,8,0"/><TextBox Text="{Binding EndOffset,UpdateSourceTrigger=PropertyChanged}" Width="72"/></WrapPanel>
-       <TextBlock Text="境界の許容間隔（フレーム）"/>
-       <TextBox Text="{Binding BoundaryTolerance,UpdateSourceTrigger=PropertyChanged}"/>
-       <TextBlock Text="配置する方向（塞がっていたら、同じ方向へ探します）"/>
-       <ComboBox ItemsSource="{Binding DataContext.IntentDirections,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Direction,Mode=TwoWay}"/>
-       <WrapPanel><TextBlock Text="対象から何段離すか" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding LayerOffset,UpdateSourceTrigger=PropertyChanged}" Width="64"/></WrapPanel>
-       <WrapPanel><TextBlock Text="探索するレイヤー番号" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding LayerMinimum,UpdateSourceTrigger=PropertyChanged}" Width="64"/><TextBlock Text=" ～ " VerticalAlignment="Center"/><TextBox Text="{Binding LayerMaximum,UpdateSourceTrigger=PropertyChanged}" Width="64"/></WrapPanel>
+       <TextBlock Text="基準にする位置"/>
+       <ComboBox x:Name="AnchorBox" ItemsSource="{Binding DataContext.IntentAnchors,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Anchor,Mode=TwoWay}"/>
+
+       <StackPanel x:Name="AlignmentPanel">
+        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowAlignment}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+        <TextBlock Text="基準位置にどう合わせるか"/>
+        <ComboBox x:Name="AlignmentBox" ItemsSource="{Binding DataContext.IntentAlignments,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Alignment,Mode=TwoWay}"/>
+       </StackPanel>
+
+       <TextBlock Text="どこまで置くか"/>
+       <ComboBox x:Name="DurationBox" ItemsSource="{Binding DataContext.IntentDurations,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Duration,Mode=TwoWay}"/>
+
+       <StackPanel x:Name="FixedDurationPanel">
+        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowFixedDuration}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+        <WrapPanel><TextBlock Text="長さ（フレーム）" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox x:Name="FixedDurationBox" Text="{Binding FixedDuration,UpdateSourceTrigger=PropertyChanged}" Width="80"/></WrapPanel>
+       </StackPanel>
+
+       <StackPanel x:Name="NeighborPanel">
+        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowNeighborSettings}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+        <TextBlock Text="どの周囲アイテムを見るか"/>
+        <ComboBox x:Name="NeighborBox" ItemsSource="{Binding DataContext.IntentNeighbors,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Neighbor,Mode=TwoWay}"/>
+       </StackPanel>
+
+       <StackPanel x:Name="NeighborEdgePanel">
+        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowNeighborEdge}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+        <TextBlock Text="そのアイテムのどこまで"/>
+        <ComboBox x:Name="NeighborEdgeBox" ItemsSource="{Binding DataContext.IntentNeighborEdges,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding NeighborEdge,Mode=TwoWay}"/>
+       </StackPanel>
+
+       <StackPanel x:Name="FallbackPanel">
+        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowNeighborFallback}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+        <TextBlock Text="見つからなければ"/>
+        <ComboBox x:Name="FallbackBox" ItemsSource="{Binding DataContext.IntentFallbacks,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Fallback,Mode=TwoWay}"/>
+       </StackPanel>
+
+       <StackPanel x:Name="BoundaryTolerancePanel">
+        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowBoundaryTolerance}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+        <TextBlock Text="境界として許容するずれ（フレーム）"/>
+        <TextBox x:Name="BoundaryToleranceBox" Text="{Binding BoundaryTolerance,UpdateSourceTrigger=PropertyChanged}"/>
+       </StackPanel>
+
+       <TextBlock Text="配置する方向"/>
+       <ComboBox x:Name="DirectionBox" ItemsSource="{Binding DataContext.IntentDirections,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Direction,Mode=TwoWay}" ToolTip="塞がっている場合も、選んだ同じ方向へ空きを探します。"/>
+       <TextBlock Text="塞がっていれば、選んだ方向へそのまま空きを探します。" Opacity="0.72" Margin="0,-3,0,5"/>
+
+       <Expander x:Name="RelationAdvanced" Header="詳細設定" Margin="0,4">
+        <StackPanel Margin="8,5">
+         <StackPanel x:Name="MaximumGapPanel">
+          <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowMaximumGap}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+          <TextBlock Text="周囲アイテムとして見る最大間隔（空欄なら制限なし）"/>
+          <TextBox x:Name="MaximumGapBox" Text="{Binding MaximumGap,UpdateSourceTrigger=PropertyChanged}"/>
+         </StackPanel>
+         <WrapPanel><TextBlock Text="開始をずらす" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding StartOffset,UpdateSourceTrigger=PropertyChanged}" Width="72"/><TextBlock Text="終了をずらす" VerticalAlignment="Center" Margin="12,0,8,0"/><TextBox Text="{Binding EndOffset,UpdateSourceTrigger=PropertyChanged}" Width="72"/></WrapPanel>
+         <WrapPanel><TextBlock Text="対象から何段離すか" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding LayerOffset,UpdateSourceTrigger=PropertyChanged}" Width="64"/></WrapPanel>
+         <WrapPanel><TextBlock Text="探索するレイヤー番号" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding LayerMinimum,UpdateSourceTrigger=PropertyChanged}" Width="64"/><TextBlock Text=" ～ " VerticalAlignment="Center"/><TextBox Text="{Binding LayerMaximum,UpdateSourceTrigger=PropertyChanged}" Width="64"/></WrapPanel>
+        </StackPanel>
+       </Expander>
       </StackPanel>
      </Expander>
+
      <Expander x:Name="EntryEditor" Header="演出と並び順" IsExpanded="True" Margin="0,4">
       <StackPanel Margin="8,5">
        <ListBox x:Name="EntryList" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry,Mode=TwoWay}" MinHeight="80" MaxHeight="220" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -86,6 +146,7 @@
       </StackPanel>
      </Expander>
     </StackPanel>
+
     <Expander x:Name="SourceEditor" Header="テンプレートをまとめて追加" Margin="0,5">
      <StackPanel Margin="8,5">
       <TextBox Text="{Binding IntentSettings.SourceSearch,UpdateSourceTrigger=PropertyChanged}" ToolTip="元テンプレート名で検索"/>
