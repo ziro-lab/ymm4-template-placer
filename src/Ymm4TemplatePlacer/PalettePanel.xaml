@@ -52,7 +52,7 @@
       <Button x:Name="MoveUpButton" Content="↑ 上へ" Command="{Binding MovePaletteEntryUpCommand}" Padding="8,4" Margin="0,0,6,4" ToolTip="選択中のテンプレートを1つ上へ移動"/>
       <Button x:Name="MoveDownButton" Content="↓ 下へ" Command="{Binding MovePaletteEntryDownCommand}" Padding="8,4" Margin="0,0,6,4" ToolTip="選択中のテンプレートを1つ下へ移動"/>
      </WrapPanel>
-     <WrapPanel><Button Content="選択テンプレートを外す" Command="{Binding RemovePaletteEntryCommand}" Padding="8,4" Margin="0,0,6,4"/><Button Content="パレットを削除" Command="{Binding DeletePaletteCommand}" Padding="8,4" Margin="0,0,0,4" ToolTip="元テンプレート・登録・タイムラインは削除しません。"/></WrapPanel>
+     <WrapPanel><Button Content="選択テンプレートを外す" Command="{Binding RemovePaletteEntryCommand}" Padding="8,4" Margin="0,0,6,4"/><Button x:Name="DeletePaletteButton" Content="パレットを削除" Command="{Binding DeletePaletteCommand}" Padding="8,4" Margin="0,0,0,4" ToolTip="削除前に、このパレット内の件数と影響範囲を確認します。元テンプレート・登録・タイムラインは削除しません。"/></WrapPanel>
     </StackPanel>
    </ScrollViewer>
   </Expander>
