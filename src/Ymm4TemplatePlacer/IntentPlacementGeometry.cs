@@ -1,6 +1,5 @@
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
-using YukkuriMovieMaker.Settings;
 
 namespace Ymm4TemplatePlacer;
 
@@ -30,15 +29,7 @@ public static class IntentPlacementGeometry
         context.ValidateCurrent(timeline, false);
         return new(context, bundle, items, false);
     }
-    public static void ValidateCharacters(IntentSelectionContext context, TemplateBundle bundle)
-    {
-        var names = context.Selected.Select(x => x.CharacterName).Concat(bundle.Items.Select(x => ItemCharacters.Get(x)?.Name))
-            .OfType<string>().Distinct(StringComparer.Ordinal);
-        foreach (var name in names)
-        {
-            // Template clones can legitimately hold a detached same-name Character. Only an actual duplicate host definition is ambiguous.
-            if (CharacterSettings.Default.Characters.Where(x => x.Name == name).Distinct().Take(2).Count() > 1)
-                throw new InvalidOperationException($"YMM4に同名キャラクター「{name}」が複数登録されています。一意にしてから配置してください。");
-        }
-    }
+    public static void ValidateCharacters(IntentSelectionContext context, TemplateBundle bundle) =>
+        IntentCharacterRegistry.RequireUnambiguous(context.Selected.Select(x => x.CharacterName)
+            .Concat(bundle.Items.Select(x => ItemCharacters.Get(x)?.Name)).OfType<string>());
 }
