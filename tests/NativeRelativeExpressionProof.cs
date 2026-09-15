@@ -1,6 +1,5 @@
 using System.IO;
 using System.Reflection;
-using System.Text.Json;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
 using YukkuriMovieMaker.Settings;
@@ -27,8 +26,7 @@ internal static partial class NativeProof
         {
             var bundleEntry = TemplateResolver.Reference(source, "笑顔", character.Name);
             var singleEntry = TemplateResolver.Reference(single, "笑顔", character.Name);
-            var bundleTile = new IntentEntry(bundleEntry.Id) { UseTemplateDuration = true };
-            var singleTile = new IntentEntry(singleEntry.Id);
+            var bundleTile = new IntentEntry(bundleEntry.Id) { UseTemplateDuration = true }; var singleTile = new IntentEntry(singleEntry.Id);
             var target = new IntentTargetContext { ItemTypeKeys = [IntentSelectionContext.TypeKey(typeof(VoiceItem))], CharacterName = character.Name };
             var relation = new IntentRelation { Duration = IntentDuration.UntilRelated, Neighbor = IntentNeighbor.NextSameTypeAndCharacter };
             var first = new IntentPalette(Guid.NewGuid(), "セット1", "表情", target, relation, [bundleTile]) { ExpressionCandidates = true };
@@ -45,50 +43,39 @@ internal static partial class NativeProof
                 "R10 same-name detached Character candidates work and duplicate aliases receive only needed set/source context");
             await SelectInDropdown(view, row, source.Name);
             var baseline = Signature(timeline); var sourceBaseline = (face.Frame, face.Length, face.Layer, face.Remark, text.Frame, text.Layer);
-            var direct = IntentExecutionPlan.Create(timeline, first, bundleTile, fixture.Library);
-            Assert(direct.Count == 2, "R10 tile path accepts the same complete bundle as expression assignment");
+            Assert(IntentExecutionPlan.Create(timeline, first, bundleTile, fixture.Library).Count == 2,
+                "R10 tile path accepts the same complete bundle as expression assignment");
             var excel = Path.Combine(output, "r10-relative-expression.xlsx"); vm.ExportTo(excel); vm.ImportFrom(excel);
             row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
             Assert(row.SelectedChoice.Template?.IntentSource?.Entry.LibraryEntryId == bundleEntry.Id && Signature(timeline) == baseline,
                 "R10 Excel Bridge roundtrip resolves the Palette-backed whole bundle without Timeline mutation");
-            await ClickPlace(view);
-            Assert(!vm.HasError, "R10 actual native expression placement command completes: " + vm.Status);
+            await ClickPlace(view); Assert(!vm.HasError, "R10 actual native expression placement command completes: " + vm.Status);
             var members = timeline.Items.Where(x => x != voice && x != nextVoice).OrderBy(x => { IntentAssociationTag.Read(x.Remark, out var tag); return tag?.Index ?? int.MaxValue; }).ToArray();
-            Assert(members.Length == 2 && members[0].Frame == 100 && members[1].Frame == 110 && members[0].Length == 20 && members[1].Length == 12 &&
-                members[1].Layer - members[0].Layer == 1, "R10 expression placement preserves complete bundle frame/layer/duration geometry");
-            Assert(members.All(x => IntentAssociationTag.Read(x.Remark, out _) == AssociationTagState.Valid) &&
-                AssociationTag.Voice(voice.Remark, out _) == AssociationTagState.Valid && sourceBaseline == (face.Frame, face.Length, face.Layer, face.Remark, text.Frame, text.Layer),
-                "R13 complete generated membership is identifiable; source templates remain unchanged");
+            Assert(members.Length == 2 && members[0].Frame == 100 && members[1].Frame == 110 && members[0].Length == 20 && members[1].Length == 12 && members[1].Layer - members[0].Layer == 1,
+                "R10 expression placement preserves complete bundle frame/layer/duration geometry");
+            Assert(members.All(x => IntentAssociationTag.Read(x.Remark, out _) == AssociationTagState.Valid) && AssociationTag.Voice(voice.Remark, out _) == AssociationTagState.Valid &&
+                sourceBaseline == (face.Frame, face.Length, face.Layer, face.Remark, text.Frame, text.Layer), "R13 complete generated membership is identifiable; source templates remain unchanged");
             var placed = Signature(timeline);
             await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == baseline, "R13 one native Undo removes every expression bundle member and restores Voice remark");
             await undo.RedoAsync(); await Idle(); Assert(Signature(timeline) == placed, "R13 native Redo restores the exact whole associated bundle");
             undo.Record(); voice.Frame = 140; undo.Record(); timeline.SelectedItems = [members[1]];
-            var beforeResync = Signature(timeline);
-            var result = vm.Resync(); await Idle();
+            var beforeResync = Signature(timeline); var result = vm.Resync(); await Idle();
             Assert(result.Skipped.Count == 0 && result.Plan.UpdateCount == 2 && members[0].Frame == 140 && members[1].Frame == 150,
                 "R13 selecting a non-Face member resyncs the entire bundle against saved Palette relation");
-            Assert(members[0].Remark.Contains("user face remark") && members[1].Remark.Contains("user text remark"),
-                "R13 Resync preserves all existing member contents and user remarks");
+            Assert(members[0].Remark.Contains("user face remark") && members[1].Remark.Contains("user text remark"), "R13 Resync preserves all existing member contents and user remarks");
             await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == beforeResync, "R13 one native Undo restores every updated bundle member");
             var duplicate = members[1].GetClone(); duplicate.Layer += 5;
-            timeline.Items = timeline.Items.Add(duplicate); timeline.SelectedItems = [members[0]]; var ambiguous = Signature(timeline);
-            var refused = vm.Resync();
-            Assert(refused.Plan.UpdateCount == 0 && refused.Skipped.Count == 1 && Signature(timeline) == ambiguous,
-                "R13 copied member identity makes the whole bundle zero-write; no first-match reconstruction");
-            timeline.Items = timeline.Items.Remove(duplicate).Remove(members[1]); timeline.SelectedItems = [voice]; var missing = Signature(timeline);
-            refused = vm.Resync();
-            Assert(refused.Plan.UpdateCount == 0 && refused.Skipped.Count == 1 && Signature(timeline) == missing,
-                "R13 a missing member never causes partial Resync or silent member regeneration");
+            timeline.Items = timeline.Items.Add(duplicate); timeline.SelectedItems = [members[0]]; var ambiguous = Signature(timeline); var refused = vm.Resync();
+            Assert(refused.Plan.UpdateCount == 0 && refused.Skipped.Count == 1 && Signature(timeline) == ambiguous, "R13 copied member identity makes the whole bundle zero-write; no first-match reconstruction");
+            timeline.Items = timeline.Items.Remove(duplicate).Remove(members[1]); timeline.SelectedItems = [voice]; var missing = Signature(timeline); refused = vm.Resync();
+            Assert(refused.Plan.UpdateCount == 0 && refused.Skipped.Count == 1 && Signature(timeline) == missing, "R13 a missing member never causes partial Resync or silent member regeneration");
             timeline.Items = timeline.Items.Add(members[1]); timeline.SelectedItems = [voice];
             var legacyGuard = ResyncPlan.Create(timeline, fixture.ExpressionPresets.Single(x => x.Id == fixture.CurrentExpressionPresetId));
-            Assert(legacyGuard.Plan.UpdateCount == 0 && legacyGuard.Skipped.Count == 1,
-                "R13 retained legacy Resync cannot resize only the Face member of a relative bundle");
+            Assert(legacyGuard.Plan.UpdateCount == 0 && legacyGuard.Skipped.Count == 1, "R13 retained legacy Resync cannot resize only the Face member of a relative bundle");
             face.Length++; var changed = Signature(timeline); refused = vm.Resync();
-            Assert(refused.Plan.UpdateCount == 0 && refused.Skipped.Count == 1 && Signature(timeline) == changed,
-                "R13 changed source topology is rejected without guessing member mappings"); face.Length--;
+            Assert(refused.Plan.UpdateCount == 0 && refused.Skipped.Count == 1 && Signature(timeline) == changed, "R13 changed source topology is rejected without guessing member mappings"); face.Length--;
             timeline.Items = [voice, nextVoice]; voice.Remark = ""; timeline.SelectedItems = [voice]; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
-            field.SetValue(vm, fixture); vm.Refresh(); row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
-            row.SelectedChoice = row.Choices.Single(x => x.Template?.Name == single.Name);
+            field.SetValue(vm, fixture); vm.Refresh(); row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice)); row.SelectedChoice = row.Choices.Single(x => x.Template?.Name == single.Name);
             fixture.IntentPalettes[1] = second with { Entries = [bundleTile] }; vm.RefreshExpressionVocabulary();
             Assert(!row.SelectedChoice.IsAvailable && !vm.PlaceCommand.CanExecute(null), "R10 removing a chosen membership retains a visible invalid assignment and disables placement");
             RejectWithoutMutation(timeline, () => vm.Place(), "R10 stale membership cannot be silently placed through direct invocation");
@@ -96,15 +83,15 @@ internal static partial class NativeProof
             CharacterSettings.Default.Characters.Add(character); CharacterSettings.Default.Characters.Add(detached);
             try { RejectWithoutMutation(timeline, () => IntentExecutionPlan.Create(timeline, first, bundleTile, fixture.Library), "R10 actual duplicate registered Character names fail closed"); }
             finally { CharacterSettings.Default.Characters.Remove(character); CharacterSettings.Default.Characters.Remove(detached); }
-            var staged = IntentExpressionPlacement.Create(timeline, [row], fixture);
+            // The expression operation validates the complete Voice-list snapshot even when only one row is assigned.
+            var staged = IntentExpressionPlacement.Create(timeline, vm.Rows.ToArray(), fixture);
             fixture.IntentPalettes[1] = second with { Relation = second.Relation with { StartOffset = 1 } };
             RejectWithoutMutation(timeline, () => staged.Commit(timeline, undo, fixture), "R10 changed saved relation invalidates a staged expression commit");
             Log("R10=PASS"); Log("R13=PASS");
         }
         finally
         {
-            ItemSettings.Default.Templates.Remove(source); ItemSettings.Default.Templates.Remove(single);
-            store.Save(original); field.SetValue(vm, original);
+            ItemSettings.Default.Templates.Remove(source); ItemSettings.Default.Templates.Remove(single); store.Save(original); field.SetValue(vm, original);
             timeline.Items = before; timeline.SelectedItems = selection; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
             vm.SetLegacyWorkspace(mode); vm.Refresh(); vm.ResetIntentSettings();
         }
