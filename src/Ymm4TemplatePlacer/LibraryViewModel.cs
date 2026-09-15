@@ -20,7 +20,7 @@ public sealed partial class PlacerViewModel
     public string LibraryNotice { get => libraryNotice; private set => Set(ref libraryNotice, value); }
     public string LibrarySearch { get => librarySearch; set { Set(ref librarySearch, value); RefreshLibraryEntries(); } }
     public string LibraryDisplayName { get => libraryDisplayName; set => Set(ref libraryDisplayName, value); }
-    public CharacterOption? SelectedLibraryCharacter { get => selectedLibraryCharacter; set => Set(ref selectedLibraryCharacter, value); }
+    public CharacterOption? SelectedLibraryCharacter { get => selectedLibraryCharacter; set { Set(ref selectedLibraryCharacter, value); OnPropertyChanged(nameof(LibraryCharacterSummary)); } }
     public ItemTemplate? SelectedSourceTemplate
     {
         get => selectedSourceTemplate;
@@ -133,8 +133,22 @@ public sealed partial class PlacerViewModel
         EditSettings(next => { next.Library.RemoveAll(x => x.Id == id); OnLibraryUnregistered(next, id); });
         HasError = false; Status = "テンプレート管理から登録解除しました。YMM4のテンプレートとタイムラインは変更していません。";
     }
+    public string LibraryCharacterSummary
+    {
+        get
+        {
+            var chosen = SelectedLibraryCharacter?.Name;
+            var actual = SelectedSourceTemplate?.Items.Count == 1 ? ItemCharacters.Get(SelectedSourceTemplate.Items[0]) : null;
+            if (chosen == null) return "キャラクター: 指定なし";
+            if (actual?.Name == chosen)
+                return ReferenceEquals(ItemCharacters.ResolveUnique(timeline, chosen), actual)
+                    ? $"キャラクター: {chosen}（自動）" : $"キャラクター: {chosen}（同名のため要確認）";
+            return $"キャラクター: {chosen}（指定）";
+        }
+    }
     private void UpdateLibraryCommands()
     {
+        OnPropertyChanged(nameof(LibraryCharacterSummary));
         RegisterLibraryCommand?.RaiseCanExecuteChanged(); SaveLibraryCommand?.RaiseCanExecuteChanged();
         RelinkLibraryCommand?.RaiseCanExecuteChanged(); UnregisterLibraryCommand?.RaiseCanExecuteChanged();
     }

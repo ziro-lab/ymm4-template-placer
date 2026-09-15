@@ -86,6 +86,9 @@ public sealed record LibraryEntryView(LibraryEntry Entry)
     public string DisplayName => Entry.DisplayName;
     public string SourceName => Entry.Source.Name;
     public string CharacterName => Entry.CharacterName ?? "指定なし";
-    public string Status => TemplateResolver.Resolve(Entry).Message;
+    public string Status
+    {
+        get { var result = TemplateResolver.Resolve(Entry); return result.State == TemplateReferenceState.Resolved ? "" : result.Message; }
+    }
 }
 public sealed record CharacterOption(string? Name, string Label);

@@ -29,7 +29,7 @@ internal static partial class NativeProof
         var ta = Template("W8/FaceA", [sourceA]); var tb = Template("W8/FaceB", [sourceB]);
         ItemSettings.Default.Templates.Add(ta); ItemSettings.Default.Templates.Add(tb);
         undo.Record(); foreach (var voice in new[] { a, b, other }) Assert(timeline.TryAddItems([voice], voice.Frame, voice.Layer), "W8 native Voice fixture insertion"); undo.Record();
-        vm.Refresh(); view.MainTabs.SelectedIndex = 0; await Idle();
+        vm.Refresh(); ShowTask(view, "expression"); await Idle();
         foreach (var row in vm.Rows.Where(x => ReferenceEquals(x.Target.Voice, a) || ReferenceEquals(x.Target.Voice, b) || ReferenceEquals(x.Target.Voice, other)))
             row.SelectedChoice = row.Choices.Single(x => ReferenceEquals(x.Template?.Template, ReferenceEquals(row.Target.Voice, other) ? tb : ta));
         vm.CopyExpressionPreset(); vm.ExpressionDraft.Name = "再同期試験"; vm.ExpressionDraft.UseTemplateLayer = false;

@@ -26,8 +26,8 @@ internal static partial class NativeProof
         var template = Template("W12/Overview", [source]); ItemSettings.Default.Templates.Add(template);
         vm.Refresh(); vm.SelectedSourceTemplate = template; vm.LibraryDisplayName = "強調";
         var entry = vm.RegisterLibrary();
-        vm.ActivePaletteKind = PaletteKind.Style; vm.NewPaletteName = "仕上げ確認"; var palette = vm.CreatePalette();
-        view.MainTabs.SelectedIndex = 2; await Idle();
+        vm.ActivePaletteKind = PaletteKind.Style; vm.NewPaletteCharacter = null; vm.NewPaletteName = "仕上げ確認"; var palette = vm.CreatePalette();
+        ShowTask(view, "palette"); await Idle();
         Assert(vm.PaletteEntries.Count == 0 && vm.PaletteEmptyMessage.Contains("空", StringComparison.Ordinal), "W12 empty palette gives a concrete Library-add next action");
         SaveNamedView(view, "ui-palette-empty.png");
         vm.PaletteLibraryChoice = vm.PaletteLibraryChoices.Single(x => x.Id == entry.Id); vm.AddPaletteEntry();
@@ -53,13 +53,13 @@ internal static partial class NativeProof
         vm.DeleteSelectionPreset(); vm.SelectedSelectionPreset = vm.SelectionPresets.Single(x => x.Id == firstCopy.Id); vm.DeleteSelectionPreset();
         vm.SelectedSelectionPreset = vm.SelectionPresets.Single(x => x.Id == basePreset.Id);
         vm.SelectionTemplate = vm.SelectionTemplates.Single(x => x.Id == entry.Id);
-        view.MainTabs.SelectedIndex = 1; await Idle();
+        ShowTask(view, "selection"); await Idle();
         Assert(view.SelectionSurface.TemplateSelector.ItemTemplate != null && TextSearch.GetTextPath(view.SelectionSurface.TemplateSelector) == "DisplayName",
             "W12 selection Template chooser has a detailed source/Character template and short-name keyboard search");
         Assert(view.SelectionSurface.ProfileSelector.GetBindingExpression(ItemsControl.ItemsSourceProperty)?.Status == BindingStatus.Active &&
             view.SelectionSurface.PlaceSelectionButton.GetBindingExpression(Button.CommandProperty)?.Status == BindingStatus.Active,
             "W12 real selection profile list and placement command bindings are active");
-        view.MainTabs.SelectedIndex = 3; await Idle();
+        ShowTask(view, "library"); await Idle();
         var search = view.LibrarySurface.LibrarySearchBox;
         search.Text = "W12/Overview"; search.GetBindingExpression(TextBox.TextProperty)!.UpdateSource(); await Idle();
         Assert(vm.LibraryEntries.Count == 1 && vm.LibraryEntries[0].Id == entry.Id, "W12 actual Library search matches a source name without altering its reference");
@@ -72,11 +72,11 @@ internal static partial class NativeProof
         var names = new[] { "expression", "selection", "palette", "library" };
         for (var tab = 0; tab < names.Length; tab++)
         {
-            view.MainTabs.SelectedIndex = tab; await Idle();
+            ShowTask(view, names[tab]); await Idle();
             if (tab == 1) Descendant<ScrollViewer>(view.SelectionSurface)?.ScrollToTop();
             if (tab == 3) Descendant<ScrollViewer>(view.LibrarySurface)?.ScrollToTop();
             await Idle();
-            Assert(view.IsLoaded && view.MainTabs.SelectedIndex == tab && view.Background != null && view.Foreground != null,
+            Assert(view.IsLoaded && TaskIsVisible(view, names[tab]) && view.Background != null && view.Foreground != null,
                 "W12 native tab has a loaded, themed surface: " + names[tab]);
             SaveNamedView(view, "ui-" + names[tab] + "-normal.png");
         }
@@ -86,20 +86,20 @@ internal static partial class NativeProof
             view.Width = 360; view.Height = 320;
             for (var tab = 0; tab < names.Length; tab++)
             {
-                view.MainTabs.SelectedIndex = tab; await Idle(); view.UpdateLayout();
+                ShowTask(view, names[tab]); await Idle(); view.UpdateLayout();
                 Assert(view.ActualWidth >= 360 && view.ActualHeight >= 280, "W12 narrow native layout remains measurable: " + names[tab]);
                 SaveNamedView(view, "ui-" + names[tab] + "-narrow.png");
             }
         }
         finally { view.Width = width; view.Height = height; await Idle(); }
-        timeline.SelectedItems = []; view.MainTabs.SelectedIndex = 1; await Idle();
+        timeline.SelectedItems = []; ShowTask(view, "selection"); await Idle();
         Assert(vm.SelectionProfiles.Count == 0 && !vm.PlaceSelectionCommand.CanExecute(null) && vm.SelectionContext.Contains("タイムライン", StringComparison.Ordinal),
             "W12 empty Timeline selection names the correct selection surface and disables placement");
         SaveNamedView(view, "ui-selection-empty.png");
         vm.ActivePaletteKind = PaletteKind.Style; vm.ManualStylePalette = vm.StylePalettes.Single(x => x.Id == palette.Id); vm.DeleteCurrentPalette();
         vm.ManualStylePalette = vm.StylePalettes.FirstOrDefault(x => x.Id == oldStyle); vm.ActivePaletteKind = oldKind;
         vm.SelectedLibraryEntry = vm.LibraryEntries.Single(x => x.Id == entry.Id); vm.UnregisterLibrary();
-        ItemSettings.Default.Templates.Remove(template); vm.Refresh(); view.MainTabs.SelectedIndex = 0; await Idle();
+        ItemSettings.Default.Templates.Remove(template); vm.Refresh(); ShowTask(view, "expression"); await Idle();
         Assert(Signature(timeline) == before && new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().NextAssociationId == nextId,
             "W12 UI review and settings edits do not mutate Timeline Items or allocate association IDs");
         Log("W12_UI=PASS");

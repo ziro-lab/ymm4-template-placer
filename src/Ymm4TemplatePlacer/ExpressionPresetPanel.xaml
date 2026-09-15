@@ -1,17 +1,15 @@
 <UserControl x:Class="Ymm4TemplatePlacer.ExpressionPresetPanel"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
- xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Ymm4TemplatePlacer">
+ <UserControl.Resources><local:ExpressionRangeConverter x:Key="ExpressionRange"/></UserControl.Resources>
  <StackPanel Margin="0,4,0,0">
-  <DockPanel>
-   <TextBlock Text="表情プリセット" VerticalAlignment="Center" Margin="0,0,8,0"/>
-   <ComboBox x:Name="PresetSelector" ItemsSource="{Binding ExpressionPresets}" DisplayMemberPath="Name"
-    SelectedItem="{Binding SelectedExpressionPreset,Mode=TwoWay}" MinWidth="140" ToolTip="{Binding ExpressionPresetNotice}"/>
-  </DockPanel>
-  <TextBlock Text="{Binding ExpressionPresetSummary}" TextWrapping="Wrap" Opacity="0.8" Margin="0,3,0,0"/>
-  <Expander x:Name="PresetEditor" Header="プリセットを編集" Margin="0,3,0,0">
-   <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+  <ComboBox x:Name="PresetSelector" ItemsSource="{Binding ExpressionPresets}" DisplayMemberPath="Name"
+   SelectedItem="{Binding SelectedExpressionPreset,Mode=TwoWay}" ToolTip="保存した配置条件を切り替えます" Margin="0,0,0,3">
+   <ComboBox.Style><Style TargetType="ComboBox"><Style.Triggers><DataTrigger Binding="{Binding ExpressionPresets.Count}" Value="1"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></ComboBox.Style>
+  </ComboBox>
+  <Expander x:Name="PresetEditor" Header="{Binding SelectedExpressionPreset,Converter={StaticResource ExpressionRange}}" ToolTip="{Binding ExpressionPresetSummary}">
+   <ScrollViewer MaxHeight="90" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="4">
-     <TextBlock Text="表情をどの長さ・位置・レイヤーで置くかを決めます。迷ったら『音声と同じ』、位置調整0、テンプレートのレイヤーのままで使えます。" TextWrapping="Wrap" Opacity="0.75" Margin="0,0,0,6"/>
      <DockPanel Margin="0,2"><TextBlock Text="名前" Width="72" VerticalAlignment="Center"/><TextBox Text="{Binding ExpressionDraft.Name,UpdateSourceTrigger=PropertyChanged}"/></DockPanel>
      <DockPanel Margin="0,2"><TextBlock Text="配置する長さ" Width="72" VerticalAlignment="Center"/>
       <ComboBox ItemsSource="{Binding ExpressionDurations}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding ExpressionDraft.Duration,Mode=TwoWay}"/>

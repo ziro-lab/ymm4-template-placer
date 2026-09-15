@@ -9,7 +9,7 @@ internal static partial class NativeProof
         stage = "W12 preset selector refresh";
         var vm = ViewModel!; var view = View!;
         var signature = Signature(timeline);
-        timeline.SelectedItems = []; view.MainTabs.SelectedIndex = 0; await Idle();
+        timeline.SelectedItems = []; ShowTask(view, "expression"); await Idle();
         var expression = vm.SelectedExpressionPreset!;
         Assert(view.PresetSurface.PresetSelector.SelectedItem is ExpressionPreset visible && visible.Id == expression.Id && visible.Name == expression.Name,
             "W12 actual expression selector displays the current saved preset after unrelated settings refresh");
@@ -28,7 +28,7 @@ internal static partial class NativeProof
             "W12 deleting an expression copy leaves a visible valid selection");
         vm.SelectedExpressionPreset = vm.ExpressionPresets.Single(x => x.Id == expression.Id);
         timeline.SelectedItems = [timeline.Items.OfType<VoiceItem>().First()];
-        view.MainTabs.SelectedIndex = 1; await Idle();
+        ShowTask(view, "selection"); await Idle();
         var selection = vm.SelectedSelectionPreset!;
         Assert(view.SelectionSurface.SelectionPresetSelector.SelectedItem is SelectionPreset shown && shown.Id == selection.Id && shown.Name == selection.Name,
             "W12 actual selection-preset ComboBox displays its saved name and ID");
@@ -46,7 +46,7 @@ internal static partial class NativeProof
         Assert(view.SelectionSurface.SelectionPresetSelector.SelectedItem is SelectionPreset remaining && remaining.Id == vm.SelectedSelectionPreset!.Id,
             "W12 deleting a selection copy leaves a visible valid current preset");
         vm.SelectedSelectionPreset = vm.SelectionPresets.Single(x => x.Id == selection.Id);
-        timeline.SelectedItems = []; view.MainTabs.SelectedIndex = 0; await Idle();
+        timeline.SelectedItems = []; ShowTask(view, "expression"); await Idle();
         Assert(Signature(timeline) == signature, "W12 selector changes and refresh never mutate native Timeline Items");
         Log("W12_SELECTORS=PASS");
     }

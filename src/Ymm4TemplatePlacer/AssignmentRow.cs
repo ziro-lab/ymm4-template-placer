@@ -3,7 +3,10 @@ using System.Runtime.CompilerServices;
 
 namespace Ymm4TemplatePlacer;
 
-public sealed record TemplateChoice(FaceTemplate? Template, string Label);
+public sealed record TemplateChoice(FaceTemplate? Template, string Label, string? ShortName = null)
+{
+    public string DisplayName => ShortName ?? Label;
+}
 
 public sealed class AssignmentRow : INotifyPropertyChanged
 {
@@ -34,6 +37,20 @@ public sealed class AssignmentRow : INotifyPropertyChanged
             .Concat(candidates.Select(x => new TemplateChoice(x, x.Name))).ToArray();
         selectedChoice = Choices[0];
     }
+    public void RefreshCandidates(IReadOnlyList<FaceTemplate> catalog, PlacerSettings settings)
+    {
+        var selected = SelectedChoice.Template;
+        var candidates = TemplateCatalog.ForVoice(Target.Voice, catalog);
+        bool SameSnapshot(FaceTemplate value) => selected != null && ReferenceEquals(value.Template, selected.Template) &&
+            ReferenceEquals(value.Face, selected.Face) && value.Name == selected.Name && value.Character == selected.Character;
+        // Adding a source is not permission to heal a changed/missing assignment. Keep its original snapshot for the existing guard.
+        if (selected != null && !candidates.Any(SameSnapshot)) return;
+        Choices = new[] { new TemplateChoice(null, candidates.Count == 0 ? "— 候補なし —" : "— 配置しない —") }
+            .Concat(candidates.Select(x => new TemplateChoice(SameSnapshot(x) ? selected : x, x.Name))).ToArray();
+        selectedChoice = Choices.First(x => ReferenceEquals(x.Template, selected));
+        PreferPalette(settings);
+        Changed(nameof(HasCandidates));
+    }
     public void PreferPalette(PlacerSettings settings)
     {
         var selected = SelectedChoice.Template;
@@ -53,7 +70,8 @@ public sealed class AssignmentRow : INotifyPropertyChanged
         Choices = new[] { Choices[0] }.Concat(candidates
             .OrderBy(x => preferred.TryGetValue(x, out var item) ? item.Order : int.MaxValue)
             .ThenBy(x => x.Name, StringComparer.Ordinal)
-            .Select(x => new TemplateChoice(x, preferred.TryGetValue(x, out var item) ? item.Label : x.Name))).ToArray();
+            .Select(x => new TemplateChoice(x, preferred.TryGetValue(x, out var item) ? item.Label : x.Name,
+                preferred.TryGetValue(x, out item) ? item.Label[..^"（パレット）".Length] : null))).ToArray();
         selectedChoice = Choices.First(x => ReferenceEquals(x.Template, selected));
         Changed(nameof(Choices)); Changed(nameof(SelectedChoice)); Changed(nameof(State));
     }

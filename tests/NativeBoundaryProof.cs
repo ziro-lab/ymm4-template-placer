@@ -23,7 +23,7 @@ internal static partial class NativeProof
         foreach (var item in new IItem[] { a, b, distractor, blocker }) Assert(timeline.TryAddItems([item], item.Frame, item.Layer), "W11 native fixture insertion");
         undo.Record(); vm.Refresh(); vm.SelectedSourceTemplate = template; vm.LibraryDisplayName = "切替の強調";
         var entry = vm.RegisterLibrary(); vm.SelectionTemplate = vm.SelectionTemplates.Single(x => x.Id == entry.Id);
-        timeline.SelectedItems = [b, a]; view.MainTabs.SelectedIndex = 1; await Idle();
+        timeline.SelectedItems = [b, a]; ShowTask(view, "selection"); await Idle();
         Assert(vm.SelectionProfiles.Select(x => x.Value).SequenceEqual(new[] { SelectionProfile.SelectionRange, SelectionProfile.Boundary }), "W11 exactly two targets offer Range and Boundary without single-target profiles");
         vm.SelectedSelectionProfile = vm.SelectionProfiles.Single(x => x.Value == SelectionProfile.Boundary); vm.CopySelectionPreset();
         vm.SelectionDraft.Name = "境界を挟む30frame"; vm.SelectionDraft.StartOffset = "-15"; vm.SelectionDraft.Duration = "30";

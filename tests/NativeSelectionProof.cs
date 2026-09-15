@@ -34,7 +34,7 @@ internal static partial class NativeProof
         vm.SelectionTemplate = vm.SelectionTemplates.Single(x => x.Id == entry.Id);
         // TryAddItems selects inserted Items in the host. Establish the intended empty context explicitly.
         timeline.SelectedItems = [];
-        view.MainTabs.SelectedIndex = 1; await Idle();
+        ShowTask(view, "selection"); await Idle();
         var surface = view.SelectionSurface;
         Assert(surface.IsLoaded && ReferenceEquals(surface.DataContext, vm), "W9 actual Selection panel is hosted in native YMM4");
         Assert(timeline.SelectedItems.Count == 0 && vm.SelectionProfiles.Count == 0 && !vm.PlaceSelectionCommand.CanExecute(null), "W9 no selection exposes no unusable profiles");

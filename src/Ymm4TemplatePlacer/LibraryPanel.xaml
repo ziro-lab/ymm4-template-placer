@@ -5,7 +5,7 @@
  <Grid Margin="6">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <StackPanel Grid.Row="0">
-   <TextBlock Text="YMM4のテンプレートをパレットから使えるように登録します。ここは普段使う画面ではなく、追加・再リンク用の管理画面です。" TextWrapping="Wrap"/>
+   <TextBlock Text="元テンプレートの参照を確認・修正します。普段の追加はパレットの［＋ テンプレートを追加］から行えます。" TextWrapping="Wrap"/>
    <TextBlock Text="アイテムを1つだけ含むテンプレートをYMM4で登録し、一覧を更新してください。" TextWrapping="Wrap" Opacity="0.7"/>
    <TextBlock Text="{Binding LibraryNotice}" TextWrapping="Wrap" FontWeight="Bold"/>
   </StackPanel>
@@ -31,10 +31,13 @@
    <TextBlock Text="元のYMM4テンプレート（追加・再リンク先）" TextWrapping="Wrap"/>
    <ComboBox x:Name="SourceCombo" ItemsSource="{Binding SourceTemplates}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSourceTemplate,Mode=TwoWay}" IsTextSearchEnabled="True" ToolTip="同名候補を自動で選びません。曖昧な場合はYMM4側で区別してください。"/>
   </StackPanel>
-  <WrapPanel Grid.Row="4" Margin="0,6">
-   <StackPanel Margin="0,0,8,0"><TextBlock Text="表示名"/><TextBox x:Name="DisplayNameBox" Text="{Binding LibraryDisplayName,UpdateSourceTrigger=PropertyChanged}" Width="180" MaxLength="256"/></StackPanel>
-   <StackPanel><TextBlock Text="キャラクター（任意）"/><ComboBox ItemsSource="{Binding LibraryCharacters}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedLibraryCharacter,Mode=TwoWay}" MinWidth="120"/></StackPanel>
-  </WrapPanel>
+  <StackPanel Grid.Row="4" Margin="0,6">
+   <TextBlock Text="表示名"/><TextBox x:Name="DisplayNameBox" Text="{Binding LibraryDisplayName,UpdateSourceTrigger=PropertyChanged}" MaxLength="256"/>
+   <TextBlock x:Name="CharacterSummary" Text="{Binding LibraryCharacterSummary}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+   <Expander x:Name="CharacterOverrideEditor" Header="キャラクター指定を変更" Margin="0,4,0,0">
+    <ComboBox x:Name="CharacterOverrideSelector" ItemsSource="{Binding LibraryCharacters}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedLibraryCharacter,Mode=TwoWay}" ToolTip="通常は元テンプレートから自動取得します。キャラクターを持たないテンプレートへの関連付けや指定なしもここで選べます。"/>
+   </Expander>
+  </StackPanel>
   <WrapPanel Grid.Row="5">
    <Button x:Name="RegisterButton" Content="新規登録" Command="{Binding RegisterLibraryCommand}" Padding="10,5" Margin="0,0,6,4"/>
    <Button Content="名前等を保存" Command="{Binding SaveLibraryCommand}" Padding="10,5" Margin="0,0,6,4"/>

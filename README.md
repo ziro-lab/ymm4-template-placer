@@ -1,68 +1,50 @@
-# YMM4 Template Placer v0.4.0 Candidate
+# YMM4 Template Placer v0.4.0 Task UX Candidate
 
-YMM4の登録済みItem Templateを、短い名前・Character / Styleの棚で整理し、再生位置や選択Itemとの関係で安全に配置するWPF Pluginです。
+よく使うYMM4テンプレートをパレットにまとめ、選んで置くWPFプラグインです。元テンプレートの管理名や内容を変えず、短い表示名で再利用できます。
 
-**使い方・インストール:** [ユーザーガイド](docs/USAGE.md)  
-**配置の数値の意味:** [選択配置](docs/SELECTION_PLACEMENT.md)  
-**検証方法:** [テスト](tests/README.md) / [v0.4 Acceptance](docs/V0.4_ACCEPTANCE.md)
+**使い方・導入:** [ユーザーガイド](docs/USAGE.md)  
+**配置計算:** [選択配置の数値](docs/SELECTION_PLACEMENT.md)  
+**設計・検証:** [Task UX](docs/TASK_UX.md) / [テスト](tests/README.md) / [既存18項目Acceptance](docs/V0.4_ACCEPTANCE.md)
 
-## このbranchについて
-
-v0.4の統合Candidateです。PR #6はDraftのまま維持し、mainへのmergeは行いません。検証済みcheckpointは各Wの記録とPR本文を参照してください。個々のstaging commitは検証完了を意味しません。
-
-最終配布物は実YMM4内のP1〜P9、W3〜W12、全18Acceptance、release/proof Warning 0 / Error 0、通常DLLの実ホストロード、package内容・hash確認を通したときだけ生成します。`provenance.json`のsource/runと`v04-acceptance.json`を確認してください。
-
-v0.3.1は保持すべき回帰baselineです。[IMPLEMENTATION](docs/IMPLEMENTATION.md) / [VERIFICATION](docs/VERIFICATION.md) はv0.3の歴史的記録であり、v0.4の現在の使い方ではありません。特に旧版の削除・置換操作は廃止しています。[DESIGN](docs/DESIGN.md) / [ROADMAP](docs/ROADMAP.md) はv0.4の設計と検証順の正本です。
-
-## 主な操作
-
-| 画面 | 用途 |
-| --- | --- |
-| 表情一覧 | VoiceへCharacter対応Face Templateを割り当て、保存済みExpression Presetで追加する。Excelはこの割り当て専用のサブ経路。 |
-| 選択配置 | 1 ItemのTarget Companion / Point Emphasis、複数ItemのSelection Range、2 ItemのBoundary。 |
-| パレット | Character棚の一時自動切替・手動Style棚・ダブルクリックQuick Drop。 |
-| Library | YMM4 Templateへの厳密な参照、短い表示名、Character対応、再リンク・登録解除。 |
-
-LibraryはTemplate本体を保存しません。同じ登録を複数の棚へ置けます。参照先が0件・複数件なら推測せず、明示的な再リンクへ案内します。
-
-Quick Dropは現在再生位置とTemplate本来のLengthを使います。Character棚は基準 / 前面（大きいLayer番号） / 背面（小さいLayer番号）を選択でき、予定区間の全長でLayer衝突を確認します。既存Itemを空けるために動かしたり短くしたりしません。
-
-表情PresetはVoiceと同じ、またはNext Same Character + MaxGap、開始/終了offset、Layer範囲・優先番号を保存できます。次Voiceが重なっていることだけを理由に現在Voiceより短縮しません。
-
-## 追加・再同期・削除
+## 主要な操作
 
 ```text
-配置   = 全体を計画してから追加
-再同期 = 選択した関連表情へ現在のExpression Presetを再適用
-削除   = YMM4標準操作
+パレット → ＋ テンプレートを追加 → YMM4テンプレートを選択 → 追加 → ダブルクリックで配置
+表情一覧 → セリフを見て表情を選択 → 表情を配置
+選択配置 → タイムラインで対象を選択 → 何を／どこに置くか選択 → 配置
 ```
 
-関連付けは表情一覧からのVoice Expression配置だけです。Remark本文を残して単純な連番を付け、手動再同期時に連番＋実際のCharacterでTargetが一意な場合だけ更新します。特定不能はスキップし、成功分は1回のnative Undoへまとめます。Quick Dropと選択配置は独立Itemで、関連付けを持ちません。
+Primary tabはパレット／表情一覧／選択配置です。内部の登録モデルやCharacter/Styleを理解してから使う必要はありません。テンプレート管理は参照確認・再リンク等のsecondary viewです。候補なしの表情行から直接追加へ進めます。
 
-通常配置はadd-onlyです。全行未選択でも既存Itemを削除しません。Presetの未保存編集、入力不正、空きLayerなし、Template参照切れなどでは追加前に停止します。
+保存済みの配置条件、表情の再同期、Excel Bridge、基準／前面／背面、全5種類の配置Profileは維持しています。選択配置の予定は必要な入力変更時だけ自動更新し、配置時は最新状態で再計算します。常時監視ではありません。
 
-## ビルドと配布
+## 安全性
 
-検証baselineはWindows / .NET 10 SDK / YMM4 4.55.1.1 Liteです。
+配置は追加、再同期は選択した既存関連表情の更新、削除はYMM4標準操作です。既存アイテムの自動削除・移動・短縮、曖昧な参照の推測修復はしません。全長の衝突と同時配置の予約を検証し、配置できない場合は追加前に止めます。Undo/RedoはYMM4標準を使います。
+
+Libraryには元データの参照だけを保存し、本体の第二DBは持ちません。元参照が0件・複数件なら明示的な再リンクが必要です。Quick Dropと選択配置は独立アイテム、関連付け・現在条件による再同期は表情一覧の明示操作です。
+
+## Candidateと検証
+
+PR #8のUX作業は `feature/v0.4-integrated-candidate` / PR #6へ統合します。**mainへはまだmergeしません。PR #6は手元受入のためDraftを維持します。**
+
+回帰baselineは `c3fc36837508b59d09026a74b5799141eae00a7a`（384 native assertions）。最新の検証済みcommit/runはPR #6本文と段階別checkpointを確認してください。staging commitやビルドだけでは完了を意味しません。
+
+最終packageはP1-P9、W3-W12、V04、WUX1-WUX7、既存18項目＋必須UX12項目、release/proofのWarning 0 / Error 0、実配布DLLのnative smoke、package hashチェックを通した場合だけ生成します。人工fixtureによる検証であり、任意の実PSD素材・初心者本人・物理インストーラ・全DPIまで検証済みとは主張しません。
+
+## ビルド
+
+固定検証環境はWindows / .NET 10 SDK / YMM4 4.55.1.1 Liteです。
 
 ```powershell
 dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release `
   "-p:YMM4DirPath=C:\Tools\YMM4\" -p:Ymm4Proof=false --nologo -warnaserror
 ```
 
-Targetは`net10.0-windows10.0.19041.0`、ExcelはOpen XML SDK 3.5.1です。Excel本体やCOM automationは不要です。通常DLLにはproofコードを含めません。
+Targetは `net10.0-windows10.0.19041.0`、ExcelはOpen XML SDK 3.5.1を使用し、Excel本体やCOMは不要です。通常DLLはproofコードを含みません。
 
-`native-yymm4-proof` artifactの主要成果物:
+`native-yymm4-proof` artifactには `.ymme`、source ZIP、provenance / SHA256 / package-checks、v04-acceptance / ux-acceptance、段階別ログ、buildとrelease smoke記録、UI画像とpreview計測が入ります。YMM4本体と第三者の素材は配布しません。
 
-- `Ymm4TemplatePlacer-v0.4.0.ymme`: Pluginと必要なOpen XML DLL、説明・検証metadata。
-- `Ymm4TemplatePlacer-source.zip`: 検証したcheckoutのソース一式。
-- `provenance.json` / `SHA256.json` / `package-checks.json`: 対応するsource、run、DLL、archiveの照合情報。
-- `proof-log.txt` / `v04-acceptance.json` / buildログ / release smoke記録 / UI画像: 実行Evidence。
+汎用Rule Engine、Node Editor、AI API、音声解析、常時同期、ID修復、過去Preset snapshot、新Profile、複数アイテムTemplateの一般化は追加しません。P2のUI複数行一括割当は保留し、Excelによるまとめ編集を維持しています。
 
-YMM4本体や第三者のキャラクター素材は同梱しません。通常DLLが実YMM4でロードされたことと、`.ymme`内DLLがそのDLLと一致することを検査します。物理的なインストーラ操作やユーザー固有PSD素材の見た目まで検証済みとは主張しません。
-
-## 境界
-
-汎用Rule Engine / DSL、Template本体の第二DB、常時同期、copy/paste ID修復、曖昧Target推測、過去Preset Snapshot、自動削除・再生成、複数Item Template一般化、音声解析、AI API直接連携は実装しません。
-
-CIの重い処理はソース・XAML・project・test・fixture・workflow変更または明示的な手動実行時だけです。**docs-onlyの通常変更ではYMM4をダウンロード・起動しません。** 個別staging編集をまとめる場合も、次のWへ進む前にそのW全体のnative proofを必要とします。
+[DESIGN](docs/DESIGN.md) / [ROADMAP](docs/ROADMAP.md) はCore設計と歴史的実装順、[TASK_UX](docs/TASK_UX.md) と[USAGE](docs/USAGE.md) が今回の操作・UIの正本です。v0.3のIMPLEMENTATION / VERIFICATIONは歴史的記録で、旧削除・置換方式は使いません。docs-only変更では重いYMM4検証を走らせず、最終統合では全native laneを要求します。
