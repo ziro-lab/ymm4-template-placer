@@ -80,7 +80,7 @@ internal static partial class NativeProof
             Assert(refused.Plan.UpdateCount == 0 && refused.Skipped.Count == 1 && Signature(timeline) == missing,
                 "R13 a missing member never causes partial Resync or silent member regeneration");
             timeline.Items = timeline.Items.Add(members[1]); timeline.SelectedItems = [voice];
-            var legacyGuard = ResyncPlan.Create(timeline, vm.CurrentExpressionPreset);
+            var legacyGuard = ResyncPlan.Create(timeline, fixture.ExpressionPresets.Single(x => x.Id == fixture.CurrentExpressionPresetId));
             Assert(legacyGuard.Plan.UpdateCount == 0 && legacyGuard.Skipped.Count == 1,
                 "R13 retained legacy Resync cannot resize only the Face member of a relative bundle");
             face.Length++; var changed = Signature(timeline); refused = vm.Resync();
