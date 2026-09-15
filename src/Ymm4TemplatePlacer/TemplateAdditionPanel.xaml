@@ -43,7 +43,7 @@
   </StackPanel>
   <WrapPanel Grid.Row="4" Margin="0,6,0,0">
    <Button x:Name="AddButton" Content="{Binding AddTemplateActionLabel}" Command="{Binding CompleteAddTemplateCommand}" Padding="12,5" Margin="0,0,8,0"/>
-   <Button x:Name="CancelButton" Content="戻る" Command="{Binding CancelAddTemplateCommand}" Padding="12,5" Margin="0,0,8,0"/>
+   <Button x:Name="CancelButton" Content="キャンセル" Command="{Binding CancelAddTemplateCommand}" Padding="12,5" Margin="0,0,8,0" ToolTip="追加せずに元の作業へ戻ります。"/>
    <Button x:Name="ManageButton" Content="テンプレート管理…" Command="{Binding OpenTemplateManagementCommand}" Padding="6,5"/>
   </WrapPanel>
  </Grid>
