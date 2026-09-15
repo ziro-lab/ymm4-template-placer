@@ -30,5 +30,6 @@ internal static partial class NativeProof
         await VerifyIdentityClarity(timeline);
         VerifyFinalAcceptance();
         VerifyTaskUxAcceptance();
+        VerifyWorkflowAcceptance();
     }
 }
