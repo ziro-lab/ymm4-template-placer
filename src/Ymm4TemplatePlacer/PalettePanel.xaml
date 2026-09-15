@@ -29,7 +29,7 @@
     <ListBox.ItemTemplate><DataTemplate>
      <Grid Margin="2,1"><Grid.ColumnDefinitions><ColumnDefinition Width="26"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
       <Border Grid.Column="0" Tag="PaletteDragHandle" Background="Transparent" Cursor="SizeAll" ToolTip="ドラッグして並び替え"
-              PreviewMouseLeftButtonDown="OnDragHandleMouseDown" PreviewMouseMove="OnDragHandleMouseMove" PreviewMouseLeftButtonUp="OnDragHandleMouseUp" MouseDoubleClick="OnDragHandleDoubleClick">
+              PreviewMouseLeftButtonDown="OnDragHandleMouseDown" PreviewMouseMove="OnDragHandleMouseMove" PreviewMouseLeftButtonUp="OnDragHandleMouseUp">
        <TextBlock Text="⋮⋮" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.65" IsHitTestVisible="False"/>
       </Border>
       <StackPanel Grid.Column="1" Margin="3,3,5,3">
