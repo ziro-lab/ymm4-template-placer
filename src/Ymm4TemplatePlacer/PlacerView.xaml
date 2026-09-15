@@ -7,7 +7,7 @@
  <Grid Margin="8">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <DockPanel Grid.Row="0" Margin="0,0,0,6">
-   <Button x:Name="RefreshButton" Content="更新" Command="{Binding RefreshCommand}" DockPanel.Dock="Left" Padding="12,4" Margin="0,0,8,0" ToolTip="現在のシーンの音声とテンプレートを読み直します。表情一覧の選択はクリアされます。"/>
+   <Button x:Name="RefreshButton" Content="シーン更新" Command="{Binding RefreshCommand}" DockPanel.Dock="Left" Padding="12,4" Margin="0,0,8,0" ToolTip="現在のシーンの音声とテンプレートを読み直します。表情一覧の選択はクリアされます。"/>
    <TextBlock Text="{Binding SceneName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
   </DockPanel>
   <TabControl x:Name="MainTabs" Grid.Row="1" SelectedIndex="0">
@@ -36,7 +36,7 @@
        </Grid></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
       </DataGrid.Columns>
      </DataGrid>
-     <TextBlock x:Name="ExpressionEmptyNotice" Grid.Row="1" Text="このシーンには音声がありません。YMM4で音声を追加し、［更新］してください。" TextWrapping="Wrap" Margin="8,28,8,8" IsHitTestVisible="False">
+     <TextBlock x:Name="ExpressionEmptyNotice" Grid.Row="1" Text="このシーンには音声がありません。YMM4で音声を追加し、［シーン更新］してください。" TextWrapping="Wrap" Margin="8,28,8,8" IsHitTestVisible="False">
       <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Rows.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
      </TextBlock>
      <ScrollViewer x:Name="ExpressionRowDetail" Grid.Row="2" DataContext="{Binding SelectedItem,ElementName=VoiceGrid}" Visibility="Collapsed" MaxHeight="58" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="2,4,2,0">
