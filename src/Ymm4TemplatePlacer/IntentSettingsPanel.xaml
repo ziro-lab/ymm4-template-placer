@@ -1,0 +1,109 @@
+<UserControl x:Class="Ymm4TemplatePlacer.IntentSettingsPanel"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:local="clr-namespace:Ymm4TemplatePlacer">
+ <UserControl.Resources>
+  <Style TargetType="TextBox"><Setter Property="Margin" Value="0,2,0,7"/><Setter Property="Padding" Value="5,3"/></Style>
+  <Style TargetType="ComboBox"><Setter Property="Margin" Value="0,2,0,7"/><Setter Property="Padding" Value="5,3"/></Style>
+  <Style TargetType="Button"><Setter Property="Margin" Value="0,2,6,4"/><Setter Property="Padding" Value="8,5"/></Style>
+  <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
+ </UserControl.Resources>
+ <Grid Margin="6">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <StackPanel Grid.Row="0">
+   <ComboBox x:Name="PalettePicker" ItemsSource="{Binding IntentSettings.Palettes}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedPalette,Mode=TwoWay}" AutomationProperties.Name="編集するパレットセット"/>
+   <WrapPanel>
+    <Button x:Name="NewPaletteButton" Content="＋ セット" Command="{Binding CreateIntentPaletteCommand}"/>
+    <Button x:Name="DuplicateButton" Content="複製" Command="{Binding DuplicateIntentPaletteCommand}"/>
+    <Button Content="↑" ToolTip="セットを前へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="-1"/>
+    <Button Content="↓" ToolTip="セットを後へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="1"/>
+    <Button Content="削除" Command="{Binding DeleteIntentPaletteCommand}"/>
+   </WrapPanel>
+  </StackPanel>
+  <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+   <StackPanel>
+    <StackPanel DataContext="{Binding IntentSettings.SelectedPalette}">
+     <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+     <TextBlock Text="セット名"/>
+     <TextBox x:Name="SetNameBox" Text="{Binding Name,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+     <TextBlock Text="やりたいこと（同じ名前は同じ用途タブにまとまります）"/>
+     <TextBox x:Name="IntentNameBox" Text="{Binding Intent,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+     <Expander x:Name="TargetEditor" Header="使う対象" IsExpanded="True" Margin="0,4">
+      <StackPanel Margin="8,5">
+       <ItemsControl ItemsSource="{Binding TypeChoices}">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate><DataTemplate><CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}" Margin="0,3,12,5" ToolTip="{Binding Key}"/></DataTemplate></ItemsControl.ItemTemplate>
+       </ItemsControl>
+       <ComboBox ItemsSource="{Binding DataContext.IntentTypeModes,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding TypeMatch,Mode=TwoWay}"/>
+       <WrapPanel><TextBlock Text="選択数" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding MinimumCount,UpdateSourceTrigger=PropertyChanged}" Width="54"/><TextBlock Text=" ～ " VerticalAlignment="Center"/><TextBox Text="{Binding MaximumCount,UpdateSourceTrigger=PropertyChanged}" Width="54"/></WrapPanel>
+       <TextBlock Text="キャラクター名（空欄なら指定なし）"/>
+       <TextBox Text="{Binding CharacterName,UpdateSourceTrigger=PropertyChanged}"/>
+       <CheckBox Content="このセットの表情を、表情一覧の候補にも使う" IsChecked="{Binding ExpressionCandidates,Mode=TwoWay}" Margin="0,3"/>
+      </StackPanel>
+     </Expander>
+     <Expander x:Name="RelationEditor" Header="どう置くか" IsExpanded="True" Margin="0,4">
+      <StackPanel Margin="8,5">
+       <TextBlock Text="基準の位置"/>
+       <ComboBox ItemsSource="{Binding DataContext.IntentAnchors,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Anchor,Mode=TwoWay}"/>
+       <ComboBox ItemsSource="{Binding DataContext.IntentAlignments,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Alignment,Mode=TwoWay}"/>
+       <TextBlock Text="長さ"/>
+       <ComboBox ItemsSource="{Binding DataContext.IntentDurations,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Duration,Mode=TwoWay}"/>
+       <WrapPanel><TextBlock Text="固定長（フレーム）" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding FixedDuration,UpdateSourceTrigger=PropertyChanged}" Width="80"/></WrapPanel>
+       <TextBlock Text="周囲の何を見るか"/>
+       <ComboBox ItemsSource="{Binding DataContext.IntentNeighbors,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Neighbor,Mode=TwoWay}"/>
+       <ComboBox ItemsSource="{Binding DataContext.IntentNeighborEdges,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding NeighborEdge,Mode=TwoWay}"/>
+       <TextBlock Text="見つからなければ"/>
+       <ComboBox ItemsSource="{Binding DataContext.IntentFallbacks,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Fallback,Mode=TwoWay}"/>
+       <TextBlock Text="最大間隔（フレーム・空欄なら制限なし）"/>
+       <TextBox Text="{Binding MaximumGap,UpdateSourceTrigger=PropertyChanged}"/>
+       <WrapPanel><TextBlock Text="開始をずらす" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding StartOffset,UpdateSourceTrigger=PropertyChanged}" Width="72"/><TextBlock Text="終了をずらす" VerticalAlignment="Center" Margin="12,0,8,0"/><TextBox Text="{Binding EndOffset,UpdateSourceTrigger=PropertyChanged}" Width="72"/></WrapPanel>
+       <TextBlock Text="境界の許容間隔（フレーム）"/>
+       <TextBox Text="{Binding BoundaryTolerance,UpdateSourceTrigger=PropertyChanged}"/>
+       <TextBlock Text="配置する方向（塞がっていたら、同じ方向へ探します）"/>
+       <ComboBox ItemsSource="{Binding DataContext.IntentDirections,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Direction,Mode=TwoWay}"/>
+       <WrapPanel><TextBlock Text="対象から何段離すか" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding LayerOffset,UpdateSourceTrigger=PropertyChanged}" Width="64"/></WrapPanel>
+       <WrapPanel><TextBlock Text="探索するレイヤー番号" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding LayerMinimum,UpdateSourceTrigger=PropertyChanged}" Width="64"/><TextBlock Text=" ～ " VerticalAlignment="Center"/><TextBox Text="{Binding LayerMaximum,UpdateSourceTrigger=PropertyChanged}" Width="64"/></WrapPanel>
+      </StackPanel>
+     </Expander>
+     <Expander x:Name="EntryEditor" Header="演出と並び順" IsExpanded="True" Margin="0,4">
+      <StackPanel Margin="8,5">
+       <ListBox x:Name="EntryList" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry,Mode=TwoWay}" MinHeight="80" MaxHeight="220" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+        <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" ToolTip="{Binding SourceDetail}" Padding="5,4"/></DataTemplate></ListBox.ItemTemplate>
+       </ListBox>
+       <WrapPanel>
+        <Button Content="↑ 上へ" Command="{Binding DataContext.MoveIntentEntryCommand,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" CommandParameter="-1"/>
+        <Button Content="↓ 下へ" Command="{Binding DataContext.MoveIntentEntryCommand,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" CommandParameter="1"/>
+        <Button Content="セットから外す" Command="{Binding DataContext.RemoveIntentEntryCommand,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}"/>
+       </WrapPanel>
+       <Expander Header="選択した演出だけの微調整" DataContext="{Binding SelectedEntry}">
+        <StackPanel Margin="8,5">
+         <CheckBox Content="テンプレート内の長さを維持" IsChecked="{Binding UseTemplateDuration,Mode=TwoWay}"/>
+         <TextBlock Text="開始の差分（フレーム）"/><TextBox Text="{Binding StartOffset,UpdateSourceTrigger=PropertyChanged}"/>
+         <TextBlock Text="終了の差分（フレーム）"/><TextBox Text="{Binding EndOffset,UpdateSourceTrigger=PropertyChanged}"/>
+         <TextBlock Text="固定長の上書き（空欄ならセットの設定）"/><TextBox Text="{Binding FixedDuration,UpdateSourceTrigger=PropertyChanged}"/>
+        </StackPanel>
+       </Expander>
+      </StackPanel>
+     </Expander>
+    </StackPanel>
+    <Expander x:Name="SourceEditor" Header="テンプレートをまとめて追加" Margin="0,5">
+     <StackPanel Margin="8,5">
+      <TextBox Text="{Binding IntentSettings.SourceSearch,UpdateSourceTrigger=PropertyChanged}" ToolTip="元テンプレート名で検索"/>
+      <ListBox x:Name="SourceList" ItemsSource="{Binding IntentSettings.VisibleSources}" MaxHeight="240" MinHeight="80" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
+       <ListBox.ItemTemplate><DataTemplate><CheckBox IsChecked="{Binding Selected,Mode=TwoWay}" Margin="2,4"><TextBlock Text="{Binding Label}" TextWrapping="Wrap"/></CheckBox></DataTemplate></ListBox.ItemTemplate>
+      </ListBox>
+      <Button x:Name="AddSourcesButton" Content="チェックしたテンプレートを追加" Command="{Binding AddIntentSourcesCommand}" HorizontalAlignment="Left"/>
+      <Button Content="新しい表情を取り込む" Command="{Binding RescanIntentExpressionsCommand}" HorizontalAlignment="Left"/>
+     </StackPanel>
+    </Expander>
+    <Expander Header="以前の設定・互換操作" Margin="0,8">
+     <Button Content="旧設定・従来の配置を開く" Command="{Binding OpenLegacyWorkspaceCommand}" HorizontalAlignment="Left"/>
+    </Expander>
+   </StackPanel>
+  </ScrollViewer>
+  <StackPanel Grid.Row="2" Margin="0,6,0,0">
+   <TextBlock Text="{Binding IntentSettings.ChangeNotice}"/>
+   <WrapPanel><Button x:Name="SaveButton" Content="変更を保存" Command="{Binding SaveIntentSettingsCommand}"/><Button x:Name="DiscardButton" Content="変更を破棄" Command="{Binding DiscardIntentSettingsCommand}"/></WrapPanel>
+  </StackPanel>
+ </Grid>
+</UserControl>

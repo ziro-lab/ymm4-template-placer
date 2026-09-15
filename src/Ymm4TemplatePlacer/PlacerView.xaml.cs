@@ -10,16 +10,11 @@ public partial class PlacerView : UserControl
     private PlacerViewModel? observedViewModel;
     private TransientWorkSnapshot? suspendedWork;
     public IntentPalettePanel RelativePaletteSurface { get; } = new();
-    private readonly StackPanel relativeSettings = new() { Margin = new Thickness(12) };
+    public IntentSettingsPanel RelativeSettingsSurface { get; } = new();
     private readonly Button returnToRelative = new() { Content = "相対パレットへ戻る", Padding = new Thickness(10, 4, 10, 4), Visibility = Visibility.Collapsed };
     public PlacerView()
     {
         InitializeComponent();
-        relativeSettings.Children.Add(new TextBlock { Text = "相対パレット設定", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 12) });
-        var import = new Button { Content = "新しい表情を取り込む", Padding = new Thickness(10, 6, 10, 6), HorizontalAlignment = HorizontalAlignment.Left };
-        import.SetBinding(Button.CommandProperty, new Binding(nameof(PlacerViewModel.ImportNewExpressionsCommand))); relativeSettings.Children.Add(import);
-        var legacy = new Button { Content = "旧設定・従来の配置を開く", Padding = new Thickness(10, 6, 10, 6), Margin = new Thickness(0, 12, 0, 0), HorizontalAlignment = HorizontalAlignment.Left };
-        legacy.SetBinding(Button.CommandProperty, new Binding(nameof(PlacerViewModel.OpenLegacyWorkspaceCommand))); relativeSettings.Children.Add(legacy);
         returnToRelative.SetBinding(Button.CommandProperty, new Binding(nameof(PlacerViewModel.CloseLegacyWorkspaceCommand)));
         if (RefreshButton.Parent is DockPanel header) { DockPanel.SetDock(returnToRelative, Dock.Right); header.Children.Insert(0, returnToRelative); }
         SizeChanged += (_, _) => RefreshExpressionDetail();
@@ -40,10 +35,7 @@ public partial class PlacerView : UserControl
         if (e.OldValue is PlacerViewModel previous) suspendedWork = previous.TakeTransientWork();
         var next = e.NewValue as PlacerViewModel;
         ObserveViewModel(IsLoaded ? next : null);
-        if (next != null && suspendedWork != null)
-        {
-            next.AcceptTransientWork(suspendedWork); suspendedWork = null;
-        }
+        if (next != null && suspendedWork != null) { next.AcceptTransientWork(suspendedWork); suspendedWork = null; }
         SynchronizeTask();
     }
     private void ObserveViewModel(PlacerViewModel? next)
@@ -53,8 +45,7 @@ public partial class PlacerView : UserControl
         {
             observedViewModel.PropertyChanged -= ViewModelChanged;
             observedViewModel.IntentSettingsRequested -= OpenIntentSettings;
-            observedViewModel.DeactivateIntentWorkspace();
-            observedViewModel.SetActiveTask("");
+            observedViewModel.DeactivateIntentWorkspace(); observedViewModel.SetActiveTask("");
         }
         observedViewModel = next;
         if (next != null)
@@ -63,12 +54,15 @@ public partial class PlacerView : UserControl
             next.ActivateIntentWorkspace(); RefreshWorkspaceSurface();
         }
     }
-    private void OpenIntentSettings(object? sender, EventArgs e) => SelectionTab.IsSelected = true;
+    private void OpenIntentSettings(object? sender, EventArgs e)
+    {
+        observedViewModel?.BeginIntentSettings(); SelectionTab.IsSelected = true;
+    }
     private void RefreshWorkspaceSurface()
     {
         var legacy = observedViewModel?.UseLegacyWorkspace == true;
         PaletteTab.Content = legacy ? PaletteSurface : RelativePaletteSurface;
-        SelectionTab.Content = legacy ? SelectionSurface : relativeSettings;
+        SelectionTab.Content = legacy ? SelectionSurface : RelativeSettingsSurface;
         SelectionTab.Header = legacy ? "選択配置" : "設定";
         returnToRelative.Visibility = legacy ? Visibility.Visible : Visibility.Collapsed;
         SynchronizeTask();
