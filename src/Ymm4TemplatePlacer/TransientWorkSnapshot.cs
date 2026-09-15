@@ -22,7 +22,7 @@ internal sealed record TemplateAdditionWork(
     Character? ExpressionCharacter,
     string? ExpressionCharacterName,
     string Search,
-    ItemTemplate? Source,
+    IReadOnlyList<ItemTemplate> Sources,
     string DisplayName);
 internal sealed record LibraryEditWork(
     string Search,
@@ -132,7 +132,7 @@ public sealed partial class PlacerViewModel
         var creating = IsCreatingPalette ? new PaletteCreationWork(NewPaletteName, NewPaletteCharacter?.Name) : null;
         VoiceSnapshot? expressionTarget = expressionAdditionTarget?.Target;
         var addition = IsAddingTemplate ? new TemplateAdditionWork(addingPaletteId, expressionTarget, expressionAdditionCharacter,
-            expressionAdditionCharacterName, AddTemplateSearch, AddTemplateSource, AddTemplateDisplayName) : null;
+            expressionAdditionCharacterName, AddTemplateSearch, SelectedAddTemplateSources.ToArray(), AddTemplateDisplayName) : null;
         var selectedLibrary = SelectedLibraryEntry?.Entry;
         var libraryEdit = new LibraryEditWork(LibrarySearch, selectedLibrary?.Id, selectedLibrary, SelectedSourceTemplate,
             LibraryDisplayName, SelectedLibraryCharacter?.Name, IsManagingTemplates);
@@ -288,15 +288,13 @@ public sealed partial class PlacerViewModel
         addingPaletteId = work.PaletteId; expressionAdditionTarget = target; expressionAdditionCharacter = work.ExpressionCharacter;
         expressionAdditionCharacterName = work.ExpressionCharacterName;
         addTemplateSearch = work.Search; OnPropertyChanged(nameof(AddTemplateSearch));
-        addTemplateSource = null; OnPropertyChanged(nameof(AddTemplateSource)); AddTemplateDisplayName = work.DisplayName;
         IsAddingTemplate = true; RefreshAddTemplateSources();
-        if (work.Source != null)
+        var restorable = new List<ItemTemplate>();
+        foreach (var source in work.Sources)
         {
-            if (ItemSettings.Default.Templates.Contains(work.Source) && AddTemplateSources.Contains(work.Source))
-            {
-                addTemplateSource = work.Source; OnPropertyChanged(nameof(AddTemplateSource)); AddTemplateDisplayName = work.DisplayName; NotifyTemplateAddition();
-            }
+            if (ItemSettings.Default.Templates.Contains(source) && AddSourceAllowed(source)) restorable.Add(source);
             else skipped++;
         }
+        RestoreAddTemplateSelections(restorable, work.DisplayName);
     }
 }
