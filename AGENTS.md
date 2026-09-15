@@ -4,7 +4,7 @@
 
 Current target: **v0.4.2 Relative Intent Palette**, branch `feature/v0.4.2-character-template-bundles`, PR #11. Base: native-verified v0.4.1 Candidate `2710039b9f3d40c54aa8e495cb81a998c3f82e5e`. Historical regression baseline: v0.3.1.
 
-Read `docs/V0.4.2_RELATIVE_PALETTE_DESIGN.md`, `docs/V0.4.2_ROADMAP.md`, `docs/V0.4.2_CANDIDATE.md`, `docs/USAGE.md` and the latest PR/native evidence. The v0.4.2 roadmap is authoritative for R numbering. `docs/DESIGN.md` and `docs/ROADMAP.md` describe the historical v0.4 implementation; its proven safety core remains mandatory, but its old normal UI and singleton-only scope do not override the explicit v0.4.2 revision.
+Read `docs/V0.4.2_RELATIVE_PALETTE_DESIGN.md`, `docs/V0.4.2_UIUX_MENTAL_MODEL.md`, `docs/V0.4.2_ROADMAP.md`, `docs/V0.4.2_CANDIDATE.md`, `docs/USAGE.md` and the latest PR/native evidence. The UI/UX mental-model addendum is authoritative for what normal editing must expose: Item -> editing intent -> optional Set -> executable tile; engine parameters must not leak back into the common path. The v0.4.2 roadmap is authoritative for R numbering. `docs/DESIGN.md` and `docs/ROADMAP.md` describe the historical v0.4 implementation; its proven safety core remains mandatory, but its old normal UI and singleton-only scope do not override the explicit v0.4.2 revision.
 
 Do not reimplement completed W/R checkpoints. A build or source edit alone is not completion. Do not merge main. Keep PR #6 Draft until the user accepts the Candidate in their actual editing environment.
 
@@ -47,7 +47,7 @@ Run heavy native YMM4/build/package work in the existing Windows GitHub Actions 
 - Work on the specified branch; preserve main and the accepted baseline.
 - Use small auditable changes/checkpoints. If a safety check rejects a write, do not reroute it; record the exact operation and last successful commit.
 - Documentation-only changes must not download/build/launch YMM4; source/project/XAML/tests/fixtures/workflow changes require the native lane before promotion.
-- Require P1-P9, W3-W12, WUX1-WUX13, R1-R14, current acceptance manifests, zero compiler warnings/errors, exact release DLL native smoke and stable-root archive checks.
+- Require P1-P9, W3-W12, WUX1-WUX13, R1-R14, `RELATIVE_UIUX=PASS`, current core/Task UX/workflow/relative/relative-UIUX acceptance manifests, zero compiler warnings/errors, exact release DLL native smoke and stable-root archive checks.
 - `ValidateRelativeEvidence.ps1` is the independent relative acceptance consumer; keep its negative tests. Do not weaken expected stage/check coverage merely to get a green run.
 - `.ymme` root must always be `Ymm4TemplatePlacer/`, never a versioned plugin folder. Record source/checkout/run provenance and all final hashes.
 - Separate DONE/PARTIAL/FUTURE/BLOCKED accurately. Native PASS is not hands-on user acceptance.
