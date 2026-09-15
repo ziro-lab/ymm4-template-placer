@@ -21,7 +21,7 @@ $env:YMM4_TEMPLATE_PLACER_DIST_DIR=$DistributionDir
 if ($ReleaseSmoke) { Remove-Item Env:YMM4_TEMPLATE_PLACER_PROOF_DIR -ErrorAction SilentlyContinue }
 else {
  $env:YMM4_TEMPLATE_PLACER_PROOF_DIR=$OutputDir
- foreach ($name in @('proof-result.txt','proof-log.txt','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json')) { Remove-Item (Join-Path $OutputDir $name) -ErrorAction SilentlyContinue }
+ foreach ($name in @('proof-result.txt','proof-log.txt','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json')) { Remove-Item (Join-Path $OutputDir $name) -ErrorAction SilentlyContinue }
 }
 $p=Start-Process (Join-Path $Ymm4Dir 'YukkuriMovieMaker.exe') -WorkingDirectory $Ymm4Dir -PassThru
 try {
