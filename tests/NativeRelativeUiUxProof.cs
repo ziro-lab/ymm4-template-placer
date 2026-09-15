@@ -72,10 +72,12 @@ internal static partial class NativeProof
             Assert(placed.Frame == voice.Frame && placed.Layer < voice.Layer, "UIUX one tile click directly performs the saved relative placement");
             await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == beforeSwitch, "UIUX the direct tile action remains one native Undo");
 
-            view.Width = 360; view.Height = 430; await Idle(); surface.UpdateLayout();
+            view.Width = 360; view.Height = 360; await Idle(); surface.UpdateLayout();
             var narrowButtons = RelativeVisuals(surface.IntentTileItems).OfType<Button>().Where(x => x.CommandParameter is IntentTileChoice).ToArray();
             Assert(surface.IntentContextHeader.IsVisible && surface.IntentTabStrip.IsVisible && surface.IntentSetSegments.IsVisible && narrowButtons.Length == 2 &&
-                narrowButtons.All(x => x.ActualWidth > 0 && x.TranslatePoint(new Point(x.ActualWidth, 0), surface).X <= surface.ActualWidth + 1) && surface.IntentSettingsButton.IsVisible,
+                narrowButtons.All(x => x.ActualWidth > 0 && x.TranslatePoint(new Point(x.ActualWidth, 0), surface).X <= surface.ActualWidth + 1) &&
+                surface.IntentSettingsButton.IsVisible && surface.IntentSettingsButton.ActualHeight > 0 &&
+                surface.IntentSettingsButton.TranslatePoint(new Point(surface.IntentSettingsButton.ActualWidth, surface.IntentSettingsButton.ActualHeight), surface).Y <= surface.ActualHeight + 1,
                 "UIUX 360px keeps context, intent, segmented set, action tiles and settings discovery understandable");
             SaveNamedView(view, "v042-uiux-edit-360.png");
 
@@ -131,8 +133,9 @@ internal static partial class NativeProof
 
             var emptySession = new IntentSettingsSession(fixture, new[] { typeof(VoiceItem), typeof(TextItem) });
             RejectWithoutMutation(timeline, () => emptySession.Create([]), "UIUX creating a set with no Timeline context never silently defaults to Voice");
-            view.Width = 360; view.Height = 430; panel.RelationAdvanced.IsExpanded = false; panel.TargetAdvanced.IsExpanded = false; await Idle();
-            Assert(panel.SaveButton.IsVisible && panel.RelationSummaryText.IsVisible && panel.ActualWidth <= 360,
+            view.Width = 360; view.Height = 360; panel.RelationAdvanced.IsExpanded = false; panel.TargetAdvanced.IsExpanded = false; await Idle();
+            Assert(panel.SaveButton.IsVisible && panel.SaveButton.ActualHeight > 0 && panel.RelationSummaryText.IsVisible && panel.ActualWidth <= 360 &&
+                panel.SaveButton.TranslatePoint(new Point(panel.SaveButton.ActualWidth, panel.SaveButton.ActualHeight), panel).Y <= panel.ActualHeight + 1,
                 "UIUX narrow Settings keep the result summary and save action available while advanced parameters stay collapsed");
             SaveNamedView(view, "v042-uiux-settings-360.png");
 
