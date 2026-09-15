@@ -47,7 +47,7 @@ internal static partial class NativeProof
         Assert(vm.AddTemplateSources.Count == 1 && ReferenceEquals(vm.AddTemplateSources[0], source),
             "WUX3 expression recovery offers only singleton Face sources for the exact Character, excluding neutral and other Characters");
         var add = view.TemplateAdditionSurface;
-        add.SourceList.SelectedItem = source; add.SourceList.ScrollIntoView(source); await Idle();
+        await SetAddSource(add, source);
         add.NameBox.Text = "ふつう"; add.NameBox.GetBindingExpression(TextBox.TextProperty)!.UpdateSource();
         await InvokeSelectionButton(add.ManageButton);
         Assert(vm.IsManagingTemplates && vm.IsAddingTemplate && vm.AddTemplateDisplayName == "ふつう" && ReferenceEquals(vm.AddTemplateSource, source),
@@ -67,7 +67,7 @@ internal static partial class NativeProof
         Assert(Signature(timeline) == before && saved.NextAssociationId == initial.NextAssociationId,
             "WUX3 recovery organizes references only, without Timeline mutation or association allocation");
         var persisted = File.ReadAllText(PlacerSettingsStore.DefaultPath);
-        vm.AddExpressionTemplateCommand.Execute(row); add.SourceList.SelectedItem = source; await Idle();
+        vm.AddExpressionTemplateCommand.Execute(row); vm.AddTemplateSource = source; await Idle();
         await InvokeSelectionButton(add.AddButton);
         Assert(!vm.HasError && File.ReadAllText(PlacerSettingsStore.DefaultPath) == persisted,
             "WUX3 an already-registered member restores candidates without an unnecessary second save");
