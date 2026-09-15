@@ -11,15 +11,38 @@
    <TextBlock Text="検索 " DockPanel.Dock="Left" VerticalAlignment="Center"/>
    <TextBox x:Name="SourceSearch" Text="{Binding AddTemplateSearch,UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="追加するYMM4テンプレートを検索"/>
   </DockPanel>
-  <ListBox x:Name="SourceList" Grid.Row="2" ItemsSource="{Binding AddTemplateSources}" DisplayMemberPath="Name" SelectedItem="{Binding AddTemplateSource,Mode=TwoWay}" TextSearch.TextPath="Name" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" AutomationProperties.Name="元のYMM4テンプレート"/>
+  <ListBox x:Name="SourceList" Grid.Row="2" ItemsSource="{Binding AddTemplateChoices}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+           VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" AutomationProperties.Name="元のYMM4テンプレート">
+   <ListBox.ItemTemplate>
+    <DataTemplate>
+     <Grid Margin="1"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <CheckBox IsChecked="{Binding IsSelected,Mode=TwoWay}" IsEnabled="{Binding CanSelect}" VerticalAlignment="Center" Padding="2"
+                AutomationProperties.Name="{Binding Name}">
+       <StackPanel Orientation="Horizontal">
+        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+        <TextBlock Text="{Binding CharacterName,StringFormat=  {0}}" Opacity="0.6" Margin="4,0,0,0"/>
+       </StackPanel>
+      </CheckBox>
+      <TextBlock Grid.Column="1" Text="{Binding StateLabel}" Opacity="0.65" VerticalAlignment="Center" Margin="8,0,2,0"/>
+     </Grid>
+    </DataTemplate>
+   </ListBox.ItemTemplate>
+  </ListBox>
   <StackPanel Grid.Row="3" Margin="0,5,0,0">
-   <TextBlock Text="表示名"/>
-   <TextBox x:Name="NameBox" Text="{Binding AddTemplateDisplayName,UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding AddTemplateUsesExisting}" MaxLength="256" AutomationProperties.Name="パレットでの表示名"/>
+   <DockPanel>
+    <Button Content="選択解除" Command="{Binding ClearAddTemplateSelectionCommand}" DockPanel.Dock="Right" Padding="6,2"/>
+    <TextBlock Text="{Binding AddTemplateSelectionSummary}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+   </DockPanel>
+   <StackPanel>
+    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding AddTemplateIsSingleSelection}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+    <TextBlock Text="表示名"/>
+    <TextBox x:Name="NameBox" Text="{Binding AddTemplateDisplayName,UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding AddTemplateUsesExisting}" MaxLength="256" AutomationProperties.Name="パレットでの表示名"/>
+   </StackPanel>
    <TextBlock Text="{Binding AddTemplateCharacterSummary}" Opacity="0.75" TextTrimming="CharacterEllipsis"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding AddTemplateCharacterSummary}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
    <TextBlock Text="{Binding AddTemplateNotice}" TextWrapping="Wrap" MaxHeight="80"/>
   </StackPanel>
   <WrapPanel Grid.Row="4" Margin="0,6,0,0">
-   <Button x:Name="AddButton" Content="パレットへ追加" Command="{Binding CompleteAddTemplateCommand}" Padding="12,5" Margin="0,0,8,0"/>
+   <Button x:Name="AddButton" Content="{Binding AddTemplateActionLabel}" Command="{Binding CompleteAddTemplateCommand}" Padding="12,5" Margin="0,0,8,0"/>
    <Button x:Name="CancelButton" Content="戻る" Command="{Binding CancelAddTemplateCommand}" Padding="12,5" Margin="0,0,8,0"/>
    <Button x:Name="ManageButton" Content="テンプレート管理…" Command="{Binding OpenTemplateManagementCommand}" Padding="6,5"/>
   </WrapPanel>
