@@ -28,7 +28,8 @@ internal static partial class NativeProof
         var beforeTimeline = Signature(timeline);
         var beforeSettings = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
         var row = vm.Rows.First(x => x.Character == "TestA");
-        var character = row.Target.Voice.Character ?? throw new InvalidOperationException("WUX10 TestA Character missing.");
+        var voice = row.Target.Voice;
+        var character = voice.Character ?? throw new InvalidOperationException("WUX10 TestA Character missing.");
         var characterPalette = vm.PaletteChoices.Single(x => x.Kind == PaletteKind.Character && x.CharacterName == "TestA");
         vm.SelectedPalette = characterPalette; await Idle();
         var originalIds = vm.CurrentPalette!.LibraryEntryIds.ToArray();
@@ -90,8 +91,9 @@ internal static partial class NativeProof
         Assert(panel.PaletteList.AllowDrop && handle.Cursor == Cursors.SizeAll,
             "WUX10 actual Palette row exposes a dedicated drag handle and drop surface instead of hijacking the whole row");
 
-        // Existing Character-expression preference follows the user order immediately.
-        var candidateOrder = row.Choices.Skip(1).Where(x => x.Template != null && sources.Any(source => ReferenceEquals(source, x.Template.Template)))
+        // Existing Character-expression preference follows the user order immediately. Reacquire the row actually displayed by the current VM after settings refresh.
+        var currentRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
+        var candidateOrder = currentRow.Choices.Skip(1).Where(x => x.Template != null && sources.Any(source => ReferenceEquals(source, x.Template.Template)))
             .Select(x => x.Template!.Template).ToArray();
         Assert(candidateOrder.SequenceEqual(new[] { sources[2], sources[0], sources[1] }),
             "WUX10 Character expression candidates immediately follow the reordered Palette priority");
