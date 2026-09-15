@@ -7,7 +7,7 @@ namespace Ymm4TemplatePlacer;
 public partial class PlacerView : UserControl
 {
     private PlacerViewModel? observedViewModel;
-    private LibraryEntry? suspendedSelectionEntry;
+    private TransientWorkSnapshot? suspendedWork;
     public PlacerView()
     {
         InitializeComponent();
@@ -27,18 +27,14 @@ public partial class PlacerView : UserControl
     private void ChangeViewModel(object sender, DependencyPropertyChangedEventArgs e)
     {
         // YMM4 can keep this View while replacing its suspended ViewModel.
-        // Reuse only the exact unchanged registration the user had selected, never infer another source.
-        if (e.OldValue is PlacerViewModel previous) suspendedSelectionEntry = previous.SelectionTemplate?.Entry;
+        // Carry session-only unfinished work across that replacement; the new VM restores only exact unchanged targets.
+        if (e.OldValue is PlacerViewModel previous) suspendedWork = previous.TakeTransientWork();
         var next = e.NewValue as PlacerViewModel;
         ObserveViewModel(IsLoaded ? next : null);
-        if (next != null)
+        if (next != null && suspendedWork != null)
         {
-            if (suspendedSelectionEntry != null && next.SelectionTemplate == null)
-            {
-                var choice = next.SelectionTemplates.FirstOrDefault(x => x.Entry == suspendedSelectionEntry);
-                if (choice != null) next.SelectionTemplate = choice;
-            }
-            suspendedSelectionEntry = null;
+            next.AcceptTransientWork(suspendedWork);
+            suspendedWork = null;
         }
         SynchronizeTask();
     }

@@ -1,50 +1,76 @@
-# YMM4 Template Placer v0.4.0 Task UX Candidate
+# YMM4 Template Placer v0.4.1 Candidate
 
-よく使うYMM4テンプレートをパレットにまとめ、選んで置くWPFプラグインです。元テンプレートの管理名や内容を変えず、短い表示名で再利用できます。
+YukkuriMovieMaker4で、登録済みテンプレートを「よく使うパレット」「音声に対応する表情」「選択アイテムとの関係配置」として素早く再利用するためのTool Pluginです。
 
-**使い方・導入:** [ユーザーガイド](docs/USAGE.md)  
-**配置計算:** [選択配置の数値](docs/SELECTION_PLACEMENT.md)  
-**設計・検証:** [Task UX](docs/TASK_UX.md) / [テスト](tests/README.md) / [既存18項目Acceptance](docs/V0.4_ACCEPTANCE.md)
+現在のv0.4.1 UX Workflow Candidateは、v0.4.0 Task UX Candidateを土台に、実利用で残っていた反復負担と途中作業消失を改善しています。
 
-## 主要な操作
+## v0.4.1の主な改善
 
-```text
-パレット → ＋ テンプレートを追加 → YMM4テンプレートを選択 → 追加 → ダブルクリックで配置
-表情一覧 → セリフを見て表情を選択 → 表情を配置
-選択配置 → タイムラインで対象を選択 → 何を／どこに置くか選択 → 配置
-```
+- **Tool close/reopenの途中作業保持** — 同一YMM4セッションで厳密に同一と確認できるdraft・表情選択・追加途中を復元。変更済み対象は推測復元しません。
+- **パレットへ複数Templateを一括追加** — 1件/N件を同じBatch Preflight/Commitで処理。1件でも曖昧・欠損なら全件zero-write。
+- **パレットを自分順へ並び替え** — 専用Drag Handleまたは↑↓。既存`LibraryEntryIds`順序をそのまま正本とし、別Paletteには影響しません。
+- **破壊操作の意味を明示** — Palette削除とLibrary登録解除は、件数・影響範囲・削除しないものを確認してから実行。Cancelはzero-write。
+- **Intentを言葉で分離** — `キャンセル` / `戻る` / `シーン更新` / `一覧更新` を作用に合わせて区別。
+- **同名項目の識別** — 普段は短い名前のまま、衝突時だけCharacterや元Template名を補助表示。
 
-Primary tabはパレット／表情一覧／選択配置です。内部の登録モデルやCharacter/Styleを理解してから使う必要はありません。テンプレート管理は参照確認・再リンク等のsecondary viewです。候補なしの表情行から直接追加へ進めます。
+## 既存の主要機能
 
-保存済みの配置条件、表情の再同期、Excel Bridge、基準／前面／背面、全5種類の配置Profileは維持しています。選択配置の予定は必要な入力変更時だけ自動更新し、配置時は最新状態で再計算します。常時監視ではありません。
+- Palette-firstの直接Template追加
+- Character連動 / 手動Paletteを1つのPickerで扱う
+- Quick Drop（再生位置へ配置）
+- Base / Front / Backの全時間幅Layer計画
+- 表情一覧の音声単位割り当て
+- Expression multi-presets / Next Same Character / MaxGap / offsets
+- Selection-scoped Association / Resync
+- Target Companion / Point Emphasis / Selection Range / Boundary
+- Excel Bridge
+- Native Undo / Redo
+- strict TemplateLocator / no fuzzy recovery
+- add-only PlacementPlan / Preflight
 
-## 安全性
+## 安全性の方針
 
-配置は追加、再同期は選択した既存関連表情の更新、削除はYMM4標準操作です。既存アイテムの自動削除・移動・短縮、曖昧な参照の推測修復はしません。全長の衝突と同時配置の予約を検証し、配置できない場合は追加前に止めます。Undo/RedoはYMM4標準を使います。
+Template Placerは既存Timelineアイテムを自動削除・置換・短縮しません。
 
-Libraryには元データの参照だけを保存し、本体の第二DBは持ちません。元参照が0件・複数件なら明示的な再リンクが必要です。Quick Dropと選択配置は独立アイテム、関連付け・現在条件による再同期は表情一覧の明示操作です。
+配置は、
 
-## Candidateと検証
+1. strictな参照解決
+2. 配置予定の作成
+3. full-span collision / Layer予約の事前検証
+4. 全件が成立した場合だけ一括commit
 
-PR #8のUX作業は `feature/v0.4-integrated-candidate` / PR #6へ統合します。**mainへはまだmergeしません。PR #6は手元受入のためDraftを維持します。**
+の順で行います。
 
-回帰baselineは `c3fc36837508b59d09026a74b5799141eae00a7a`（384 native assertions）。最新の検証済みcommit/runはPR #6本文と段階別checkpointを確認してください。staging commitやビルドだけでは完了を意味しません。
+YMM4 Template本体はSource of Truthとして外部参照し、プラグイン設定へTemplate bodyを複製保存しません。
 
-最終packageはP1-P9、W3-W12、V04、WUX1-WUX7、既存18項目＋必須UX12項目、release/proofのWarning 0 / Error 0、実配布DLLのnative smoke、package hashチェックを通した場合だけ生成します。人工fixtureによる検証であり、任意の実PSD素材・初心者本人・物理インストーラ・全DPIまで検証済みとは主張しません。
+曖昧・欠損・Character不一致時は、似たものを推測して続行せず停止します。
 
-## ビルド
+## 検証
 
-固定検証環境はWindows / .NET 10 SDK / YMM4 4.55.1.1 Liteです。
+基準YMM4: **4.55.1.1 Lite**
 
-```powershell
-dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release `
-  "-p:YMM4DirPath=C:\Tools\YMM4\" -p:Ymm4Proof=false --nologo -warnaserror
-```
+v0.4.1 Candidateは以下を同じNative laneで要求します。
 
-Targetは `net10.0-windows10.0.19041.0`、ExcelはOpen XML SDK 3.5.1を使用し、Excel本体やCOMは不要です。通常DLLはproofコードを含みません。
+- P1-P9
+- W3-W12 / V04
+- Original v0.4 Acceptance 18/18
+- Task UX WUX1-WUX7 / 12 requirements
+- UX Workflow WUX8-WUX13 / 10 requirements
+- Release / Proof build Warning 0 / Error 0
+- Open XML validation
+- exact distribution DLL native smoke
+- `.ymme` / source / provenance package verification
 
-`native-yymm4-proof` artifactには `.ymme`、source ZIP、provenance / SHA256 / package-checks、v04-acceptance / ux-acceptance、段階別ログ、buildとrelease smoke記録、UI画像とpreview計測が入ります。YMM4本体と第三者の素材は配布しません。
+詳細は `docs/USAGE.md`、設計は `docs/V0.4.1_UX_WORKFLOW_DESIGN.md` を参照してください。
 
-汎用Rule Engine、Node Editor、AI API、音声解析、常時同期、ID修復、過去Preset snapshot、新Profile、複数アイテムTemplateの一般化は追加しません。P2のUI複数行一括割当は保留し、Excelによるまとめ編集を維持しています。
+## Intentional boundaries
 
-[DESIGN](docs/DESIGN.md) / [ROADMAP](docs/ROADMAP.md) はCore設計と歴史的実装順、[TASK_UX](docs/TASK_UX.md) と[USAGE](docs/USAGE.md) が今回の操作・UIの正本です。v0.3のIMPLEMENTATION / VERIFICATIONは歴史的記録で、旧削除・置換方式は使いません。docs-only変更では重いYMM4検証を走らせず、最終統合では全native laneを要求します。
+v0.4.1では、AI/audio analysis、汎用rule engine、node editor、continuous sync、fuzzy recovery、scene-wide resync、新Profile family、自動sort rule、app-restart後の未保存draft recoveryは追加していません。
+
+表情一覧での同Character複数行一括割り当ても今回は見送り、Excel Bridgeを低リスクなbulk pathとして維持しています。
+
+## Branch policy
+
+開発中のv0.4.1 Workflowは `feature/v0.4.1-ux-workflow` / PR #9 で進め、最終Native PASS後にだけ `feature/v0.4-integrated-candidate` へ統合します。
+
+`main` はユーザー実機受入が完了するまで変更しません。PR #6もDraftを維持します。

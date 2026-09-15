@@ -46,7 +46,7 @@ internal static partial class NativeProof
         async Task<LibraryEntry> AddSource(ItemTemplate source)
         {
             await InvokeSelectionButton(palette.AddTemplateButton);
-            view.TemplateAdditionSurface.SourceList.SelectedItem = source; view.TemplateAdditionSurface.SourceList.ScrollIntoView(source); await Idle();
+            await SetAddSource(view.TemplateAdditionSurface, source);
             view.TemplateAdditionSurface.NameBox.Text = "枠";
             view.TemplateAdditionSurface.NameBox.GetBindingExpression(TextBox.TextProperty)!.UpdateSource();
             Assert(InTaskViewport(view.TemplateAdditionSurface.AddButton, view), "WUX7 360px direct-add completion does not require scrolling the whole task");

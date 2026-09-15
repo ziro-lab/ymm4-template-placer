@@ -7,7 +7,7 @@ internal static partial class NativeProof
     private static void VerifyFinalAcceptance()
     {
         stage = "W12 integrated acceptance";
-        Assert(typeof(PlacerViewModel).Assembly.GetName().Version == new Version(0, 4, 0, 0), "W12 native plugin assembly is version 0.4.0.0");
+        Assert(typeof(PlacerViewModel).Assembly.GetName().Version == new Version(0, 4, 1, 0), "W12 native plugin assembly is version 0.4.1.0");
         var lines = File.ReadAllLines(Path.Combine(output, "proof-log.txt"));
         var stages = Enumerable.Range(1, 9).Select(x => $"P{x}=PASS")
             .Concat(Enumerable.Range(3, 9).Select(x => $"W{x}=PASS")).Append("W12_UI=PASS").ToArray();
@@ -36,7 +36,7 @@ internal static partial class NativeProof
         var checks = requirements.Select((x, i) => new { id = i + 1, requirement = x.Requirement, result = "PASS", evidence = x.Evidence }).ToArray();
         File.WriteAllText(Path.Combine(output, "v04-acceptance.json"), JsonSerializer.Serialize(new
         {
-            schema = "YMM4-Template-Placer-Acceptance/1", version = "0.4.0", result = "PASS",
+            schema = "YMM4-Template-Placer-Acceptance/1", version = "0.4.1", result = "PASS",
             host = "YMM4 4.55.1.1 Lite", profile_families = 5, required_native_stages = stages, checks,
             additional_profiles = new[] { "W9 Target Companion / Point Emphasis", "W10 Selection Range", "W11 Boundary" },
             boundary = "Native synthetic fixtures and real WPF commands/state. No claim of user PSD-asset visual fidelity or physical mouse injection."

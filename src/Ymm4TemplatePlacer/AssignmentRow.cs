@@ -54,8 +54,8 @@ public sealed class AssignmentRow : INotifyPropertyChanged
     public void PreferPalette(PlacerSettings settings)
     {
         var selected = SelectedChoice.Template;
-        var preferred = new Dictionary<FaceTemplate, (int Order, string Label)>();
         var palette = settings.Palettes.SingleOrDefault(x => x.Kind == PaletteKind.Character && x.CharacterName == Character);
+        var resolved = new List<(LibraryEntry Entry, FaceTemplate Template)>();
         foreach (var id in palette?.LibraryEntryIds ?? [])
         {
             var entry = settings.Library.SingleOrDefault(x => x.Id == id);
@@ -63,15 +63,24 @@ public sealed class AssignmentRow : INotifyPropertyChanged
             var resolution = TemplateResolver.Resolve(entry);
             if (resolution.State != TemplateReferenceState.Resolved) continue;
             var choice = Choices.FirstOrDefault(x => x.Template != null && ReferenceEquals(x.Template.Template, resolution.Template));
-            if (choice?.Template is FaceTemplate template)
-                preferred.TryAdd(template, (preferred.Count, entry.DisplayName + "（パレット）"));
+            if (choice?.Template is FaceTemplate template && !resolved.Any(x => ReferenceEquals(x.Template, template))) resolved.Add((entry, template));
+        }
+        var duplicateDisplayNames = resolved.GroupBy(x => x.Entry.DisplayName, StringComparer.Ordinal).Where(x => x.Count() > 1)
+            .Select(x => x.Key).ToHashSet(StringComparer.Ordinal);
+        var preferred = new Dictionary<FaceTemplate, (int Order, string Label, string ShortName)>();
+        foreach (var pair in resolved)
+        {
+            var shortName = duplicateDisplayNames.Contains(pair.Entry.DisplayName)
+                ? $"{pair.Entry.DisplayName} — {pair.Entry.Source.Name}"
+                : pair.Entry.DisplayName;
+            preferred.TryAdd(pair.Template, (preferred.Count, shortName + "（パレット）", shortName));
         }
         var candidates = Choices.Skip(1).Select(x => x.Template!).ToArray();
         Choices = new[] { Choices[0] }.Concat(candidates
             .OrderBy(x => preferred.TryGetValue(x, out var item) ? item.Order : int.MaxValue)
             .ThenBy(x => x.Name, StringComparer.Ordinal)
             .Select(x => new TemplateChoice(x, preferred.TryGetValue(x, out var item) ? item.Label : x.Name,
-                preferred.TryGetValue(x, out item) ? item.Label[..^"（パレット）".Length] : null))).ToArray();
+                preferred.TryGetValue(x, out item) ? item.ShortName : null))).ToArray();
         selectedChoice = Choices.First(x => ReferenceEquals(x.Template, selected));
         Changed(nameof(Choices)); Changed(nameof(SelectedChoice)); Changed(nameof(State));
     }

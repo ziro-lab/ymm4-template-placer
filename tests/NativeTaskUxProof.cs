@@ -22,7 +22,7 @@ internal static partial class NativeProof
         await InvokeSelectionButton(view.PaletteSurface.AddTemplateButton);
         var add = view.TemplateAdditionSurface;
         Assert(vm.IsAddingTemplate && add.IsVisible && !view.MainTabs.IsVisible, "WUX1 add opens a focused secondary task and preserves the previous task");
-        add.SourceList.SelectedItem = template; add.SourceList.ScrollIntoView(template); await Idle();
+        await SetAddSource(add, template);
         add.NameBox.Text = "フラッシュ"; add.NameBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)!.UpdateSource();
         Assert(vm.AddTemplateDisplayName == "フラッシュ" && add.AddButton.IsEnabled, "WUX1 source and optional short name are real two-way-bound inputs");
         SaveNamedView(view, "ux-add-template-normal.png");
@@ -47,7 +47,7 @@ internal static partial class NativeProof
         await undo.RedoAsync(); await Idle(); Assert(Signature(timeline) == dropped, "WUX1 first-use placement has native Redo");
         await undo.UndoAsync(); await Idle();
         vm.ActivePaletteKind = PaletteKind.Style; vm.NewPaletteCharacter = null; vm.NewPaletteName = "UX1 second"; var second = vm.CreatePalette();
-        await InvokeSelectionButton(view.PaletteSurface.AddTemplateButton); add.SourceList.SelectedItem = template; add.SourceList.ScrollIntoView(template); await Idle();
+        await InvokeSelectionButton(view.PaletteSurface.AddTemplateButton); await SetAddSource(add, template);
         Assert(vm.AddTemplateUsesExisting && add.NameBox.IsReadOnly && vm.AddTemplateDisplayName == "フラッシュ", "WUX1 an exact unique registration is reused without another naming decision");
         await InvokeSelectionButton(add.AddButton);
         saved = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
@@ -55,7 +55,7 @@ internal static partial class NativeProof
             saved.Palettes.Single(x => x.Id == second.Id).LibraryEntryIds.Single() == entry.Id,
             "WUX1 adding the same source to a second Palette reuses the same stable reference");
         vm.SelectedSourceTemplate = template; vm.LibraryDisplayName = "duplicate plugin ref"; var duplicate = vm.RegisterLibrary();
-        await InvokeSelectionButton(view.PaletteSurface.AddTemplateButton); add.SourceList.SelectedItem = template; add.SourceList.ScrollIntoView(template); await Idle();
+        await InvokeSelectionButton(view.PaletteSurface.AddTemplateButton); await SetAddSource(add, template);
         var settingsBefore = File.ReadAllText(PlacerSettingsStore.DefaultPath);
         await InvokeSelectionButton(add.AddButton);
         Assert(vm.HasError && vm.IsAddingTemplate && ReferenceEquals(vm.AddTemplateSource, template) &&
@@ -66,7 +66,7 @@ internal static partial class NativeProof
         vm.DeleteCurrentPalette(); vm.ManualStylePalette = vm.StylePalettes.Single(x => x.Id == firstPalette.Id); vm.DeleteCurrentPalette();
         vm.SelectedLibraryEntry = vm.LibraryEntries.Single(x => x.Id == entry.Id); vm.UnregisterLibrary();
         // A live duplicate and a deleted source must also stop before creating even a Library entry.
-        await InvokeSelectionButton(view.PaletteSurface.AddTemplateButton); add.SourceList.SelectedItem = template; add.SourceList.ScrollIntoView(template); await Idle();
+        await InvokeSelectionButton(view.PaletteSurface.AddTemplateButton); await SetAddSource(add, template);
         var twin = Template(template.Name, [new TextItem { Length = 18, Layer = 110 }]); ItemSettings.Default.Templates.Add(twin);
         settingsBefore = File.ReadAllText(PlacerSettingsStore.DefaultPath);
         await InvokeSelectionButton(add.AddButton);

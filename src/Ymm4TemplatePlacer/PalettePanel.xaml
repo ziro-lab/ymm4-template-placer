@@ -5,7 +5,7 @@
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <DockPanel Grid.Row="0" Margin="0,0,0,6">
    <Button x:Name="NewPaletteButton" Content="＋ パレット" Command="{Binding BeginCreatePaletteCommand}" DockPanel.Dock="Right" Padding="8,3" Margin="6,0,0,0"/>
-   <ComboBox x:Name="PaletteSelector" ItemsSource="{Binding PaletteChoices}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedPalette,Mode=TwoWay}" TextSearch.TextPath="Name" AutomationProperties.Name="パレット"/>
+   <ComboBox x:Name="PaletteSelector" ItemsSource="{Binding PaletteChoices}" DisplayMemberPath="DisplayLabel" SelectedItem="{Binding SelectedPalette,Mode=TwoWay}" TextSearch.TextPath="DisplayLabel" AutomationProperties.Name="パレット"/>
   </DockPanel>
   <StackPanel Grid.Row="1" Margin="0,0,0,6">
    <TextBlock Text="{Binding PaletteContextStatus}" ToolTip="{Binding PaletteContextDetail}" TextWrapping="Wrap" Opacity="0.75">
@@ -24,12 +24,21 @@
    </WrapPanel>
   </StackPanel>
   <Grid Grid.Row="2" Style="{StaticResource BrowseOnly}">
-   <ListBox x:Name="PaletteList" ItemsSource="{Binding PaletteEntries}" SelectedItem="{Binding SelectedPaletteEntry,Mode=TwoWay}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
-    <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="5,4">
-     <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}"/>
-     <TextBlock Text="{Binding SourceDetail}" FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis" ToolTip="{Binding SourceDetail}"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding SourceDetail}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
-     <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Opacity="0.75"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Status}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
-    </StackPanel></DataTemplate></ListBox.ItemTemplate>
+   <ListBox x:Name="PaletteList" ItemsSource="{Binding PaletteEntries}" SelectedItem="{Binding SelectedPaletteEntry,Mode=TwoWay}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+            AllowDrop="True" DragOver="OnPaletteDragOver" DragLeave="OnPaletteDragLeave" Drop="OnPaletteDrop">
+    <ListBox.ItemTemplate><DataTemplate>
+     <Grid Margin="2,1"><Grid.ColumnDefinitions><ColumnDefinition Width="26"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+      <Border Grid.Column="0" Tag="PaletteDragHandle" Background="Transparent" Cursor="SizeAll" ToolTip="ドラッグして並び替え"
+              PreviewMouseLeftButtonDown="OnDragHandleMouseDown" PreviewMouseMove="OnDragHandleMouseMove" PreviewMouseLeftButtonUp="OnDragHandleMouseUp">
+       <TextBlock Text="⋮⋮" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.65" IsHitTestVisible="False"/>
+      </Border>
+      <StackPanel Grid.Column="1" Margin="3,3,5,3">
+       <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}"/>
+       <TextBlock Text="{Binding SourceDetail}" FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis" ToolTip="{Binding SourceDetail}"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding SourceDetail}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+       <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Opacity="0.75"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Status}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+      </StackPanel>
+     </Grid>
+    </DataTemplate></ListBox.ItemTemplate>
    </ListBox>
    <TextBlock Text="{Binding PaletteEmptyMessage}" TextWrapping="Wrap" Margin="8" IsHitTestVisible="False"/>
   </Grid>
@@ -39,7 +48,11 @@
     <StackPanel Margin="0,4,0,0">
      <TextBlock Text="パレット名"/>
      <DockPanel><Button Content="変更" Command="{Binding RenamePaletteCommand}" DockPanel.Dock="Right" Padding="8,4" Margin="6,0,0,0"/><TextBox Text="{Binding PaletteNameDraft,UpdateSourceTrigger=PropertyChanged}" MaxLength="256"/></DockPanel>
-     <WrapPanel Margin="0,4,0,0"><Button Content="選択テンプレートを外す" Command="{Binding RemovePaletteEntryCommand}" Padding="8,4" Margin="0,0,6,4"/><Button Content="パレットを削除" Command="{Binding DeletePaletteCommand}" Padding="8,4" Margin="0,0,0,4" ToolTip="元テンプレート・登録・タイムラインは削除しません。"/></WrapPanel>
+     <WrapPanel Margin="0,4,0,0">
+      <Button x:Name="MoveUpButton" Content="↑ 上へ" Command="{Binding MovePaletteEntryUpCommand}" Padding="8,4" Margin="0,0,6,4" ToolTip="選択中のテンプレートを1つ上へ移動"/>
+      <Button x:Name="MoveDownButton" Content="↓ 下へ" Command="{Binding MovePaletteEntryDownCommand}" Padding="8,4" Margin="0,0,6,4" ToolTip="選択中のテンプレートを1つ下へ移動"/>
+     </WrapPanel>
+     <WrapPanel><Button Content="選択テンプレートを外す" Command="{Binding RemovePaletteEntryCommand}" Padding="8,4" Margin="0,0,6,4"/><Button x:Name="DeletePaletteButton" Content="パレットを削除" Command="{Binding DeletePaletteCommand}" Padding="8,4" Margin="0,0,0,4" ToolTip="削除前に、このパレット内の件数と影響範囲を確認します。元テンプレート・登録・タイムラインは削除しません。"/></WrapPanel>
     </StackPanel>
    </ScrollViewer>
   </Expander>

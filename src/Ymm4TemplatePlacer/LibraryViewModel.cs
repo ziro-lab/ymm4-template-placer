@@ -63,7 +63,7 @@ public sealed partial class PlacerViewModel
         RegisterLibraryCommand = new ActionCommand(_ => settingsAvailable && SelectedSourceTemplate != null, _ => Guard(() => RegisterLibrary()));
         SaveLibraryCommand = new ActionCommand(_ => settingsAvailable && SelectedLibraryEntry != null, _ => Guard(SaveLibrary));
         RelinkLibraryCommand = new ActionCommand(_ => settingsAvailable && SelectedLibraryEntry != null && SelectedSourceTemplate != null, _ => Guard(RelinkLibrary));
-        UnregisterLibraryCommand = new ActionCommand(_ => settingsAvailable && SelectedLibraryEntry != null, _ => Guard(UnregisterLibrary));
+        UnregisterLibraryCommand = new ActionCommand(_ => settingsAvailable && SelectedLibraryEntry != null, _ => Guard(UnregisterLibraryFromUi));
         try { settings = settingsStore.Load(); settingsAvailable = true; }
         catch (Exception ex) { LibraryNotice = "設定を読み込めないため保存を停止しています。元ファイルは保持しています: " + ex.Message; }
         RefreshV04();
@@ -131,7 +131,7 @@ public sealed partial class PlacerViewModel
     {
         var id = SelectedLibraryEntry?.Id ?? throw new InvalidOperationException("登録解除するテンプレートを選んでください。");
         EditSettings(next => { next.Library.RemoveAll(x => x.Id == id); OnLibraryUnregistered(next, id); });
-        HasError = false; Status = "テンプレート管理から登録解除しました。YMM4のテンプレートとタイムラインは変更していません。";
+        HasError = false; Status = "テンプレート管理から登録解除しました。すべてのパレットからも外しました。YMM4のテンプレートとタイムラインは変更していません。";
     }
     public string LibraryCharacterSummary
     {
