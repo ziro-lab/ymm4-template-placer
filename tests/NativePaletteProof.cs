@@ -31,7 +31,7 @@ internal static partial class NativeProof
         vm.NewPaletteName = "明るい"; var bright = vm.CreatePalette();
         vm.PaletteLibraryChoice = vm.PaletteLibraryChoices.Single(x => x.Id == entryA.Id);
         await InvokeSelectionButton(panel.AddTemplateButton);
-        view.TemplateAdditionSurface.SourceList.SelectedItem = TemplateResolver.Resolve(entryA).Template; await Idle();
+        await SetAddSource(view.TemplateAdditionSurface, TemplateResolver.Resolve(entryA).Template!);
         await InvokeSelectionButton(view.TemplateAdditionSurface.AddButton);
         var saved = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
         Assert(!vm.HasError && saved.Palettes.Single(x => x.Id == battle.Id).LibraryEntryIds.Single() == entryA.Id && saved.Palettes.Single(x => x.Id == bright.Id).LibraryEntryIds.Single() == entryA.Id,
