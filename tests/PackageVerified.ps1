@@ -6,6 +6,9 @@ $installFolder='Ymm4TemplatePlacer'
 $project=[xml](Get-Content -Raw 'src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj')
 if ($project.Project.PropertyGroup.Version -cne $version) { throw 'Project/package version mismatch' }
 $relative = & "$PSScriptRoot/ValidateRelativeEvidence.ps1" -OutputDir $OutputDir -SelfTest
+$relativeUiux=Get-Content -Raw (Join-Path $OutputDir 'v042-uiux-acceptance.json') | ConvertFrom-Json
+$guard=Get-Content -Raw (Join-Path $OutputDir 'evidence-guard-tests.json') | ConvertFrom-Json
+if ($guard.result -cne 'PASS' -or $guard.positive_checks -ne 1 -or $guard.negative_checks -ne 13 -or @($guard.checks | Where-Object { $_.result -cne 'PASS_REJECTED' }).Count) { throw 'Relative evidence guard self-test is incomplete' }
 $package=Join-Path $OutputDir 'package'
 $logPath=Join-Path $OutputDir 'proof-log.txt'
 $log=Get-Content $logPath
@@ -41,6 +44,7 @@ Copy-Item (Join-Path $OutputDir 'v04-acceptance.json') $package
 Copy-Item (Join-Path $OutputDir 'ux-acceptance.json') $package
 Copy-Item (Join-Path $OutputDir 'ux-workflow-acceptance.json') $package
 Copy-Item (Join-Path $OutputDir 'v042-acceptance.json') $package
+Copy-Item (Join-Path $OutputDir 'v042-uiux-acceptance.json') $package
 if ((Get-Content -Raw (Join-Path $package 'README.md')) -notmatch '^# YMM4 Template Placer v0\.4\.2') { throw 'Obsolete package usage documentation' }
 Remove-Item (Join-Path $package '*.pdb') -ErrorAction SilentlyContinue
 $event=Get-Content -Raw $env:GITHUB_EVENT_PATH | ConvertFrom-Json
@@ -55,17 +59,15 @@ $sourceHead=if ($env:GITHUB_EVENT_NAME -eq 'pull_request') { $event.pull_request
  base_task_ux_version=$ux.version; base_task_ux_requirements=12; base_task_ux_result=$ux.result
  ux_workflow_version=$workflow.version; ux_workflow_requirements=10; ux_workflow_result=$workflow.result
  relative_version=$relative.version; relative_result=$relative.result; relative_requirements=@($relative.checks).Count
- relative_native_stages=$relative.required_native_stages; evidence_guard_negative_checks=10
+ relative_uiux_version=$relativeUiux.version; relative_uiux_result=$relativeUiux.result; relative_uiux_requirements=@($relativeUiux.checks).Count
+ relative_native_stages=$relative.required_native_stages; evidence_guard_negative_checks=$guard.negative_checks
  distribution_dll_sha256=$dllHash; ymme_install_folder=$installFolder
 } | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'provenance.json')
 Copy-Item (Join-Path $OutputDir 'provenance.json') $package
-$expected=@('Ymm4TemplatePlacer.dll','Ymm4TemplatePlacer.deps.json','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll','README.md','THIRD_PARTY_NOTICES.md','provenance.json','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json')
+$expected=@('Ymm4TemplatePlacer.dll','Ymm4TemplatePlacer.deps.json','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll','README.md','THIRD_PARTY_NOTICES.md','provenance.json','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json')
 $files=@(Get-ChildItem $package -File -Recurse)
 if ($files.Count -ne $expected.Count -or @($files | Where-Object { $_.Name -notin $expected -or $_.Directory.FullName -ne (Resolve-Path $package).Path }).Count -ne 0) { throw 'Unexpected, nested or missing distributable content' }
 
-# YMM4 uses the top-level directory inside .ymme as the plugin install directory.
-# Keep that directory stable across versions so upgrades replace the same plugin instead of
-# creating Ymm4TemplatePlacer-v0.x.y side-by-side folders.
 $archive=Join-Path $OutputDir "Ymm4TemplatePlacer-v$version.ymme"
 $temporary=Join-Path $OutputDir "Ymm4TemplatePlacer-v$version.zip"
 $ymmeStage=Join-Path $OutputDir 'ymme-stage'
@@ -98,13 +100,13 @@ git archive --format=zip -o $sourceArchive HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Source archive failed' }
 $sourceZip=[IO.Compression.ZipFile]::OpenRead((Resolve-Path $sourceArchive).Path)
 try {
- foreach ($name in @('AGENTS.md','docs/DESIGN.md','docs/USAGE.md','docs/USAGE_V0.4.1.md','docs/V0.4.2_RELATIVE_PALETTE_DESIGN.md','docs/V0.4.2_ROADMAP.md','docs/V0.4.2_CANDIDATE.md','docs/V0.4.1_UX_WORKFLOW_DESIGN.md','src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj','tests/NativeV04Proof.cs','tests/NativeAcceptanceProof.cs','tests/NativeTaskUxFinalProof.cs','tests/NativeWorkflowAcceptanceProof.cs','docs/TASK_UX.md','tests/NativeRelativeFinalProof.cs','tests/ValidateRelativeEvidence.ps1','tests/PackageVerified.ps1')) {
+ foreach ($name in @('AGENTS.md','docs/DESIGN.md','docs/USAGE.md','docs/USAGE_V0.4.1.md','docs/V0.4.2_RELATIVE_PALETTE_DESIGN.md','docs/V0.4.2_UIUX_MENTAL_MODEL.md','docs/V0.4.2_ROADMAP.md','docs/V0.4.2_CANDIDATE.md','docs/V0.4.1_UX_WORKFLOW_DESIGN.md','src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj','tests/NativeV04Proof.cs','tests/NativeAcceptanceProof.cs','tests/NativeTaskUxFinalProof.cs','tests/NativeWorkflowAcceptanceProof.cs','docs/TASK_UX.md','tests/NativeRelativeFinalProof.cs','tests/NativeRelativeUiUxProof.cs','tests/ValidateRelativeEvidence.ps1','tests/PackageVerified.ps1')) {
   if ($null -eq $sourceZip.GetEntry($name)) { throw "Missing source archive entry: $name" }
  }
 } finally { $sourceZip.Dispose() }
 [ordered]@{
- result='PASS'; version=$version; native_stages='P1-P9,W3-W12,V04,WUX1-WUX13,R1-R14,V042_ACCEPTANCE'; acceptance_requirements=18
- relative_requirements=19; relative_result=$relative.result; evidence_guard_negative_checks=10
+ result='PASS'; version=$version; native_stages='P1-P9,W3-W12,V04,WUX1-WUX13,R1-R14,RELATIVE_UIUX,V042_ACCEPTANCE'; acceptance_requirements=18
+ relative_requirements=20; relative_result=$relative.result; relative_uiux_requirements=10; relative_uiux_result=$relativeUiux.result; evidence_guard_negative_checks=$guard.negative_checks
  base_task_ux_requirements=12; ux_workflow_requirements=10; payload_files=$expected; archived_dll_sha256=$archivedHash
  source_archive='Ymm4TemplatePlacer-source.zip'; ymme_install_folder=$installFolder; ymme_file_entries=$expectedArchive
 } | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'package-checks.json')
