@@ -1,143 +1,55 @@
 # AGENTS.md
 
-## Project intent
+## Current revision
 
-YMM4 Template Placer is a YukkuriMovieMaker4 plugin for organizing registered YMM4 Item Templates into a small plugin-side Library / Palette and placing them through a finite set of semantic Target relationships.
+Current target: **v0.4.2 Relative Intent Palette**, branch `feature/v0.4.2-character-template-bundles`, PR #11. Base: native-verified v0.4.1 Candidate `2710039b9f3d40c54aa8e495cb81a998c3f82e5e`. Historical regression baseline: v0.3.1.
 
-Current branch is the **integrated v0.4.0 Candidate**. The historical regression baseline is **v0.3.1**: v0.3.0 functionality plus the native-verified Timeline Tool lifecycle hotfix (`CanSuspend=true`, hide/reopen without Timeline mutation). Read `docs/DESIGN.md`, `docs/NATIVE_VALIDATION_V0.4.md`, `docs/ROADMAP.md`, then `docs/V0.4_ACCEPTANCE.md` and the latest PR/checkpoint evidence. Do not reimplement already native-verified W checkpoints. `docs/IMPLEMENTATION.md` and `docs/VERIFICATION.md` are historical v0.3 records; current user behavior is `docs/USAGE.md`, including add-only placement instead of the old replacement path.
+Read `docs/V0.4.2_RELATIVE_PALETTE_DESIGN.md`, `docs/V0.4.2_ROADMAP.md`, `docs/V0.4.2_CANDIDATE.md`, `docs/USAGE.md` and the latest PR/native evidence. The v0.4.2 roadmap is authoritative for R numbering. `docs/DESIGN.md` and `docs/ROADMAP.md` describe the historical v0.4 implementation; its proven safety core remains mandatory, but its old normal UI and singleton-only scope do not override the explicit v0.4.2 revision.
 
-Final completion requires the full native ladder and 18-item acceptance manifest, zero compiler warnings/errors, exact release DLL native smoke and versioned package checks. A source edit or successful build alone is not completion. Keep PR #6 Draft and main unchanged unless the user explicitly authorizes a later merge. Small staging file commits may defer CI until their integration commit; every completed W still requires the whole native lane before promotion.
+Do not reimplement completed W/R checkpoints. A build or source edit alone is not completion. Do not merge main. Keep PR #6 Draft until the user accepts the Candidate in their actual editing environment.
 
-`docs/NATIVE_VALIDATION_V0.4.md` records pre-implementation behavior proved against the real pinned YMM4 host. For covered paths, use the proved public host surface instead of rediscovering private Timeline ViewModel internals unless a later native test demonstrates that the public route is insufficient.
+## Product boundary
 
-## v0.4 product boundary
+Normal editing is selection -> applicable intent -> optional Palette Set -> one concrete tile click. Decide placement relations during setup, not on every normal action. Palette owns applicability and relation; entries have only small parameter overrides.
 
-The plugin should help the user:
+Runtime Item type is the primary applicability key. Uniform and mixed multi-selection require explicit matching contracts. CharacterName is the logical grouping key. Distinct host objects with the same logical name do not by themselves suppress candidates; real ambiguous registered Character definitions stop placement.
 
-```text
-find the relevant YMM4 Template quickly
-→ place it through a meaningful relationship
-→ optionally re-apply that relationship later
-```
+First expression bootstrap scans live Face-containing Templates. It does not repeatedly re-add user-deleted memberships. New expression import is explicit. Settings organization is separate from normal execution. No arbitrary expression, script, property-path engine, boolean tree, regex rules, DSL or node graph.
 
-It must not become a general rule language or a second timeline engine.
+## Safety core
 
-### Source of truth
+- Live YMM4 `ItemSettings.Default.Templates` is the source of truth. Library/settings store references, aliases and relation parameters, never copied Template bodies.
+- `ItemTemplate.SceneId` is not a unique ID. Strict TemplateLocator must resolve exactly one source. Missing/ambiguous references remain unresolved; only explicit relink may change their meaning.
+- Normal placement is add-only. Never delete/rebuild or move/shorten existing unrelated/manual items to make room.
+- Resolve time, whole-duration collisions and already-planned occupancy for the complete operation before mutation. A required-plan failure leaves zero partial placement.
+- Clone bundle members independently, normalize the minimum source Frame and preserve internal Frame/Layer/Length/content. Do not invent native Group identities.
+- 上 means smaller layer numbers; 下 means larger numbers. Collision escape translates the whole bundle in the same direction only, within the saved bounds. No opposite-side wrap.
+- Commit through the shared PlacementPlan and YMM4-native Undo/Redo. No custom undo stack.
+- Validate stale source/context/settings again before committing. Do not turn failures into empty-success reports.
+- Settings edits are staged and atomically saved. Corrupt/future/external-modified settings must not be overwritten. Load-time migration is in memory and preserves old meanings.
 
-- YMM4 `ItemSettings.Default.Templates` remains the Template source of truth.
-- The plugin Library stores references, plugin display names and optional Character association; it does **not** copy Template bodies into a second template database.
-- Library and Palette are separate. One LibraryEntry may appear in multiple Palettes.
-- YMM4 `ItemTemplate.SceneId` is **not** a unique Template ID. Native restart validation proved duplicate Name / Path / SceneId entries can persist. Resolve stored source metadata only when exactly one live Template matches; 0 or multiple matches stay unresolved and require explicit relink/removal. Never fuzzy-pick a candidate.
+## Association and compatibility
 
-### Main interaction models
+Normal tiles are unassociated. Expression-list placement may associate one Voice with multiple generated members through weak Remark tags. Preserve user remarks. Each member must be identifiable; explicit Resync updates whole bundles or skips the invalid bundle, never partially reconstructs it. A copied/missing member or ambiguous target is not repaired by proximity/text/order.
 
-- **Expression list:** bulk VoiceItem → Character-compatible Face Template assignment. Excel remains a secondary bridge for this path.
-- **Character Palette:** selected VoiceItem / TachieFaceItem temporarily selects the matching Character palette; clearing that context returns to the previously manually selected Character palette. Native proof shows this can subscribe to public `Timeline.PropertyChanged` and read public `SelectedItem` / `SelectedItems`; polling/private Timeline ViewModel reflection is not required on YMM4 4.55.1.1.
-- **Style Palette:** manually selected editing vocabulary such as bright / dark / battle effects.
-- **Quick Drop:** double-click a Palette entry to place the Template at public `Timeline.CurrentFrame` using the Template intrinsic Length. Quick Drop has no Target association and is not resynced.
-- **Selection placement:** apply a finite semantic Profile to selected Timeline Items. Selection Profiles add independent Items; association/Resync is the explicit expression path. See `docs/SELECTION_PLACEMENT.md` for rounding, padding and agreed boundary position.
+Resync is user-triggered, selection-scoped, uses current saved relations, and is best effort across independent bundles with truthful skip reporting and one native Undo for the successful updates. No continuous tracking or scene-wide sync. Legacy Resync must not update just one member of a relative bundle.
 
-## CURRENT semantic Profiles
+Keep the explicit compatibility workspace for old Library/Palette/Expression/Selection presets and old Quick Drop. No invented absolute-to-relative migration. Excel remains a secondary Voice assignment bridge; import validates before changing assignments and never mutates Timeline by itself. No Excel COM requirement.
 
-v0.4 implements only these Profile families unless the design is explicitly revised:
+## Host and runtime
 
-```text
-Character Expression
-Target Companion
-Point Emphasis
-Selection Range
-Boundary
-```
+Pinned native host: YMM4 4.55.1.1 Lite, .NET 10, WPF, `net10.0-windows10.0.19041.0`. Prefer proved public Timeline APIs documented in `docs/NATIVE_VALIDATION_V0.4.md`; selection is event-driven, not polling or private Timeline ViewModel reflection. The isolated fixed read-only Character registry compatibility adapter is documented separately; do not generalize it into arbitrary reflection.
 
-Profiles are thin strategies over shared planning primitives. Do not expose arbitrary start/end predicates or build a generic resolver graph.
+Run heavy native YMM4/build/package work in the existing Windows GitHub Actions lane, not the chat container. Keep fixtures tiny, deterministic and redistribution-safe. Check actual commands/state plus screenshots. Do not infer user PSD fidelity from synthetic fixtures.
 
-## Layer rules
+## Release and git discipline
 
-Layer placement is important and must be planned before mutation.
+- Work on the specified branch; preserve main and the accepted baseline.
+- Use small auditable changes/checkpoints. If a safety check rejects a write, do not reroute it; record the exact operation and last successful commit.
+- Documentation-only changes must not download/build/launch YMM4; source/project/XAML/tests/fixtures/workflow changes require the native lane before promotion.
+- Require P1-P9, W3-W12, WUX1-WUX13, R1-R14, current acceptance manifests, zero compiler warnings/errors, exact release DLL native smoke and stable-root archive checks.
+- `ValidateRelativeEvidence.ps1` is the independent relative acceptance consumer; keep its negative tests. Do not weaken expected stage/check coverage merely to get a green run.
+- `.ymme` root must always be `Ymm4TemplatePlacer/`, never a versioned plugin folder. Record source/checkout/run provenance and all final hashes.
+- Separate DONE/PARTIAL/FUTURE/BLOCKED accurately. Native PASS is not hands-on user acceptance.
 
-Character Quick Drop supports:
-
-```text
-Base  = configured normal Layer policy
-Front = greater Layer number than overlapping same-Character related Items
-Back  = smaller Layer number than overlapping same-Character related Items
-```
-
-YMM4 display priority follows Layer number, so do not rename these modes to ambiguous timeline-screen terms without explanation. Collision checks use the full planned Item duration, not only its first frame.
-
-Native proof confirmed the intended rule: same-Character Layers define the Front/Back baseline, unrelated Characters do not alter that baseline, and any Timeline Item may block a candidate Layer during any part of the proposed duration.
-
-Layer search is deterministic. Existing Items are never moved or shortened to make room. Planned Items in the same batch reserve occupancy before commit.
-
-## Placement / mutation rules
-
-- v0.4 placement is **add-only**. Do not delete all generated Items and rebuild them.
-- Deletion is a normal YMM4 user operation.
-- Preserve all unrelated/manual Items.
-- Build and validate PlacementPlans before mutating Timeline state.
-- If a required placement cannot be planned safely, do not partially mutate the operation.
-- Use YMM4-native Undo/Redo; do not build a custom undo stack.
-
-## Lightweight association / resync
-
-Persistent connected clips are out of scope. Association is only a weak marker for explicit, user-triggered re-sync.
-
-- Give a target Voice a simple plugin-wide serial only when association is needed.
-- Store plugin tags inside Remark without destroying user-authored Remark text.
-- Resync lookup: source serial → Character guard → exactly one target.
-- 0 matches or multiple matches: skip. Do not infer by Frame, Serif, ordering or similarity.
-- Resync is best effort and uses the **current Preset**, never a historical Preset snapshot.
-- Quick Drop has no association.
-- No continuous event monitoring, automatic target-delete handling, copy/paste ID repair, or whole-scene sync in v0.4.
-
-## Excel
-
-Excel remains a secondary bulk Assignment bridge for Voice Expression only. Do not turn the workbook into a generic Placement Profile editor.
-
-- `.xlsx` generation/read must not require Excel COM automation.
-- Import validates first and does not mutate Timeline by itself.
-- Placement after import uses the currently selected Character Expression Preset.
-
-## Explicit non-goals
-
-Do not add these to v0.4 unless the design is explicitly changed:
-
-- Series Set as a core concept
-- plugin-owned copies of YMM4 Template bodies
-- generic Rule Engine / DSL / node editor / arbitrary predicates
-- automatic delete-and-rebuild placement
-- continuous synchronization or Voice move event tracking
-- copy/paste ID repair or fuzzy target recovery
-- historical Preset snapshots
-- persistent Connected Clip semantics
-- multi-item Template generalization
-- protected Intro / Outro time remapping
-- Parent / Follow / Track Matte engines
-- audio/beat analysis, word timing or STT
-- direct AI API integration
-- multi-scene batch
-
-## Technical target
-
-- YMM4 4.55.1.1 Lite baseline
-- .NET 10
-- `net10.0-windows10.0.19041.0`
-- WPF plugin
-- Native Windows GitHub Actions as the primary automated runtime proof
-
-## CI rules
-
-- Heavy native YMM4 work must run only for source/project/XAML/test/fixture/workflow changes plus manual dispatch.
-- Documentation-only changes must not download or launch YMM4.
-- Keep fixtures tiny, deterministic and redistribution-safe.
-- Prefer direct state assertions over screenshot-only assertions; also inspect UI captures for display regressions.
-- Preserve v0.3.1 regression tests, including P9 Tool hide/reopen, while maintaining v0.4 proof steps.
-- Use small auditable file edits. If a tool safety check rejects a write, do not reroute it: record the exact operation, file and last successful commit.
-
-## Implementation order
-
-Follow `docs/ROADMAP.md` as the historical implementation/proof ladder, and continue from the latest verified checkpoint rather than rebuilding it. Keep the placement core, host surface evidence and finite-profile boundary intact. Changes to a completed W need corresponding regression proof before they are promoted.
-
-## External references
-
-Existing YMM4 projects and cross-editor research are implementation/design evidence, not permission to copy blindly. Review licenses before reusing source. Prefer implementing only the required behavior against YMM4 APIs.
+Existing external projects/research are evidence, not permission to copy assets or code without checking licenses. Prefer the smallest implementation against proved YMM4 APIs.

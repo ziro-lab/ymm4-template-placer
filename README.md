@@ -1,76 +1,42 @@
-# YMM4 Template Placer v0.4.1 Candidate
+# YMM4 Template Placer v0.4.2 Candidate
 
-YukkuriMovieMaker4で、登録済みテンプレートを「よく使うパレット」「音声に対応する表情」「選択アイテムとの関係配置」として素早く再利用するためのTool Pluginです。
+YMM4の登録済みテンプレートを、選んだアイテムとの相対関係ごと使い回すTool Pluginです。
 
-現在のv0.4.1 UX Workflow Candidateは、v0.4.0 Task UX Candidateを土台に、実利用で残っていた反復負担と途中作業消失を改善しています。
+```text
+タイムラインで基準アイテムを選ぶ
+→ 表情・装飾などの「やりたいこと」
+→ 必要ならセットを切り替える
+→ 演出タイルを1クリック
+```
 
-## v0.4.1の主な改善
+配置方法は設定時に決め、通常編集では同じ判断を繰り返しません。
 
-- **Tool close/reopenの途中作業保持** — 同一YMM4セッションで厳密に同一と確認できるdraft・表情選択・追加途中を復元。変更済み対象は推測復元しません。
-- **パレットへ複数Templateを一括追加** — 1件/N件を同じBatch Preflight/Commitで処理。1件でも曖昧・欠損なら全件zero-write。
-- **パレットを自分順へ並び替え** — 専用Drag Handleまたは↑↓。既存`LibraryEntryIds`順序をそのまま正本とし、別Paletteには影響しません。
-- **破壊操作の意味を明示** — Palette削除とLibrary登録解除は、件数・影響範囲・削除しないものを確認してから実行。Cancelはzero-write。
-- **Intentを言葉で分離** — `キャンセル` / `戻る` / `シーン更新` / `一覧更新` を作用に合わせて区別。
-- **同名項目の識別** — 普段は短い名前のまま、衝突時だけCharacterや元Template名を補助表示。
+## v0.4.2
 
-## 既存の主要機能
+選択中の実Item型・選択数・キャラクター名から用途を絞り込みます。同じ用途の複数セット、折り返す演出タイル、初回の表情テンプレート取り込み、複数テンプレートの一括登録、並べ替え・複製を備えています。
 
-- Palette-firstの直接Template追加
-- Character連動 / 手動Paletteを1つのPickerで扱う
-- Quick Drop（再生位置へ配置）
-- Base / Front / Backの全時間幅Layer計画
-- 表情一覧の音声単位割り当て
-- Expression multi-presets / Next Same Character / MaxGap / offsets
-- Selection-scoped Association / Resync
-- Target Companion / Point Emphasis / Selection Range / Boundary
-- Excel Bridge
-- Native Undo / Redo
-- strict TemplateLocator / no fuzzy recovery
-- add-only PlacementPlan / Preflight
+複数アイテムを含むテンプレートはBundleとして内部の時間差・レイヤー差・長さを保持します。衝突した場合は全体を同じ方向へ移動し、全件を安全に置けない場合は配置しません。
 
-## 安全性の方針
+表情一覧とパレットは候補元を共有します。表情一覧から関連付けて配置したBundleは、選択した音声またはメンバーから全体を手動再同期できます。Excelは表情割り当ての補助経路です。
 
-Template Placerは既存Timelineアイテムを自動削除・置換・短縮しません。
+## 安全性と互換操作
 
-配置は、
+元データはYMM4のテンプレートです。プラグインは参照だけを保存し、テンプレート本体の別DBを作りません。欠損・重複を推測修復せず、配置前に全件検証します。既存の無関係なアイテムを削除・移動・短縮せず、配置・再同期はYMM4のUndo/Redoで戻せます。
 
-1. strictな参照解決
-2. 配置予定の作成
-3. full-span collision / Layer予約の事前検証
-4. 全件が成立した場合だけ一括commit
+旧Library・Palette・Presetは読み込みだけでは書き換えず保持します。旧Quick Dropや旧プリセットは、設定の「以前の設定・互換操作」から利用できます。
 
-の順で行います。
+## 配布と検証
 
-YMM4 Template本体はSource of Truthとして外部参照し、プラグイン設定へTemplate bodyを複製保存しません。
+対象ホストは **YMM4 4.55.1.1 Lite / .NET 10**。配布条件は、P1-P9、W3-W12、WUX1-WUX13、R1-R14、4種類の受入れmanifest、Release/Proof各0 Warning・0 Error、最終配布DLLのnative smoke、固定ルートの`.ymme`検査です。
 
-曖昧・欠損・Character不一致時は、似たものを推測して続行せず停止します。
+`tests/ValidateRelativeEvidence.ps1`はv0.4.2の結果欠損・改変を拒否します。`tests/PackageVerified.ps1`はこの検査の10種類の異常系も試し、DLL・版番号・受入れ結果が揃った場合だけ配布します。run/SHA/件数はArtifact内の`provenance.json`を確認してください。
 
-## 検証
+インストール用は`Ymm4TemplatePlacer-v0.4.2.ymme`。内部ルートは版番号を付けない`Ymm4TemplatePlacer/`です。
 
-基準YMM4: **4.55.1.1 Lite**
+使い方は`docs/USAGE.md`、実装対応・検証境界は`docs/V0.4.2_CANDIDATE.md`、設計と工程番号は`docs/V0.4.2_RELATIVE_PALETTE_DESIGN.md`と`docs/V0.4.2_ROADMAP.md`を参照してください。
 
-v0.4.1 Candidateは以下を同じNative laneで要求します。
+## 実機受入れ
 
-- P1-P9
-- W3-W12 / V04
-- Original v0.4 Acceptance 18/18
-- Task UX WUX1-WUX7 / 12 requirements
-- UX Workflow WUX8-WUX13 / 10 requirements
-- Release / Proof build Warning 0 / Error 0
-- Open XML validation
-- exact distribution DLL native smoke
-- `.ymme` / source / provenance package verification
+自動検証は本物のYMM4・WPF操作と合成アイテムを使います。ユーザーの実PSD素材、他プラグインとの組み合わせ、物理マウス・インストーラ、全DPI/theme、将来ホスト、クラッシュ復旧は保証範囲に含めません。
 
-詳細は `docs/USAGE.md`、設計は `docs/V0.4.1_UX_WORKFLOW_DESIGN.md` を参照してください。
-
-## Intentional boundaries
-
-v0.4.1では、AI/audio analysis、汎用rule engine、node editor、continuous sync、fuzzy recovery、scene-wide resync、新Profile family、自動sort rule、app-restart後の未保存draft recoveryは追加していません。
-
-表情一覧での同Character複数行一括割り当ても今回は見送り、Excel Bridgeを低リスクなbulk pathとして維持しています。
-
-## Branch policy
-
-開発中のv0.4.1 Workflowは `feature/v0.4.1-ux-workflow` / PR #9 で進め、最終Native PASS後にだけ `feature/v0.4-integrated-candidate` へ統合します。
-
-`main` はユーザー実機受入が完了するまで変更しません。PR #6もDraftを維持します。
+`main`は実機受入れまで変更しません。PR #6はDraftのままです。v0.4.2は`feature/v0.4.2-character-template-bundles` / PR #11で管理します。
