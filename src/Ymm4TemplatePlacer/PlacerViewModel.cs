@@ -62,6 +62,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         timeline = info.Timeline;
         undo = info.UndoRedoManager;
         if (changed) { AttachTimelineV04(); Guard(Refresh); }
+        TryRestoreTransientWork();
         UpdateCommands();
     }
     public void Refresh()
@@ -131,6 +132,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public void LoadState(ToolState stateData) { }
     public void Dispose()
     {
+        disposedTransientWork ??= CaptureTransientWork();
         DetachTimelineV04(); DisposeV04();
         foreach (var row in Rows) row.PropertyChanged -= RowChanged;
         Rows.Clear(); timeline = null; undo = null;

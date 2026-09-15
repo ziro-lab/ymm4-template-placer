@@ -23,6 +23,7 @@ internal static partial class NativeProof
         await VerifyFinalUi(timeline);
         await VerifyPresetSelectorRefresh(timeline);
         await VerifyTaskUxFinal(timeline, undo);
+        await VerifyResumeContinuity(timeline, undo);
         VerifyFinalAcceptance();
         VerifyTaskUxAcceptance();
     }
