@@ -16,6 +16,18 @@ Runtime Item type is the primary applicability key. Uniform and mixed multi-sele
 
 First expression bootstrap scans live Face-containing Templates. It does not repeatedly re-add user-deleted memberships. New expression import is explicit. Settings organization is separate from normal execution. No arbitrary expression, script, property-path engine, boolean tree, regex rules, DSL or node graph.
 
+## GUI coordination guardrails
+
+Preserve the current WPF/MVVM and PlacementPlan architecture; do not rewrite it into MVP, Chain of Responsibility, or another pattern merely for terminology compliance. Apply the following rules when adding or changing GUI behavior so AI-assisted incremental work cannot create hidden cross-screen state coupling.
+
+- Treat Views and child panels as passive surfaces. They may render bound state, perform purely local visual/layout work, and forward user intent. Do not let a View or code-behind directly change a sibling View, sibling ViewModel, Timeline, settings, or another feature's workflow state to make a behavior happen.
+- Keep child ViewModels responsible only for their own local feature state. Any request that affects workspace mode, competing operations, global visibility/navigation, operation admission, cancellation, or another component must be raised to the owning parent and ultimately the root coordinator (`PlacerViewModel` or its explicit successor).
+- UI events must have one upward ownership path. Prefer commands/events that bubble through the existing owner hierarchy over sibling-to-sibling calls, shared mutable flags, or ad-hoc callbacks. The component that receives an event either handles the part it owns or delegates upward; it must not reach sideways to orchestrate another component.
+- The root coordinator is the single arbiter for mutually exclusive UI/workflow state. Do not add sleeps, retry loops, temporary locks, duplicated timers, or competing show/hide decisions in separate components to reconcile races after the fact.
+- When a new feature introduces mutually exclusive or order-sensitive application states, model them explicitly as a finite state/transition model (an enum/state object or an equally explicit transition table) instead of encoding the new global state as an unchecked combination of booleans. Keep invalid transitions impossible or rejected at the coordinator boundary.
+- A user action must have one authoritative route from input to decision to effect. Repeated input, cancel/close, mode switch, Tool hide/reopen, and re-entry during an executing operation must be covered by regression tests when the changed feature can interact with those paths.
+- Do not move placement/domain decisions into the GUI coordinator. Keep the existing direction: UI intent -> coordinator/admission -> resolver/plan -> complete preflight -> `PlacementPlan` commit -> native Undo. GUI coordination rules are a guardrail around the proven placement core, not a replacement for it.
+
 ## Safety core
 
 - Live YMM4 `ItemSettings.Default.Templates` is the source of truth. Library/settings store references, aliases and relation parameters, never copied Template bodies.
