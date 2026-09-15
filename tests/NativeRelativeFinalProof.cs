@@ -30,7 +30,6 @@ internal static partial class NativeProof
         foreach (var source in sources) ItemSettings.Default.Templates.Add(source);
         try
         {
-            // Migration preserves exact old meanings instead of inventing a relative target for absolute presets.
             var node = JsonSerializer.SerializeToNode(original)!.AsObject();
             foreach (var name in new[] { "IntentPaletteRevision", "IntentPalettes", "ExpressionBootstrapComplete", "ImportedExpressionSources", "LegacyWorkspace" }) node.Remove(name);
             var migrationPath = Path.Combine(output, "r14-old-settings.json");
@@ -106,7 +105,6 @@ internal static partial class NativeProof
         finally
         {
             foreach (var source in sources) ItemSettings.Default.Templates.Remove(source);
-            // This process owns its isolated CI settings file. Resynchronize its concurrency token before restoring the fixture.
             store.Load(); store.Save(original); field.SetValue(vm, original);
             timeline.Items = items; timeline.SelectedItems = selection; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
             view.Width = width; view.Height = height; vm.SetLegacyWorkspace(mode); vm.Refresh(); vm.ResetIntentSettings();
@@ -123,7 +121,7 @@ internal static partial class NativeProof
     private static void VerifyRelativeAcceptance()
     {
         var lines = File.ReadAllLines(Path.Combine(output, "proof-log.txt"));
-        var required = Enumerable.Range(1, 8).Select(x => $"R{x}=PASS").Concat(new[] { "R9_CORE=PASS", "R9_UI=PASS", "R10=PASS", "R11=PASS", "R12=PASS", "R13=PASS", "R14_NATIVE=PASS", "V04=PASS", "UX_ACCEPTANCE=PASS", "UX_WORKFLOW_ACCEPTANCE=PASS" }).ToArray();
+        var required = Enumerable.Range(1, 8).Select(x => $"R{x}=PASS").Concat(new[] { "R9_CORE=PASS", "R9_UI=PASS", "R10=PASS", "R11=PASS", "R12=PASS", "R13=PASS", "RELATIVE_UIUX=PASS", "R14_NATIVE=PASS", "V04=PASS", "UX_ACCEPTANCE=PASS", "UX_WORKFLOW_ACCEPTANCE=PASS" }).ToArray();
         foreach (var marker in required) Assert(lines.Contains(marker, StringComparer.Ordinal), "R14 final acceptance requires completed native stage " + marker);
         Assert(!nativeFaultOccurred, "R14 no swallowed or unhandled native fault is accepted");
         var checks = new (string Requirement, string Evidence)[] {
@@ -142,6 +140,7 @@ internal static partial class NativeProof
             ("Palette-backed bundle Excel export/import retains source identity and does not mutate Timeline", "R10; NativeRelativeExpressionProof"),
             ("Settings isolated from execution; real bulk registration/reorder/duplicate/invalid text/discard/save", "R11/R14; NativeIntentSettingsProof/NativeRelativeFinalProof"),
             ("Dense wrapping tiles at 360px; sticky settings save; no ordinary unrelated full-Library selection", "R7/R11/R12/R14"),
+            ("Mental-model UI: selection -> intent -> optional Set -> one tile; progressive Settings; natural-language summary; actionable empty states", "RELATIVE_UIUX; NativeRelativeUiUxProof"),
             ("Weak bundle associations; selected non-Face member/Voice scope; whole-bundle manual Resync and native Undo", "R13; NativeRelativeExpressionProof"),
             ("Missing/copied/source-changed bundle refuses reconstruction; legacy Resync cannot mutate one relative member", "R13; NativeRelativeExpressionProof"),
             ("Old Library/Character-Style palettes/Expression-Selection presets remain readable without load-time writes", "R14 migration proof; old meanings retained in explicit compatibility workspace"),
