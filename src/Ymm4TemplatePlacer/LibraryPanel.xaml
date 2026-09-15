@@ -42,7 +42,7 @@
    <Button x:Name="RegisterButton" Content="新規登録" Command="{Binding RegisterLibraryCommand}" Padding="10,5" Margin="0,0,6,4"/>
    <Button Content="名前等を保存" Command="{Binding SaveLibraryCommand}" Padding="10,5" Margin="0,0,6,4"/>
    <Button x:Name="RelinkButton" Content="再リンク" Command="{Binding RelinkLibraryCommand}" Padding="10,5" Margin="0,0,6,4"/>
-   <Button Content="登録解除" Command="{Binding UnregisterLibraryCommand}" Padding="10,5" Margin="0,0,0,4" ToolTip="登録一覧から外すだけです。元テンプレートとタイムラインは削除しません。"/>
+   <Button x:Name="UnregisterButton" Content="登録解除" Command="{Binding UnregisterLibraryCommand}" Padding="10,5" Margin="0,0,0,4" ToolTip="登録解除すると、使っているすべてのパレットからも外れます。元テンプレートとタイムラインは削除しません。"/>
   </WrapPanel>
  </Grid>
  </ScrollViewer>
