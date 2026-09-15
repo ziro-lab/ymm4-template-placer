@@ -7,13 +7,13 @@
  <Grid Margin="8">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <DockPanel Grid.Row="0" Margin="0,0,0,6">
-   <Button x:Name="RefreshButton" Content="シーン更新" Command="{Binding RefreshCommand}" DockPanel.Dock="Left" Padding="12,4" Margin="0,0,8,0" ToolTip="現在のシーンの音声とテンプレートを読み直します。表情一覧の選択はクリアされます。"/>
+   <Button x:Name="RefreshButton" Content="シーン更新" Command="{Binding RefreshCommand}" DockPanel.Dock="Left" Padding="12,4" Margin="0,0,8,0" ToolTip="現在のシーンの音声とテンプレートを読み直します。「表情をまとめて」の選択はクリアされます。"/>
    <TextBlock Text="{Binding SceneName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
   </DockPanel>
   <TabControl x:Name="MainTabs" Grid.Row="1" SelectedIndex="0">
    <TabControl.Style><Style TargetType="TabControl"><Style.Triggers><DataTrigger Binding="{Binding IsAddingTemplate}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding IsManagingTemplates}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TabControl.Style>
-   <TabItem x:Name="PaletteTab" Header="パレット"><local:PalettePanel x:Name="PaletteSurface"/></TabItem>
-   <TabItem x:Name="ExpressionTab" Header="表情一覧">
+   <TabItem x:Name="PaletteTab" Header="編集"><local:PalettePanel x:Name="PaletteSurface"/></TabItem>
+   <TabItem x:Name="ExpressionTab" Header="表情をまとめて">
     <Grid Margin="6">
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
      <StackPanel Grid.Row="0" Margin="0,0,0,6">
@@ -53,7 +53,7 @@
      </StackPanel>
     </Grid>
    </TabItem>
-   <TabItem x:Name="SelectionTab" Header="選択配置"><local:SelectionPanel x:Name="SelectionSurface"/></TabItem>
+   <TabItem x:Name="SelectionTab" Header="設定"><local:SelectionPanel x:Name="SelectionSurface"/></TabItem>
   </TabControl>
   <local:TemplateAdditionPanel x:Name="TemplateAdditionSurface" Grid.Row="1">
    <local:TemplateAdditionPanel.Style><Style TargetType="local:TemplateAdditionPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsAddingTemplate}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding IsManagingTemplates}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></local:TemplateAdditionPanel.Style>
