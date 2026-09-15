@@ -62,6 +62,8 @@ public partial class PlacerView : UserControl
         var legacy = observedViewModel?.UseLegacyWorkspace == true;
         PaletteTab.Content = legacy ? PaletteSurface : RelativePaletteSurface;
         SelectionTab.Content = legacy ? SelectionSurface : RelativeSettingsSurface;
+        PaletteTab.Header = legacy ? "パレット" : "編集";
+        ExpressionTab.Header = legacy ? "表情一覧" : "表情をまとめて";
         SelectionTab.Header = legacy ? "選択配置" : "設定";
         PresetSurface.Visibility = legacy ? Visibility.Visible : Visibility.Collapsed;
         returnToRelative.Visibility = legacy ? Visibility.Visible : Visibility.Collapsed;
