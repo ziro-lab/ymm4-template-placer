@@ -6,6 +6,8 @@ using YukkuriMovieMaker.Project.Items;
 
 namespace Ymm4TemplatePlacer;
 
+public sealed record PaletteMoveRequest(Guid LibraryEntryId, int InsertionIndex);
+
 public sealed partial class PlacerViewModel
 {
     private bool refreshingPalettes;
@@ -66,12 +68,19 @@ public sealed partial class PlacerViewModel
     public ActionCommand DeletePaletteCommand { get; private set; } = null!;
     public ActionCommand AddPaletteEntryCommand { get; private set; } = null!;
     public ActionCommand RemovePaletteEntryCommand { get; private set; } = null!;
+    public ActionCommand MovePaletteEntryCommand { get; private set; } = null!;
+    public ActionCommand MovePaletteEntryUpCommand { get; private set; } = null!;
+    public ActionCommand MovePaletteEntryDownCommand { get; private set; } = null!;
     partial void InitializePalettes()
     {
         CreatePaletteCommand = new ActionCommand(_ => settingsAvailable, _ => Guard(() => CreatePalette()));
         DeletePaletteCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null, _ => Guard(DeleteCurrentPalette));
         AddPaletteEntryCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null && PaletteLibraryChoice != null, _ => Guard(AddPaletteEntry));
         RemovePaletteEntryCommand = new ActionCommand(_ => settingsAvailable && CurrentPalette != null && SelectedPaletteEntry != null, _ => Guard(RemovePaletteEntry));
+        MovePaletteEntryCommand = new ActionCommand(x => settingsAvailable && CurrentPalette != null && x is PaletteMoveRequest request && CurrentPalette.LibraryEntryIds.Contains(request.LibraryEntryId),
+            x => Guard(() => MovePaletteEntry((PaletteMoveRequest)x!)));
+        MovePaletteEntryUpCommand = new ActionCommand(_ => CanMoveSelectedPaletteEntry(-1), _ => Guard(() => MoveSelectedPaletteEntry(-1)));
+        MovePaletteEntryDownCommand = new ActionCommand(_ => CanMoveSelectedPaletteEntry(1), _ => Guard(() => MoveSelectedPaletteEntry(1)));
         InitializePaletteTask();
         InitializeTemplateAddition();
         InitializeQuickDrop();
@@ -208,6 +217,44 @@ public sealed partial class PlacerViewModel
         EditSettings(next => next.Palettes.Single(x => x.Id == palette.Id).LibraryEntryIds.Remove(id));
         HasError = false; Status = "このパレットから外しました。他のパレット・テンプレート管理・タイムラインは変更していません。";
     }
+    private bool CanMoveSelectedPaletteEntry(int delta)
+    {
+        var palette = CurrentPalette; var entry = SelectedPaletteEntry;
+        if (!settingsAvailable || palette == null || entry == null) return false;
+        var index = palette.LibraryEntryIds.IndexOf(entry.LibraryEntryId);
+        return delta < 0 ? index > 0 : index >= 0 && index < palette.LibraryEntryIds.Count - 1;
+    }
+    private void MoveSelectedPaletteEntry(int delta)
+    {
+        var palette = CurrentPalette ?? throw new InvalidOperationException("パレットを選んでください。");
+        var entry = SelectedPaletteEntry ?? throw new InvalidOperationException("並び替えるテンプレートを選んでください。");
+        var index = palette.LibraryEntryIds.IndexOf(entry.LibraryEntryId);
+        if (index < 0) throw new InvalidOperationException("選択したテンプレートは現在のパレットにありません。");
+        var insertionIndex = delta < 0 ? index - 1 : index + 2;
+        MovePaletteEntry(new(entry.LibraryEntryId, insertionIndex));
+    }
+    public void MovePaletteEntry(PaletteMoveRequest request)
+    {
+        var palette = CurrentPalette ?? throw new InvalidOperationException("パレットを選んでください。");
+        var currentIndex = palette.LibraryEntryIds.IndexOf(request.LibraryEntryId);
+        if (currentIndex < 0) throw new InvalidOperationException("並び替えるテンプレートは現在のパレットにありません。");
+        var insertionIndex = Math.Clamp(request.InsertionIndex, 0, palette.LibraryEntryIds.Count);
+        if (insertionIndex > currentIndex) insertionIndex--;
+        if (insertionIndex == currentIndex) return;
+        var selectedId = request.LibraryEntryId;
+        EditSettings(next =>
+        {
+            var ids = next.Palettes.Single(x => x.Id == palette.Id).LibraryEntryIds;
+            var sourceIndex = ids.IndexOf(selectedId);
+            if (sourceIndex < 0) throw new InvalidOperationException("並び替えるテンプレートは現在のパレットにありません。");
+            ids.RemoveAt(sourceIndex);
+            ids.Insert(Math.Clamp(insertionIndex, 0, ids.Count), selectedId);
+        });
+        SelectedPaletteEntry = PaletteEntries.FirstOrDefault(x => x.LibraryEntryId == selectedId);
+        foreach (var row in Rows) row.PreferPalette(settings);
+        HasError = false; Status = "パレットの並び順を保存しました。元テンプレートとタイムラインは変更していません。";
+        UpdatePaletteCommands();
+    }
     partial void OnLibraryUnregistered(PlacerSettings next, Guid id)
     {
         foreach (var palette in next.Palettes) palette.LibraryEntryIds.Remove(id);
@@ -215,6 +262,8 @@ public sealed partial class PlacerViewModel
     private void UpdatePaletteCommands()
     {
         CreatePaletteCommand?.RaiseCanExecuteChanged(); DeletePaletteCommand?.RaiseCanExecuteChanged();
-        AddPaletteEntryCommand?.RaiseCanExecuteChanged(); RemovePaletteEntryCommand?.RaiseCanExecuteChanged(); RenamePaletteCommand?.RaiseCanExecuteChanged(); UpdateQuickDropCommands();
+        AddPaletteEntryCommand?.RaiseCanExecuteChanged(); RemovePaletteEntryCommand?.RaiseCanExecuteChanged();
+        MovePaletteEntryCommand?.RaiseCanExecuteChanged(); MovePaletteEntryUpCommand?.RaiseCanExecuteChanged(); MovePaletteEntryDownCommand?.RaiseCanExecuteChanged();
+        RenamePaletteCommand?.RaiseCanExecuteChanged(); UpdateQuickDropCommands();
     }
 }
