@@ -47,6 +47,12 @@ public sealed partial class PlacerViewModel
             {
                 var count = IntentSettings!.ImportNewExpressions(); HasError = false; Status = $"新しい表情{count}件を下書きへ取り込みました。［変更を保存］で確定します。";
             }));
+            // The Settings panel may already have evaluated its bindings before Loaded initializes these commands.
+            // CanExecuteChanged alone cannot replace an earlier null binding value.
+            foreach (var property in new[] { nameof(SaveIntentSettingsCommand), nameof(DiscardIntentSettingsCommand),
+                nameof(CreateIntentPaletteCommand), nameof(DuplicateIntentPaletteCommand), nameof(DeleteIntentPaletteCommand),
+                nameof(MoveIntentPaletteCommand), nameof(MoveIntentEntryCommand), nameof(RemoveIntentEntryCommand),
+                nameof(AddIntentSourcesCommand), nameof(RescanIntentExpressionsCommand) }) OnPropertyChanged(property);
         }
         if (IntentSettings == null) ResetIntentSettings();
     }
