@@ -20,7 +20,7 @@
                 AutomationProperties.Name="{Binding Name}">
        <StackPanel Orientation="Horizontal">
         <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
-        <TextBlock Text="{Binding CharacterName,StringFormat=  {0}}" Opacity="0.6" Margin="4,0,0,0"/>
+        <TextBlock Text="{Binding CharacterName}" Opacity="0.6" Margin="4,0,0,0"/>
        </StackPanel>
       </CheckBox>
       <TextBlock Grid.Column="1" Text="{Binding StateLabel}" Opacity="0.65" VerticalAlignment="Center" Margin="8,0,2,0"/>
