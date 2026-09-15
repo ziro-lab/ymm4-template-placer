@@ -34,6 +34,7 @@ public sealed class PlacerSettingsStore
         var bytes = ReadBytes();
         var result = bytes == null ? new PlacerSettings() : JsonSerializer.Deserialize<PlacerSettings>(bytes, Options) ?? throw new InvalidDataException("設定ファイルが空です。");
         SelectionPresetSettings.Upgrade(result);
+        IntentPaletteSettings.Upgrade(result);
         Validate(result); expectedDigest = Digest(bytes); loaded = true; return result;
     }
     public static PlacerSettings Copy(PlacerSettings settings) =>
@@ -48,6 +49,7 @@ public sealed class PlacerSettingsStore
         PaletteSettings.Validate(settings);
         ExpressionPresetSettings.Validate(settings);
         SelectionPresetSettings.Validate(settings);
+        IntentPaletteSettings.Validate(settings);
     }
     public void Save(PlacerSettings settings)
     {

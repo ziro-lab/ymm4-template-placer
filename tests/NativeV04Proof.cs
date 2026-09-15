@@ -32,5 +32,6 @@ internal static partial class NativeProof
         VerifyTaskUxAcceptance();
         VerifyWorkflowAcceptance();
         await VerifyRelativeFoundations(timeline, undo);
+        await VerifyIntentCore(timeline, undo);
     }
 }
