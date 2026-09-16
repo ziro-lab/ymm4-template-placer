@@ -60,8 +60,10 @@ internal static partial class NativeProof
             var choice = row.Choices.Single(x => x.Template?.Name == template.Name);
             Assert(!ReferenceEquals(choice.Template!.Face.Character, canonical) && ReferenceEquals(choice.Template.Face.Character, detached),
                 "Template fidelity fixture reaches the expression dropdown with a detached same-name source Character");
-            row.SelectedChoice = choice;
-            Assert(vm.PlaceCommand.CanExecute(null), "Template fidelity selected expression-list candidate is executable");
+            await SelectInDropdown(view, row, template.Name);
+            row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
+            Assert(row.SelectedChoice.Template?.Name == template.Name && vm.PlaceCommand.CanExecute(null),
+                "Template fidelity actual expression ComboBox selection makes placement executable");
             var baseline = Signature(timeline);
             await ClickPlace(view);
             Assert(!vm.HasError, "Template fidelity actual expression-list placement command completes: " + vm.Status);
