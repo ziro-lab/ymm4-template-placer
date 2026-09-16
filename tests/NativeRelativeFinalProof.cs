@@ -121,7 +121,7 @@ internal static partial class NativeProof
     private static void VerifyRelativeAcceptance()
     {
         var lines = File.ReadAllLines(Path.Combine(output, "proof-log.txt"));
-        var required = Enumerable.Range(1, 8).Select(x => $"R{x}=PASS").Concat(new[] { "R9_CORE=PASS", "R9_UI=PASS", "R10=PASS", "R11=PASS", "R12=PASS", "R13=PASS", "RELATIVE_UIUX=PASS", "R14_NATIVE=PASS", "V04=PASS", "UX_ACCEPTANCE=PASS", "UX_WORKFLOW_ACCEPTANCE=PASS" }).ToArray();
+        var required = Enumerable.Range(1, 8).Select(x => $"R{x}=PASS").Concat(new[] { "R9_CORE=PASS", "R9_UI=PASS", "R10=PASS", "R11=PASS", "R12=PASS", "R13=PASS", "TEMPLATE_FIDELITY=PASS", "RELATIVE_UIUX=PASS", "R14_NATIVE=PASS", "V04=PASS", "UX_ACCEPTANCE=PASS", "UX_WORKFLOW_ACCEPTANCE=PASS" }).ToArray();
         foreach (var marker in required) Assert(lines.Contains(marker, StringComparer.Ordinal), "R14 final acceptance requires completed native stage " + marker);
         Assert(!nativeFaultOccurred, "R14 no swallowed or unhandled native fault is accepted");
         var checks = new (string Requirement, string Evidence)[] {
@@ -141,6 +141,7 @@ internal static partial class NativeProof
             ("Settings isolated from execution; real bulk registration/reorder/duplicate/invalid text/discard/save", "R11/R14; NativeIntentSettingsProof/NativeRelativeFinalProof"),
             ("Dense wrapping tiles at 360px; sticky settings save; no ordinary unrelated full-Library selection", "R7/R11/R12/R14"),
             ("Mental-model UI: selection -> intent -> optional Set -> one tile; progressive Settings; natural-language summary; actionable empty states", "RELATIVE_UIUX; NativeRelativeUiUxProof"),
+            ("Expression-list Template fidelity rebinds detached same-name Face clones to the target Voice Character while preserving cloned effect identity/value and source Template", "TEMPLATE_FIDELITY; NativeTemplateFidelityProof"),
             ("Weak bundle associations; selected non-Face member/Voice scope; whole-bundle manual Resync and native Undo", "R13; NativeRelativeExpressionProof"),
             ("Missing/copied/source-changed bundle refuses reconstruction; legacy Resync cannot mutate one relative member", "R13; NativeRelativeExpressionProof"),
             ("Old Library/Character-Style palettes/Expression-Selection presets remain readable without load-time writes", "R14 migration proof; old meanings retained in explicit compatibility workspace"),
@@ -150,7 +151,7 @@ internal static partial class NativeProof
             schema = "YMM4-Template-Placer-Relative-Acceptance/1", version = "0.4.2", result = "PASS", host = "YMM4 4.55.1.1 Lite",
             required_native_stages = required, checks = checks.Select((x, i) => new { id = i + 1, requirement = x.Requirement, evidence = x.Evidence, result = "PASS" }),
             packaging = "Separate exact distribution DLL smoke and stable-root archive gates must still PASS before distribution.",
-            boundary = "Actual WPF commands and synthetic Items; no physical mouse/installer, arbitrary PSD rendering, crash recovery, or future-host compatibility claim. Character registry uses a fixed read-only host compatibility adapter."
+            boundary = "Actual WPF commands and synthetic Items; no physical mouse/installer, arbitrary PSD rendering, third-party effect fidelity, crash recovery, or future-host compatibility claim. Character registry uses a fixed read-only host compatibility adapter."
         }, new JsonSerializerOptions { WriteIndented = true }));
         Log("V042_ACCEPTANCE=PASS");
     }

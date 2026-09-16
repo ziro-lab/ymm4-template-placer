@@ -34,8 +34,8 @@ public static partial class TemplateResolver
         if (matches.Length != 1) return new(TemplateReferenceState.Ambiguous, null, null);
         var items = matches[0].Items.ToArray();
         if (items.Length != 1) return new(TemplateReferenceState.Unsupported, matches[0], null);
-        var character = ItemCharacters.Get(items[0]);
-        if (entry.CharacterName != null && character != null && !string.Equals(character.Name, entry.CharacterName, StringComparison.Ordinal))
+        var characterName = ItemCharacters.Name(items[0]);
+        if (entry.CharacterName != null && characterName != null && !string.Equals(characterName, entry.CharacterName, StringComparison.Ordinal))
             return new(TemplateReferenceState.CharacterMismatch, matches[0], null);
         return new(TemplateReferenceState.Resolved, matches[0], items[0]);
     }
@@ -70,6 +70,37 @@ public static class ItemCharacters
         TachieItem tachie => tachie.Character,
         _ => null
     };
+    public static string? Name(IItem item) => item switch
+    {
+        VoiceItem voice => voice.CharacterName,
+        TachieFaceItem face => face.CharacterName,
+        TachieItem tachie => tachie.CharacterName,
+        _ => Get(item)?.Name
+    };
+    public static bool RebindIfSameLogicalCharacter(IItem item, string logicalName, Character canonical)
+    {
+        if (!string.Equals(Name(item), logicalName, StringComparison.Ordinal)) return false;
+        switch (item)
+        {
+            case VoiceItem voice:
+                voice.Character = canonical;
+                return true;
+            case TachieFaceItem face:
+                // Character assignment may refresh Character-derived defaults. Preserve the already-cloned
+                // template-owned face parameter/effects so rebinding identity never rewrites the action itself.
+                var parameter = face.TachieFaceParameter;
+                var effects = face.TachieFaceEffects;
+                face.Character = canonical;
+                face.TachieFaceParameter = parameter;
+                face.TachieFaceEffects = effects;
+                return true;
+            case TachieItem tachie:
+                tachie.Character = canonical;
+                return true;
+            default:
+                return false;
+        }
+    }
     public static Character[] Read(Timeline? timeline) =>
         (timeline?.Items.Select(Get) ?? Enumerable.Empty<Character?>())
         .Concat(ItemSettings.Default.Templates.SelectMany(x => x.Items).Select(Get))
