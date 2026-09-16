@@ -9,6 +9,7 @@ namespace Ymm4TemplatePlacer;
 
 internal static partial class NativeProof
 {
+    // Keep this proof native-relevant: release packaging must never promote a fidelity-gate edit on a docs-only CI path.
     private static async Task VerifyTemplateFidelity(Timeline timeline, UndoRedoManager undo)
     {
         stage = "v0.4.2 template Character/effect fidelity";
