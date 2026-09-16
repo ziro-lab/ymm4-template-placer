@@ -22,13 +22,13 @@ jobs:
         run: |
           dotnet --list-sdks
           if (-not (dotnet --list-sdks | Select-String -Pattern '^10\.')) { throw '.NET 10 SDK missing' }
-      - name: Download exact YMM4 4.55.1.1 Lite
+      - name: Download exact YMM4 4.56.1.0 Lite
         shell: pwsh
         run: |
-          curl.exe -L --fail --retry 3 --silent --show-error -o ymm4.zip https://github.com/manju-summoner/YukkuriMovieMaker4/releases/download/v4.55.1.1/YukkuriMovieMaker_v4.55.1.1_Lite.zip
+          curl.exe -L --fail --retry 3 --silent --show-error -o ymm4.zip https://github.com/manju-summoner/YukkuriMovieMaker4/releases/download/v4.56.1.0/YukkuriMovieMaker_v4.56.1.0_Lite.zip
           if ($LASTEXITCODE -ne 0) { throw 'YMM4 download failed' }
           $hash=(Get-FileHash ymm4.zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($hash -ne '125860147cc33b831fc1a6d6ea996958001c2ead3b0d37f7d900251d5617db9b') { throw "YMM4 hash mismatch: $hash" }
+          if ($hash -ne '49c0ed689f545737b7ce939971bfc625962e00791c57883dc8e6f058aa336c5a') { throw "YMM4 hash mismatch: $hash" }
           Expand-Archive -LiteralPath ymm4.zip -DestinationPath ymm4
           $exe=Get-ChildItem ymm4 -Recurse -Filter YukkuriMovieMaker.exe | Select-Object -First 1
           if (-not $exe) { throw 'YMM4 exe missing' }
@@ -51,7 +51,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: playback-rate-probe
+          name: playback-rate-probe-v4.56.1.0
           path: out/*.txt
           if-no-files-found: warn
           retention-days: 14
