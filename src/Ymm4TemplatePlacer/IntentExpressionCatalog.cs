@@ -7,7 +7,7 @@ public sealed record IntentExpressionSource(IntentPalette Palette, IntentEntry E
     public bool Matches(VoiceItem voice) => Palette.ExpressionCandidates && Palette.Target.TypeMatch == IntentTypeMatch.UniformType &&
         Palette.Target.MinimumCount <= 1 && Palette.Target.MaximumCount >= 1 &&
         Palette.Target.ItemTypeKeys.Contains(IntentSelectionContext.TypeKey(voice.GetType()), StringComparer.Ordinal) &&
-        (Palette.Target.CharacterName == null || Palette.Target.CharacterName == voice.Character?.Name);
+        (Palette.Target.CharacterName == null || Palette.Target.CharacterName == voice.CharacterName);
 
     public (IntentPalette Palette, IntentEntry Entry, TemplateBundle Bundle) ResolveCurrent(PlacerSettings settings)
     {
@@ -42,7 +42,7 @@ public static class IntentExpressionCatalog
                 var bundle = resolution.Bundle;
                 if (bundle == null || !bundle.HasFace || bundle.CharacterName == null ||
                     (palette.Target.CharacterName != null && palette.Target.CharacterName != bundle.CharacterName) || seen.Contains(bundle.Template)) continue;
-                var face = bundle.Items.OfType<TachieFaceItem>().FirstOrDefault(x => x.Character?.Name == bundle.CharacterName);
+                var face = bundle.Items.OfType<TachieFaceItem>().FirstOrDefault(x => ItemCharacters.Name(x) == bundle.CharacterName);
                 if (face == null) continue;
                 seen.Add(bundle.Template);
                 result.Add(new(bundle.Template, face, bundle.Template.Name, bundle.CharacterName)
