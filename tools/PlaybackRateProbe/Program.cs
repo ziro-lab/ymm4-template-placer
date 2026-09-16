@@ -34,10 +34,6 @@ foreach (var path in Directory.EnumerateFiles(ymm4Dir, "*.dll").Concat(Directory
     catch { }
 }
 
-var sb = new StringBuilder();
-sb.AppendLine($"YMM4_DIR={ymm4Dir}");
-sb.AppendLine($"ASSEMBLIES={assemblies.Count}");
-
 static IEnumerable<Type> SafeTypes(Assembly a)
 {
     try { return a.GetTypes(); }
@@ -46,24 +42,11 @@ static IEnumerable<Type> SafeTypes(Assembly a)
 }
 
 var allTypes = assemblies.SelectMany(SafeTypes).ToArray();
-var interestingTypes = allTypes.Where(t =>
-    (t.FullName?.Contains("Preview", StringComparison.OrdinalIgnoreCase) ?? false) ||
-    (t.FullName?.Contains("Player", StringComparison.OrdinalIgnoreCase) ?? false) ||
-    (t.FullName?.Contains("Setting", StringComparison.OrdinalIgnoreCase) ?? false)).ToArray();
-
-sb.AppendLine("\n=== TYPES/MEMBERS CONTAINING PLAYBACK/SPEED ===");
-foreach (var t in interestingTypes.OrderBy(t => t.FullName))
-{
-    var members = t.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-        .Where(m => m.Name.Contains("Playback", StringComparison.OrdinalIgnoreCase) ||
-                    m.Name.Contains("PlaySpeed", StringComparison.OrdinalIgnoreCase) ||
-                    m.Name.Contains("Speed", StringComparison.OrdinalIgnoreCase))
-        .Select(m => $"{m.MemberType}: {m}")
-        .Distinct().ToArray();
-    if (members.Length == 0) continue;
-    sb.AppendLine($"TYPE {t.FullName}");
-    foreach (var m in members) sb.AppendLine("  " + m);
-}
+var ymmTypes = allTypes.Where(t => t.FullName?.StartsWith("YukkuriMovieMaker.", StringComparison.Ordinal) == true).ToArray();
+var sb = new StringBuilder();
+sb.AppendLine($"YMM4_DIR={ymm4Dir}");
+sb.AppendLine($"ASSEMBLIES={assemblies.Count}");
+sb.AppendLine($"YMM_TYPES={ymmTypes.Length}");
 
 var single = new OpCode[0x100];
 var multi = new OpCode[0x100];
@@ -96,7 +79,8 @@ string ResolveToken(MethodBase method, int token, OperandType kind)
 
 IEnumerable<string> Disassemble(MethodBase method)
 {
-    var body = method.GetMethodBody();
+    MethodBody? body;
+    try { body = method.GetMethodBody(); } catch { yield break; }
     var il = body?.GetILAsByteArray();
     if (il is null) yield break;
     var p = 0;
@@ -146,41 +130,85 @@ IEnumerable<string> Disassemble(MethodBase method)
     }
 }
 
-var targetMethods = allTypes.SelectMany(t =>
+IEnumerable<MethodBase> Methods(Type t)
 {
-    try { return t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static); }
-    catch { return Array.Empty<MethodInfo>(); }
-}).Where(m =>
-    m.Name.Contains("PlaybackRate", StringComparison.OrdinalIgnoreCase) ||
-    m.Name.Contains("PlaySpeed", StringComparison.OrdinalIgnoreCase) ||
-    (m.DeclaringType?.Name.Contains("PreviewViewModel", StringComparison.OrdinalIgnoreCase) == true &&
-     (m.Name.Contains("Playback", StringComparison.OrdinalIgnoreCase) || m.Name.Contains("Play", StringComparison.OrdinalIgnoreCase))))
-  .DistinctBy(m => (m.Module.ModuleVersionId, m.MetadataToken))
-  .OrderBy(m => m.DeclaringType?.FullName).ThenBy(m => m.Name).ToArray();
-
-sb.AppendLine("\n=== TARGET METHOD IL ===");
-foreach (var m in targetMethods)
-{
-    sb.AppendLine($"\nMETHOD {m.DeclaringType?.FullName}::{m}");
-    foreach (var line in Disassemble(m)) sb.AppendLine("  " + line);
+    try
+    {
+        return t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static).Cast<MethodBase>()
+            .Concat(t.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static));
+    }
+    catch { return Array.Empty<MethodBase>(); }
 }
 
-sb.AppendLine("\n=== METHODS WITH NUMERIC CONSTANT 8/16/32 NEAR PLAYBACK TYPES ===");
-foreach (var t in interestingTypes.OrderBy(t => t.FullName))
+sb.AppendLine("\n=== YMMSETTINGS PLAYBACK MEMBERS / ATTRIBUTES ===");
+var settingsType = ymmTypes.FirstOrDefault(t => t.FullName == "YukkuriMovieMaker.Settings.YMMSettings");
+if (settingsType is not null)
 {
-    MethodInfo[] methods;
-    try { methods = t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static); }
-    catch { continue; }
-    foreach (var m in methods)
+    foreach (var member in settingsType.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+             .Where(m => m.Name.Contains("Playback", StringComparison.OrdinalIgnoreCase)).OrderBy(m => m.Name))
+    {
+        sb.AppendLine($"{member.MemberType}: {member}");
+        try
+        {
+            foreach (var a in member.GetCustomAttributesData())
+                sb.AppendLine("  ATTR " + a);
+        }
+        catch { }
+    }
+}
+
+sb.AppendLine("\n=== ALL YMM METHODS REFERENCING PLAYBACKRATE ===");
+var playbackMethods = new List<(MethodBase Method, string[] Lines)>();
+foreach (var t in ymmTypes)
+{
+    foreach (var m in Methods(t))
     {
         var lines = Disassemble(m).ToArray();
-        if (!lines.Any(x => x.Contains("ldc.r8 8", StringComparison.Ordinal) || x.Contains("ldc.r4 8", StringComparison.Ordinal) ||
-                            x.Contains("ldc.i4.8", StringComparison.Ordinal) || x.Contains("ldc.i4.s 8", StringComparison.Ordinal))) continue;
-        sb.AppendLine($"\nCONST8 {m.DeclaringType?.FullName}::{m}");
+        if (!m.Name.Contains("PlaybackRate", StringComparison.OrdinalIgnoreCase) &&
+            !lines.Any(x => x.Contains("PlaybackRate", StringComparison.OrdinalIgnoreCase) || x.Contains("playbackRate", StringComparison.OrdinalIgnoreCase)))
+            continue;
+        playbackMethods.Add((m, lines));
+    }
+}
+foreach (var entry in playbackMethods.OrderBy(x => x.Method.DeclaringType?.FullName).ThenBy(x => x.Method.Name))
+{
+    sb.AppendLine($"\nMETHOD {entry.Method.DeclaringType?.FullName}::{entry.Method}");
+    foreach (var line in entry.Lines) sb.AppendLine("  " + line);
+}
+
+sb.AppendLine("\n=== PLAYBACK METHODS WITH BOUNDARY CONSTANTS ===");
+string[] boundaries = ["ldc.i4.s 15", "ldc.i4.s 16", "ldc.i4.s 31", "ldc.i4.s 32", "ldc.i4.s 63", "ldc.i4.s 64",
+                       "ldc.i4 15", "ldc.i4 16", "ldc.i4 31", "ldc.i4 32", "ldc.i4 63", "ldc.i4 64",
+                       "ldc.i4.8", "ldc.r8 8", "ldc.r8 16", "ldc.r8 32"];
+foreach (var entry in playbackMethods)
+{
+    if (!entry.Lines.Any(x => boundaries.Any(b => x.Contains(b, StringComparison.Ordinal)))) continue;
+    sb.AppendLine($"\nBOUNDARY {entry.Method.DeclaringType?.FullName}::{entry.Method}");
+    foreach (var line in entry.Lines) sb.AppendLine("  " + line);
+}
+
+sb.AppendLine("\n=== CORE PLAYBACK TYPES FULL IL ===");
+var coreNames = new HashSet<string>(StringComparer.Ordinal)
+{
+    "YukkuriMovieMaker.ViewModels.PreviewViewModel",
+    "YukkuriMovieMaker.Player.TimelineAudioPlayer",
+    "YukkuriMovieMaker.Player.TimelineVideoPlayer",
+    "YukkuriMovieMaker.Player.Audio.AudioPlayer",
+    "YukkuriMovieMaker.Player.Audio.EffectedItemSource",
+    "YukkuriMovieMaker.Player.Audio.Effects.PlaybackRateEffect"
+};
+foreach (var t in ymmTypes.Where(t => coreNames.Contains(t.FullName ?? "")).OrderBy(t => t.FullName))
+{
+    sb.AppendLine($"\nTYPE {t.FullName}");
+    foreach (var m in Methods(t).OrderBy(m => m.Name))
+    {
+        var lines = Disassemble(m).ToArray();
+        if (lines.Length == 0) continue;
+        sb.AppendLine($"\nMETHOD {m}");
         foreach (var line in lines) sb.AppendLine("  " + line);
     }
 }
 
 File.WriteAllText(outputPath, sb.ToString(), new UTF8Encoding(false));
-Console.WriteLine(sb.ToString());
+Console.WriteLine($"Wrote {outputPath} ({sb.Length} chars), playback methods={playbackMethods.Count}");
 return 0;
