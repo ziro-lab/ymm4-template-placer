@@ -1,0 +1,53 @@
+name: playback-rate-probe
+on:
+  workflow_dispatch:
+  push:
+    branches: ['probe/preview-playback-rate']
+    paths:
+      - 'tools/PlaybackRateProbe/**'
+      - '.github/workflows/playback-rate-probe.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Confirm .NET 10 SDK
+        shell: pwsh
+        run: |
+          dotnet --list-sdks
+          if (-not (dotnet --list-sdks | Select-String -Pattern '^10\.')) { throw '.NET 10 SDK missing' }
+      - name: Download exact YMM4 4.55.1.1 Lite
+        shell: pwsh
+        run: |
+          curl.exe -L --fail --retry 3 --silent --show-error -o ymm4.zip https://github.com/manju-summoner/YukkuriMovieMaker4/releases/download/v4.55.1.1/YukkuriMovieMaker_v4.55.1.1_Lite.zip
+          if ($LASTEXITCODE -ne 0) { throw 'YMM4 download failed' }
+          $hash=(Get-FileHash ymm4.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '125860147cc33b831fc1a6d6ea996958001c2ead3b0d37f7d900251d5617db9b') { throw "YMM4 hash mismatch: $hash" }
+          Expand-Archive -LiteralPath ymm4.zip -DestinationPath ymm4
+          $exe=Get-ChildItem ymm4 -Recurse -Filter YukkuriMovieMaker.exe | Select-Object -First 1
+          if (-not $exe) { throw 'YMM4 exe missing' }
+          "YMM4_DIR=$($exe.Directory.FullName)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build playback-rate probe
+        shell: pwsh
+        run: |
+          dotnet build tools/PlaybackRateProbe/PlaybackRateProbe.csproj -c Release --nologo -warnaserror
+      - name: Inspect YMM4 playback-rate implementation
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out | Out-Null
+          dotnet run --project tools/PlaybackRateProbe/PlaybackRateProbe.csproj -c Release --no-build -- "$env:YMM4_DIR" "$PWD/out/playback-rate-probe.txt"
+          if ($LASTEXITCODE -ne 0) { throw 'Playback-rate probe failed' }
+          Get-Content out/playback-rate-probe.txt
+      - name: Upload probe result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: playback-rate-probe
+          path: out/playback-rate-probe.txt
+          if-no-files-found: warn
+          retention-days: 14
