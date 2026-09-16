@@ -35,6 +35,7 @@ Preserve the current WPF/MVVM and PlacementPlan architecture; do not rewrite it 
 - Normal placement is add-only. Never delete/rebuild or move/shorten existing unrelated/manual items to make room.
 - Resolve time, whole-duration collisions and already-planned occupancy for the complete operation before mutation. A required-plan failure leaves zero partial placement.
 - Clone bundle members independently, normalize the minimum source Frame and preserve internal Frame/Layer/Length/content. Do not invent native Group identities.
+- `GetClone()` preserves the source Character object identity in the pinned host. For a character-bearing clone whose logical `CharacterName` matches the selected target, rebind only the clone to that selected canonical Character after planning; never rewrite the live Template. For `TachieFaceItem`, preserve the already-cloned Face parameter/effect objects across Character setter refresh. Keep `TEMPLATE_FIDELITY=PASS` as a release gate. This synthetic native proof covers built-in/community effect state, not arbitrary third-party plugin fidelity.
 - 上 means smaller layer numbers; 下 means larger numbers. Collision escape translates the whole bundle in the same direction only, within the saved bounds. No opposite-side wrap.
 - Commit through the shared PlacementPlan and YMM4-native Undo/Redo. No custom undo stack.
 - Validate stale source/context/settings again before committing. Do not turn failures into empty-success reports.
@@ -52,14 +53,14 @@ Keep the explicit compatibility workspace for old Library/Palette/Expression/Sel
 
 Pinned native host: YMM4 4.55.1.1 Lite, .NET 10, WPF, `net10.0-windows10.0.19041.0`. Prefer proved public Timeline APIs documented in `docs/NATIVE_VALIDATION_V0.4.md`; selection is event-driven, not polling or private Timeline ViewModel reflection. The isolated fixed read-only Character registry compatibility adapter is documented separately; do not generalize it into arbitrary reflection.
 
-Run heavy native YMM4/build/package work in the existing Windows GitHub Actions lane, not the chat container. Keep fixtures tiny, deterministic and redistribution-safe. Check actual commands/state plus screenshots. Do not infer user PSD fidelity from synthetic fixtures.
+Run heavy native YMM4/build/package work in the existing Windows GitHub Actions lane, not the chat container. Keep fixtures tiny, deterministic and redistribution-safe. Check actual commands/state plus screenshots. Do not infer user PSD fidelity or third-party effect fidelity from synthetic fixtures.
 
 ## Release and git discipline
 
 - Work on the specified branch; preserve main and the accepted baseline.
 - Use small auditable changes/checkpoints. If a safety check rejects a write, do not reroute it; record the exact operation and last successful commit.
 - Documentation-only changes must not download/build/launch YMM4; source/project/XAML/tests/fixtures/workflow changes require the native lane before promotion.
-- Require P1-P9, W3-W12, WUX1-WUX13, R1-R14, `RELATIVE_UIUX=PASS`, current core/Task UX/workflow/relative/relative-UIUX acceptance manifests, zero compiler warnings/errors, exact release DLL native smoke and stable-root archive checks.
+- Require P1-P9, W3-W12, WUX1-WUX13, R1-R14, `TEMPLATE_FIDELITY=PASS`, `RELATIVE_UIUX=PASS`, current core/Task UX/workflow/relative/relative-UIUX acceptance manifests, zero compiler warnings/errors, exact release DLL native smoke and stable-root archive checks.
 - `ValidateRelativeEvidence.ps1` is the independent relative acceptance consumer; keep its negative tests. Do not weaken expected stage/check coverage merely to get a green run.
 - `.ymme` root must always be `Ymm4TemplatePlacer/`, never a versioned plugin folder. Record source/checkout/run provenance and all final hashes.
 - Separate DONE/PARTIAL/FUTURE/BLOCKED accurately. Native PASS is not hands-on user acceptance.
