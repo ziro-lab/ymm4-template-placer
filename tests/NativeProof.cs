@@ -47,6 +47,7 @@ internal static partial class NativeProof
                     var undo = model?.GetType().GetProperty("UndoRedoManager")?.GetValue(model) as UndoRedoManager;
                     if (timeline == null || undo == null) continue;
                     timer.Stop(); Log($"YMM4={typeof(Timeline).Assembly.GetName().Version}; host={root.GetType().FullName}");
+                    VerifyPlaybackRateExtension(root);
                     InspectTemplateRegistration(timeline);
                     await Run(root, timeline, undo);
                     VerifyWorkbookVariants(timeline);
