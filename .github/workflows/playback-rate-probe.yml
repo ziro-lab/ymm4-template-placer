@@ -5,6 +5,7 @@ on:
     branches: ['probe/preview-playback-rate']
     paths:
       - 'tools/PlaybackRateProbe/**'
+      - 'tools/PlaybackRateDeepProbe/**'
       - '.github/workflows/playback-rate-probe.yml'
 permissions:
   contents: read
@@ -32,22 +33,25 @@ jobs:
           $exe=Get-ChildItem ymm4 -Recurse -Filter YukkuriMovieMaker.exe | Select-Object -First 1
           if (-not $exe) { throw 'YMM4 exe missing' }
           "YMM4_DIR=$($exe.Directory.FullName)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
-      - name: Build playback-rate probe
+      - name: Build probes
         shell: pwsh
         run: |
           dotnet build tools/PlaybackRateProbe/PlaybackRateProbe.csproj -c Release --nologo -warnaserror
+          dotnet build tools/PlaybackRateDeepProbe/PlaybackRateDeepProbe.csproj -c Release --nologo -warnaserror
       - name: Inspect YMM4 playback-rate implementation
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force out | Out-Null
           dotnet run --project tools/PlaybackRateProbe/PlaybackRateProbe.csproj -c Release --no-build -- "$env:YMM4_DIR" "$PWD/out/playback-rate-probe.txt"
           if ($LASTEXITCODE -ne 0) { throw 'Playback-rate probe failed' }
-          Get-Content out/playback-rate-probe.txt
+          dotnet run --project tools/PlaybackRateDeepProbe/PlaybackRateDeepProbe.csproj -c Release --no-build -- "$env:YMM4_DIR" "$PWD/out/playback-rate-deep-probe.txt"
+          if ($LASTEXITCODE -ne 0) { throw 'Playback-rate deep probe failed' }
+          Get-Content out/playback-rate-deep-probe.txt
       - name: Upload probe result
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: playback-rate-probe
-          path: out/playback-rate-probe.txt
+          path: out/*.txt
           if-no-files-found: warn
           retention-days: 14
