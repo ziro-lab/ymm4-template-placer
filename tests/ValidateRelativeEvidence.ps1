@@ -4,7 +4,7 @@ Set-StrictMode -Version Latest
 
 # Independent consumer contract: never trust a producer's PASS or its own stage list alone.
 $required=@('R1=PASS','R2=PASS','R3=PASS','R4=PASS','R5=PASS','R6=PASS','R7=PASS','R8=PASS',
- 'R9_CORE=PASS','R9_UI=PASS','R10=PASS','R11=PASS','R12=PASS','R13=PASS','RELATIVE_UIUX=PASS','R14_NATIVE=PASS',
+ 'R9_CORE=PASS','R9_UI=PASS','R10=PASS','R11=PASS','R12=PASS','R13=PASS','TEMPLATE_FIDELITY=PASS','RELATIVE_UIUX=PASS','R14_NATIVE=PASS',
  'V04=PASS','UX_ACCEPTANCE=PASS','UX_WORKFLOW_ACCEPTANCE=PASS')
 function Assert-RelativeEvidence {
  param([string[]]$Lines, $Manifest, $UiuxManifest)
@@ -16,9 +16,9 @@ function Assert-RelativeEvidence {
      $Manifest.version -cne '0.4.2' -or $Manifest.result -cne 'PASS' -or $Manifest.host -cne 'YMM4 4.55.1.1 Lite') {
   throw 'Relative acceptance identity/version/result/host mismatch'
  }
- if (@($Manifest.checks).Count -ne 20 -or @($Manifest.checks | Where-Object { $_.result -cne 'PASS' -or
+ if (@($Manifest.checks).Count -ne 21 -or @($Manifest.checks | Where-Object { $_.result -cne 'PASS' -or
      [string]::IsNullOrWhiteSpace($_.requirement) -or [string]::IsNullOrWhiteSpace($_.evidence) }).Count) { throw 'Incomplete relative acceptance checks' }
- if ((@($Manifest.checks.id | Sort-Object) -join ',') -cne ((1..20) -join ',')) { throw 'Relative acceptance IDs missing or duplicated' }
+ if ((@($Manifest.checks.id | Sort-Object) -join ',') -cne ((1..21) -join ',')) { throw 'Relative acceptance IDs missing or duplicated' }
  if (@($Manifest.required_native_stages).Count -ne $required.Count -or
      @(Compare-Object ($required | Sort-Object) ($Manifest.required_native_stages | Sort-Object) -CaseSensitive).Count) {
   throw 'Relative manifest stage contract is incomplete'
@@ -39,6 +39,7 @@ if ($SelfTest) {
  $tests=[Collections.Generic.List[object]]::new()
  $mutations=[ordered]@{
   'missing R13 stage' = { param($m,$u) }
+  'missing template fidelity stage' = { param($m,$u) }
   'missing UIUX stage' = { param($m,$u) }
   'missing final success' = { param($m,$u) }
   'duplicate native stage' = { param($m,$u) }
@@ -46,7 +47,7 @@ if ($SelfTest) {
   'failed manifest check' = { param($m,$u) $m.checks[0].result='FAIL' }
   'missing manifest check' = { param($m,$u) $m.checks=@($m.checks | Select-Object -Skip 1) }
   'duplicate requirement ID' = { param($m,$u) $m.checks[1].id=$m.checks[0].id }
-  'weakened manifest stages' = { param($m,$u) $m.required_native_stages=@($m.required_native_stages | Where-Object { $_ -cne 'R13=PASS' }) }
+  'weakened manifest stages' = { param($m,$u) $m.required_native_stages=@($m.required_native_stages | Where-Object { $_ -cne 'TEMPLATE_FIDELITY=PASS' }) }
   'wrong native host' = { param($m,$u) $m.host='unverified-host' }
   'failed UIUX check' = { param($m,$u) $u.checks[0].result='FAIL' }
   'missing UIUX check' = { param($m,$u) $u.checks=@($u.checks | Select-Object -Skip 1) }
@@ -59,9 +60,10 @@ if ($SelfTest) {
   $testLines=@($lines)
   switch ($name) {
    'missing R13 stage' { $testLines=@($lines | Where-Object { $_ -cne 'R13=PASS' }) }
+   'missing template fidelity stage' { $testLines=@($lines | Where-Object { $_ -cne 'TEMPLATE_FIDELITY=PASS' }) }
    'missing UIUX stage' { $testLines=@($lines | Where-Object { $_ -cne 'RELATIVE_UIUX=PASS' }) }
    'missing final success' { $testLines=@($lines | Where-Object { $_ -cne 'V042_ACCEPTANCE=PASS' }) }
-   'duplicate native stage' { $testLines=$lines + @('R13=PASS') }
+   'duplicate native stage' { $testLines=$lines + @('TEMPLATE_FIDELITY=PASS') }
    'explicit failure in log' { $testLines=$lines + @('ASSERT FAIL: deliberate negative fixture') }
   }
   $rejected=$false
