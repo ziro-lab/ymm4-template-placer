@@ -36,7 +36,7 @@ public sealed class TemplateBundle
         OriginFrame = items.Min(x => x.Frame);
         MinimumLayer = items.Min(x => x.Layer); MaximumLayer = items.Max(x => x.Layer);
         Span = checked((int)(items.Max(x => (long)x.Frame + x.Length) - OriginFrame));
-        var names = items.Select(x => ItemCharacters.Get(x)?.Name).OfType<string>().Distinct(StringComparer.Ordinal).ToArray();
+        var names = items.Select(ItemCharacters.Name).OfType<string>().Distinct(StringComparer.Ordinal).ToArray();
         CharacterName = names.Length == 1 ? names[0] : null;
         observed = items.Select(x => (x, x.Frame, x.Length, x.Layer, x.Group, x.Remark, ItemCharacters.Get(x))).ToArray();
     }
@@ -94,7 +94,7 @@ public static partial class TemplateResolver
         if (items.Length == 0 || items.Length > 2048 || items.Distinct().Count() != items.Length ||
             items.Any(x => x == null || x.Frame < 0 || x.Length <= 0 || x.Layer < 0 || (long)x.Frame + x.Length > int.MaxValue))
             return new(TemplateReferenceState.Unsupported, null);
-        var characters = items.Select(x => ItemCharacters.Get(x)?.Name).OfType<string>().ToArray();
+        var characters = items.Select(ItemCharacters.Name).OfType<string>().ToArray();
         if (entry.CharacterName != null && characters.Any(x => !string.Equals(x, entry.CharacterName, StringComparison.Ordinal)))
             return new(TemplateReferenceState.CharacterMismatch, null);
         return new(TemplateReferenceState.Resolved, new TemplateBundle(entry, source.Template, items));
