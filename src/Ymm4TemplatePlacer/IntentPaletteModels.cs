@@ -3,6 +3,8 @@ using System.Text.Json;
 
 namespace Ymm4TemplatePlacer;
 
+public enum IntentTileColor { Neutral, Rose, Amber, Green, Blue, Violet }
+
 public enum IntentTypeMatch { UniformType, ExactMixedTypes }
 public enum IntentAnchor { SelectedStart, SelectedEnd, SelectedCenter, SelectionRangeStart, SelectionRangeEnd, PairBoundary, RelatedStart, RelatedEnd }
 public enum IntentDuration { Template, TargetSpan, Fixed, UntilRelated }
@@ -67,6 +69,9 @@ public sealed record IntentRelation
 
 public sealed record IntentEntry(Guid LibraryEntryId)
 {
+    // Appearance only: never used by resolution, identity, geometry or association.
+    public string? DisplayAlias { get; init; }
+    public IntentTileColor Color { get; init; }
     // Small parameter differences only; a tile cannot replace the Palette's whole relation.
     public int StartOffsetDelta { get; init; }
     public int EndOffsetDelta { get; init; }
@@ -109,7 +114,8 @@ public static class IntentPaletteSettings
             settings.ImportedExpressionSources.Distinct().Count() != settings.ImportedExpressionSources.Count ||
             settings.IntentPalettes.Any(x => x == null || x.Id == Guid.Empty || string.IsNullOrWhiteSpace(x.Name) || x.Name.Length > 256 ||
                 string.IsNullOrWhiteSpace(x.Intent) || x.Intent.Length > 128 || x.Target == null || x.Relation == null || x.Entries == null ||
-                x.Entries.Count > 2048 || x.Entries.Any(e => e == null || e.LibraryEntryId == Guid.Empty || e.FixedDurationOverride < 1) ||
+                x.Entries.Count > 2048 || x.Entries.Any(e => e == null || e.LibraryEntryId == Guid.Empty || e.FixedDurationOverride < 1 ||
+                    (e.DisplayAlias != null && e.DisplayAlias.Length > 128) || !Enum.IsDefined(e.Color)) ||
                 x.Entries.Select(e => e.LibraryEntryId).Distinct().Count() != x.Entries.Count) ||
             settings.IntentPalettes.Select(x => x.Id).Distinct().Count() != settings.IntentPalettes.Count)
             throw new InvalidDataException("未対応または不正な相対パレット設定です。元ファイルは保持しています。");

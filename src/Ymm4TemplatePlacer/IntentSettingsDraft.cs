@@ -14,6 +14,7 @@ public abstract class IntentEditable : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
     public event EventHandler? Edited;
     protected void Raise([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new(name));
+    protected void NavigationChanged([CallerMemberName] string? name = null) { Raise(name); Edited?.Invoke(this, EventArgs.Empty); }
     protected void Notify([CallerMemberName] string? name = null)
     {
         Raise(name); Edited?.Invoke(this, EventArgs.Empty);
@@ -43,8 +44,13 @@ public sealed class IntentEntryDraft : IntentEditable
 {
     private string start, end, length;
     private bool intrinsic;
+    private string displayAlias;
+    private IntentTileColor color;
+    private readonly LibraryEntry? source;
     public Guid LibraryEntryId { get; }
-    public string Name { get; }
+    public string Name => IntentTileAppearance.Label(new(LibraryEntryId) { DisplayAlias = DisplayAlias }, source);
+    public string DisplayAlias { get => displayAlias; set { if (displayAlias == value) return; displayAlias = value; Notify(); Raise(nameof(Name)); } }
+    public IntentTileColor Color { get => color; set { if (color == value) return; color = value; Notify(); } }
     public string SourceDetail { get; }
     public string StartOffset { get => start; set { start = value; Notify(); } }
     public string EndOffset { get => end; set { end = value; Notify(); } }
@@ -53,13 +59,13 @@ public sealed class IntentEntryDraft : IntentEditable
     public IntentEntryDraft(IntentEntry entry, IReadOnlyList<LibraryEntry> library)
     {
         LibraryEntryId = entry.LibraryEntryId;
-        var source = library.SingleOrDefault(x => x.Id == LibraryEntryId);
-        Name = source?.DisplayName ?? "参照切れ";
+        source = library.SingleOrDefault(x => x.Id == LibraryEntryId);
+        displayAlias = entry.DisplayAlias ?? ""; color = entry.Color;
         SourceDetail = source == null ? "元の登録がありません。" : source.Source.Name + "\n" + TemplateResolver.ResolveBundle(source).Message;
         start = entry.StartOffsetDelta.ToString(CultureInfo.InvariantCulture); end = entry.EndOffsetDelta.ToString(CultureInfo.InvariantCulture);
         length = entry.FixedDurationOverride?.ToString(CultureInfo.InvariantCulture) ?? ""; intrinsic = entry.UseTemplateDuration;
     }
-    public IntentEntry Build() => new(LibraryEntryId) { StartOffsetDelta = Number(StartOffset, "演出の開始差分"),
+    public IntentEntry Build() => new(LibraryEntryId) { DisplayAlias = string.IsNullOrWhiteSpace(DisplayAlias) ? null : DisplayAlias.Trim(), Color = Color, StartOffsetDelta = Number(StartOffset, "演出の開始差分"),
         EndOffsetDelta = Number(EndOffset, "演出の終了差分"), FixedDurationOverride = OptionalNumber(FixedDuration, "演出の固定長"), UseTemplateDuration = UseTemplateDuration };
 }
 
@@ -158,7 +164,7 @@ public sealed class IntentPaletteDraft : IntentEditable
     public bool ShowAlignment => Duration != IntentDuration.UntilRelated;
     public ObservableCollection<IntentTypeOption> TypeChoices { get; } = [];
     public ObservableCollection<IntentEntryDraft> Entries { get; } = [];
-    public IntentEntryDraft? SelectedEntry { get => selectedEntry; set { selectedEntry = value; Notify(); } }
+    public IntentEntryDraft? SelectedEntry { get => selectedEntry; set { if (selectedEntry == value) return; selectedEntry = value; Raise(); } }
     public string Summary => BuildSummary();
 
     public IntentPaletteDraft(IntentPalette source, IReadOnlyList<LibraryEntry> library, IReadOnlyDictionary<string, string> types)
@@ -251,7 +257,7 @@ public sealed class IntentPaletteDraft : IntentEditable
     }
 }
 
-public sealed class IntentSettingsSession : IntentEditable
+public sealed partial class IntentSettingsSession : IntentEditable
 {
     private PlacerSettings working;
     private IntentPaletteDraft? selectedPalette;
@@ -263,9 +269,9 @@ public sealed class IntentSettingsSession : IntentEditable
     public ObservableCollection<IntentPaletteDraft> Palettes { get; } = [];
     public ObservableCollection<IntentSourceOption> Sources { get; } = [];
     public ICollectionView VisibleSources { get; }
-    public IntentPaletteDraft? SelectedPalette { get => selectedPalette; set { selectedPalette = value; Notify(); } }
-    public string SourceSearch { get => sourceSearch; set { sourceSearch = value; VisibleSources.Refresh(); Notify(); } }
-    public IntentSettingsSession(PlacerSettings source, IEnumerable<Type> knownTypes)
+    public IntentPaletteDraft? SelectedPalette { get => selectedPalette; set { if (refreshingNavigation || selectedPalette == value) return; selectedPalette = value; NavigationChanged(); } }
+    public string SourceSearch { get => sourceSearch; set { sourceSearch = value; VisibleSources.Refresh(); Raise(); } }
+    public IntentSettingsSession(PlacerSettings source, IEnumerable<Type> knownTypes, IReadOnlyList<IItem>? selection = null)
     {
         BaselineFingerprint = JsonSerializer.Serialize(source); working = PlacerSettingsStore.Copy(source);
         KnownTypes = knownTypes.Append(typeof(VoiceItem)).Distinct().ToDictionary(IntentSelectionContext.TypeKey, TypeLabel, StringComparer.Ordinal);
@@ -274,14 +280,20 @@ public sealed class IntentSettingsSession : IntentEditable
         foreach (var template in ItemSettings.Default.Templates.Where(x => x.Items.Count > 0).OrderBy(x => x.Name, StringComparer.Ordinal)) Sources.Add(new(template));
         VisibleSources = CollectionViewSource.GetDefaultView(Sources);
         VisibleSources.Filter = x => x is IntentSourceOption option && (sourceSearch.Length == 0 || option.Name.Contains(sourceSearch, StringComparison.OrdinalIgnoreCase));
-        Palettes.CollectionChanged += (_, _) => MarkDirty();
+        InitializeNavigation(selection ?? []);
+        Palettes.CollectionChanged += (_, _) => { MarkDirty(); RefreshNavigation(); };
     }
-    public static string TypeLabel(Type type) => type.Name switch { "VoiceItem" => "ボイス", "TachieFaceItem" => "表情", "TachieItem" => "立ち絵", "TextItem" => "テキスト", "VideoItem" => "動画", "AudioItem" => "音声", "ShapeItem" => "図形", "ImageItem" => "画像", _ => type.Name };
+    public static string TypeLabel(Type type) => ItemDisplayNames.For(type);
     private void MarkDirty() { HasChanges = true; Notify(nameof(HasChanges)); Raise(nameof(ChangeNotice)); }
     private IntentPaletteDraft AddDraft(IntentPalette palette)
     {
         var draft = new IntentPaletteDraft(palette, working.Library, KnownTypes);
-        draft.Edited += (_, _) => MarkDirty(); Palettes.Add(draft); return draft;
+        draft.Edited += (_, _) => MarkDirty();
+        draft.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(IntentPaletteDraft.SelectedEntry)) NavigationChanged(nameof(SelectedPalette));
+        };
+        Palettes.Add(draft); return draft;
     }
     public PlacerSettings Build()
     {
@@ -314,8 +326,8 @@ public sealed class IntentSettingsSession : IntentEditable
     public void RemoveSelected()
     {
         if (SelectedPalette == null) return;
-        var index = Palettes.IndexOf(SelectedPalette); Palettes.Remove(SelectedPalette);
-        SelectedPalette = Palettes.Count == 0 ? null : Palettes[Math.Min(index, Palettes.Count - 1)]; MarkDirty();
+        Palettes.Remove(SelectedPalette);
+        RefreshPaletteFilter(); MarkDirty();
     }
     public void MovePalette(int delta)
     {

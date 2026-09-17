@@ -52,7 +52,7 @@ internal static partial class NativeProof
                 "R11 filtering preserves checked sources across a bulk registration draft");
             panel.SourceEditor.IsExpanded = true; await Idle();
             await InvokeSelectionButton(panel.AddSourcesButton);
-            Assert(draft.Entries.Count == 2 && draft.Entries.Single(x => x.Name == sourceB.Name).UseTemplateDuration,
+            Assert(draft.Entries.Count == 2 && draft.Entries.Single(x => x.Name == "Bundle").UseTemplateDuration,
                 "R11 one bulk action includes singleton and multi-item templates with bundle duration preserved");
             Assert(Signature(timeline) == signature && JsonSerializer.Serialize(fixture) == baseline &&
                 (!File.Exists(PlacerSettingsStore.DefaultPath) || File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(bytes)),

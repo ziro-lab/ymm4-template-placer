@@ -50,7 +50,7 @@ internal static partial class NativeProof
             vm.ActivateIntentWorkspace(); vm.SetLegacyWorkspace(false); vm.Refresh(); view.PaletteTab.IsSelected = true; await Idle();
             var surface = view.RelativePaletteSurface;
 
-            Assert(view.PaletteTab.Header?.ToString() == "編集" && view.ExpressionTab.Header?.ToString() == "表情をまとめて" && view.SelectionTab.Header?.ToString() == "設定",
+            Assert(view.PaletteTab.Header?.ToString() == "配置" && view.ExpressionTab.Header?.ToString() == "表情をまとめて" && view.SelectionTab.Header?.ToString() == "設定",
                 "UIUX normal top level is task language, not Palette / Selection Placement implementation taxonomy");
             Assert(vm.IntentContextTitle == "UX Character ボイス" && vm.IntentContextDetail.Contains("今日も", StringComparison.Ordinal) &&
                 surface.IntentContextTitleText.IsVisible && surface.IntentContextDetailText.IsVisible,
@@ -126,6 +126,9 @@ internal static partial class NativeProof
             draft.CharacterRestricted = true; await Idle();
             Assert(panel.CharacterNamePanel.IsVisible && panel.RelationSummaryText.Text.Contains(character.Name, StringComparison.Ordinal),
                 "UIUX enabling Character restriction reveals the one required Character input and updates the summary");
+            Assert(!panel.TargetAdvanced.IsExpanded && !panel.TargetTypeChoices.IsVisible,
+                "H1 normal Item-first Settings keep the complete runtime type matrix under explicit Advanced");
+            panel.TargetAdvanced.IsExpanded = true; await Idle();
             var typeChecks = RelativeVisuals(panel.TargetTypeChoices).OfType<CheckBox>().ToArray();
             Assert(typeChecks.Length >= 2 && typeChecks.All(x => x.ToolTip == null), "UIUX normal Settings never expose raw runtime type keys as implementation metadata");
             var textType = draft.TypeChoices.Single(x => x.Key == IntentSelectionContext.TypeKey(typeof(TextItem))); textType.Selected = true; await Idle();
@@ -142,7 +145,7 @@ internal static partial class NativeProof
             var checks = new (string Requirement, string Evidence)[]
             {
                 ("Item selection exposes only meaningful intents for the current context", "Voice context native intent filtering"),
-                ("Normal top-level wording is task-oriented instead of Palette / Selection Placement taxonomy", "native Edit / bulk expression / Settings headers"),
+                ("Normal top-level wording is task-oriented instead of Palette / Selection Placement taxonomy", "native Placement / bulk expression / Settings headers"),
                 ("Intent and Set are distinct levels; small Sets are visible segments and large Sets have deliberate fallback", "native 2-set and 5-set layouts"),
                 ("One tile directly performs the saved placement without Profile, Preset, Layer, Relation or Template-management decisions", "native tile command plus normal-surface control audit"),
                 ("Settings progressive disclosure follows duration, neighbor, fallback, boundary, Character and type-match choices", "native visibility transitions"),

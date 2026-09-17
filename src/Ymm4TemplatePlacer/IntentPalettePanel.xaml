@@ -34,13 +34,21 @@
   <Grid Grid.Row="3">
    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <ItemsControl x:Name="IntentTileItems" ItemsSource="{Binding IntentTiles}">
-     <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+     <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemWidth="104" ItemHeight="108"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
      <ItemsControl.ItemTemplate><DataTemplate>
-      <Button Content="{Binding Label}" Command="{Binding DataContext.ExecuteIntentTileCommand,RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-       CommandParameter="{Binding}" ToolTip="{Binding Detail}" ToolTipService.ShowOnDisabled="True" MinWidth="88" MinHeight="40" MaxWidth="260" Padding="12,8" Margin="3"
-       AutomationProperties.Name="{Binding Label}">
-       <Button.ContentTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" TextAlignment="Center"/></DataTemplate></Button.ContentTemplate>
-      </Button>
+      <Grid Margin="3" AllowDrop="True" DragOver="TileDragOver" Drop="TileDrop">
+       <Grid.RowDefinitions><RowDefinition Height="20"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+       <Border x:Name="TileDragHandle" Grid.Row="0" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="{Binding Accent}" BorderThickness="0,3,0,0"
+        Cursor="SizeAll" ToolTip="ドラッグで並び替え。設定の上へ・下へでも変更できます。" AutomationProperties.Name="並び替え用の取っ手"
+        PreviewMouseLeftButtonDown="TileHandleDown" PreviewMouseLeftButtonUp="TileHandleUp" PreviewMouseMove="TileHandleMove" LostMouseCapture="TileHandleLostCapture">
+        <TextBlock Text="···" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+       </Border>
+       <Button Grid.Row="1" Command="{Binding DataContext.ExecuteIntentTileCommand,RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+        CommandParameter="{Binding}" ToolTip="{Binding AppearanceDescription}" ToolTipService.ShowOnDisabled="True" Padding="6" Margin="0"
+        AutomationProperties.Name="{Binding Label}" AutomationProperties.HelpText="{Binding AppearanceDescription}">
+        <TextBlock Text="{Binding Label}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" TextAlignment="Center" MaxHeight="58"/>
+       </Button>
+      </Grid>
      </DataTemplate></ItemsControl.ItemTemplate>
     </ItemsControl>
    </ScrollViewer>

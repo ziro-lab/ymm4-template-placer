@@ -8,7 +8,11 @@ namespace Ymm4TemplatePlacer;
 
 public sealed record IntentTabChoice(string Name);
 public sealed record IntentSetChoice(IntentPalette Palette, string Label);
-public sealed record IntentTileChoice(Guid PaletteId, IntentEntry Entry, string Label, string Detail, bool Available);
+public sealed record IntentTileChoice(Guid PaletteId, IntentEntry Entry, string Label, string Detail, bool Available)
+{
+    public System.Windows.Media.Brush Accent => IntentTileAppearance.Accent(Entry.Color);
+    public string AppearanceDescription => $"{Detail}\n色ラベル: {IntentTileAppearance.ColorName(Entry.Color)}";
+}
 
 public sealed partial class PlacerViewModel
 {
@@ -61,6 +65,7 @@ public sealed partial class PlacerViewModel
         if (!intentInitialized)
         {
             intentInitialized = true;
+            InitializeIntentTileOrdering();
             useLegacyWorkspace = settings.LegacyWorkspace;
             ExecuteIntentTileCommand = new ActionCommand(x => !intentExecuting && settingsAvailable && undo != null &&
                 x is IntentTileChoice tile && tile.Available && IntentTiles.Contains(tile),
@@ -92,7 +97,10 @@ public sealed partial class PlacerViewModel
     private void IntentTimelineChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(Timeline.SelectedItems) or nameof(Timeline.SelectedItem) or nameof(Timeline.Items))
+        {
             RefreshIntentWorkspace();
+            IntentSettings?.UpdateSelectionContext(timeline?.SelectedItems.ToArray() ?? []);
+        }
     }
     public void RefreshIntentWorkspace()
     {
@@ -177,15 +185,15 @@ public sealed partial class PlacerViewModel
         IntentTiles.Clear();
         var palette = selectedIntentSet?.Palette;
         if (palette == null) { RaiseIntentSurfaceState(); return; }
-        var duplicateNames = palette.Entries.Select(x => settings.Library.SingleOrDefault(e => e.Id == x.LibraryEntryId))
-            .OfType<LibraryEntry>().GroupBy(x => x.DisplayName, StringComparer.Ordinal).Where(x => x.Count() > 1)
-            .Select(x => x.Key).ToHashSet(StringComparer.Ordinal);
-        foreach (var tile in palette.Entries)
+        var labels = palette.Entries.Select(x => IntentTileAppearance.Label(x, settings.Library.SingleOrDefault(e => e.Id == x.LibraryEntryId))).ToArray();
+        var displayLabels = IntentTileAppearance.Distinguish(labels);
+        for (var index = 0; index < palette.Entries.Count; index++)
         {
+            var tile = palette.Entries[index];
             var source = settings.Library.SingleOrDefault(x => x.Id == tile.LibraryEntryId);
-            if (source == null) { IntentTiles.Add(new(palette.Id, tile, "参照切れ", "設定で元テンプレートの登録を確認してください。", false)); continue; }
+            var label = displayLabels[index];
+            if (source == null) { IntentTiles.Add(new(palette.Id, tile, label, "設定で元テンプレートの登録を確認してください。", false)); continue; }
             var resolution = TemplateResolver.ResolveBundle(source);
-            var label = duplicateNames.Contains(source.DisplayName) ? $"{source.DisplayName} — {source.Source.Name}" : source.DisplayName;
             IntentTiles.Add(new(palette.Id, tile, label, resolution.Bundle == null ? resolution.Message : source.Source.Name, resolution.Bundle != null));
         }
         IntentNotice = IntentTiles.Count == 0 ? $"「{selectedIntentTab?.Name ?? "この用途"}」の「{selectedIntentSet?.Label ?? "このセット"}」には演出がありません。" : "";

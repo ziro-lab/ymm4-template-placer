@@ -25,7 +25,7 @@ public sealed partial class PlacerViewModel
         {
             SaveIntentSettingsCommand = new ActionCommand(_ => settingsAvailable && IntentSettings?.HasChanges == true, _ => Guard(SaveIntentSettings));
             DiscardIntentSettingsCommand = new ActionCommand(_ => IntentSettings != null, _ => ResetIntentSettings());
-            CreateIntentPaletteCommand = new ActionCommand(_ => settingsAvailable && IntentSettings != null, _ => Guard(() => IntentSettings!.Create(timeline?.SelectedItems.ToArray() ?? [])));
+            CreateIntentPaletteCommand = new ActionCommand(_ => settingsAvailable && IntentSettings?.CanCreateForContext == true, _ => Guard(() => IntentSettings!.CreateForContext()));
             DuplicateIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.SelectedPalette != null, _ => Guard(() => IntentSettings!.Duplicate()));
             DeleteIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.SelectedPalette != null, _ => Guard(() =>
             {
@@ -53,13 +53,14 @@ public sealed partial class PlacerViewModel
                 nameof(AddIntentSourcesCommand), nameof(RescanIntentExpressionsCommand) }) OnPropertyChanged(property);
         }
         if (IntentSettings == null) ResetIntentSettings();
+        else IntentSettings.UpdateSelectionContext(timeline?.SelectedItems.ToArray() ?? []);
     }
     private void IntentSettingsEdited(object? sender, EventArgs e) => UpdateIntentSettingsCommands();
     public void ResetIntentSettings()
     {
         if (intentSettings != null) intentSettings.Edited -= IntentSettingsEdited;
         var types = (timeline?.Items.Select(x => x.GetType()) ?? []).Concat(ItemSettings.Default.Templates.SelectMany(x => x.Items).Select(x => x.GetType()));
-        IntentSettings = new(settings, types); IntentSettings.Edited += IntentSettingsEdited;
+        IntentSettings = new(settings, types, timeline?.SelectedItems.ToArray() ?? []); IntentSettings.Edited += IntentSettingsEdited;
     }
     public void SaveIntentSettings()
     {
@@ -72,11 +73,13 @@ public sealed partial class PlacerViewModel
     }
     private void UpdateIntentSettingsCommands()
     {
+        ReorderIntentTileCommand?.RaiseCanExecuteChanged();
         SaveIntentSettingsCommand?.RaiseCanExecuteChanged(); DiscardIntentSettingsCommand?.RaiseCanExecuteChanged();
         CreateIntentPaletteCommand?.RaiseCanExecuteChanged(); DuplicateIntentPaletteCommand?.RaiseCanExecuteChanged(); DeleteIntentPaletteCommand?.RaiseCanExecuteChanged();
         MoveIntentPaletteCommand?.RaiseCanExecuteChanged(); MoveIntentEntryCommand?.RaiseCanExecuteChanged(); RemoveIntentEntryCommand?.RaiseCanExecuteChanged();
         AddIntentSourcesCommand?.RaiseCanExecuteChanged(); RescanIntentExpressionsCommand?.RaiseCanExecuteChanged();
     }
+    public IReadOnlyList<IntentOption<IntentTileColor>> IntentTileColors { get; } = Enum.GetValues<IntentTileColor>().Select(x => new IntentOption<IntentTileColor>(x, IntentTileAppearance.ColorName(x))).ToArray();
     public IReadOnlyList<IntentOption<IntentTypeMatch>> IntentTypeModes { get; } = [new(IntentTypeMatch.UniformType,"選択した種類のどれか・全件同じ種類"), new(IntentTypeMatch.ExactMixedTypes,"指定した種類の組み合わせだけ")];
     public IReadOnlyList<IntentOption<IntentAnchor>> IntentAnchors { get; } = [new(IntentAnchor.SelectedStart,"選択アイテムの開始"),new(IntentAnchor.SelectedEnd,"選択アイテムの終了"),new(IntentAnchor.SelectedCenter,"選択アイテムの中央"),new(IntentAnchor.SelectionRangeStart,"選択範囲の開始"),new(IntentAnchor.SelectionRangeEnd,"選択範囲の終了"),new(IntentAnchor.PairBoundary,"選択した2件の境界"),new(IntentAnchor.RelatedStart,"周囲アイテムの開始"),new(IntentAnchor.RelatedEnd,"周囲アイテムの終了")];
     public IReadOnlyList<IntentOption<IntentAlignment>> IntentAlignments { get; } = [new(IntentAlignment.StartAtAnchor,"ここから開始"),new(IntentAlignment.EndAtAnchor,"ここで終了")];
