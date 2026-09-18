@@ -16,6 +16,7 @@ internal static partial class NativeProof
         stage = "H3/H4/H5 hands-on expression workflow";
         var vm = ViewModel!; var view = View!;
         var field = typeof(PlacerViewModel).GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var store = (PlacerSettingsStore)typeof(PlacerViewModel).GetField("settingsStore", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!;
         var original = (PlacerSettings)field.GetValue(vm)!; var before = timeline.Items; var selection = timeline.SelectedItems; var mode = vm.UseLegacyWorkspace;
         var disk = File.Exists(PlacerSettingsStore.DefaultPath) ? File.ReadAllBytes(PlacerSettingsStore.DefaultPath) : null;
         var character = new Character { Name = "Hands-on Expression" }; var detached = new Character { Name = character.Name };
@@ -129,6 +130,7 @@ internal static partial class NativeProof
             vm.CloseExpressionTrialSession();
             foreach (var source in new[] { sourceA, sourceB, sourceC }) ItemSettings.Default.Templates.Remove(source);
             if (disk != null) File.WriteAllBytes(PlacerSettingsStore.DefaultPath, disk); else if (File.Exists(PlacerSettingsStore.DefaultPath)) File.Delete(PlacerSettingsStore.DefaultPath);
+            store.Load(); // Reset the protected-store digest after restoring the fixture bytes; later proofs must see a coherent baseline.
             field.SetValue(vm, original); timeline.Items = before; timeline.SelectedItems = selection; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
             vm.SetLegacyWorkspace(mode); vm.Refresh(); vm.ResetIntentSettings();
         }
