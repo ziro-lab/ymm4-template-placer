@@ -8,4 +8,6 @@ public sealed class PlacerToolPlugin : IToolPlugin
     public Type ViewModelType => typeof(PlacerViewModel);
     public Type ViewType => typeof(PlacerView);
     public bool AllowMultipleInstances => false;
+    public string DefaultGroupName => "Utilities";
+    public int DefaultOrder => 550;
 }

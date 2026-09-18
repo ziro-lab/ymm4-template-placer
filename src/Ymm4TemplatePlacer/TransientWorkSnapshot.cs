@@ -153,16 +153,22 @@ public sealed partial class PlacerViewModel
         if (!ReferenceEquals(snapshot.Timeline, timeline)) return;
 
         var skipped = 0;
-        foreach (var assignment in snapshot.Assignments)
+        var suppressBeforeRestore = suppressExpressionApply; suppressExpressionApply = true;
+        try
         {
-            var row = Rows.SingleOrDefault(x => SameVoice(x.Target, assignment.Target));
-            if (row == null) { skipped++; continue; }
-            var choice = row.Choices.SingleOrDefault(x => x.Template != null &&
-                ReferenceEquals(x.Template.Template, assignment.SourceTemplate) && ReferenceEquals(x.Template.Face, assignment.SourceFace) &&
-                x.Template.Name == assignment.SourceName && x.Template.Character == assignment.SourceCharacter);
-            if (choice == null) { skipped++; continue; }
-            row.SelectedChoice = choice;
+            foreach (var assignment in snapshot.Assignments)
+            {
+                var row = Rows.SingleOrDefault(x => SameVoice(x.Target, assignment.Target));
+                if (row == null) { skipped++; continue; }
+                if (UsesRelativeExpressions && ExpressionAssociationOwnsSelection(row)) continue;
+                var choice = row.Choices.SingleOrDefault(x => x.Template != null &&
+                    ReferenceEquals(x.Template.Template, assignment.SourceTemplate) && ReferenceEquals(x.Template.Face, assignment.SourceFace) &&
+                    x.Template.Name == assignment.SourceName && x.Template.Character == assignment.SourceCharacter);
+                if (choice == null) { skipped++; continue; }
+                row.SelectedChoice = choice;
+            }
         }
+        finally { suppressExpressionApply = suppressBeforeRestore; }
 
         if (snapshot.ExpressionDraft is { } expression)
         {

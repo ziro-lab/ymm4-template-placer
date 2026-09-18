@@ -90,6 +90,7 @@ public sealed partial class PlacerViewModel
     public void SetLegacyWorkspace(bool value)
     {
         if (useLegacyWorkspace == value) return;
+        CloseExpressionTrialSession();
         useLegacyWorkspace = value; OnPropertyChanged(nameof(UseLegacyWorkspace));
         // Workspace navigation is session-only. Switching tabs/modes must not save settings or mutate Timeline.
         RefreshIntentWorkspace();

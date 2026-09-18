@@ -10,7 +10,7 @@ public sealed partial class PlacerViewModel
         Rows.Count == 0 ? "YMM4で音声を追加して［シーン更新］してください。" :
         Rows.Any(x => !x.SelectedChoice.IsAvailable) ? "選択元を確認できない表情があります。候補を確認して選び直してください。" :
         !Rows.Any(x => x.SelectedChoice.Template != null) ? "「表情をまとめて」のテンプレート列で表情を選んでください。" :
-        UsesRelativeExpressions ? "表情パレットの保存済みの配置方法で追加します。同じ元テンプレートが複数セットにある場合は、先頭セットの設定を使います。" :
+        UsesRelativeExpressions ? "表情の選択は即時反映されます。このボタンはExcel読込など、まだタイムラインへ反映していない割り当てをまとめて確定するときだけ使います。" :
         "選んだ表情を追加します。未選択の行は何もしません。既存の配置は削除・移動・短縮しません。";
     public string SelectionPlaceHint => SelectionPresetDirty ? "配置条件を保存するか、編集を戻してください。" :
         timeline?.SelectedItems.Count is not > 0 ? "タイムラインで基準にするアイテムを選んでください。" :

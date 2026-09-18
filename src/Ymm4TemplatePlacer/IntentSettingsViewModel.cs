@@ -21,6 +21,7 @@ public sealed partial class PlacerViewModel
     public ActionCommand RescanIntentExpressionsCommand { get; private set; } = null!;
     public void BeginIntentSettings()
     {
+        CloseExpressionTrialSession();
         if (SaveIntentSettingsCommand == null)
         {
             SaveIntentSettingsCommand = new ActionCommand(_ => settingsAvailable && IntentSettings?.HasChanges == true, _ => Guard(SaveIntentSettings));

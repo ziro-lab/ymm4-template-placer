@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 
 namespace Ymm4TemplatePlacer;
 
@@ -23,8 +24,14 @@ public partial class PlacerView : UserControl
         SizeChanged += (_, _) => RefreshExpressionDetail();
         PresetSurface.PresetEditor.Expanded += (_, _) => ExcelEditor.IsExpanded = false;
         ExcelEditor.Expanded += (_, _) => PresetSurface.PresetEditor.IsExpanded = false;
-        VoiceGrid.SelectionChanged += (_, _) => RefreshExpressionDetail();
+        VoiceGrid.SelectionChanged += (_, _) => { RefreshExpressionDetail(); observedViewModel?.SetExpressionRowContext(VoiceGrid.SelectedItem as AssignmentRow); };
         MainTabs.SelectionChanged += (_, e) => { if (ReferenceEquals(e.OriginalSource, MainTabs)) SynchronizeTask(); };
+        PreviewKeyDown += (_, e) =>
+        {
+            if ((e.Key == Key.Z || e.Key == Key.Y) && (Keyboard.Modifiers & ModifierKeys.Control) != 0)
+                observedViewModel?.CloseExpressionTrialSession();
+        };
+        IsKeyboardFocusWithinChanged += (_, e) => { if (e.NewValue is false) observedViewModel?.CloseExpressionTrialSession(); };
         DataContextChanged += ChangeViewModel;
         Loaded += (_, _) => { ObserveViewModel(DataContext as PlacerViewModel); SynchronizeTask(); };
         Unloaded += (_, _) => ObserveViewModel(null);
@@ -32,6 +39,13 @@ public partial class PlacerView : UserControl
 #if YMM4_PROOF
         NativeProof.View = this;
 #endif
+    }
+    private void VoiceGridRow_DoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not DataGridRow { DataContext: AssignmentRow row } || observedViewModel == null) return;
+        if (!observedViewModel.NavigateExpressionRowCommand.CanExecute(row)) return;
+        observedViewModel.NavigateExpressionRowCommand.Execute(row);
+        e.Handled = true;
     }
     private void ChangeViewModel(object sender, DependencyPropertyChangedEventArgs e)
     {

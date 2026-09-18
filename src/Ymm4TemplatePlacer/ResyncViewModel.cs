@@ -42,6 +42,7 @@ public sealed partial class PlacerViewModel
     }
     public ResyncPlan Resync()
     {
+        CloseExpressionTrialSession();
         var current = RequireTimeline();
         if (undo == null) throw new InvalidOperationException("YMM4の「元に戻す」に接続できません。");
         if (current.SelectedItems.Count == 0) throw new InvalidOperationException("YMM4のタイムラインで、関連表情または音声を選択してください。「表情をまとめて」の行選択は対象ではありません。");
