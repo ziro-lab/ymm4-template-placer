@@ -35,6 +35,23 @@ public sealed class AssignmentRow : INotifyPropertyChanged
         No = no; Target = target; UsesIntentSources = intentSources ?? catalog.Any(x => x.IntentSource != null);
         Choices = IntentExpressionCatalog.Choices(target, catalog); selectedChoice = Choices[0];
     }
+    internal void RestoreSelectedChoice(TemplateChoice? choice, string? unavailableLabel = null)
+    {
+        var next = choice;
+        if (next == null && unavailableLabel != null)
+        {
+            next = Choices.FirstOrDefault(x => x.Template == null && !x.IsAvailable && x.Label == unavailableLabel);
+            if (next == null)
+            {
+                next = new TemplateChoice(null, unavailableLabel, null, false);
+                Choices = Choices.Concat([next]).ToArray();
+                Changed(nameof(Choices)); Changed(nameof(HasCandidates));
+            }
+        }
+        next ??= Choices.First();
+        if (ReferenceEquals(next, selectedChoice)) return;
+        selectedChoice = next; Changed(nameof(SelectedChoice)); Changed(nameof(State));
+    }
     public void SetCandidateMode(bool relative) => UsesIntentSources = relative;
     public void RefreshCandidates(IReadOnlyList<FaceTemplate> catalog, PlacerSettings settings, bool? relative = null)
     {

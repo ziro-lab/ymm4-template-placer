@@ -36,7 +36,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
             Refresh();
         }));
         PlaceCommand = new ActionCommand(_ => timeline != null && undo != null && settingsAvailable &&
-            (UsesRelativeExpressions || !ExpressionPresetDirty) && Rows.Any(x => x.SelectedChoice.Template != null) &&
+            (UsesRelativeExpressions ? HasPendingRelativeAssignments() : !ExpressionPresetDirty && Rows.Any(x => x.SelectedChoice.Template != null)) &&
             Rows.All(x => x.SelectedChoice.IsAvailable), _ => Guard(() => Place()));
         ExportCommand = new ActionCommand(_ => timeline != null && Rows.Count > 0, _ => Guard(() =>
         {
@@ -49,6 +49,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
             if (dialog.ShowDialog() == true) ImportFrom(dialog.FileName);
         }));
         InitializeV04();
+        InitializeExpressionImmediate();
         PropertyChanged += ExpressionModeChanged;
 #if YMM4_PROOF
         NativeProof.ViewModel = this;
@@ -62,7 +63,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public void SetTimelineToolInfo(TimelineToolInfo info)
     {
         var changed = !ReferenceEquals(timeline, info.Timeline);
-        if (changed) { DetachTimelineV04(); DeactivateIntentWorkspace(); }
+        if (changed) { CloseExpressionTrialSession(); DetachTimelineV04(); DeactivateIntentWorkspace(); }
         timeline = info.Timeline; undo = info.UndoRedoManager;
         if (changed) { AttachTimelineV04(); Guard(Refresh); }
         TryRestoreTransientWork(); UpdateCommands();
@@ -76,11 +77,21 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public void RefreshExpressionVocabulary()
     {
         var catalog = ExpressionCatalog();
-        foreach (var row in Rows) row.RefreshCandidates(catalog, settings, UsesRelativeExpressions);
+        var previous = suppressExpressionApply; suppressExpressionApply = true;
+        try
+        {
+            foreach (var row in Rows)
+            {
+                row.RefreshCandidates(catalog, settings, UsesRelativeExpressions);
+                if (UsesRelativeExpressions) RestoreExpressionChoiceFromTimeline(row);
+            }
+        }
+        finally { suppressExpressionApply = previous; }
         OnPropertyChanged(nameof(Summary)); OnPropertyChanged(nameof(UsesRelativeExpressions)); UpdateCommands();
     }
     public void Refresh()
     {
+        CloseExpressionTrialSession();
         var current = RequireTimeline();
         if (intentInitialized) RefreshIntentWorkspace();
         var catalog = ExpressionCatalog();
@@ -89,6 +100,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     }
     public int Place()
     {
+        CloseExpressionTrialSession();
         var current = RequireTimeline();
         if (undo == null) throw new InvalidOperationException("YMM4の「元に戻す」に接続できません。プラグインを開き直してください。");
         if (UsesRelativeExpressions)
@@ -105,6 +117,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     }
     public void ExportTo(string path)
     {
+        CloseExpressionTrialSession();
         var current = RequireTimeline(); PlacementEngine.ValidateSnapshot(current, Rows.Select(x => x.Target).ToArray());
         if (Rows.Any(x => !x.SelectedChoice.IsAvailable)) throw new InvalidOperationException("参照切れの表情選択があります。候補を確認してから出力してください。");
         WorkbookBridge.Export(path, current.Name, Rows.ToArray(), ExpressionCatalog());
@@ -112,22 +125,32 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     }
     public void ImportFrom(string path)
     {
+        CloseExpressionTrialSession();
         var current = RequireTimeline(); var next = WorkbookBridge.Import(path, current.Name, VoiceSnapshot.Capture(current), ExpressionCatalog());
-        SetRows(next); HasError = false;
+        SetRows(next, false); HasError = false;
         Status = UsesRelativeExpressions ? "Excelを読み込みました。表情を確認して［配置］してください。配置方法は現在保存されているパレットに従います。タイムラインはまだ変更していません。" :
             $"Excelを読み込みました。選択内容と現在のプリセット「{CurrentExpressionPreset.Name}」を確認して［配置］してください。タイムラインはまだ変更していません。";
     }
     private Timeline RequireTimeline() => timeline ?? throw new InvalidOperationException("対象シーンを開き、プラグインを開き直してください。");
-    private void SetRows(IReadOnlyList<AssignmentRow> rows)
+    private void SetRows(IReadOnlyList<AssignmentRow> rows, bool restoreAssociations = true)
     {
         foreach (var row in Rows) row.PropertyChanged -= RowChanged;
         Rows.Clear();
-        foreach (var row in rows) { row.SetCandidateMode(UsesRelativeExpressions); row.PreferPalette(settings); row.PropertyChanged += RowChanged; Rows.Add(row); }
+        foreach (var row in rows)
+        {
+            row.SetCandidateMode(UsesRelativeExpressions); row.PreferPalette(settings);
+            if (UsesRelativeExpressions && restoreAssociations) RestoreExpressionChoiceFromTimeline(row);
+            row.PropertyChanged += RowChanged; Rows.Add(row);
+        }
         OnPropertyChanged(nameof(Summary)); UpdateCommands();
     }
     private void RowChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(AssignmentRow.SelectedChoice)) { OnPropertyChanged(nameof(Summary)); UpdateCommands(); }
+        if (e.PropertyName == nameof(AssignmentRow.SelectedChoice))
+        {
+            OnPropertyChanged(nameof(Summary)); UpdateCommands();
+            if (!suppressExpressionApply && UsesRelativeExpressions && sender is AssignmentRow row) ApplyImmediateExpressionChoice(row);
+        }
     }
     private void UpdateCommands()
     {
@@ -145,6 +168,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public void Dispose()
     {
         disposedTransientWork ??= CaptureTransientWork(); PropertyChanged -= ExpressionModeChanged;
+        CloseExpressionTrialSession(); expressionTrialSession.Dispose();
         DeactivateIntentWorkspace(); DetachTimelineV04(); DisposeV04();
         if (intentSettings != null) intentSettings.Edited -= IntentSettingsEdited;
         foreach (var row in Rows) row.PropertyChanged -= RowChanged;
