@@ -2,13 +2,31 @@
 
 ## Current revision
 
-Current target: **v0.4.2 Relative Intent Palette**, PR #11. The hands-on UX polish implementation-prep branch is `work/v0.4.2-hands-on-ux-polish`, based exactly on native-verified PR #11 source `eeb465438a75508a936180543ee517bdfbf292a4`. Base: native-verified v0.4.1 Candidate `2710039b9f3d40c54aa8e495cb81a998c3f82e5e`. Historical regression baseline: v0.3.1.
+Current target: **v0.4.2 Hands-on Round 2**, branch `work/v0.4.2-hands-on-round2`, based exactly on native-verified PR #13 source `6873adba0497c334a81097bc61fbcadb7bd40a0a`.
 
-Read `docs/V0.4.2_HANDS_ON_UX_POLISH_WORKPLAN.md` and `docs/V0.4.2_HANDS_ON_UX_POLISH_ACCEPTANCE.md` first on this branch, then `docs/V0.4.2_RELATIVE_PALETTE_DESIGN.md`, `docs/V0.4.2_UIUX_MENTAL_MODEL.md`, `docs/V0.4.2_ROADMAP.md`, `docs/V0.4.2_CANDIDATE.md`, `docs/USAGE.md` and the latest PR/native evidence. The hands-on workplan is authoritative for this polish pass where it adds detail; it does not override the proven safety core. The UI/UX mental-model addendum remains authoritative for the normal editing model: Item -> editing intent -> optional Set -> executable tile; engine parameters must not leak back into the common path. The v0.4.2 roadmap remains authoritative for R numbering.
+Read these Round 2 documents first:
 
-Do not reimplement completed W/R checkpoints. A build or source edit alone is not completion. Do not merge main. Keep PR #6 and PR #11 Draft until the user accepts the new Candidate in their actual editing environment.
+1. `docs/V0.4.2_HANDS_ON_ROUND2_DESIGN.md`
+2. `docs/V0.4.2_HANDS_ON_ROUND2_HOST_EVIDENCE.md`
+3. `docs/V0.4.2_HANDS_ON_ROUND2_WORKPLAN.md`
+4. `docs/V0.4.2_HANDS_ON_ROUND2_ACCEPTANCE.md`
+5. `docs/V0.4.2_HANDS_ON_ROUND2_IMPLEMENTATION_PREP.md`
 
-Before implementing expression trial-switch Undo suppression, Tool-menu utility placement, or Item display-name discovery, use the pinned-host P0 evidence required by the hands-on workplan. Do not guess host APIs, add arbitrary reflection, invent a custom undo stack, or silently bypass native Undo to satisfy UX wording.
+Then read the Round 1 hands-on workplan/acceptance and the existing v0.4.2 relative-palette design/mental-model/roadmap documents for preserved history and safety contracts.
+
+Round 2 is a child pass over the completed automated PR #13 implementation. Do not reimplement H1-H6 or earlier W/R checkpoints. Preserve the PR #13 native-green baseline (run `35334621300`, 986 assertions) while changing the user-facing workflow.
+
+Pinned Round 2 host findings are already complete. In particular:
+
+- Tool Utility group uses `YukkuriMovieMaker.Resources.Localization.Texts.ToolGroupUtilityName`.
+- no dedicated supported public forced-preview redraw route was established.
+- Item / Timeline background / ruler pointer intent is distinguishable on exact 4.55.1.1.
+- `CurrentFrameChanged` is not a context-switch signal because ruler, keyboard and playback all produce it.
+- YMM4 visual-tree classification is version-specific; unknown routes must fail safe by keeping current context.
+
+The user-visible hierarchy is now **context -> Set -> tile**. Hide the separate Intent level from the common path; preserve existing serialized Intent data for compatibility. UI unification does not authorize a core rewrite: targeted Sets continue to use IntentPalette/IntentExecutionPlan, Generic Sets continue to use Style Palette/QuickDropPlanner behind a small presentation adapter.
+
+Do not merge `main`. Keep PR #6, PR #11, PR #13 and the Round 2 PR Draft until the user accepts the next real editing candidate.
 
 ## Product boundary
 
