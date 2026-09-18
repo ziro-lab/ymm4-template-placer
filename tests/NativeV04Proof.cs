@@ -47,6 +47,7 @@ internal static partial class NativeProof
         await VerifyTemplateFidelity(timeline, undo);
         await VerifyRelativeUiUx(timeline, undo);
         await VerifyHandsOnAppearance(timeline, undo);
+        await VerifyHandsOnWorkflow(timeline, undo);
         await VerifyRelativeFinal(timeline, undo);
         VerifyRelativeAcceptance();
     }

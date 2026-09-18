@@ -41,15 +41,20 @@ internal static partial class NativeProof
                 "R10 candidate union follows Palette and entry order, deduplicating repeated source membership");
             Assert(row.Choices.Skip(1).Select(x => x.DisplayName).Distinct().Count() == 2 && !ReferenceEquals(row.Choices[1].Template!.Face.Character, voice.Character),
                 "R10 same-name detached Character candidates work and duplicate aliases receive only needed set/source context");
-            await SelectInDropdown(view, row, source.Name);
             var baseline = Signature(timeline); var sourceBaseline = (face.Frame, face.Length, face.Layer, face.Remark, text.Frame, text.Layer);
+            await SelectInDropdown(view, row, source.Name); await Idle();
+            var immediateMembers = timeline.Items.Where(x => x != voice && x != nextVoice).ToArray();
+            Assert(immediateMembers.Length == 2 && ManagedIntentExpressionReader.Read(timeline, voice).Bundle?.Members.Count == 2,
+                "R10 selecting a relative expression immediately applies exactly one managed whole bundle");
             Assert(IntentExecutionPlan.Create(timeline, first, bundleTile, fixture.Library).Count == 2,
                 "R10 tile path accepts the same complete bundle as expression assignment");
-            var excel = Path.Combine(output, "r10-relative-expression.xlsx"); vm.ExportTo(excel); vm.ImportFrom(excel);
-            row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
-            Assert(row.SelectedChoice.Template?.IntentSource?.Entry.LibraryEntryId == bundleEntry.Id && Signature(timeline) == baseline,
-                "R10 Excel Bridge roundtrip resolves the Palette-backed whole bundle without Timeline mutation");
-            await ClickPlace(view); Assert(!vm.HasError, "R10 actual native expression placement command completes: " + vm.Status);
+            var excel = Path.Combine(output, "r10-relative-expression.xlsx"); vm.ExportTo(excel);
+            await undo.UndoAsync(); await Idle();
+            Assert(Signature(timeline) == baseline, "R10 closing the trial before Excel export leaves one native Undo back to the pre-trial state");
+            vm.ImportFrom(excel); row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
+            Assert(row.SelectedChoice.Template?.IntentSource?.Entry.LibraryEntryId == bundleEntry.Id && Signature(timeline) == baseline && vm.PlaceCommand.CanExecute(null),
+                "R10 Excel Bridge import restores a pending Palette-backed assignment without Timeline mutation");
+            await ClickPlace(view); Assert(!vm.HasError, "R10 Excel pending assignment commits through the retained batch bridge: " + vm.Status);
             var members = timeline.Items.Where(x => x != voice && x != nextVoice).OrderBy(x => { IntentAssociationTag.Read(x.Remark, out var tag); return tag?.Index ?? int.MaxValue; }).ToArray();
             Assert(members.Length == 2 && members[0].Frame == 100 && members[1].Frame == 110 && members[0].Length == 20 && members[1].Length == 12 && members[1].Layer - members[0].Layer == 1,
                 "R10 expression placement preserves complete bundle frame/layer/duration geometry");
@@ -75,18 +80,29 @@ internal static partial class NativeProof
             face.Length++; var changed = Signature(timeline); refused = vm.Resync();
             Assert(refused.Plan.UpdateCount == 0 && refused.Skipped.Count == 1 && Signature(timeline) == changed, "R13 changed source topology is rejected without guessing member mappings"); face.Length--;
             timeline.Items = [voice, nextVoice]; voice.Remark = ""; timeline.SelectedItems = [voice]; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
-            field.SetValue(vm, fixture); vm.Refresh(); row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice)); row.SelectedChoice = row.Choices.Single(x => x.Template?.Name == single.Name);
-            fixture.IntentPalettes[1] = second with { Entries = [bundleTile] }; vm.RefreshExpressionVocabulary();
-            Assert(!row.SelectedChoice.IsAvailable && !vm.PlaceCommand.CanExecute(null), "R10 removing a chosen membership retains a visible invalid assignment and disables placement");
-            RejectWithoutMutation(timeline, () => vm.Place(), "R10 stale membership cannot be silently placed through direct invocation");
-            fixture.IntentPalettes[1] = second; vm.RefreshExpressionVocabulary();
+            field.SetValue(vm, fixture); vm.Refresh(); row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
+            row.SelectedChoice = row.Choices.Single(x => x.Template?.Name == single.Name); await Idle(); vm.CloseExpressionTrialSession();
+            var active = (PlacerSettings)field.GetValue(vm)!; var secondIndex = active.IntentPalettes.FindIndex(x => x.Id == second.Id);
+            active.IntentPalettes[secondIndex] = active.IntentPalettes[secondIndex] with { Entries = [bundleTile] }; vm.RefreshExpressionVocabulary();
+            Assert(!row.SelectedChoice.IsAvailable && !vm.PlaceCommand.CanExecute(null), "R10 removing a chosen membership reconstructs an unavailable association and disables batch placement");
+            var staleSignature = Signature(timeline);
+            Assert(vm.Place() == 0 && Signature(timeline) == staleSignature, "R10 an unavailable association is never guessed or silently rebuilt by direct batch invocation");
+            active.IntentPalettes[secondIndex] = second; vm.RefreshExpressionVocabulary();
             CharacterSettings.Default.Characters.Add(character); CharacterSettings.Default.Characters.Add(detached);
-            try { RejectWithoutMutation(timeline, () => IntentExecutionPlan.Create(timeline, first, bundleTile, fixture.Library), "R10 actual duplicate registered Character names fail closed"); }
+            try { RejectWithoutMutation(timeline, () => IntentExecutionPlan.Create(timeline, first, bundleTile, active.Library), "R10 actual duplicate registered Character names fail closed"); }
             finally { CharacterSettings.Default.Characters.Remove(character); CharacterSettings.Default.Characters.Remove(detached); }
-            // The expression operation validates the complete Voice-list snapshot even when only one row is assigned.
-            var staged = IntentExpressionPlacement.Create(timeline, vm.Rows.ToArray(), fixture);
-            fixture.IntentPalettes[1] = second with { Relation = second.Relation with { StartOffset = 1 } };
-            RejectWithoutMutation(timeline, () => staged.Commit(timeline, undo, fixture), "R10 changed saved relation invalidates a staged expression commit");
+            // A detached pending batch row still validates the complete Voice-list snapshot and saved relation at commit.
+            var stagedCatalog = IntentExpressionCatalog.Read(active);
+            var stagedRows = vm.Rows.Select(x =>
+            {
+                var clone = new AssignmentRow(x.No, x.Target, stagedCatalog, true);
+                if (ReferenceEquals(x.Target.Voice, voice)) clone.SelectedChoice = clone.Choices.Single(c => c.Template?.IntentSource?.Entry.LibraryEntryId == bundleEntry.Id);
+                return clone;
+            }).ToArray();
+            var staged = IntentExpressionPlacement.Create(timeline, stagedRows, active);
+            var firstIndex = active.IntentPalettes.FindIndex(x => x.Id == first.Id);
+            active.IntentPalettes[firstIndex] = active.IntentPalettes[firstIndex] with { Relation = active.IntentPalettes[firstIndex].Relation with { StartOffset = 1 } };
+            RejectWithoutMutation(timeline, () => staged.Commit(timeline, undo, active), "R10 changed saved relation invalidates a staged expression replacement commit");
             Log("R10=PASS"); Log("R13=PASS");
         }
         finally
