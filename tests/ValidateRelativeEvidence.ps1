@@ -6,9 +6,12 @@ Set-StrictMode -Version Latest
 $required=@('R1=PASS','R2=PASS','R3=PASS','R4=PASS','R5=PASS','R6=PASS','R7=PASS','R8=PASS',
  'R9_CORE=PASS','R9_UI=PASS','R10=PASS','R11=PASS','R12=PASS','R13=PASS','TEMPLATE_FIDELITY=PASS','RELATIVE_UIUX=PASS','R14_NATIVE=PASS',
  'V04=PASS','UX_ACCEPTANCE=PASS','UX_WORKFLOW_ACCEPTANCE=PASS')
+$handsOnIds=@(1..9 | ForEach-Object { "A$_" }) + @(1..11 | ForEach-Object { "B$_" }) +
+ @(1..12 | ForEach-Object { "C$_" }) + @(1..3 | ForEach-Object { "D$_" }) + @(1..8 | ForEach-Object { "E$_" })
+
 function Assert-RelativeEvidence {
- param([string[]]$Lines, $Manifest, $UiuxManifest)
- foreach ($marker in ($required + @('V042_ACCEPTANCE=PASS'))) {
+ param([string[]]$Lines, $Manifest, $UiuxManifest, $HandsOnManifest)
+ foreach ($marker in ($required + @('V042_ACCEPTANCE=PASS','HANDS_ON_UX_POLISH=PASS'))) {
   if (@($Lines | Where-Object { $_ -ceq $marker }).Count -ne 1) { throw "Missing or duplicate native stage: $marker" }
  }
  if (@($Lines | Where-Object { $_ -cmatch '^ASSERT FAIL:|^FAIL(?:\s|$)' }).Count) { throw 'Native failure appears in the proof log' }
@@ -30,33 +33,56 @@ function Assert-RelativeEvidence {
  if (@($UiuxManifest.checks).Count -ne 10 -or @($UiuxManifest.checks | Where-Object { $_.result -cne 'PASS' -or
      [string]::IsNullOrWhiteSpace($_.requirement) -or [string]::IsNullOrWhiteSpace($_.evidence) }).Count) { throw 'Incomplete relative UI/UX acceptance checks' }
  if ((@($UiuxManifest.checks.id | Sort-Object) -join ',') -cne ((1..10) -join ',')) { throw 'Relative UI/UX acceptance IDs missing or duplicated' }
+ if ($null -eq $HandsOnManifest -or $HandsOnManifest.schema -cne 'YMM4-Template-Placer-Hands-On-UX-Polish/1' -or
+     $HandsOnManifest.version -cne '0.4.2' -or $HandsOnManifest.result -cne 'PASS' -or $HandsOnManifest.host -cne 'YMM4 4.55.1.1 Lite') {
+  throw 'Hands-on UX polish identity/version/result/host mismatch'
+ }
+ if (@($HandsOnManifest.checks).Count -ne $handsOnIds.Count -or @($HandsOnManifest.checks | Where-Object {
+     $_.result -cne 'PASS' -or [string]::IsNullOrWhiteSpace($_.id) -or [string]::IsNullOrWhiteSpace($_.evidence) }).Count) {
+  throw 'Incomplete hands-on UX polish checks'
+ }
+ if ((@($HandsOnManifest.checks.id | Sort-Object) -join ',') -cne (($handsOnIds | Sort-Object) -join ',')) {
+  throw 'Hands-on UX polish IDs missing or duplicated'
+ }
 }
+
 $lines=@(Get-Content (Join-Path $OutputDir 'proof-log.txt'))
 $relative=Get-Content -Raw (Join-Path $OutputDir 'v042-acceptance.json') | ConvertFrom-Json
 $uiux=Get-Content -Raw (Join-Path $OutputDir 'v042-uiux-acceptance.json') | ConvertFrom-Json
-Assert-RelativeEvidence $lines $relative $uiux
+$handsOn=Get-Content -Raw (Join-Path $OutputDir 'hands-on-ux-polish.json') | ConvertFrom-Json
+Assert-RelativeEvidence $lines $relative $uiux $handsOn
+
 if ($SelfTest) {
  $tests=[Collections.Generic.List[object]]::new()
  $mutations=[ordered]@{
-  'missing R13 stage' = { param($m,$u) }
-  'missing template fidelity stage' = { param($m,$u) }
-  'missing UIUX stage' = { param($m,$u) }
-  'missing final success' = { param($m,$u) }
-  'duplicate native stage' = { param($m,$u) }
-  'old manifest version' = { param($m,$u) $m.version='0.4.1' }
-  'failed manifest check' = { param($m,$u) $m.checks[0].result='FAIL' }
-  'missing manifest check' = { param($m,$u) $m.checks=@($m.checks | Select-Object -Skip 1) }
-  'duplicate requirement ID' = { param($m,$u) $m.checks[1].id=$m.checks[0].id }
-  'weakened manifest stages' = { param($m,$u) $m.required_native_stages=@($m.required_native_stages | Where-Object { $_ -cne 'TEMPLATE_FIDELITY=PASS' }) }
-  'wrong native host' = { param($m,$u) $m.host='unverified-host' }
-  'failed UIUX check' = { param($m,$u) $u.checks[0].result='FAIL' }
-  'missing UIUX check' = { param($m,$u) $u.checks=@($u.checks | Select-Object -Skip 1) }
-  'explicit failure in log' = { param($m,$u) }
+  'missing R13 stage' = { param($m,$u,$h) }
+  'missing template fidelity stage' = { param($m,$u,$h) }
+  'missing UIUX stage' = { param($m,$u,$h) }
+  'missing final success' = { param($m,$u,$h) }
+  'duplicate native stage' = { param($m,$u,$h) }
+  'old manifest version' = { param($m,$u,$h) $m.version='0.4.1' }
+  'failed manifest check' = { param($m,$u,$h) $m.checks[0].result='FAIL' }
+  'missing manifest check' = { param($m,$u,$h) $m.checks=@($m.checks | Select-Object -Skip 1) }
+  'duplicate requirement ID' = { param($m,$u,$h) $m.checks[1].id=$m.checks[0].id }
+  'weakened manifest stages' = { param($m,$u,$h) $m.required_native_stages=@($m.required_native_stages | Where-Object { $_ -cne 'TEMPLATE_FIDELITY=PASS' }) }
+  'wrong native host' = { param($m,$u,$h) $m.host='unverified-host' }
+  'failed UIUX check' = { param($m,$u,$h) $u.checks[0].result='FAIL' }
+  'missing UIUX check' = { param($m,$u,$h) $u.checks=@($u.checks | Select-Object -Skip 1) }
+  'explicit failure in log' = { param($m,$u,$h) }
+  'missing hands-on stage' = { param($m,$u,$h) }
+  'duplicate hands-on stage' = { param($m,$u,$h) }
+  'stale hands-on manifest' = { param($m,$u,$h) $h.version='0.4.1' }
+  'failed hands-on check' = { param($m,$u,$h) $h.checks[0].result='FAIL' }
+  'missing hands-on check' = { param($m,$u,$h) $h.checks=@($h.checks | Select-Object -Skip 1) }
+  'duplicate hands-on ID' = { param($m,$u,$h) $h.checks[1].id=$h.checks[0].id }
+  'missing hands-on manifest' = { param($m,$u,$h) }
  }
  foreach ($name in $mutations.Keys) {
   $copy=$relative | ConvertTo-Json -Depth 20 | ConvertFrom-Json
   $uiuxCopy=$uiux | ConvertTo-Json -Depth 20 | ConvertFrom-Json
-  & $mutations[$name] $copy $uiuxCopy
+  $handsCopy=$handsOn | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+  & $mutations[$name] $copy $uiuxCopy $handsCopy
+  if ($name -eq 'missing hands-on manifest') { $handsCopy=$null }
   $testLines=@($lines)
   switch ($name) {
    'missing R13 stage' { $testLines=@($lines | Where-Object { $_ -cne 'R13=PASS' }) }
@@ -65,14 +91,16 @@ if ($SelfTest) {
    'missing final success' { $testLines=@($lines | Where-Object { $_ -cne 'V042_ACCEPTANCE=PASS' }) }
    'duplicate native stage' { $testLines=$lines + @('TEMPLATE_FIDELITY=PASS') }
    'explicit failure in log' { $testLines=$lines + @('ASSERT FAIL: deliberate negative fixture') }
+   'missing hands-on stage' { $testLines=@($lines | Where-Object { $_ -cne 'HANDS_ON_UX_POLISH=PASS' }) }
+   'duplicate hands-on stage' { $testLines=$lines + @('HANDS_ON_UX_POLISH=PASS') }
   }
   $rejected=$false
-  try { Assert-RelativeEvidence $testLines $copy $uiuxCopy } catch { $rejected=$true }
+  try { Assert-RelativeEvidence $testLines $copy $uiuxCopy $handsCopy } catch { $rejected=$true }
   if (-not $rejected) { throw "Evidence guard accepted invalid input: $name" }
   $tests.Add([ordered]@{name=$name; result='PASS_REJECTED'})
  }
  [ordered]@{schema='YMM4-Template-Placer-Evidence-Guard/1'; result='PASS'; positive_checks=1;
   negative_checks=$tests.Count; checks=$tests} | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $OutputDir 'evidence-guard-tests.json')
- Write-Host "Relative evidence guard: 1 valid input and $($tests.Count) rejection tests PASS"
+ Write-Host "Relative/hands-on evidence guard: 1 valid input and $($tests.Count) rejection tests PASS"
 }
 $relative

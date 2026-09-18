@@ -7,13 +7,14 @@ $project=[xml](Get-Content -Raw 'src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.cspro
 if ($project.Project.PropertyGroup.Version -cne $version) { throw 'Project/package version mismatch' }
 $relative = & "$PSScriptRoot/ValidateRelativeEvidence.ps1" -OutputDir $OutputDir -SelfTest
 $relativeUiux=Get-Content -Raw (Join-Path $OutputDir 'v042-uiux-acceptance.json') | ConvertFrom-Json
+$handsOn=Get-Content -Raw (Join-Path $OutputDir 'hands-on-ux-polish.json') | ConvertFrom-Json
 $guard=Get-Content -Raw (Join-Path $OutputDir 'evidence-guard-tests.json') | ConvertFrom-Json
-if ($guard.result -cne 'PASS' -or $guard.positive_checks -ne 1 -or $guard.negative_checks -ne 14 -or @($guard.checks | Where-Object { $_.result -cne 'PASS_REJECTED' }).Count) { throw 'Relative evidence guard self-test is incomplete' }
+if ($guard.result -cne 'PASS' -or $guard.positive_checks -ne 1 -or $guard.negative_checks -ne 21 -or @($guard.checks | Where-Object { $_.result -cne 'PASS_REJECTED' }).Count) { throw 'Relative/hands-on evidence guard self-test is incomplete' }
 $package=Join-Path $OutputDir 'package'
 $logPath=Join-Path $OutputDir 'proof-log.txt'
 $log=Get-Content $logPath
 if ((Get-Content -Raw (Join-Path $OutputDir 'proof-result.txt')).Trim() -cne 'PASS P1 P2 P3 P4 P5 P6 P7 P8 P9') { throw 'Native result is not a complete PASS' }
-$stages=@('P1','P2','P3','P4','P5','P6','P7','P8','P9','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12_UI','W12_SELECTORS','W12','V04') + (1..13 | ForEach-Object { "WUX$_" }) + @('UX_ACCEPTANCE','UX_WORKFLOW_ACCEPTANCE','TEMPLATE_FIDELITY')
+$stages=@('P1','P2','P3','P4','P5','P6','P7','P8','P9','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12_UI','W12_SELECTORS','W12','V04') + (1..13 | ForEach-Object { "WUX$_" }) + @('UX_ACCEPTANCE','UX_WORKFLOW_ACCEPTANCE','TEMPLATE_FIDELITY','HANDS_ON_H1_H2','HANDS_ON_H3_H4_H5','HANDS_ON_UX_POLISH')
 foreach ($stage in $stages) {
  if ($log -cnotcontains "$stage=PASS") { throw "Missing native success stage: $stage" }
 }
@@ -45,6 +46,7 @@ Copy-Item (Join-Path $OutputDir 'ux-acceptance.json') $package
 Copy-Item (Join-Path $OutputDir 'ux-workflow-acceptance.json') $package
 Copy-Item (Join-Path $OutputDir 'v042-acceptance.json') $package
 Copy-Item (Join-Path $OutputDir 'v042-uiux-acceptance.json') $package
+Copy-Item (Join-Path $OutputDir 'hands-on-ux-polish.json') $package
 if ((Get-Content -Raw (Join-Path $package 'README.md')) -notmatch '^# YMM4 Template Placer v0\.4\.2') { throw 'Obsolete package usage documentation' }
 Remove-Item (Join-Path $package '*.pdb') -ErrorAction SilentlyContinue
 $event=Get-Content -Raw $env:GITHUB_EVENT_PATH | ConvertFrom-Json
@@ -61,10 +63,11 @@ $sourceHead=if ($env:GITHUB_EVENT_NAME -eq 'pull_request') { $event.pull_request
  relative_version=$relative.version; relative_result=$relative.result; relative_requirements=@($relative.checks).Count
  relative_uiux_version=$relativeUiux.version; relative_uiux_result=$relativeUiux.result; relative_uiux_requirements=@($relativeUiux.checks).Count
  relative_native_stages=$relative.required_native_stages; template_fidelity_result=if($log -ccontains 'TEMPLATE_FIDELITY=PASS'){'PASS'}else{'FAIL'}; evidence_guard_negative_checks=$guard.negative_checks
+ hands_on_ux_version=$handsOn.version; hands_on_ux_result=$handsOn.result; hands_on_ux_requirements=@($handsOn.checks).Count
  distribution_dll_sha256=$dllHash; ymme_install_folder=$installFolder
 } | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'provenance.json')
 Copy-Item (Join-Path $OutputDir 'provenance.json') $package
-$expected=@('Ymm4TemplatePlacer.dll','Ymm4TemplatePlacer.deps.json','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll','README.md','THIRD_PARTY_NOTICES.md','provenance.json','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json')
+$expected=@('Ymm4TemplatePlacer.dll','Ymm4TemplatePlacer.deps.json','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll','README.md','THIRD_PARTY_NOTICES.md','provenance.json','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json','hands-on-ux-polish.json')
 $files=@(Get-ChildItem $package -File -Recurse)
 if ($files.Count -ne $expected.Count -or @($files | Where-Object { $_.Name -notin $expected -or $_.Directory.FullName -ne (Resolve-Path $package).Path }).Count -ne 0) { throw 'Unexpected, nested or missing distributable content' }
 
@@ -100,13 +103,14 @@ git archive --format=zip -o $sourceArchive HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Source archive failed' }
 $sourceZip=[IO.Compression.ZipFile]::OpenRead((Resolve-Path $sourceArchive).Path)
 try {
- foreach ($name in @('AGENTS.md','docs/DESIGN.md','docs/USAGE.md','docs/USAGE_V0.4.1.md','docs/V0.4.2_RELATIVE_PALETTE_DESIGN.md','docs/V0.4.2_UIUX_MENTAL_MODEL.md','docs/V0.4.2_ROADMAP.md','docs/V0.4.2_CANDIDATE.md','docs/V0.4.1_UX_WORKFLOW_DESIGN.md','src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj','tests/NativeV04Proof.cs','tests/NativeAcceptanceProof.cs','tests/NativeTaskUxFinalProof.cs','tests/NativeWorkflowAcceptanceProof.cs','docs/TASK_UX.md','tests/NativeRelativeFinalProof.cs','tests/NativeRelativeUiUxProof.cs','tests/NativeTemplateFidelityProof.cs','tests/ValidateRelativeEvidence.ps1','tests/PackageVerified.ps1')) {
+ foreach ($name in @('AGENTS.md','docs/DESIGN.md','docs/USAGE.md','docs/USAGE_V0.4.1.md','docs/V0.4.2_RELATIVE_PALETTE_DESIGN.md','docs/V0.4.2_UIUX_MENTAL_MODEL.md','docs/V0.4.2_ROADMAP.md','docs/V0.4.2_CANDIDATE.md','docs/V0.4.1_UX_WORKFLOW_DESIGN.md','src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj','tests/NativeV04Proof.cs','tests/NativeAcceptanceProof.cs','tests/NativeTaskUxFinalProof.cs','tests/NativeWorkflowAcceptanceProof.cs','docs/TASK_UX.md','tests/NativeRelativeFinalProof.cs','tests/NativeRelativeUiUxProof.cs','tests/NativeTemplateFidelityProof.cs','tests/NativeHandsOnUxPolishProof.cs','tests/NativeHandsOnWorkflowProof.cs','tests/ValidateRelativeEvidence.ps1','tests/PackageVerified.ps1','docs/V0.4.2_HANDS_ON_UX_POLISH_WORKPLAN.md','docs/V0.4.2_HANDS_ON_UX_POLISH_ACCEPTANCE.md','docs/V0.4.2_HANDS_ON_UX_POLISH_P0_HOST_SURFACE.md')) {
   if ($null -eq $sourceZip.GetEntry($name)) { throw "Missing source archive entry: $name" }
  }
 } finally { $sourceZip.Dispose() }
 [ordered]@{
- result='PASS'; version=$version; native_stages='P1-P9,W3-W12,V04,WUX1-WUX13,R1-R14,TEMPLATE_FIDELITY,RELATIVE_UIUX,V042_ACCEPTANCE'; acceptance_requirements=18
+ result='PASS'; version=$version; native_stages='P1-P9,W3-W12,V04,WUX1-WUX13,R1-R14,TEMPLATE_FIDELITY,RELATIVE_UIUX,V042_ACCEPTANCE,HANDS_ON_UX_POLISH'; acceptance_requirements=18
  relative_requirements=21; relative_result=$relative.result; relative_uiux_requirements=10; relative_uiux_result=$relativeUiux.result; template_fidelity_result='PASS'; evidence_guard_negative_checks=$guard.negative_checks
+ hands_on_ux_requirements=@($handsOn.checks).Count; hands_on_ux_result=$handsOn.result
  base_task_ux_requirements=12; ux_workflow_requirements=10; payload_files=$expected; archived_dll_sha256=$archivedHash
  source_archive='Ymm4TemplatePlacer-source.zip'; ymme_install_folder=$installFolder; ymme_file_entries=$expectedArchive
 } | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'package-checks.json')
