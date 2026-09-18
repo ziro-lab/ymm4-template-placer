@@ -22,12 +22,14 @@ internal static partial class NativeProof
         [DllImport("user32.dll")] internal static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr extra);
         [DllImport("user32.dll")] internal static extern void keybd_event(byte key, byte scan, uint flags, UIntPtr extra);
     }
-    private static async Task NativeRound2Click(Point screen)
+    private static async Task NativeRound2Click(Point screen, TimelinePointerOrigin? expected = null)
     {
         Assert(Round2Input.SetCursorPos((int)Math.Round(screen.X), (int)Math.Round(screen.Y)), "R2-A OS cursor moved to verified host hit point");
         await Task.Delay(100);
         Assert(Round2Input.GetCursorPos(out var actual) && Math.Abs(actual.X - screen.X) <= 1 && Math.Abs(actual.Y - screen.Y) <= 1,
             $"R2-A requested pointer ({screen.X:0},{screen.Y:0}) is physically reachable; actual=({actual.X},{actual.Y})");
+        if (expected != null) Assert(TimelinePointerIntentClassifier.Classify(Mouse.DirectlyOver as DependencyObject) == expected,
+            "R2-A actual pre-click hit route matches the freshly measured " + expected);
         Log($"R2-A input-before-down: over={Mouse.DirectlyOver?.GetType().FullName}; captured={Mouse.Captured?.GetType().FullName}; route={TimelinePointerIntentClassifier.Classify(Mouse.DirectlyOver as DependencyObject)}");
         Round2Input.mouse_event(0x0002, 0, 0, 0, UIntPtr.Zero);
         await Task.Delay(50); Round2Input.mouse_event(0x0004, 0, 0, 0, UIntPtr.Zero);
@@ -112,19 +114,20 @@ internal static partial class NativeProof
                 }
                 throw new InvalidOperationException("No exact host hit route for " + expected);
             }
-            var blankPoint = HitPoint(timelineView, TimelinePointerOrigin.TimelineBackground, true);
-            var itemPoint = HitPoint(itemView, TimelinePointerOrigin.Item, false);
-            var rulerPoint = HitPoint(rulerView, TimelinePointerOrigin.Ruler, false);
+            Point rulerPoint;
             // Only exact visible hit routes are used; no coordinate guess is allowed to count as proof.
             vm.PropertyChanged += contextChanged; InputManager.Current.PreProcessInput += beforeInput;
             timeline.PropertyChanged += selectionChanged;
-            await NativeRound2Click(blankPoint);
+            await NativeRound2Click(HitPoint(timelineView, TimelinePointerOrigin.TimelineBackground, true), TimelinePointerOrigin.TimelineBackground);
             Assert(vm.PlacementContext == PlacementContext.Generic && timeline.SelectedItems.Contains(voice), "R2-A A5 real background input chooses Generic without clearing the retained Voice");
-            await NativeRound2Click(itemPoint);
+            await NativeRound2Click(HitPoint(itemView, TimelinePointerOrigin.Item, false), TimelinePointerOrigin.Item);
             Assert(beforeHostSelectionObserved && selectionAfterHostObserved && vm.PlacementContext == PlacementContext.Selection,
                 "R2-A A3/A4 real already-selected Item click waits for host Selection and enters Selection context");
-            await NativeRound2Click(rulerPoint);
+            await NativeRound2Click(HitPoint(rulerView, TimelinePointerOrigin.Ruler, false), TimelinePointerOrigin.Ruler);
             Assert(vm.PlacementContext == PlacementContext.Generic, "R2-A A6 real ruler input chooses Generic");
+            // The common Tool can change layout when its context changes. Never reuse
+            // a screen point measured before that change; a stale hit must not count as proof.
+            rulerPoint = HitPoint(rulerView, TimelinePointerOrigin.Ruler, false);
             var rulerStart = timeline.CurrentFrame;
             Round2Input.SetCursorPos((int)rulerPoint.X, (int)rulerPoint.Y); Round2Input.mouse_event(0x0002, 0, 0, 0, UIntPtr.Zero);
             for (var i = 1; i <= 3; i++) { Round2Input.SetCursorPos((int)rulerPoint.X + i * 15, (int)rulerPoint.Y); await Task.Delay(60); }
@@ -143,9 +146,9 @@ internal static partial class NativeProof
             var forwarded = 0;
             using (var duplicateProbe = new TimelinePointerInputRouter(_ => forwarded++, () => { }))
             {
-                duplicateProbe.Attach(); duplicateProbe.Attach(); await NativeRound2Click(blankPoint);
+                duplicateProbe.Attach(); duplicateProbe.Attach(); await NativeRound2Click(HitPoint(timelineView, TimelinePointerOrigin.TimelineBackground, true), TimelinePointerOrigin.TimelineBackground);
                 Assert(forwarded == 1, "R2-A repeated Attach delivers one actual pointer event, not two");
-                duplicateProbe.Detach(); duplicateProbe.Detach(); await NativeRound2Click(blankPoint);
+                duplicateProbe.Detach(); duplicateProbe.Detach(); await NativeRound2Click(HitPoint(timelineView, TimelinePointerOrigin.TimelineBackground, true), TimelinePointerOrigin.TimelineBackground);
                 Assert(forwarded == 1, "R2-A repeated Detach leaves no global input handler");
             }
             for (var i = 0; i < 3; i++)
