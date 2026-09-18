@@ -64,32 +64,8 @@ if ($ReleaseSmoke) {
  if (-not (Select-String -Path $result -Pattern '^PASS P1 P2 P3 P4 P5 P6 P7 P8 P9$')) { throw 'Native functional proof failed' }
  if (-not (Select-String -Path $log -Pattern '^V04=PASS$')) { throw 'Integrated v0.4 native proof is incomplete' }
  if (-not (Select-String -Path $log -Pattern '^UX_ACCEPTANCE=PASS$')) { throw 'Task UX acceptance is incomplete' }
- if (-not (Select-String -Path $log -Pattern '^UX_WORKFLOW_ACCEPTANCE=PASS
- $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
- if ($acceptance.version -ne '0.4.2' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 core acceptance evidence' }
- $ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-Json
- if ($ux.version -ne '0.4.0' -or $ux.result -ne 'PASS' -or @($ux.checks).Count -ne 12 -or @($ux.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete retained Task UX acceptance evidence' }
- $workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
- if ($workflow.version -ne '0.4.2' -or $workflow.result -ne 'PASS' -or @($workflow.checks).Count -ne 10 -or @($workflow.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 UX workflow acceptance evidence' }
-}
-) -or -not (Select-String -Path $log -Pattern '^WUX13=PASS
- $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
- if ($acceptance.version -ne '0.4.2' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 core acceptance evidence' }
- $ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-Json
- if ($ux.version -ne '0.4.0' -or $ux.result -ne 'PASS' -or @($ux.checks).Count -ne 12 -or @($ux.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete retained Task UX acceptance evidence' }
- $workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
- if ($workflow.version -ne '0.4.2' -or $workflow.result -ne 'PASS' -or @($workflow.checks).Count -ne 10 -or @($workflow.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 UX workflow acceptance evidence' }
-}
-)) { throw 'v0.4.2 UX workflow acceptance is incomplete' }
- if (-not (Select-String -Path $log -Pattern '^HANDS_ON_UX_POLISH=PASS
- $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
- if ($acceptance.version -ne '0.4.2' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 core acceptance evidence' }
- $ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-Json
- if ($ux.version -ne '0.4.0' -or $ux.result -ne 'PASS' -or @($ux.checks).Count -ne 12 -or @($ux.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete retained Task UX acceptance evidence' }
- $workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
- if ($workflow.version -ne '0.4.2' -or $workflow.result -ne 'PASS' -or @($workflow.checks).Count -ne 10 -or @($workflow.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 UX workflow acceptance evidence' }
-}
-)) { throw 'Hands-on UX polish native acceptance is incomplete' }
+ if (-not (Select-String -Path $log -Pattern '^UX_WORKFLOW_ACCEPTANCE=PASS$') -or -not (Select-String -Path $log -Pattern '^WUX13=PASS$')) { throw 'v0.4.2 UX workflow acceptance is incomplete' }
+ if (-not (Select-String -Path $log -Pattern '^HANDS_ON_UX_POLISH=PASS$')) { throw 'Hands-on UX polish native acceptance is incomplete' }
  $null = & "$PSScriptRoot/ValidateRelativeEvidence.ps1" -OutputDir $OutputDir
  $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
  if ($acceptance.version -ne '0.4.2' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 core acceptance evidence' }
