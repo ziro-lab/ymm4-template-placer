@@ -61,13 +61,11 @@ internal static partial class NativeProof
             var choice = row.Choices.Single(x => x.Template?.Name == template.Name);
             Assert(!ReferenceEquals(choice.Template!.Face.Character, canonical) && ReferenceEquals(choice.Template.Face.Character, detached),
                 "Template fidelity fixture reaches the expression dropdown with a detached same-name source Character");
-            await SelectInDropdown(view, row, template.Name);
-            row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
-            Assert(row.SelectedChoice.Template?.Name == template.Name && vm.PlaceCommand.CanExecute(null),
-                "Template fidelity actual expression ComboBox selection makes placement executable");
             var baseline = Signature(timeline);
-            await ClickPlace(view);
-            Assert(!vm.HasError, "Template fidelity actual expression-list placement command completes: " + vm.Status);
+            await SelectInDropdown(view, row, template.Name); await Idle();
+            row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
+            Assert(row.SelectedChoice.Template?.Name == template.Name && !vm.PlaceCommand.CanExecute(null) && !vm.HasError,
+                "Template fidelity actual expression ComboBox selection immediately applies the managed expression: " + vm.Status);
 
             var placedFace = timeline.Items.OfType<TachieFaceItem>().Single();
             var placedEffect = placedFace.TachieFaceEffects.Single();
@@ -81,8 +79,9 @@ internal static partial class NativeProof
                 "Template fidelity preserves a non-default effect parameter value across clone, Character rebind and actual expression placement");
             Assert(sourceFace.Frame == 30 && sourceFace.Layer == 5 && sourceFace.Length == 30 && sourceFace.Remark == "fidelity-source",
                 "Template fidelity leaves source geometry and user content unchanged");
+            vm.CloseExpressionTrialSession();
             await undo.UndoAsync(); await Idle();
-            Assert(Signature(timeline) == baseline, "Template fidelity expression-list placement remains one native Undo");
+            Assert(Signature(timeline) == baseline, "Template fidelity immediate expression trial remains one native Undo");
             Log("TEMPLATE_FIDELITY=PASS");
         }
         finally
