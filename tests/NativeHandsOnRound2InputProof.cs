@@ -16,6 +16,8 @@ internal static partial class NativeProof
     // OS input belongs only in the isolated proof build, never the distributable.
     private static class Round2Input
     {
+        [StructLayout(LayoutKind.Sequential)] internal struct CursorPoint { public int X; public int Y; }
+        [DllImport("user32.dll")] internal static extern bool GetCursorPos(out CursorPoint point);
         [DllImport("user32.dll")] internal static extern bool SetCursorPos(int x, int y);
         [DllImport("user32.dll")] internal static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr extra);
         [DllImport("user32.dll")] internal static extern void keybd_event(byte key, byte scan, uint flags, UIntPtr extra);
@@ -23,7 +25,11 @@ internal static partial class NativeProof
     private static async Task NativeRound2Click(Point screen)
     {
         Assert(Round2Input.SetCursorPos((int)Math.Round(screen.X), (int)Math.Round(screen.Y)), "R2-A OS cursor moved to verified host hit point");
-        await Task.Delay(50); Round2Input.mouse_event(0x0002, 0, 0, 0, UIntPtr.Zero);
+        await Task.Delay(100);
+        Assert(Round2Input.GetCursorPos(out var actual) && Math.Abs(actual.X - screen.X) <= 1 && Math.Abs(actual.Y - screen.Y) <= 1,
+            $"R2-A requested pointer ({screen.X:0},{screen.Y:0}) is physically reachable; actual=({actual.X},{actual.Y})");
+        Log($"R2-A input-before-down: over={Mouse.DirectlyOver?.GetType().FullName}; captured={Mouse.Captured?.GetType().FullName}; route={TimelinePointerIntentClassifier.Classify(Mouse.DirectlyOver as DependencyObject)}");
+        Round2Input.mouse_event(0x0002, 0, 0, 0, UIntPtr.Zero);
         await Task.Delay(50); Round2Input.mouse_event(0x0004, 0, 0, 0, UIntPtr.Zero);
         await Task.Delay(100); await Idle();
     }
@@ -35,6 +41,7 @@ internal static partial class NativeProof
         var legacy = vm.UseLegacyWorkspace; var visibility = view.Visibility;
         var host = Application.Current.Windows.Cast<Window>().Single(x => x.DataContext?.GetType().FullName == "YukkuriMovieMaker.ViewModels.MainViewModel");
         var width = host.Width; var height = host.Height; var windowState = host.WindowState;
+        var left = host.Left; var top = host.Top;
         var voice = new VoiceItem(new Character { Name = "Round2 Input" }) { Frame = 10, Length = 60, Layer = 1 };
         var trace = new List<object>(); var genericTransitions = 0;
         var beforeHostSelectionObserved = false; var selectionAfterHostObserved = false;
@@ -48,11 +55,12 @@ internal static partial class NativeProof
         };
         PreProcessInputEventHandler beforeInput = (_, e) =>
         {
-            if (e.StagingItem.Input is MouseButtonEventArgs mouse && mouse.RoutedEvent == Mouse.PreviewMouseDownEvent &&
-                TimelinePointerIntentClassifier.Classify(mouse.MouseDevice.DirectlyOver as DependencyObject) == TimelinePointerOrigin.Item)
+            if (e.StagingItem.Input is MouseButtonEventArgs mouse && mouse.RoutedEvent == Mouse.PreviewMouseDownEvent)
             {
-                beforeHostSelectionObserved |= vm.PlacementContext == PlacementContext.Generic;
-                trace.Add(new { kind = "item-preview", context = vm.PlacementContext.ToString(), selected = timeline.SelectedItems.Count, frame = timeline.CurrentFrame });
+                var origin = TimelinePointerIntentClassifier.Classify(mouse.MouseDevice.DirectlyOver as DependencyObject);
+                if (origin == TimelinePointerOrigin.Item) beforeHostSelectionObserved |= vm.PlacementContext == PlacementContext.Generic;
+                trace.Add(new { kind = "pointer-preview", origin = origin.ToString(), source = mouse.MouseDevice.DirectlyOver?.GetType().FullName,
+                    context = vm.PlacementContext.ToString(), selected = timeline.SelectedItems.Count, frame = timeline.CurrentFrame });
             }
         };
         PropertyChangedEventHandler selectionChanged = (_, e) =>
@@ -63,7 +71,10 @@ internal static partial class NativeProof
         try
         {
             vm.SetLegacyWorkspace(false); view.PaletteTab.IsSelected = true; view.Visibility = Visibility.Visible;
-            host.WindowState = WindowState.Normal; host.Width = 1280; host.Height = 900; host.Activate();
+            // Hosted runner desktops may be smaller than 1280x900. Maximize into the real
+            // working area instead of clicking logical coordinates outside the physical screen.
+            host.WindowState = WindowState.Normal; host.Left = SystemParameters.WorkArea.Left; host.Top = SystemParameters.WorkArea.Top;
+            host.WindowState = WindowState.Maximized; host.Activate(); await Task.Delay(150); await Idle();
             timeline.Items = [voice]; timeline.SelectedItems = []; timeline.CurrentFrame = 0;
             timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record(); vm.ActivateIntentWorkspace(); await Idle();
             Assert(TimelinePointerIntentClassifier.IsPinnedHost && new PlacerToolPlugin().DefaultGroupName == YukkuriMovieMaker.Resources.Localization.Texts.ToolGroupUtilityName,
@@ -161,7 +172,7 @@ internal static partial class NativeProof
             InputManager.Current.PreProcessInput -= beforeInput; vm.PropertyChanged -= contextChanged; timeline.PropertyChanged -= selectionChanged;
             vm.EndTimelinePointer(); timeline.Items = items; timeline.SelectedItems = selection; timeline.CurrentFrame = frame;
             timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record(); view.Visibility = visibility;
-            host.Width = width; host.Height = height; host.WindowState = windowState;
+            host.WindowState = WindowState.Normal; host.Width = width; host.Height = height; host.Left = left; host.Top = top; host.WindowState = windowState;
             vm.SetLegacyWorkspace(legacy); vm.Refresh();
         }
     }
