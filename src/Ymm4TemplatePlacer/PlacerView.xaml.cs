@@ -9,12 +9,14 @@ namespace Ymm4TemplatePlacer;
 public partial class PlacerView : UserControl
 {
     private PlacerViewModel? observedViewModel;
+    internal TimelinePointerInputRouter PointerRouter { get; }
     private TransientWorkSnapshot? suspendedWork;
     public IntentPalettePanel RelativePaletteSurface { get; } = new();
     public IntentSettingsPanel RelativeSettingsSurface { get; } = new();
     private readonly Button returnToRelative = new() { Content = "相対パレットへ戻る", Padding = new Thickness(10, 4, 10, 4), Visibility = Visibility.Collapsed };
     public PlacerView()
     {
+        PointerRouter = new(origin => observedViewModel?.ObserveTimelinePointer(origin), () => observedViewModel?.EndTimelinePointer());
         InitializeComponent();
         returnToRelative.SetBinding(Button.CommandProperty, new Binding(nameof(PlacerViewModel.CloseLegacyWorkspaceCommand)));
         if (RefreshButton.Parent is DockPanel header) { DockPanel.SetDock(returnToRelative, Dock.Right); header.Children.Insert(0, returnToRelative); }
@@ -58,18 +60,22 @@ public partial class PlacerView : UserControl
     private void ObserveViewModel(PlacerViewModel? next)
     {
         if (ReferenceEquals(observedViewModel, next)) return;
+        PointerRouter.Detach();
         if (observedViewModel != null)
         {
+            observedViewModel.IntentWorkspaceDeactivated -= WorkspaceDeactivated;
             observedViewModel.PropertyChanged -= ViewModelChanged; observedViewModel.IntentSettingsRequested -= OpenIntentSettings;
             observedViewModel.DeactivateIntentWorkspace(); observedViewModel.SetActiveTask("");
         }
         observedViewModel = next;
         if (next != null)
         {
+            next.IntentWorkspaceDeactivated += WorkspaceDeactivated;
             next.PropertyChanged += ViewModelChanged; next.IntentSettingsRequested += OpenIntentSettings;
             next.ActivateIntentWorkspace(); next.AttachRelativeExpressionBindings(); RefreshWorkspaceSurface();
         }
     }
+    private void WorkspaceDeactivated(object? sender, EventArgs e) => PointerRouter.Detach();
     private void OpenIntentSettings(object? sender, EventArgs e) { observedViewModel?.BeginIntentSettings(); SelectionTab.IsSelected = true; }
     private void RefreshWorkspaceSurface()
     {
@@ -85,13 +91,16 @@ public partial class PlacerView : UserControl
     }
     private void ViewModelChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PlacerViewModel.SceneName)) { observedViewModel?.ActivateIntentWorkspace(); observedViewModel?.RefreshExpressionVocabulary(); }
+        if (e.PropertyName == nameof(PlacerViewModel.SceneName)) { SynchronizeTask(); observedViewModel?.RefreshExpressionVocabulary(); }
         if (e.PropertyName == nameof(PlacerViewModel.UseLegacyWorkspace)) RefreshWorkspaceSurface();
         if (e.PropertyName is nameof(PlacerViewModel.IsAddingTemplate) or nameof(PlacerViewModel.IsManagingTemplates)) SynchronizeTask();
     }
     private void SynchronizeTask()
     {
-        var vm = observedViewModel; if (vm == null) return;
+        var vm = observedViewModel;
+        if (vm == null) { PointerRouter.Detach(); return; }
+        if (IsLoaded && IsVisible) vm.ActivateIntentWorkspace(); else vm.DeactivateIntentWorkspace();
+        if (IsLoaded && IsVisible && vm.HasIntentTimeline && !vm.UseLegacyWorkspace) PointerRouter.Attach(); else PointerRouter.Detach();
         vm.SetActiveTask(!IsLoaded || !IsVisible ? "" : vm.IsManagingTemplates ? "library" : vm.IsAddingTemplate ? "adding" :
             SelectionTab.IsSelected ? vm.UseLegacyWorkspace ? "selection" : "intent-settings" : ExpressionTab.IsSelected ? "expression" : "palette");
     }

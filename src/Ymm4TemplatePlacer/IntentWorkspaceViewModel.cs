@@ -77,7 +77,7 @@ public sealed partial class PlacerViewModel
         }
         if (!ReferenceEquals(intentTimeline, timeline))
         {
-            DeactivateIntentWorkspace(); intentTimeline = timeline;
+            DeactivateIntentWorkspace(); intentTimeline = timeline; InitializePlacementContext();
             if (intentTimeline != null) intentTimeline.PropertyChanged += IntentTimelineChanged;
         }
         RefreshIntentWorkspace();
@@ -85,18 +85,22 @@ public sealed partial class PlacerViewModel
     public void DeactivateIntentWorkspace()
     {
         if (intentTimeline != null) intentTimeline.PropertyChanged -= IntentTimelineChanged;
-        intentTimeline = null;
+        intentTimeline = null; EndTimelinePointer();
+        IntentWorkspaceDeactivated?.Invoke(this, EventArgs.Empty);
     }
     public void SetLegacyWorkspace(bool value)
     {
         if (useLegacyWorkspace == value) return;
         CloseExpressionTrialSession();
+        EndTimelinePointer();
         useLegacyWorkspace = value; OnPropertyChanged(nameof(UseLegacyWorkspace));
         // Workspace navigation is session-only. Switching tabs/modes must not save settings or mutate Timeline.
         RefreshIntentWorkspace();
     }
     private void IntentTimelineChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (!ReferenceEquals(sender, intentTimeline)) return;
+        if (e.PropertyName is nameof(Timeline.SelectedItems) or nameof(Timeline.SelectedItem)) ObserveContextSelection();
         if (e.PropertyName is nameof(Timeline.SelectedItems) or nameof(Timeline.SelectedItem) or nameof(Timeline.Items))
         {
             RefreshIntentWorkspace();
