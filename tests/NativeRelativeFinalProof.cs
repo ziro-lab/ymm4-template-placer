@@ -86,16 +86,16 @@ internal static partial class NativeProof
                 "R14 dense native tiles wrap into multiple columns and rows at 360px without horizontal clipping");
             SaveNamedView(view, "v042-palette-360.png");
             timeline.SelectedItems = [voice, next]; await Idle();
-            Assert(vm.IntentTabs.Count == 1 && vm.IntentTabs[0].Name == "範囲に配置", "R12 explicit uniform multi-selection displays only its configured range intent");
+            Assert(vm.IntentSets.Count == 1 && vm.IntentSets[0].Targeted?.Intent == "範囲に配置", "R12 explicit uniform multi-selection displays only its configured range intent");
             var tile = vm.IntentTiles.Single(); var count = vm.ExecuteIntentTile(tile);
             var added = timeline.Items.Single(x => x != voice && x != next && x != text);
             Assert(count == 1 && added.Frame == 100 && added.Length == 140 && added.Layer == 19,
                 "R12 the common action surface executes a saved multi-selection range without a separate Selection Placement mode");
             await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == signature, "R12 one Undo restores a multi-selection range tile action");
             timeline.SelectedItems = [voice, text]; await Idle();
-            Assert(vm.IntentTabs.Count == 1 && vm.IntentTabs[0].Name == "組み合わせ用", "R12 exact mixed-type context exposes only a deliberately configured mixed intent");
+            Assert(vm.IntentSets.Count == 1 && vm.IntentSets[0].Targeted?.Intent == "組み合わせ用", "R12 exact mixed-type context exposes only a deliberately configured mixed intent");
             timeline.SelectedItems = [text]; await Idle();
-            Assert(vm.IntentTabs.Count == 0 && vm.IntentTiles.Count == 0, "R12 no ordinary selection path falls back to the complete unrelated Library");
+            Assert(vm.IntentSets.Count == 0 && vm.IntentTiles.Count == 0, "R12 no ordinary selection path falls back to the complete unrelated Library");
             timeline.SelectedItems = [voice]; await Idle();
             view.Width = 640; view.Height = 640; await Idle(); SaveNamedView(view, "v042-palette-640.png");
             view.ExpressionTab.IsSelected = true; await Idle(); SaveNamedView(view, "v042-expression.png");
@@ -132,7 +132,7 @@ internal static partial class NativeProof
             ("Versioned settings; deterministic roundtrip; future/corrupt/external-modified settings are not overwritten", "R4/R11/R14; NativeIntentCoreProof/NativeRelativeFinalProof"),
             ("Face-template first bootstrap, explicit new import, deletion ownership and same-character multiple sets", "R5/R11"),
             ("Actual runtime types, logical CharacterName and explicit uniform/mixed cardinalities", "R6/R7/R12"),
-            ("Selection -> intent -> set -> single native tile click; tab/set changes are zero-write", "R7; NativeIntentSurfaceProof"),
+            ("Context -> Set -> single native tile click; Set changes are zero-write (Round 2 supersedes the separate Intent navigation layer)", "R7; NativeIntentSurfaceProof"),
             ("Finite anchors/neighbors, previous/next same type/character, MaxGap, ranges/boundaries and explicit fallback", "R8; NativeIntentCoreProof"),
             ("Do Not Place is zero-write; saved relations and stale-plan guards use the shared PlacementPlan gateway", "R8/R9_CORE/R9_UI"),
             ("Expression list and normal Palette share ordered live sources; detached same-name Character is not suppressed", "R10; NativeRelativeExpressionProof"),
@@ -140,7 +140,7 @@ internal static partial class NativeProof
             ("Palette-backed bundle Excel export/import retains source identity and does not mutate Timeline", "R10; NativeRelativeExpressionProof"),
             ("Settings isolated from execution; real bulk registration/reorder/duplicate/invalid text/discard/save", "R11/R14; NativeIntentSettingsProof/NativeRelativeFinalProof"),
             ("Dense wrapping tiles at 360px; sticky settings save; no ordinary unrelated full-Library selection", "R7/R11/R12/R14"),
-            ("Mental-model UI: selection -> intent -> optional Set -> one tile; progressive Settings; natural-language summary; actionable empty states", "RELATIVE_UIUX; NativeRelativeUiUxProof"),
+            ("Mental-model UI: context -> optional Set -> one tile; progressive Settings; natural-language summary; actionable empty states", "RELATIVE_UIUX; NativeRelativeUiUxProof"),
             ("Expression-list Template fidelity rebinds detached same-name Face clones to the target Voice Character while preserving cloned effect identity/value and source Template", "TEMPLATE_FIDELITY; NativeTemplateFidelityProof"),
             ("Weak bundle associations; selected non-Face member/Voice scope; whole-bundle manual Resync and native Undo", "R13; NativeRelativeExpressionProof"),
             ("Missing/copied/source-changed bundle refuses reconstruction; legacy Resync cannot mutate one relative member", "R13; NativeRelativeExpressionProof"),

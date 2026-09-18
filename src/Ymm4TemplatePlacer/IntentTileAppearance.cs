@@ -9,8 +9,10 @@ public static class IntentTileAppearance
     {
         if (!string.IsNullOrWhiteSpace(entry.DisplayAlias)) return entry.DisplayAlias.Trim();
         var name = source?.Source.Name ?? "参照切れ";
-        return name.Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).LastOrDefault() ?? name;
+        return ShortName(name);
     }
+    public static string ShortName(string name) =>
+        name.Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).LastOrDefault() ?? name;
     public static IReadOnlyList<string> Distinguish(IReadOnlyList<string> labels)
     {
         var counts = labels.GroupBy(x => x, StringComparer.Ordinal).ToDictionary(x => x.Key, x => x.Count(), StringComparer.Ordinal);

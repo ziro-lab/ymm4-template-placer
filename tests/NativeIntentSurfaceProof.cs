@@ -43,15 +43,15 @@ internal static partial class NativeProof
             view.PaletteTab.IsSelected = true; await Idle();
             Assert(ReferenceEquals(view.PaletteTab.Content, view.RelativePaletteSurface) && !ReferenceEquals(view.SelectionTab.Content, view.SelectionSurface),
                 "R7 normal workspace uses intent actions; legacy Selection/Library decisions are not the normal action surface");
-            Assert(vm.IntentTabs.Select(x => x.Name).SequenceEqual(new[] { "表情", "リアクション" }), "R7 runtime Voice context exposes only matching editing-intent tabs");
-            Assert(vm.IntentSets.Count == 2 && vm.HasIntentSets && vm.IntentTiles.Count == 1, "R7 one intent contains multiple independent sets and concrete tiles");
+            Assert(vm.IntentSets.Select(x => x.Targeted!.Intent).SequenceEqual(new[] { "表情", "表情", "リアクション" }), "R7/R2-B runtime Voice context directly exposes every matching Set, retaining compatibility Intent values");
+            Assert(vm.IntentSets.Count == 3 && vm.HasIntentSets && vm.IntentTiles.Count == 1, "R7/R2-B distinct purposes remain independent Sets with concrete tiles on one surface");
             var signature = Signature(timeline); var settingsJson = JsonSerializer.Serialize(fixture);
             view.RelativePaletteSurface.IntentSetPicker.SelectedIndex = 1; await Idle();
-            Assert(vm.SelectedIntentSet?.Palette.Id == second.Id && Signature(timeline) == signature && JsonSerializer.Serialize(fixture) == settingsJson,
+            Assert(vm.SelectedIntentSet?.Targeted?.Id == second.Id && Signature(timeline) == signature && JsonSerializer.Serialize(fixture) == settingsJson,
                 "R7 native set selection changes neither Timeline nor persisted settings model");
-            view.RelativePaletteSurface.IntentTabStrip.SelectedIndex = 1; await Idle();
-            Assert(vm.SelectedIntentTab?.Name == "リアクション" && Signature(timeline) == signature, "R7 native intent-tab selection is zero-write");
-            view.RelativePaletteSurface.IntentTabStrip.SelectedIndex = 0; await Idle();
+            view.RelativePaletteSurface.IntentSetSegments.SelectedIndex = 2; await Idle();
+            Assert(vm.SelectedIntentSet?.Id == otherIntent.Id && Signature(timeline) == signature, "R7/R2-B native Set selection crosses old Intent categories without any Timeline write");
+            view.RelativePaletteSurface.IntentSetSegments.SelectedIndex = 0; await Idle();
             view.RelativePaletteSurface.UpdateLayout();
             Button? FindButton(DependencyObject root)
             {
@@ -71,9 +71,9 @@ internal static partial class NativeProof
                 "R7 native one-click tile invokes saved relative span/up relation without profile/layer input");
             await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == signature, "R7 one native Undo restores a complete tile action");
             timeline.Items = timeline.Items.Add(face); timeline.SelectedItems = [face]; await Idle();
-            Assert(vm.IntentTabs.Count == 1 && vm.IntentTabs[0].Name == "装飾", "R7 changing runtime item type immediately replaces the available intent tabs");
+            Assert(vm.IntentSets.Count == 1 && vm.IntentSets[0].Targeted?.Intent == "装飾", "R7/R2-B changing runtime type replaces applicable Sets without showing unrelated actions");
             timeline.SelectedItems = [voice, face]; await Idle();
-            Assert(vm.IntentTabs.Count == 0 && vm.IntentTiles.Count == 0, "R7 mixed selection never guesses a common palette");
+            Assert(vm.IntentSets.Count == 0 && vm.IntentTiles.Count == 0, "R7 mixed selection never guesses a common palette");
             timeline.SelectedItems = []; await Idle();
             Assert(vm.IntentTiles.Count == 0 && vm.IntentNotice.Contains("選択"), "R7 no selection presents a useful empty state, not the full Library");
             timeline.SelectedItems = [voice]; await Idle();

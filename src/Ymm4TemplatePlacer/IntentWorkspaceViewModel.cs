@@ -6,49 +6,31 @@ using YukkuriMovieMaker.Project.Items;
 
 namespace Ymm4TemplatePlacer;
 
-public sealed record IntentTabChoice(string Name);
-public sealed record IntentSetChoice(IntentPalette Palette, string Label);
-public sealed record IntentTileChoice(Guid PaletteId, IntentEntry Entry, string Label, string Detail, bool Available)
-{
-    public System.Windows.Media.Brush Accent => IntentTileAppearance.Accent(Entry.Color);
-    public string AppearanceDescription => $"{Detail}\n色ラベル: {IntentTileAppearance.ColorName(Entry.Color)}";
-}
-
 public sealed partial class PlacerViewModel
 {
     private Timeline? intentTimeline;
     private bool intentInitialized, refreshingIntent, intentExecuting, useLegacyWorkspace;
     private string intentNotice = "", intentContextKey = "", intentContextTitle = "", intentContextDetail = "", intentEmptyActionLabel = "新しく設定する";
-    private IntentTabChoice? selectedIntentTab;
     private IntentSetChoice? selectedIntentSet;
     private readonly Dictionary<string, Guid> lastIntentSets = new(StringComparer.Ordinal);
-    public ObservableCollection<IntentTabChoice> IntentTabs { get; } = [];
     public ObservableCollection<IntentSetChoice> IntentSets { get; } = [];
     public ObservableCollection<IntentTileChoice> IntentTiles { get; } = [];
     public bool UseLegacyWorkspace => useLegacyWorkspace;
     public bool HasIntentSets => IntentSets.Count > 1;
+    public bool ShowSingleSetName => IntentSets.Count == 1;
     public bool UseSegmentedIntentSets => IntentSets.Count is > 1 and <= 4;
     public bool UseIntentSetPicker => IntentSets.Count > 4;
-    public bool ShowIntentEmptyAction => timeline != null && timeline.SelectedItems.Count > 0 && (IntentTabs.Count == 0 || IntentTiles.Count == 0);
+    public bool ShowIntentEmptyAction => timeline != null && (PlacementContext == PlacementContext.Generic || timeline.SelectedItems.Count > 0) && IntentTiles.Count == 0;
     public string IntentNotice { get => intentNotice; private set => Set(ref intentNotice, value); }
     public string IntentContextTitle { get => intentContextTitle; private set => Set(ref intentContextTitle, value); }
     public string IntentContextDetail { get => intentContextDetail; private set => Set(ref intentContextDetail, value); }
     public string IntentEmptyActionLabel { get => intentEmptyActionLabel; private set => Set(ref intentEmptyActionLabel, value); }
-    public IntentTabChoice? SelectedIntentTab
-    {
-        get => selectedIntentTab;
-        set
-        {
-            if (refreshingIntent || value == null || !IntentTabs.Contains(value) || value == selectedIntentTab) return;
-            selectedIntentTab = value; OnPropertyChanged(); RefreshIntentSets(null);
-        }
-    }
     public IntentSetChoice? SelectedIntentSet
     {
         get => selectedIntentSet;
         set
         {
-            if (refreshingIntent || value == null || !IntentSets.Contains(value) || value == selectedIntentSet) return;
+            if (refreshingIntent || value == null || !IntentSets.Any(x => ReferenceEquals(x, value)) || value == selectedIntentSet) return;
             selectedIntentSet = value; OnPropertyChanged(); RememberIntentSet(); RefreshIntentTiles();
         }
     }
@@ -68,7 +50,7 @@ public sealed partial class PlacerViewModel
             InitializeIntentTileOrdering();
             useLegacyWorkspace = settings.LegacyWorkspace;
             ExecuteIntentTileCommand = new ActionCommand(x => !intentExecuting && settingsAvailable && undo != null &&
-                x is IntentTileChoice tile && tile.Available && IntentTiles.Contains(tile),
+                x is IntentTileChoice tile && tile.Available && IntentTiles.Any(x => ReferenceEquals(x, tile)),
                 x => Guard(() => ExecuteIntentTile((IntentTileChoice)x!)));
             OpenIntentSettingsCommand = new ActionCommand(_ => true, _ => IntentSettingsRequested?.Invoke(this, EventArgs.Empty));
             OpenLegacyWorkspaceCommand = new ActionCommand(_ => true, _ => SetLegacyWorkspace(true));
@@ -119,10 +101,27 @@ public sealed partial class PlacerViewModel
                 settings = initial.Settings; // In-memory only, until an explicit successful settings operation.
                 if (initial.Diagnostics.Count > 0) IntentNotice = string.Join("\n", initial.Diagnostics);
             }
-            var preferred = selectedIntentSet?.Palette.Id;
-            IntentTabs.Clear(); IntentSets.Clear(); IntentTiles.Clear(); selectedIntentTab = null; selectedIntentSet = null;
+            var preferred = selectedIntentSet?.Id;
+            IntentSets.Clear(); IntentTiles.Clear(); selectedIntentSet = null;
             UpdateIntentContext(null);
             if (!settingsAvailable) { IntentNotice = LibraryNotice; return; }
+            if (timeline != null && PlacementContext == PlacementContext.Generic)
+            {
+                if (intentContextKey != "generic") preferred = lastIntentSets.GetValueOrDefault("generic");
+                intentContextKey = "generic";
+                IntentContextTitle = "汎用 · 時間位置";
+                IntentContextDetail = "再生位置に、テンプレートの長さで配置";
+                var styles = settings.Palettes.Where(x => x.Kind == PaletteKind.Style).ToArray();
+                foreach (var palette in styles)
+                {
+                    var peers = styles.Where(x => x.Name == palette.Name).ToArray();
+                    var label = peers.Length > 1 ? $"{palette.Name} ({Array.IndexOf(peers, palette) + 1})" : palette.Name;
+                    IntentSets.Add(new(palette, label));
+                }
+                ChooseIntentSet(preferred);
+                if (IntentSets.Count == 0) IntentNotice = "汎用セットがまだありません。設定から追加してください。";
+                return;
+            }
             if (timeline == null || timeline.SelectedItems.Count == 0)
             {
                 IntentNotice = "タイムラインで編集したいアイテムを選択してください。";
@@ -135,79 +134,82 @@ public sealed partial class PlacerViewModel
             if (nextKey != intentContextKey) preferred = lastIntentSets.GetValueOrDefault(nextKey);
             intentContextKey = nextKey;
             var applicable = settings.IntentPalettes.Where(x => x.Target.Matches(context)).ToArray();
-            foreach (var name in applicable.Select(x => x.Intent).Distinct(StringComparer.Ordinal)) IntentTabs.Add(new(name));
             var chosen = applicable.FirstOrDefault(x => x.Id == preferred) ?? applicable.FirstOrDefault();
-            selectedIntentTab = IntentTabs.FirstOrDefault(x => x.Name == chosen?.Intent);
             IntentNotice = chosen == null ? NoIntentMessage(context) : "";
             IntentEmptyActionLabel = chosen == null ? "新しく設定する" : "演出を追加する";
             FillIntentSets(applicable, chosen?.Id);
         }
         catch (Exception ex)
         {
-            IntentTabs.Clear(); IntentSets.Clear(); IntentTiles.Clear(); selectedIntentTab = null; selectedIntentSet = null;
+            IntentSets.Clear(); IntentTiles.Clear(); selectedIntentSet = null;
             IntentNotice = ex.GetBaseException().Message;
         }
         finally
         {
             refreshingIntent = false;
-            OnPropertyChanged(nameof(SelectedIntentTab)); OnPropertyChanged(nameof(SelectedIntentSet));
+            OnPropertyChanged(nameof(SelectedIntentSet));
             RaiseIntentSurfaceState(); ExecuteIntentTileCommand?.RaiseCanExecuteChanged();
         }
-    }
-    private void RefreshIntentSets(Guid? preferred)
-    {
-        if (timeline == null) return;
-        refreshingIntent = true;
-        try
-        {
-            var context = IntentSelectionContext.Capture(timeline);
-            FillIntentSets(settings.IntentPalettes.Where(x => x.Target.Matches(context)).ToArray(), preferred);
-        }
-        finally { refreshingIntent = false; }
-        OnPropertyChanged(nameof(SelectedIntentSet)); RaiseIntentSurfaceState();
     }
     private void FillIntentSets(IReadOnlyList<IntentPalette> applicable, Guid? preferred)
     {
         IntentSets.Clear();
-        var sets = applicable.Where(x => x.Intent == selectedIntentTab?.Name).ToArray();
+        var sets = applicable.ToArray(); // Set names carry the purpose; Intent remains serialized compatibility metadata.
         foreach (var palette in sets)
         {
             var peers = sets.Where(x => x.Name == palette.Name).ToArray();
             var label = peers.Length > 1 ? $"{palette.Name} ({Array.IndexOf(peers, palette) + 1})" : palette.Name;
             IntentSets.Add(new(palette, label));
         }
-        selectedIntentSet = IntentSets.FirstOrDefault(x => x.Palette.Id == preferred) ?? IntentSets.FirstOrDefault();
+        ChooseIntentSet(preferred);
+    }
+    private void ChooseIntentSet(Guid? preferred)
+    {
+        selectedIntentSet = IntentSets.FirstOrDefault(x => x.Id == preferred) ?? IntentSets.FirstOrDefault();
         RememberIntentSet(); RefreshIntentTiles(); RaiseIntentSurfaceState();
     }
     private void RememberIntentSet()
     {
         if (selectedIntentSet == null) return;
         if (lastIntentSets.Count >= 256 && !lastIntentSets.ContainsKey(intentContextKey)) lastIntentSets.Remove(lastIntentSets.Keys.First());
-        lastIntentSets[intentContextKey] = selectedIntentSet.Palette.Id;
+        lastIntentSets[intentContextKey] = selectedIntentSet.Id;
     }
     private void RefreshIntentTiles()
     {
         IntentTiles.Clear();
-        var palette = selectedIntentSet?.Palette;
-        if (palette == null) { RaiseIntentSurfaceState(); return; }
-        var labels = palette.Entries.Select(x => IntentTileAppearance.Label(x, settings.Library.SingleOrDefault(e => e.Id == x.LibraryEntryId))).ToArray();
-        var displayLabels = IntentTileAppearance.Distinguish(labels);
-        for (var index = 0; index < palette.Entries.Count; index++)
+        if (selectedIntentSet == null) { RaiseIntentSurfaceState(); ExecuteIntentTileCommand?.RaiseCanExecuteChanged(); return; }
+        if (selectedIntentSet.Targeted is { } palette)
         {
-            var tile = palette.Entries[index];
-            var source = settings.Library.SingleOrDefault(x => x.Id == tile.LibraryEntryId);
-            var label = displayLabels[index];
-            if (source == null) { IntentTiles.Add(new(palette.Id, tile, label, "設定で元テンプレートの登録を確認してください。", false)); continue; }
-            var resolution = TemplateResolver.ResolveBundle(source);
-            IntentTiles.Add(new(palette.Id, tile, label, resolution.Bundle == null ? resolution.Message : source.Source.Name, resolution.Bundle != null));
+            var labels = palette.Entries.Select(x => IntentTileAppearance.Label(x, settings.Library.SingleOrDefault(e => e.Id == x.LibraryEntryId))).ToArray();
+            var displayLabels = IntentTileAppearance.Distinguish(labels);
+            for (var index = 0; index < palette.Entries.Count; index++)
+            {
+                var tile = palette.Entries[index];
+                var source = settings.Library.SingleOrDefault(x => x.Id == tile.LibraryEntryId);
+                if (source == null) { IntentTiles.Add(new(palette.Id, tile, displayLabels[index], "設定で元テンプレートの登録を確認してください。", false)); continue; }
+                var resolution = TemplateResolver.ResolveBundle(source);
+                IntentTiles.Add(new(palette.Id, tile, displayLabels[index], resolution.Bundle == null ? resolution.Message : source.Source.Name, resolution.Bundle != null));
+            }
         }
-        IntentNotice = IntentTiles.Count == 0 ? $"「{selectedIntentTab?.Name ?? "この用途"}」の「{selectedIntentSet?.Label ?? "このセット"}」には演出がありません。" : "";
-        IntentEmptyActionLabel = IntentTiles.Count == 0 ? "演出を追加する" : "新しく設定する";
+        else if (selectedIntentSet?.Generic is { } style)
+        {
+            var entries = style.LibraryEntryIds.Select(id => (Id: id, Source: settings.Library.SingleOrDefault(x => x.Id == id))).ToArray();
+            var labels = IntentTileAppearance.Distinguish(entries.Select(x => IntentTileAppearance.ShortName(x.Source?.DisplayName ?? "参照切れ")).ToArray());
+            for (var index = 0; index < entries.Length; index++)
+            {
+                var item = entries[index]; var source = item.Source;
+                if (source == null) { IntentTiles.Add(new(style.Id, item.Id, labels[index], "元テンプレートの登録を確認してください。", false)); continue; }
+                var resolution = TemplateResolver.Resolve(source);
+                IntentTiles.Add(new(style.Id, source.Id, labels[index], resolution.Item == null ? resolution.Message : source.Source.Name, resolution.Item != null));
+            }
+        }
+        IntentNotice = IntentTiles.Count == 0 ? $"「{selectedIntentSet?.Label ?? "このセット"}」には演出がありません。" : "";
+        IntentEmptyActionLabel = IntentTiles.Count == 0 && selectedIntentSet != null ? "演出を追加する" : "新しく設定する";
         RaiseIntentSurfaceState(); ExecuteIntentTileCommand?.RaiseCanExecuteChanged();
     }
     private void RaiseIntentSurfaceState()
     {
-        OnPropertyChanged(nameof(HasIntentSets)); OnPropertyChanged(nameof(UseSegmentedIntentSets)); OnPropertyChanged(nameof(UseIntentSetPicker));
+        OnPropertyChanged(nameof(HasIntentSets)); OnPropertyChanged(nameof(ShowSingleSetName)); OnPropertyChanged(nameof(UseSegmentedIntentSets)); OnPropertyChanged(nameof(UseIntentSetPicker));
         OnPropertyChanged(nameof(ShowIntentEmptyAction));
     }
     private void UpdateIntentContext(IntentSelectionContext? context)
@@ -237,17 +239,34 @@ public sealed partial class PlacerViewModel
     }
     public int ExecuteIntentTile(IntentTileChoice tile)
     {
-        if (intentExecuting || !IntentTiles.Contains(tile) || selectedIntentSet?.Palette.Id != tile.PaletteId)
+        if (intentExecuting || !IntentTiles.Any(x => ReferenceEquals(x, tile)) || selectedIntentSet?.Id != tile.PaletteId)
             throw new InvalidOperationException("表示しているセットが変わりました。演出を選び直してください。");
         if (undo == null || !settingsAvailable) throw new InvalidOperationException("現在は配置できません。Toolと設定を確認してください。");
         intentExecuting = true; ExecuteIntentTileCommand.RaiseCanExecuteChanged();
         try
         {
-            var palette = settings.IntentPalettes.Single(x => x.Id == tile.PaletteId);
-            var plan = IntentExecutionPlan.Create(RequireTimeline(), palette, tile.Entry, settings.Library);
-            var count = plan.Commit(RequireTimeline(), undo);
+            int count; bool skipped = false;
+            if (tile.IsGeneric)
+            {
+                if (PlacementContext != PlacementContext.Generic || selectedIntentSet?.Generic == null)
+                    throw new InvalidOperationException("時間位置用のセットを選び直してください。");
+                var palette = settings.Palettes.Single(x => x.Id == tile.PaletteId && x.Kind == PaletteKind.Style);
+                if (!palette.LibraryEntryIds.Contains(tile.LibraryEntryId)) throw new InvalidOperationException("セットの演出が変更されました。");
+                var source = settings.Library.Single(x => x.Id == tile.LibraryEntryId);
+                var plan = QuickDropPlanner.Create(RequireTimeline(), source, palette, CharacterLayerMode.Base);
+                count = plan.Plan.Commit(RequireTimeline(), undo);
+            }
+            else
+            {
+                if (PlacementContext != PlacementContext.Selection || selectedIntentSet?.Targeted == null)
+                    throw new InvalidOperationException("対象アイテム用のセットを選び直してください。");
+                var palette = settings.IntentPalettes.Single(x => x.Id == tile.PaletteId);
+                var entry = palette.Entries.Single(x => x.LibraryEntryId == tile.LibraryEntryId);
+                var plan = IntentExecutionPlan.Create(RequireTimeline(), palette, entry, settings.Library);
+                count = plan.Commit(RequireTimeline(), undo); skipped = plan.Skipped;
+            }
             HasError = false;
-            Status = plan.Skipped ? "必要な周囲アイテムが見つからないため、この設定では配置しません。" : $"「{tile.Label}」を配置しました。YMM4の「元に戻す」1回で戻せます。";
+            Status = skipped ? "必要な周囲アイテムが見つからないため、この設定では配置しません。" : $"「{tile.Label}」を配置しました。YMM4の「元に戻す」1回で戻せます。";
             return count;
         }
         finally { intentExecuting = false; RefreshIntentWorkspace(); }

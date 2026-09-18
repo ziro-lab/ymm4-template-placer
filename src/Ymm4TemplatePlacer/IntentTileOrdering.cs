@@ -15,7 +15,7 @@ public sealed partial class PlacerViewModel
     }
     private bool CanReorderIntentTile(IntentTileReorderRequest request) => settingsAvailable && !intentExecuting &&
         IntentSettings?.HasChanges != true && request.Source.PaletteId == request.Target.PaletteId &&
-        selectedIntentSet?.Palette.Id == request.Source.PaletteId &&
+        selectedIntentSet?.Targeted?.Id == request.Source.PaletteId &&
         IntentTiles.Any(x => ReferenceEquals(x, request.Source)) && IntentTiles.Any(x => ReferenceEquals(x, request.Target));
 
     public void ReorderIntentTile(IntentTileReorderRequest request)
@@ -25,8 +25,8 @@ public sealed partial class PlacerViewModel
         if (ReferenceEquals(request.Source, request.Target)) return;
         var next = PlacerSettingsStore.Copy(settings);
         var palette = next.IntentPalettes.Single(x => x.Id == request.Source.PaletteId);
-        var from = palette.Entries.FindIndex(x => x.LibraryEntryId == request.Source.Entry.LibraryEntryId);
-        var to = palette.Entries.FindIndex(x => x.LibraryEntryId == request.Target.Entry.LibraryEntryId);
+        var from = palette.Entries.FindIndex(x => x.LibraryEntryId == request.Source.LibraryEntryId);
+        var to = palette.Entries.FindIndex(x => x.LibraryEntryId == request.Target.LibraryEntryId);
         if (from < 0 || to < 0) throw new InvalidOperationException("並び替える演出が見つかりません。セットを開き直してください。");
         var entry = palette.Entries[from]; palette.Entries.RemoveAt(from); palette.Entries.Insert(to, entry);
         // Same protected store and same Entries order. No Timeline access / second order store.

@@ -10,12 +10,9 @@
    <TextBlock x:Name="IntentContextDetailText" Text="{Binding IntentContextDetail}" Opacity="0.72" TextTrimming="CharacterEllipsis" ToolTip="{Binding IntentContextDetail}"/>
   </StackPanel>
 
-  <ListBox x:Name="IntentTabStrip" Grid.Row="1" ItemsSource="{Binding IntentTabs}" SelectedItem="{Binding SelectedIntentTab,Mode=TwoWay}"
-   BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch"
-   AutomationProperties.Name="このアイテムでやりたいこと">
-   <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
-   <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" Padding="12,7" FontWeight="SemiBold"/></DataTemplate></ListBox.ItemTemplate>
-  </ListBox>
+  <TextBlock x:Name="SingleSetTitleText" Grid.Row="1" Text="{Binding SelectedIntentSet.Label}" FontWeight="SemiBold" Margin="4,0,4,6">
+   <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowSingleSetName}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+  </TextBlock>
 
   <DockPanel x:Name="IntentSetRow" Grid.Row="2" Margin="2,6,2,8">
    <DockPanel.Style><Style TargetType="DockPanel"><Style.Triggers><DataTrigger Binding="{Binding HasIntentSets}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></DockPanel.Style>

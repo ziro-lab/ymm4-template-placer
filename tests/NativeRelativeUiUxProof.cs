@@ -55,12 +55,12 @@ internal static partial class NativeProof
             Assert(vm.IntentContextTitle == "UX Character ボイス" && vm.IntentContextDetail.Contains("今日も", StringComparison.Ordinal) &&
                 surface.IntentContextTitleText.IsVisible && surface.IntentContextDetailText.IsVisible,
                 "UIUX selection itself exposes the editing context before any feature choice");
-            Assert(vm.IntentTabs.Select(x => x.Name).SequenceEqual(new[] { "表情", "リアクション" }) && surface.IntentTabStrip.Items.Count == 2,
-                "UIUX selected Voice shows only meaningful editing intents for that context");
-            Assert(vm.IntentSets.Count == 2 && vm.UseSegmentedIntentSets && !vm.UseIntentSetPicker && surface.IntentSetSegments.IsVisible && !surface.IntentSetPicker.IsVisible,
+            Assert(vm.IntentSets.Select(x => x.Id).SequenceEqual(new[] { first.Id, second.Id, reaction.Id }) && surface.FindName("IntentTabStrip") == null,
+                "UIUX/R2-B selected Voice shows applicable Sets directly and has no separate Intent control");
+            Assert(vm.IntentSets.Count == 3 && vm.UseSegmentedIntentSets && !vm.UseIntentSetPicker && surface.IntentSetSegments.IsVisible && !surface.IntentSetPicker.IsVisible,
                 "UIUX a small high-frequency set choice is always-visible segments instead of a ComboBox");
             var beforeSwitch = Signature(timeline); surface.IntentSetSegments.SelectedIndex = 1; await Idle();
-            Assert(vm.SelectedIntentSet?.Palette.Id == second.Id && Signature(timeline) == beforeSwitch,
+            Assert(vm.SelectedIntentSet?.Targeted?.Id == second.Id && Signature(timeline) == beforeSwitch,
                 "UIUX switching a set is one visible operation and is zero-write");
             surface.IntentSetSegments.SelectedIndex = 0; await Idle();
             var tileButton = RelativeVisuals(surface.IntentTileItems).OfType<Button>().First(x => x.CommandParameter is IntentTileChoice);
@@ -74,21 +74,21 @@ internal static partial class NativeProof
 
             view.Width = 360; view.Height = 360; await Idle(); surface.UpdateLayout();
             var narrowButtons = RelativeVisuals(surface.IntentTileItems).OfType<Button>().Where(x => x.CommandParameter is IntentTileChoice).ToArray();
-            Assert(surface.IntentContextHeader.IsVisible && surface.IntentTabStrip.IsVisible && surface.IntentSetSegments.IsVisible && narrowButtons.Length == 2 &&
+            Assert(surface.IntentContextHeader.IsVisible && surface.IntentSetSegments.IsVisible && narrowButtons.Length == 2 &&
                 narrowButtons.All(x => x.ActualWidth > 0 && x.TranslatePoint(new Point(x.ActualWidth, 0), surface).X <= surface.ActualWidth + 1) &&
                 surface.IntentSettingsButton.IsVisible && surface.IntentSettingsButton.ActualHeight > 0 &&
                 surface.IntentSettingsButton.TranslatePoint(new Point(surface.IntentSettingsButton.ActualWidth, surface.IntentSettingsButton.ActualHeight), surface).Y <= surface.ActualHeight + 1,
-                "UIUX 360px keeps context, intent, segmented set, action tiles and settings discovery understandable");
+                "UIUX 360px keeps context, directly segmented Sets, action tiles and settings discovery understandable");
             SaveNamedView(view, "v042-uiux-edit-360.png");
 
             var many = PlacerSettingsStore.Copy(fixture);
             many.IntentPalettes = Enumerable.Range(1, 5).Select(i => first with { Id = Guid.NewGuid(), Name = $"セット{i}" }).Append(reaction).ToList();
             field.SetValue(vm, many); vm.Refresh(); view.PaletteTab.IsSelected = true; await Idle();
-            Assert(vm.IntentSets.Count == 5 && !vm.UseSegmentedIntentSets && vm.UseIntentSetPicker && !surface.IntentSetSegments.IsVisible && surface.IntentSetPicker.IsVisible,
+            Assert(vm.IntentSets.Count == 6 && !vm.UseSegmentedIntentSets && vm.UseIntentSetPicker && !surface.IntentSetSegments.IsVisible && surface.IntentSetPicker.IsVisible,
                 "UIUX many sets deliberately collapse to a ComboBox instead of overflowing the high-frequency surface");
 
             field.SetValue(vm, fixture); timeline.SelectedItems = [text]; vm.Refresh(); view.PaletteTab.IsSelected = true; await Idle();
-            Assert(vm.IntentTabs.Count == 0 && vm.IntentTiles.Count == 0 && vm.ShowIntentEmptyAction && surface.IntentEmptyActionButton.IsVisible &&
+            Assert(vm.IntentSets.Count == 0 && vm.IntentTiles.Count == 0 && vm.ShowIntentEmptyAction && surface.IntentEmptyActionButton.IsVisible &&
                 surface.IntentEmptyActionButton.Content?.ToString() == "新しく設定する" && vm.IntentNotice.Contains("まだありません", StringComparison.Ordinal),
                 "UIUX an unsupported selected Item gives an actionable empty state rather than an unrelated Library");
             var emptySignature = Signature(timeline); await InvokeSelectionButton(surface.IntentEmptyActionButton);
@@ -144,14 +144,14 @@ internal static partial class NativeProof
 
             var checks = new (string Requirement, string Evidence)[]
             {
-                ("Item selection exposes only meaningful intents for the current context", "Voice context native intent filtering"),
+                ("Item selection exposes only matching Sets for the current context", "Voice context native Set filtering; legacy Intent metadata retained"),
                 ("Normal top-level wording is task-oriented instead of Palette / Selection Placement taxonomy", "native Placement / bulk expression / Settings headers"),
-                ("Intent and Set are distinct levels; small Sets are visible segments and large Sets have deliberate fallback", "native 2-set and 5-set layouts"),
+                ("Context leads directly to Set; small Sets are visible segments and large Sets have deliberate fallback (Round 2 supersedes Intent navigation)", "native 3-set and 6-set layouts"),
                 ("One tile directly performs the saved placement without Profile, Preset, Layer, Relation or Template-management decisions", "native tile command plus normal-surface control audit"),
                 ("Settings progressive disclosure follows duration, neighbor, fallback, boundary, Character and type-match choices", "native visibility transitions"),
                 ("Settings expose a natural-language relation summary and keep rare parameters under collapsed Advanced sections", "native summary plus Advanced state"),
                 ("Unsupported contexts provide an actionable recovery and never fall back to an unrelated Library", "native Text empty-state -> Text set creation"),
-                ("360px keeps context, intent, Set, tiles, Settings discovery and Save understandable", "native narrow edit/settings captures"),
+                ("360px keeps context, Set, tiles, Settings discovery and Save understandable", "native narrow edit/settings captures"),
                 ("Raw runtime type keys and internal IDs stay out of ordinary user-facing controls", "native Settings control metadata audit"),
                 ("Navigation and Set switching are zero-write; tile placement retains shared planning and one native Undo", "native signatures and Undo proof plus retained regression ladder")
             };
