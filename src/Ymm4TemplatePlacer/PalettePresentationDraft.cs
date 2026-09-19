@@ -26,6 +26,7 @@ public sealed class PalettePresentationDraft : IntentEditable
     public ActionCommand AddShortcutCommand { get; }
     public ActionCommand RemoveShortcutCommand { get; }
     public IReadOnlyList<IntentOption<PaletteLayoutMode>> LayoutModes { get; } = [new(PaletteLayoutMode.Auto,"自動（Auto）"), new(PaletteLayoutMode.Fixed,"列数を固定")];
+    public IReadOnlyList<IntentOption<ExpressionViewportFollow>> ViewportModes { get; } = [new(ExpressionViewportFollow.Off,"追従しない"), new(ExpressionViewportFollow.WhenOutside,"画面外の時だけ追従"), new(ExpressionViewportFollow.Always,"常に追従")];
     public PalettePresentationDraft(PalettePresentationSettings source)
     {
         layout = source.LayoutMode; columns = source.FixedColumns.ToString(CultureInfo.InvariantCulture); enabled = source.ShortcutsEnabled; follow = source.ViewportFollow;

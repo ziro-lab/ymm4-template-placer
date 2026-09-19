@@ -14,7 +14,7 @@ internal static class ManagedIntentExpressionReader
 {
     public static ManagedIntentExpressionAssociation Read(Timeline timeline, VoiceItem voice)
     {
-        if (!timeline.Items.Contains(voice)) throw new InvalidOperationException("対象音声が現在のシーンにありません。シーンを更新してください。");
+        if (!timeline.Items.Contains(voice)) throw new InvalidOperationException("対象音声が現在のシーンにありません。メンテナンスから一覧を読み直してください。");
         var voiceState = AssociationTag.Voice(voice.Remark, out var serial);
         if (voiceState == AssociationTagState.Invalid) throw new InvalidOperationException("対象音声の関連付けタグが不正または重複しています。推測して変更しません。");
         if (voiceState == AssociationTagState.None) return new(null, null);
@@ -141,7 +141,7 @@ internal sealed class IntentExpressionMutation
         var voice = row.Target.Voice;
         if (!timeline.Items.Contains(voice) || voice.CharacterName != row.Target.Character || voice.Frame != row.Target.Frame ||
             voice.Length != row.Target.Length || voice.Layer != row.Target.Layer || (voice.Serif ?? "") != row.Target.Serif)
-            throw new InvalidOperationException("対象音声が「表情をまとめて」を開いた時点から変更されています。シーンを更新してください。");
+            throw new InvalidOperationException("対象音声が「表情をまとめて」を開いた時点から変更されています。メンテナンスから一覧を読み直してください。");
     }
 }
 
@@ -210,14 +210,7 @@ public sealed partial class PlacerViewModel
             timeline.Items.Contains(row.Target.Voice), x => Guard(() => NavigateExpressionRow((AssignmentRow)x!)));
         OnPropertyChanged(nameof(NavigateExpressionRowCommand));
     }
-    private void NavigateExpressionRow(AssignmentRow row)
-    {
-        var current = RequireTimeline(); CloseExpressionTrialSession();
-        if (!Rows.Contains(row) || !current.Items.Contains(row.Target.Voice))
-            throw new InvalidOperationException("対象音声が現在のシーンにありません。シーンを更新してください。");
-        current.CurrentFrame = row.Target.Frame; current.SelectItem(row.Target.Voice);
-        HasError = false; Status = $"No.{row.No} の音声位置へ移動しました。";
-    }
+    private void NavigateExpressionRow(AssignmentRow row) => QueueExpressionNavigation(row);
     internal void SetExpressionRowContext(AssignmentRow? row)
     {
         if (expressionTrialSession.IsOpen && !ReferenceEquals(expressionTrialSession.Voice, row?.Target.Voice)) CloseExpressionTrialSession();

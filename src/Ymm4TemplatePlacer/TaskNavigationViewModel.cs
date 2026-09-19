@@ -18,7 +18,7 @@ public sealed partial class PlacerViewModel
         var changed = activeTask != task;
         if (changed)
         {
-            if (task != "expression") CloseExpressionTrialSession();
+            if (task != "expression") { CancelExpressionNavigation(); CloseExpressionTrialSession(); }
             activeTask = task;
             if (!HasError && !keepPartialStatus) Status = "";
         }

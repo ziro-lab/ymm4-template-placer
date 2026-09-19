@@ -65,7 +65,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     {
         var changed = !ReferenceEquals(timeline, info.Timeline);
         var preservePending = changed && HasProtectedPendingVoiceWork();
-        if (changed) { CloseExpressionTrialSession(); DetachTimelineV04(); DeactivateIntentWorkspace(); deferredExpressionResume = null; }
+        if (changed) { CancelExpressionNavigation(); CloseExpressionTrialSession(); DetachTimelineV04(); DeactivateIntentWorkspace(); deferredExpressionResume = null; }
         timeline = info.Timeline; undo = info.UndoRedoManager;
         if (changed)
         {
@@ -190,7 +190,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public void Dispose()
     {
         disposedTransientWork ??= CaptureTransientWork(); PropertyChanged -= ExpressionModeChanged;
-        DisposeVoiceFreshness();
+        CancelExpressionNavigation(true); DisposeVoiceFreshness();
         CloseExpressionTrialSession(); expressionTrialSession.Dispose();
         DeactivateIntentWorkspace(); DetachTimelineV04(); DisposeV04();
         if (intentSettings != null) intentSettings.Edited -= IntentSettingsEdited;

@@ -2,7 +2,7 @@
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:local="clr-namespace:Ymm4TemplatePlacer">
- <Expander Header="パレット共通の表示・キー設定" Margin="0,5" DataContext="{Binding IntentSettings.Presentation}">
+ <Expander Header="表示・操作の共通設定" Margin="0,5" DataContext="{Binding IntentSettings.Presentation}">
   <StackPanel Margin="8,5">
    <WrapPanel>
     <ComboBox x:Name="LayoutPicker" ItemsSource="{Binding LayoutModes}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding LayoutMode,Mode=TwoWay}" MinWidth="120" AutomationProperties.Name="パレットの列の並べ方"/>
@@ -22,6 +22,8 @@
     </DataTemplate></ItemsControl.ItemTemplate>
    </ItemsControl>
    <Button x:Name="AddPositionShortcut" Content="＋ キーを設定" Command="{Binding AddShortcutCommand}" HorizontalAlignment="Left"/>
+   <TextBlock Text="音声行を選んだ時のタイムライン追従" Margin="0,10,0,3"/>
+   <ComboBox x:Name="ViewportFollowPicker" ItemsSource="{Binding ViewportModes}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding ViewportFollow,Mode=TwoWay}" HorizontalAlignment="Left" MinWidth="170" AutomationProperties.Name="音声行を選んだ時のタイムライン追従"/>
   </StackPanel>
  </Expander>
 </UserControl>
