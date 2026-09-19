@@ -48,7 +48,8 @@ public sealed partial class PlacerViewModel
         {
             intentInitialized = true;
             InitializeIntentTileOrdering(); InitializeIntentTileEditing();
-            useLegacyWorkspace = settings.LegacyWorkspace;
+            // Preserve the compatibility flag as data; hidden legacy UI is never the normal startup.
+            useLegacyWorkspace = false;
             ExecuteIntentTileCommand = new ActionCommand(x => !intentExecuting && tileEditState == IntentTileEditState.Idle && settingsAvailable && undo != null &&
                 x is IntentTileChoice tile && tile.Available && IntentTiles.Any(x => ReferenceEquals(x, tile)),
                 x => Guard(() => ExecuteIntentTile((IntentTileChoice)x!)));

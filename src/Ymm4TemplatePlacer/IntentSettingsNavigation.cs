@@ -24,12 +24,18 @@ public sealed partial class IntentSettingsSession
     public bool CanCreateForContext => SelectedItemContext != null;
     public bool IsGenericContext => SelectedItemContext?.IsGeneric == true;
     public bool IsTargetedContext => !IsGenericContext;
-    public IEnumerable<IntentSettingsItemContext> CommonItemContexts => ItemContexts.Where(x => x.IsGeneric)
-        .Concat(CommonSettingsTypes.Select(type => IntentSelectionContext.TypeKey(type)).SelectMany(key => ItemContexts.Where(x => !x.IsCurrentSelection && x.Key == key)));
+    public IEnumerable<IntentSettingsItemContext> DirectItemContexts => ItemContexts.Where(x => !x.IsCurrentSelection);
+    // Retained API alias; the normal surface no longer splits types into common/other.
+    public IEnumerable<IntentSettingsItemContext> CommonItemContexts => DirectItemContexts;
     public IEnumerable<IntentSettingsItemContext> OtherItemContexts => ItemContexts.Where(x => !IsCommonContext(x));
     private static bool IsCommonContext(IntentSettingsItemContext x) => x.IsGeneric || (!x.IsCurrentSelection &&
         x.TypeKeys.Any(k => CommonSettingsTypes.Select(IntentSelectionContext.TypeKey).Contains(k, StringComparer.Ordinal)));
-    private static readonly Type[] CommonSettingsTypes = [typeof(VoiceItem), typeof(TextItem), typeof(ImageItem), typeof(ShapeItem)];
+    // Fixed known public type names only, not an assembly-wide discovery/reflection scan.
+    // Missing host types are omitted; loaded third-party types are supplied by the root.
+    private static readonly Type[] CommonSettingsTypes = new[] { "VoiceItem", "TextItem", "ImageItem", "ShapeItem", "AudioItem", "VideoItem",
+        "TachieFaceItem", "TachieItem", "TransitionItem", "FrameBufferItem", "EffectItem" }
+        .Select(name => typeof(VoiceItem).Assembly.GetType("YukkuriMovieMaker.Project.Items." + name, false))
+        .OfType<Type>().Where(type => type.IsVisible && !type.IsAbstract && typeof(IItem).IsAssignableFrom(type)).ToArray();
     public string ContextNotice => SelectedItemContext == null ? "タイムラインでアイテムを選ぶか、対象の種類を選んでください。" : SelectedItemContext.IsCurrentSelection ? SelectedItemContext.Label : "";
     public IntentSettingsItemContext? SelectedItemContext
     {
@@ -94,7 +100,7 @@ public sealed partial class IntentSettingsSession
         refreshingNavigation = false;
         RefreshNavigation(); NavigationChanged(nameof(SelectedItemContext));
         Raise(nameof(CanCreateForContext)); Raise(nameof(ContextNotice));
-        Raise(nameof(CommonItemContexts)); Raise(nameof(OtherItemContexts));
+        Raise(nameof(DirectItemContexts)); Raise(nameof(CommonItemContexts)); Raise(nameof(OtherItemContexts));
         Raise(nameof(IsGenericContext)); Raise(nameof(IsTargetedContext));
     }
     private bool MatchesContext(IntentPaletteDraft draft)

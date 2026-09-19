@@ -14,7 +14,7 @@
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <StackPanel Grid.Row="0">
    <StackPanel x:Name="ItemFirstContextPanel">
-    <ItemsControl x:Name="SettingsTargetButtons" ItemsSource="{Binding IntentSettings.CommonItemContexts}" AutomationProperties.Name="Setを使う対象">
+    <ItemsControl x:Name="SettingsTargetButtons" ItemsSource="{Binding IntentSettings.DirectItemContexts}" AutomationProperties.Name="Setを使う対象">
      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
      <ItemsControl.ItemTemplate><DataTemplate>
       <Button Content="{Binding Label}" MaxWidth="320" Command="{Binding DataContext.SelectSettingsContextCommand,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" CommandParameter="{Binding}">
@@ -26,11 +26,6 @@
       </Button>
      </DataTemplate></ItemsControl.ItemTemplate>
     </ItemsControl>
-    <Expander x:Name="OtherSettingsTargets" Header="その他の種類" Margin="0,1,0,3">
-     <ItemsControl ItemsSource="{Binding IntentSettings.OtherItemContexts}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-      <ItemsControl.ItemTemplate><DataTemplate><Button Content="{Binding Label}" Command="{Binding DataContext.SelectSettingsContextCommand,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" CommandParameter="{Binding}"/></DataTemplate></ItemsControl.ItemTemplate>
-     </ItemsControl>
-    </Expander>
    </StackPanel>
    <Grid>
     <Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -205,9 +200,6 @@
      </StackPanel>
     </Expander>
     <local:PalettePresentationPanel x:Name="PresentationSettingsSurface"/>
-    <Expander Header="以前の設定・互換操作" Margin="0,8">
-     <Button Content="旧設定・従来の配置を開く" Command="{Binding OpenLegacyWorkspaceCommand}" HorizontalAlignment="Left"/>
-    </Expander>
    </StackPanel>
   </ScrollViewer>
   <StackPanel Grid.Row="2" Margin="0,6,0,0">

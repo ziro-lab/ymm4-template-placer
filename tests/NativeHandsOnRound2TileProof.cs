@@ -182,7 +182,8 @@ internal static partial class NativeProof
                 "R2-D E4/E9 opening exact Set settings preserves an unrelated unsaved draft and performs no save/placement");
             vm.ResetIntentSettings(); view.SelectionTab.IsSelected = true; view.Height = 440;
             var settingsPanel = view.RelativeSettingsSurface; settingsPanel.SourceEditor.IsExpanded = false;
-            settingsPanel.OtherSettingsTargets.IsExpanded = false; settingsPanel.SetManagement.IsExpanded = false; settingsPanel.SettingsScroll.ScrollToTop(); await Idle();
+            // Round 3 exposes all types directly; retain this compact-layout gate without a removed expander.
+            settingsPanel.SetManagement.IsExpanded = false; settingsPanel.SettingsScroll.ScrollToTop(); await Idle();
             Assert(settingsPanel.PalettePicker.ActualWidth > 150 && settingsPanel.SettingsScroll.ViewportHeight > 140 &&
                 settingsPanel.SaveButton.TranslatePoint(new Point(0, settingsPanel.SaveButton.ActualHeight), view).Y <= view.ActualHeight,
                 "R2-D/C narrow Settings uses compact direct targets and a full-width Set picker, retaining a usable scrolling viewport and visible Save");
