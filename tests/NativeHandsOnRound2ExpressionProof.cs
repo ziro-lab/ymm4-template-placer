@@ -81,8 +81,9 @@ internal static partial class NativeProof
                 "R2-E G1/F5/F7 unrelated dirty Set does not block exact atomic replace and never saves the draft");
 
             vm.ResetIntentSettings(); session = vm.IntentSettings!; var exact = session.Palettes.Single(x => x.Id == expression.Id); exact.Name = "表情（未保存）";
-            var beforeBlocked = Signature(timeline); await SelectInDropdown(view, row, sourceA.Name); await Idle();
-            Assert(vm.HasError && vm.Status.Contains("この表情Set", StringComparison.Ordinal) && vm.Status.Contains("表情（未保存）", StringComparison.Ordinal) &&
+            var beforeBlocked = Signature(timeline);
+            combo.SelectedItem = row.Choices.Single(x => x.Template?.Name == sourceA.Name); await Idle();
+            Assert(vm.HasError && row.SelectedChoice.Template?.Name == sourceB.Name && vm.Status.Contains("この表情Set", StringComparison.Ordinal) && vm.Status.Contains("表情（未保存）", StringComparison.Ordinal) &&
                 Signature(timeline) == beforeBlocked && ManagedIntentExpressionReader.Read(timeline, voice).Bundle?.Descriptor.Entry == lb.Id,
                 "R2-E G3/G4/G8 exact dirty Set blocks before mutation with affected Set name and zero writes");
 
