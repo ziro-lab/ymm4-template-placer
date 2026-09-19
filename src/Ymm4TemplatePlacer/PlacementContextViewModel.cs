@@ -9,6 +9,7 @@ public sealed partial class PlacerViewModel
     private bool pendingItemPointer;
     private YukkuriMovieMaker.Project.Timeline? placementContextTimeline;
     public PlacementContext PlacementContext => placementContext;
+    public string PlacementContextCompatibilityNotice => TimelinePointerIntentClassifier.DependencyNotice;
 
     private void InitializePlacementContext()
     {

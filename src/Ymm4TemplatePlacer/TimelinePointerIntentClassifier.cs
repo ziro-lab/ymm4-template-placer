@@ -10,8 +10,9 @@ namespace Ymm4TemplatePlacer;
 public enum TimelinePointerOrigin { Unknown, Item, TimelineBackground, Ruler }
 public enum PlacementContext { Generic, Selection }
 
-// This is an exact-host input adapter, not a semantic Timeline API. No property lookup,
-// private API, selection mutation or geometry belongs here. Unknown routes stay unknown.
+// This is a bounded host-input adapter, not a semantic Timeline API. It is verified on
+// YMM4 4.55.1.1 but intentionally not version-gated: compatible newer hosts keep working.
+// No property lookup, private API, selection mutation or geometry belongs here. Unknown routes stay unknown.
 internal static class TimelinePointerIntentClassifier
 {
     internal const string TimelineViewName = "YukkuriMovieMaker.Views.TimelineView";
@@ -21,12 +22,21 @@ internal static class TimelinePointerIntentClassifier
     internal const string ScaleViewName = "YukkuriMovieMaker.Views.TimelineScaleView";
     internal const string ScaleModelName = "YukkuriMovieMaker.ViewModels.TimelineScaleViewModel";
     private const int MaximumDepth = 32;
-    internal static bool IsPinnedHost => typeof(Timeline).Assembly.GetName().Version == new Version(4, 55, 1, 1);
+    internal static Version HostVersion => typeof(Timeline).Assembly.GetName().Version ?? new Version(0, 0);
+    internal static bool IsPinnedHost => HostVersion == new Version(4, 55, 1, 1);
+    private static readonly string[] RequiredHostTypes =
+        [TimelineViewName, TimelineModelName, ItemViewName, ItemModelName, ScaleViewName, ScaleModelName];
+    internal static bool DependencySurfaceAvailable => DependencySurfaceAvailableFor(name => typeof(Timeline).Assembly.GetType(name, false) != null);
+    internal static bool DependencySurfaceAvailableFor(Func<string, bool> typeExists) => RequiredHostTypes.All(typeExists);
+    internal static string DependencyNotice => DependencySurfaceAvailable ? "" :
+        $"このYMM4 {HostVersion}ではタイムライン連動の依存関係が変更されたため、一部の自動Set切替は使えません。配置・設定・表情操作は引き続き利用できます。";
     internal sealed record Node(string TypeName, string? DataContextName, bool HostType, bool HostDataContext);
 
     public static TimelinePointerOrigin Classify(DependencyObject? source)
     {
-        if (!IsPinnedHost || source == null) return TimelinePointerOrigin.Unknown;
+        // Do not version-gate the adapter. If a newer YMM4 still exposes the same
+        // public WPF route, keep using it. Unknown or changed routes fail safe.
+        if (source == null) return TimelinePointerOrigin.Unknown;
         var route = new List<Node>();
         for (var current = source; current != null && route.Count < MaximumDepth; current = Parent(current))
         {

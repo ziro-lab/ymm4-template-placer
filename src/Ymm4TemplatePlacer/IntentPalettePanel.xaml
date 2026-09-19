@@ -8,6 +8,9 @@
    <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding IntentContextTitle}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
    <TextBlock x:Name="IntentContextTitleText" Text="{Binding IntentContextTitle}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis"/>
    <TextBlock x:Name="IntentContextDetailText" Text="{Binding IntentContextDetail}" Opacity="0.72" TextTrimming="CharacterEllipsis" ToolTip="{Binding IntentContextDetail}"/>
+   <TextBlock x:Name="ContextCompatibilityNoticeText" Text="{Binding PlacementContextCompatibilityNotice}" TextWrapping="Wrap" Margin="0,4,0,0" FontWeight="SemiBold">
+    <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding PlacementContextCompatibilityNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+   </TextBlock>
   </StackPanel>
 
   <TextBlock x:Name="SingleSetTitleText" Grid.Row="1" Text="{Binding SelectedIntentSet.Label}" FontWeight="SemiBold" Margin="4,0,4,6">
