@@ -25,8 +25,13 @@ internal static partial class NativeProof
         var frames = new List<int>();
         PropertyChangedEventHandler changed = (_, e) => { if (e.PropertyName == nameof(Timeline.CurrentFrame) && frames.Count < 40) frames.Add(timeline.CurrentFrame); };
         timeline.PropertyChanged += changed;
-        try { await InvokePreview(preview, "TogglePlayAsync"); await Task.Delay(450); }
-        finally { await InvokePreview(preview, "StopAsync"); timeline.PropertyChanged -= changed; }
+        try
+        {
+            await InvokePreview(preview, "TogglePlayAsync");
+            Log("R3-F public playback StartPosition=" + preview.GetType().GetProperty("StartPosition", BindingFlags.Instance | BindingFlags.Public)?.GetValue(preview));
+            await Task.Delay(650);
+        }
+        finally { timeline.PropertyChanged -= changed; await InvokePreview(preview, "StopAsync"); }
         await Idle(); return frames.ToArray();
     }
     private static async Task Round3RowClick(AssignmentRow row)
@@ -46,16 +51,18 @@ internal static partial class NativeProof
         using var scope = new Round3Fixture(timeline, undo);
         var vm = ViewModel!; var view = View!;
         var character = new Character { Name = "Round3 Navigation" };
-        var first = new VoiceItem(character) { Frame = 180, Length = 90, Layer = 20, Serif = "first" };
-        var middle = new VoiceItem(character) { Frame = 1200, Length = 90, Layer = 20, Serif = "middle" };
-        var last = new VoiceItem(character) { Frame = 6000, Length = 90, Layer = 20, Serif = "last" };
+        var first = new VoiceItem(character) { Frame = 180, Length = 90, Layer = 20 };
+        var middle = new VoiceItem(character) { Frame = 1200, Length = 90, Layer = 20 };
+        var last = new VoiceItem(character) { Frame = 6000, Length = 90, Layer = 20 };
         var extent = new TextItem { Frame = 0, Length = 12000, Layer = 0 };
         var source = scope.AddTemplate("R3F/expression", new TachieFaceItem(character) { Length = 10, Layer = 4 });
         var settings = PlacerSettingsStore.Copy(scope.Original); settings.Library = [source]; settings.Palettes = [];
         settings.IntentPalettes = [new(Guid.NewGuid(), "表情", "表情", new() { ItemTypeKeys = [IntentSelectionContext.TypeKey(typeof(VoiceItem))], CharacterName = character.Name }, new(), [new(source.Id)]) { ExpressionCandidates = true }];
         settings.ExpressionBootstrapComplete = true; settings.ManualCharacterPaletteId = null; settings.ManualStylePaletteId = null;
         settings.Presentation = new();
-        scope.Apply(settings, [first, middle, last, extent], [first], 0);
+        // Playback-origin proof uses the same small, silent scene as the public Lab.
+        // Long-range geometry is added only for the separate viewport checks.
+        scope.Apply(settings, [first], [first], 0);
         view.ExpressionTab.IsSelected = true; await Idle();
         var before = Signature(timeline);
         var host = ExpressionNavigationHost.Resolve();
@@ -80,22 +87,25 @@ internal static partial class NativeProof
         try
         {
             await InvokePreview(host.PreviewOwner!, "StopAsync");
-            await host.SeekAsync!(0); await Task.Delay(150); await Idle();
-            timeline.CurrentFrame = first.Frame; timeline.SelectItem(first); await Task.Delay(150);
+            await host.SeekAsync!(0); await Task.Delay(350); await Idle();
+            timeline.CurrentFrame = first.Frame; timeline.SelectItem(first); await Task.Delay(350);
             var displayedOnly = timeline.CurrentFrame;
             baselinePlayback = await ObservePlaybackStart(timeline, host.PreviewOwner!);
             Log($"R3-F Timeline-only: displayed={displayedOnly}; playback={string.Join(',', baselinePlayback)}");
             Assert(displayedOnly == first.Frame && baselinePlayback.Length > 0 && Math.Abs(baselinePlayback[0] - displayedOnly) > 15,
                 "R3-F actual Timeline-only navigation reproduces stale playback start, not just a visual playhead check");
-            await host.SeekAsync!(0); await Task.Delay(150);
+            await host.SeekAsync!(0); await Task.Delay(350);
             await Round3RowClick(Row(first));
             Round3Assert(timeline.CurrentFrame == first.Frame && timeline.SelectedItems.Count == 1 && ReferenceEquals(timeline.SelectedItems[0], first),
                 "F1", "the actual Voice-row event routes through the root and immediately selects the Voice/start without mutating items");
             Round3Assert(actualSeeks.LastOrDefault() == first.Frame, "F4", "product row navigation seeks Preview to the same current Voice.Frame target");
-            await Task.Delay(150); synchronizedPlayback = await ObservePlaybackStart(timeline, host.PreviewOwner!);
+            await Task.Delay(350); synchronizedPlayback = await ObservePlaybackStart(timeline, host.PreviewOwner!);
             Log($"R3-F product navigation: target={first.Frame}; playback={string.Join(',', synchronizedPlayback)}");
             Round3Assert(synchronizedPlayback.Length > 0 && Math.Abs(synchronizedPlayback[0] - first.Frame) <= 15,
                 "F5", "actual playback after product row navigation begins within 15 frames of the selected Voice");
+            Assert(Signature(timeline) == before, "R3-F product playback-origin proof does not mutate the test Voice");
+            timeline.Items = [first, middle, last, extent]; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
+            vm.Refresh(); await Idle(); before = Signature(timeline);
             view.VoiceGrid.ScrollIntoView(Row(first)); view.VoiceGrid.UpdateLayout(); await Idle();
             var container = (DataGridRow)view.VoiceGrid.ItemContainerGenerator.ContainerFromItem(Row(first));
             var combo = Descendant<ComboBox>(container)!; var seeksBefore = actualSeeks.Count;
