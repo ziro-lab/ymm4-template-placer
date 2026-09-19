@@ -68,7 +68,7 @@ internal static partial class NativeProof
     private static async Task Round2Rename(IntentTileChoice tile, string alias, bool accept)
     {
         Exception? error = null; var exercised = false;
-        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+        _ = Application.Current.Dispatcher.BeginInvoke(new Action(() =>
         {
             IntentTileAliasDialog? dialog = null;
             try
@@ -112,7 +112,7 @@ internal static partial class NativeProof
             fixture.IntentPaletteRevision = 1; fixture.ExpressionBootstrapComplete = true;
             field.SetValue(vm, fixture); timeline.Items = [voice]; timeline.SelectedItems = [voice]; timeline.CurrentFrame = 10; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
             vm.SetLegacyWorkspace(false); vm.ActivateIntentWorkspace(); vm.Refresh(); vm.ResetIntentSettings(); view.PaletteTab.IsSelected = true;
-            window.WindowState = WindowState.Normal; window.Left = SystemParameters.WorkArea.Left + 8; window.Top = SystemParameters.WorkArea.Top + 8;
+            window.WindowState = System.Windows.WindowState.Normal; window.Left = SystemParameters.WorkArea.Left + 8; window.Top = SystemParameters.WorkArea.Top + 8;
             window.Width = Math.Min(600, SystemParameters.WorkArea.Width - 16); window.Height = Math.Min(600, SystemParameters.WorkArea.Height - 16);
             view.Width = 360; view.Height = 360; window.Activate(); await Task.Delay(120); await Idle();
             var signature = Signature(timeline);
@@ -199,7 +199,7 @@ internal static partial class NativeProof
             if (disk == null) File.Delete(PlacerSettingsStore.DefaultPath); else File.WriteAllBytes(PlacerSettingsStore.DefaultPath, disk);
             store.Load(); ItemSettings.Default.Templates.Remove(a); ItemSettings.Default.Templates.Remove(b);
             field.SetValue(vm, original); timeline.Items = items; timeline.SelectedItems = selection; timeline.CurrentFrame = frame; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
-            view.Width = width; view.Height = height; window.WindowState = WindowState.Normal; window.Width = windowWidth; window.Height = windowHeight; window.Left = windowLeft; window.Top = windowTop; window.WindowState = windowState;
+            view.Width = width; view.Height = height; window.WindowState = System.Windows.WindowState.Normal; window.Width = windowWidth; window.Height = windowHeight; window.Left = windowLeft; window.Top = windowTop; window.WindowState = windowState;
             vm.SetLegacyWorkspace(legacy); vm.Refresh(); vm.ResetIntentSettings();
         }
     }
