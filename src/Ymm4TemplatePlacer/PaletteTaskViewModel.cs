@@ -21,7 +21,7 @@ public sealed partial class PlacerViewModel
             Guard(() =>
             {
                 var palette = settings.Palettes.SingleOrDefault(x => x.Id == value.Id)
-                    ?? throw new InvalidOperationException("パレットが削除されています。一覧を［シーン更新］してください。");
+                    ?? throw new InvalidOperationException("パレットが削除されています。［メンテナンス → 一覧を読み直す］を選んでください。");
                 var previous = explicitPaletteSelection;
                 try
                 {

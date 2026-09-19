@@ -15,7 +15,7 @@ public static partial class WorkbookBridge
         foreach (var row in rows)
         {
             if (row.SelectedChoice.Template is FaceTemplate chosen && !templates.Any(x => ReferenceEquals(x.Template, chosen.Template) && x.Name == chosen.Name && x.Character == row.Character))
-                throw Bad("選択したテンプレートが変更されています。［シーン更新］して選び直してください。");
+                throw Bad("選択したテンプレートが変更されています。メンテナンスで一覧を読み直し、選び直してください。");
             foreach (var text in new[] { row.Character, row.Serif, row.SelectedChoice.Template?.Name ?? "" }) ValidateText(text);
         }
         var full = Path.GetFullPath(path);

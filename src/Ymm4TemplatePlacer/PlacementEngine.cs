@@ -16,7 +16,7 @@ public static class PlacementEngine
         if (current.Count != snapshot.Count || snapshot.Select(x => x.Voice).Distinct().Count() != snapshot.Count ||
             snapshot.Any(x => !current.Contains(x.Voice) || x.Voice.CharacterName != x.Character ||
                 x.Voice.Frame != x.Frame || x.Voice.Length != x.Length || x.Voice.Layer != x.Layer || (x.Voice.Serif ?? "") != x.Serif))
-            throw new InvalidOperationException("音声一覧が現在のシーンと一致しません。［シーン更新］を押してください。Excelを使う場合は再出力してください。");
+            throw new InvalidOperationException("音声一覧が現在のシーンと一致しません。メンテナンスの［一覧を読み直す］を選んでください。Excelを使う場合は再出力してください。");
     }
 
     public static TachieFaceItem CloneForVoice(VoiceSnapshot target, FaceTemplate template)
@@ -25,9 +25,9 @@ public static class PlacementEngine
         if (!ItemSettings.Default.Templates.Contains(template.Template) || template.Template.Name != template.Name ||
             items.Length != 1 || items[0] is not TachieFaceItem source ||
             !ReferenceEquals(source, template.Face) || target.Voice.Character == null || !Equals(source.Character, target.Voice.Character))
-            throw new InvalidOperationException("参照テンプレートが変更・削除されています。［シーン更新］またはExcelの再出力を行ってください。");
+            throw new InvalidOperationException("参照テンプレートが変更・削除されています。メンテナンスで一覧を読み直すか、Excelを再出力してください。");
         if (target.Frame < 0 || target.Length <= 0 || (long)target.Frame + target.Length > int.MaxValue)
-            throw new InvalidOperationException("音声の開始位置 / 長さが不正です。YMM4上で修正して［シーン更新］してください。");
+            throw new InvalidOperationException("音声の開始位置 / 長さが不正です。YMM4上で修正したあと、メンテナンスで一覧を読み直してください。");
         var clone = source.GetClone() as TachieFaceItem
             ?? throw new InvalidOperationException("表情テンプレートの複製に失敗しました。");
         if (ReferenceEquals(source, clone) || !Equals(clone.Character, target.Voice.Character))
