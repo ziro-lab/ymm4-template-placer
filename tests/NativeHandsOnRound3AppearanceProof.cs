@@ -32,12 +32,12 @@ internal static partial class NativeProof
     private sealed class Round3Fixture : IDisposable
     {
         private readonly Action restore;
-        private readonly FieldInfo field = typeof(PlacerViewModel).GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        private readonly FieldInfo settingsField = typeof(PlacerViewModel).GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic)!;
         private readonly Timeline timeline;
         private readonly UndoRedoManager undo;
         public PlacerSettings Original { get; }
         public List<ItemTemplate> Templates { get; } = [];
-        public PlacerSettings Current => (PlacerSettings)field.GetValue(ViewModel!)!;
+        public PlacerSettings Current => (PlacerSettings)settingsField.GetValue(ViewModel!)!;
         public Round3Fixture(Timeline timeline, UndoRedoManager undo)
         {
             this.timeline = timeline; this.undo = undo;
@@ -53,14 +53,14 @@ internal static partial class NativeProof
             {
                 foreach (var template in Templates) ItemSettings.Default.Templates.Remove(template);
                 if (disk == null) File.Delete(PlacerSettingsStore.DefaultPath); else File.WriteAllBytes(PlacerSettingsStore.DefaultPath, disk);
-                store.Load(); field.SetValue(vm, Original);
+                store.Load(); settingsField.SetValue(vm, Original);
                 timeline.Items = items; timeline.SelectedItems = selection; timeline.CurrentFrame = frame;
                 timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
-                view.Width = width; view.Height = height; window.WindowState = WindowState.Normal;
+                view.Width = width; view.Height = height; window.WindowState = System.Windows.WindowState.Normal;
                 window.Width = ww; window.Height = wh; window.Left = wl; window.Top = wt; window.WindowState = ws;
                 vm.SetLegacyWorkspace(legacy); vm.Refresh(); vm.ResetIntentSettings();
             };
-            window.WindowState = WindowState.Normal; window.Left = SystemParameters.WorkArea.Left + 8; window.Top = SystemParameters.WorkArea.Top + 8;
+            window.WindowState = System.Windows.WindowState.Normal; window.Left = SystemParameters.WorkArea.Left + 8; window.Top = SystemParameters.WorkArea.Top + 8;
             window.Width = Math.Min(600, SystemParameters.WorkArea.Width - 16); window.Height = Math.Min(600, SystemParameters.WorkArea.Height - 16);
             view.Width = 360; view.Height = 400; window.Activate();
         }
@@ -71,7 +71,7 @@ internal static partial class NativeProof
         }
         public void Apply(PlacerSettings settings, IItem[] items, IItem[] selection, int frame = 10)
         {
-            field.SetValue(ViewModel!, settings);
+            settingsField.SetValue(ViewModel!, settings);
             timeline.Items = [.. items]; timeline.SelectedItems = [.. selection]; timeline.CurrentFrame = frame;
             timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
             var vm = ViewModel!; vm.SetLegacyWorkspace(false); vm.ActivateIntentWorkspace(); vm.Refresh(); vm.ResetIntentSettings();
