@@ -29,6 +29,7 @@ public sealed partial class PlacerViewModel
 internal sealed class PaletteShortcutInputRouter(Func<Key, ModifierKeys, bool> execute) : IDisposable
 {
     private InputManager? manager;
+    private readonly Dictionary<Key, bool> held = [];
     public bool IsAttached => manager != null;
     internal static bool IsEditableOrMenuSource(DependencyObject? source)
     {
@@ -53,19 +54,37 @@ internal sealed class PaletteShortcutInputRouter(Func<Key, ModifierKeys, bool> e
     public void Attach()
     {
         if (manager != null) return;
+        // A key already held while the Tool reopens must not become a fresh placement.
+        held.Clear();
+        foreach (var key in Enum.GetValues<Key>().Where(PositionShortcut.SupportedKey))
+            if (Keyboard.IsKeyDown(key)) held[key] = false;
         manager = InputManager.Current; manager.PreProcessInput += BeforeInput;
     }
     public void Detach()
     {
         if (manager == null) return;
-        manager.PreProcessInput -= BeforeInput; manager = null;
+        manager.PreProcessInput -= BeforeInput; manager = null; held.Clear();
     }
     private void BeforeInput(object sender, PreProcessInputEventArgs e)
     {
-        if (e.StagingItem.Input is not KeyEventArgs key || key.RoutedEvent != Keyboard.PreviewKeyDownEvent || key.Handled || manager == null) return;
+        if (e.StagingItem.Input is not KeyEventArgs key || manager == null) return;
         var value = key.Key == Key.System ? key.SystemKey : key.Key;
-        if (ProcessKey(value, key.KeyboardDevice.Modifiers, key.KeyboardDevice.FocusedElement as DependencyObject,
-            key.IsRepeat, ComponentDispatcher.IsThreadModal, manager.IsInMenuMode)) key.Handled = true;
+        if (key.RoutedEvent == Keyboard.PreviewKeyUpEvent) { held.Remove(value); return; }
+        if (key.RoutedEvent != Keyboard.PreviewKeyDownEvent || !PositionShortcut.SupportedKey(value)) return;
+        // WPF finalizes IsRepeat during PreNotifyInput, AFTER this early admission
+        // point. Track down/up edges here instead of trusting an unfinished flag.
+        var focused = key.KeyboardDevice.FocusedElement as DependencyObject;
+        var modal = ComponentDispatcher.IsThreadModal; var menu = manager.IsInMenuMode;
+        if (held.TryGetValue(value, out var owned))
+        {
+            if (owned && AdmitInput(focused, false, modal, menu)) key.Handled = true;
+            return;
+        }
+        held[value] = false;
+        if (!key.Handled && ProcessKey(value, key.KeyboardDevice.Modifiers, focused, false, modal, menu))
+        {
+            held[value] = true; key.Handled = true;
+        }
     }
     internal bool ProcessKey(Key key, ModifierKeys modifiers, DependencyObject? focused, bool repeat, bool modal, bool menu) =>
         IsAttached && AdmitInput(focused, repeat, modal, menu) && execute(key, modifiers);

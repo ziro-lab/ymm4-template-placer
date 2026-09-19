@@ -87,15 +87,18 @@ internal static partial class NativeProof
         Round3Assert(timeline.Items.Count == 1 && timeline.Items.Single().Length == 12 && metadata == JsonSerializer.Serialize(scope.Current.Presentation.PositionShortcuts),
             "B5", "native drag changes the tile at slot 0, while its global key mapping remains byte-equivalent");
         await undo.UndoAsync(); await Idle();
-        var repeatsObserved = 0;
-        PreProcessInputEventHandler observe = (_, e) =>
+        var repeatsObserved = 0; var downsObserved = 0; var upsObserved = 0;
+        ProcessInputEventHandler observe = (_, e) =>
         {
-            if (e.StagingItem.Input is KeyEventArgs { Key: Key.F8, IsRepeat: true } key && key.RoutedEvent == Keyboard.PreviewKeyDownEvent) repeatsObserved++;
+            if (e.StagingItem.Input is not KeyEventArgs { Key: Key.F8 } key) return;
+            if (key.RoutedEvent == Keyboard.PreviewKeyDownEvent) { downsObserved++; if (key.IsRepeat) repeatsObserved++; }
+            if (key.RoutedEvent == Keyboard.PreviewKeyUpEvent) upsObserved++;
         };
-        InputManager.Current.PreProcessInput += observe;
+        InputManager.Current.PostProcessInput += observe;
         try { await Round3PressKey(Key.F8, 3); }
-        finally { InputManager.Current.PreProcessInput -= observe; }
-        Round3Assert(repeatsObserved > 0 && timeline.Items.Count == 1, "B12", "actual repeated key-down events produce exactly one placement, despite multiple free layers");
+        finally { InputManager.Current.PostProcessInput -= observe; }
+        Log($"R3-B held-key native stream: down={downsObserved}, up={upsObserved}, repeat={repeatsObserved}, placed={timeline.Items.Count}");
+        Round3Assert(downsObserved >= 4 && upsObserved == 1 && repeatsObserved > 0 && timeline.Items.Count == 1, "B12", "actual repeated key-down events produce exactly one placement, despite multiple free layers");
         await undo.UndoAsync(); await Idle();
         var focused = Keyboard.FocusedElement as DependencyObject;
         bool Route(Key key, bool repeat = false, bool modal = false, bool menu = false) => view.ShortcutRouter.ProcessKey(key, ModifierKeys.None, focused, repeat, modal, menu);
