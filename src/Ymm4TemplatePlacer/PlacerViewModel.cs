@@ -64,7 +64,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public void SetTimelineToolInfo(TimelineToolInfo info)
     {
         var changed = !ReferenceEquals(timeline, info.Timeline);
-        if (changed) { CloseExpressionTrialSession(); DetachTimelineV04(); DeactivateIntentWorkspace(); }
+        if (changed) { CloseExpressionTrialSession(); DetachTimelineV04(); DeactivateIntentWorkspace(); deferredExpressionResume = null; }
         timeline = info.Timeline; undo = info.UndoRedoManager;
         if (changed) { AttachTimelineV04(); Guard(Refresh); }
         TryRestoreTransientWork(); UpdateCommands();
@@ -73,7 +73,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     private void ExpressionModeChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(UseLegacyWorkspace)) return;
-        RefreshExpressionVocabulary(); OnPropertyChanged(nameof(UsesRelativeExpressions)); UpdateCommands();
+        RefreshExpressionVocabulary(); TryRestoreDeferredExpressionWork(); OnPropertyChanged(nameof(UsesRelativeExpressions)); UpdateCommands();
     }
     public void RefreshExpressionVocabulary()
     {

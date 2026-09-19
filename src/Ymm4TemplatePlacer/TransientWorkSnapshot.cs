@@ -48,7 +48,11 @@ internal sealed record TransientWorkSnapshot(
     TemplateAdditionWork? TemplateAddition,
     LibraryEditWork LibraryEdit,
     bool AddingTemplate,
-    bool ManagingTemplates);
+    bool ManagingTemplates)
+{
+    public bool LegacyWorkspace { get; init; }
+    public ExpressionResumeWork? DeferredExpressions { get; init; }
+}
 
 internal sealed record PresetDraftState(
     string Name,
@@ -138,7 +142,8 @@ public sealed partial class PlacerViewModel
             LibraryDisplayName, SelectedLibraryCharacter?.Name, IsManagingTemplates);
         return new TransientWorkSnapshot(timeline, assignments, expression, selection,
             selectionEntry?.Id, selectionEntry, palette?.Id, SelectedPaletteEntry?.LibraryEntryId,
-            layer, paletteName, creating, addition, libraryEdit, IsAddingTemplate, IsManagingTemplates);
+            layer, paletteName, creating, addition, libraryEdit, IsAddingTemplate, IsManagingTemplates)
+        { LegacyWorkspace = UseLegacyWorkspace, DeferredExpressions = deferredExpressionResume };
     }
 
     private static bool SameVoice(VoiceSnapshot left, VoiceSnapshot right) => ReferenceEquals(left.Voice, right.Voice) &&
@@ -153,22 +158,7 @@ public sealed partial class PlacerViewModel
         if (!ReferenceEquals(snapshot.Timeline, timeline)) return;
 
         var skipped = 0;
-        var suppressBeforeRestore = suppressExpressionApply; suppressExpressionApply = true;
-        try
-        {
-            foreach (var assignment in snapshot.Assignments)
-            {
-                var row = Rows.SingleOrDefault(x => SameVoice(x.Target, assignment.Target));
-                if (row == null) { skipped++; continue; }
-                if (UsesRelativeExpressions && ExpressionAssociationOwnsSelection(row)) continue;
-                var choice = row.Choices.SingleOrDefault(x => x.Template != null &&
-                    ReferenceEquals(x.Template.Template, assignment.SourceTemplate) && ReferenceEquals(x.Template.Face, assignment.SourceFace) &&
-                    x.Template.Name == assignment.SourceName && x.Template.Character == assignment.SourceCharacter);
-                if (choice == null) { skipped++; continue; }
-                row.SelectedChoice = choice;
-            }
-        }
-        finally { suppressExpressionApply = suppressBeforeRestore; }
+        RestoreOrDeferExpressionWork(snapshot, ref skipped);
 
         if (snapshot.ExpressionDraft is { } expression)
         {
@@ -252,6 +242,11 @@ public sealed partial class PlacerViewModel
         {
             HasError = false;
             Status = $"途中作業の一部を復元できませんでした（{skipped}件）。変更された対象は推測せず復元していません。";
+            keepPartialStatus = true;
+        }
+        else if (deferredExpressionResume != null)
+        {
+            Status = "旧workspaceの未配置選択を保持しています。現在の配置へ自動変換していません。";
             keepPartialStatus = true;
         }
     }
