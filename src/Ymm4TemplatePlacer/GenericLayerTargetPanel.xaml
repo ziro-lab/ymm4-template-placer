@@ -6,7 +6,7 @@
  <StackPanel DataContext="{Binding GenericLayerTarget}" Margin="2,0,2,5">
   <WrapPanel>
    <TextBlock Text="レイヤー" VerticalAlignment="Center" Margin="0,0,5,0"/>
-   <TextBox x:Name="GenericTargetBox" PreviewKeyDown="TargetKeyDown" Text="{Binding Target,UpdateSourceTrigger=PropertyChanged}" Width="48" Padding="4,3" MaxLength="6" ToolTip="{Binding BoundsHint}" AutomationProperties.Name="汎用配置の指定レイヤー"/>
+   <TextBox x:Name="GenericTargetBox" Text="{Binding Target,UpdateSourceTrigger=PropertyChanged}" Width="48" Padding="4,3" MaxLength="6" ToolTip="{Binding BoundsHint}" AutomationProperties.Name="汎用配置の指定レイヤー"/>
    <ComboBox x:Name="GenericOccupiedPicker" ItemsSource="{x:Static local:GenericLayerTargetDraft.Behaviors}" DisplayMemberPath="Name" SelectedValuePath="Value"
     SelectedValue="{Binding OccupiedBehavior,Mode=TwoWay}" Width="144" Margin="5,0" ToolTip="指定レイヤーが塞がっていた場合" AutomationProperties.Name="レイヤーが塞がった時の動作"/>
    <Button x:Name="ApplyGenericLayerButton" Content="適用" Padding="7,3" Command="{Binding DataContext.ApplyGenericLayerTargetCommand,RelativeSource={RelativeSource AncestorType=local:GenericLayerTargetPanel}}" ToolTip="Enterでも適用できます。Escで入力を戻します。"/>
