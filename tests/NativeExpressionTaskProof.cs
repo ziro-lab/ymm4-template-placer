@@ -64,8 +64,8 @@ internal static partial class NativeProof
                 "WUX4 360px keeps the entire Template selector inside the view instead of requiring horizontal exploration");
             Assert(view.ExpressionRowDetail.IsVisible && view.ExpressionSelectedSerif.Text == row.Serif && WithinView(view.ExpressionRowDetail, view),
                 "WUX4 narrow task provides the selected native Serif at full available width");
-            Assert(!view.PlaceButton.IsVisible && WithinView(view.ExpressionMaintenance, view),
-                "WUX4/R2-E normal immediate mode hides the batch-only Place action and keeps maintenance discovery reachable at 360px");
+            Assert((vm.UsesRelativeExpressions ? !view.PlaceButton.IsVisible : WithinView(view.PlaceButton, view)) && WithinView(view.ExpressionMaintenance, view),
+                "WUX4/R2-E 360px preserves the legacy batch Place path while relative immediate mode may hide it; maintenance discovery stays reachable");
             SaveNamedView(view, "ux-expression-narrow.png");
             var missing = vm.Rows.Single(x => x.Character == "TestC");
             view.VoiceGrid.SelectedItem = missing; view.VoiceGrid.ScrollIntoView(missing); await Idle();
