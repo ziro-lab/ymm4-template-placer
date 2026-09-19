@@ -57,5 +57,6 @@ internal static partial class NativeProof
         VerifyRelativeAcceptance();
         VerifyHandsOnRound2Final();
         await VerifyHandsOnRound3Appearance(timeline, undo);
+        await VerifyHandsOnRound3Shortcuts(timeline, undo);
     }
 }

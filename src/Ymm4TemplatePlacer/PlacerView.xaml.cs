@@ -12,6 +12,7 @@ public partial class PlacerView : UserControl
 {
     private PlacerViewModel? observedViewModel;
     internal TimelinePointerInputRouter PointerRouter { get; }
+    internal PaletteShortcutInputRouter ShortcutRouter { get; }
     private TransientWorkSnapshot? suspendedWork;
     public IntentPalettePanel RelativePaletteSurface { get; } = new();
     public IntentSettingsPanel RelativeSettingsSurface { get; } = new();
@@ -19,6 +20,7 @@ public partial class PlacerView : UserControl
     public PlacerView()
     {
         PointerRouter = new(origin => observedViewModel?.ObserveTimelinePointer(origin), () => observedViewModel?.EndTimelinePointer());
+        ShortcutRouter = new((key, modifiers) => observedViewModel?.TryExecutePositionShortcut(key, modifiers) == true);
         InitializeComponent();
         returnToRelative.SetBinding(Button.CommandProperty, new Binding(nameof(PlacerViewModel.CloseLegacyWorkspaceCommand)));
         if (RefreshButton.Parent is DockPanel header) { DockPanel.SetDock(returnToRelative, Dock.Right); header.Children.Insert(0, returnToRelative); }
@@ -68,7 +70,7 @@ public partial class PlacerView : UserControl
     private void ObserveViewModel(PlacerViewModel? next)
     {
         if (ReferenceEquals(observedViewModel, next)) return;
-        PointerRouter.Detach();
+        PointerRouter.Detach(); ShortcutRouter.Detach();
         if (observedViewModel != null)
         {
             observedViewModel.IntentWorkspaceDeactivated -= WorkspaceDeactivated;
@@ -83,7 +85,7 @@ public partial class PlacerView : UserControl
             next.ActivateIntentWorkspace(); next.AttachRelativeExpressionBindings(); RefreshWorkspaceSurface();
         }
     }
-    private void WorkspaceDeactivated(object? sender, EventArgs e) => PointerRouter.Detach();
+    private void WorkspaceDeactivated(object? sender, EventArgs e) { PointerRouter.Detach(); ShortcutRouter.Detach(); }
     private void OpenIntentSettings(object? sender, EventArgs e) { observedViewModel?.BeginIntentSettings(); SelectionTab.IsSelected = true; }
     private void RefreshWorkspaceSurface()
     {
@@ -106,9 +108,10 @@ public partial class PlacerView : UserControl
     private void SynchronizeTask()
     {
         var vm = observedViewModel;
-        if (vm == null) { PointerRouter.Detach(); return; }
+        if (vm == null) { PointerRouter.Detach(); ShortcutRouter.Detach(); return; }
         if (IsLoaded && IsVisible) vm.ActivateIntentWorkspace(); else vm.DeactivateIntentWorkspace();
         if (IsLoaded && IsVisible && vm.HasIntentTimeline && !vm.UseLegacyWorkspace) PointerRouter.Attach(); else PointerRouter.Detach();
+        if (IsLoaded && IsVisible && vm.HasIntentTimeline && !vm.UseLegacyWorkspace && PaletteTab.IsSelected && !vm.IsAddingTemplate && !vm.IsManagingTemplates) ShortcutRouter.Attach(); else ShortcutRouter.Detach();
         vm.SetActiveTask(!IsLoaded || !IsVisible ? "" : vm.IsManagingTemplates ? "library" : vm.IsAddingTemplate ? "adding" :
             SelectionTab.IsSelected ? vm.UseLegacyWorkspace ? "selection" : "intent-settings" : ExpressionTab.IsSelected ? "expression" : "palette");
     }

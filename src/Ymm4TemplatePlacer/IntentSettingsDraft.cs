@@ -265,6 +265,7 @@ public sealed partial class IntentSettingsSession : IntentEditable
     private PlacerSettings working;
     private IntentPaletteDraft? selectedPalette;
     private string sourceSearch = "";
+    public PalettePresentationDraft Presentation { get; }
     public string BaselineFingerprint { get; }
     public bool HasChanges { get; private set; }
     public string ChangeNotice => HasChanges ? "未保存の変更があります" : "";
@@ -277,6 +278,7 @@ public sealed partial class IntentSettingsSession : IntentEditable
     public IntentSettingsSession(PlacerSettings source, IEnumerable<Type> knownTypes, IReadOnlyList<IItem>? selection = null)
     {
         BaselineFingerprint = JsonSerializer.Serialize(source); working = PlacerSettingsStore.Copy(source);
+        Presentation = new(source.Presentation); Presentation.Edited += (_, _) => MarkDirty();
         KnownTypes = knownTypes.Concat(CommonSettingsTypes).Distinct().ToDictionary(IntentSelectionContext.TypeKey, TypeLabel, StringComparer.Ordinal);
         foreach (var palette in source.IntentPalettes) AddDraft(palette);
         selectedPalette = Palettes.FirstOrDefault();
@@ -318,7 +320,7 @@ public sealed partial class IntentSettingsSession : IntentEditable
     public PlacerSettings Build()
     {
         var next = PlacerSettingsStore.Copy(working); next.IntentPalettes = Palettes.Select(x => x.Build()).ToList();
-        ApplyGenericSets(next);
+        ApplyGenericSets(next); next.Presentation = Presentation.Build();
         next.LegacyWorkspace = false; IntentPaletteSettings.Upgrade(next); PlacerSettingsStore.Validate(next); return next;
     }
     public void Create(IReadOnlyList<IItem> selection)

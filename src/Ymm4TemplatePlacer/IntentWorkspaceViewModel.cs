@@ -209,6 +209,7 @@ public sealed partial class PlacerViewModel
     }
     private void RaiseIntentSurfaceState()
     {
+        OnPropertyChanged(nameof(PaletteLayout)); OnPropertyChanged(nameof(PaletteFixedColumns));
         OnPropertyChanged(nameof(HasIntentSets)); OnPropertyChanged(nameof(ShowSingleSetName)); OnPropertyChanged(nameof(UseSegmentedIntentSets)); OnPropertyChanged(nameof(UseIntentSetPicker));
         OnPropertyChanged(nameof(ShowIntentEmptyAction)); UpdateIntentTileEditingCommands();
     }

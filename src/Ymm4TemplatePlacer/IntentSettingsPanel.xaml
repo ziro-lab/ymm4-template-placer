@@ -204,6 +204,7 @@
       <Button Content="新しい表情を取り込む" Command="{Binding RescanIntentExpressionsCommand}" HorizontalAlignment="Left"/>
      </StackPanel>
     </Expander>
+    <local:PalettePresentationPanel x:Name="PresentationSettingsSurface"/>
     <Expander Header="以前の設定・互換操作" Margin="0,8">
      <Button Content="旧設定・従来の配置を開く" Command="{Binding OpenLegacyWorkspaceCommand}" HorizontalAlignment="Left"/>
     </Expander>

@@ -46,6 +46,8 @@ public sealed class PlacerSettingsStore
         if (settings.Library.Any(x => x == null || x.Id == Guid.Empty || x.Source == null || x.Source.Name == null || x.Source.PathJson == null || string.IsNullOrWhiteSpace(x.DisplayName) || x.DisplayName.Length > 256) ||
             settings.Library.Select(x => x.Id).Distinct().Count() != settings.Library.Count)
             throw new InvalidDataException("テンプレート管理のID・参照・表示名が不正です。");
+        if (settings.Presentation == null) throw new InvalidDataException("配置パレットの表示設定が空です。");
+        settings.Presentation.Validate();
         PaletteSettings.Validate(settings);
         ExpressionPresetSettings.Validate(settings);
         SelectionPresetSettings.Validate(settings);
