@@ -10,6 +10,10 @@
   <TextBlock Text="どう置く？" FontWeight="SemiBold"/>
   <TextBlock x:Name="GenericSentenceText" Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,4,0,8"/>
   <CheckBox x:Name="TemplateLayerCheck" Content="テンプレートのレイヤーに置く" IsChecked="{Binding UseTemplateLayer,Mode=TwoWay}"/>
+  <StackPanel Visibility="{Binding UseSavedRange,Converter={StaticResource VisibleWhen}}" Margin="0,5">
+   <TextBlock Text="指定レイヤーが塞がっていたら"/>
+   <ComboBox x:Name="GenericOccupiedBehaviorPicker" ItemsSource="{Binding OccupiedBehaviors}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding OccupiedBehavior,Mode=TwoWay}"/>
+  </StackPanel>
   <Expander x:Name="GenericFineTuning" Header="細かく調整" Margin="0,5">
    <StackPanel Visibility="{Binding UseSavedRange,Converter={StaticResource VisibleWhen}}" Margin="8,5">
     <TextBlock Text="空きレイヤーを探す範囲"/>

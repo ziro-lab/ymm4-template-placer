@@ -47,11 +47,11 @@ public sealed partial class PlacerViewModel
         if (!intentInitialized)
         {
             intentInitialized = true;
-            InitializeIntentTileOrdering(); InitializeIntentTileEditing();
+            InitializeIntentTileOrdering(); InitializeIntentTileEditing(); InitializeGenericLayerTarget();
             // Preserve the compatibility flag as data; hidden legacy UI is never the normal startup.
             useLegacyWorkspace = false;
             ExecuteIntentTileCommand = new ActionCommand(x => !intentExecuting && tileEditState == IntentTileEditState.Idle && settingsAvailable && undo != null &&
-                x is IntentTileChoice tile && tile.Available && IntentTiles.Any(x => ReferenceEquals(x, tile)),
+                x is IntentTileChoice tile && tile.Available && (!tile.IsGeneric || GenericLayerReadyForExecution) && IntentTiles.Any(x => ReferenceEquals(x, tile)),
                 x => Guard(() => ExecuteIntentTile((IntentTileChoice)x!)));
             OpenIntentSettingsCommand = new ActionCommand(_ => true, _ => IntentSettingsRequested?.Invoke(this, EventArgs.Empty));
             OpenLegacyWorkspaceCommand = new ActionCommand(_ => true, _ => SetLegacyWorkspace(true));
@@ -210,6 +210,7 @@ public sealed partial class PlacerViewModel
     }
     private void RaiseIntentSurfaceState()
     {
+        UpdateGenericLayerTarget();
         OnPropertyChanged(nameof(PaletteLayout)); OnPropertyChanged(nameof(PaletteFixedColumns));
         OnPropertyChanged(nameof(HasIntentSets)); OnPropertyChanged(nameof(ShowSingleSetName)); OnPropertyChanged(nameof(UseSegmentedIntentSets)); OnPropertyChanged(nameof(UseIntentSetPicker));
         OnPropertyChanged(nameof(ShowIntentEmptyAction)); UpdateIntentTileEditingCommands();
@@ -252,6 +253,7 @@ public sealed partial class PlacerViewModel
             {
                 if (PlacementContext != PlacementContext.Generic || selectedIntentSet?.Generic == null)
                     throw new InvalidOperationException("時間位置用のセットを選び直してください。");
+                if (!GenericLayerReadyForExecution) throw new InvalidOperationException("レイヤーの入力をEnterで適用するか、Escで戻してから配置してください。");
                 var palette = settings.Palettes.Single(x => x.Id == tile.PaletteId && x.Kind == PaletteKind.Style);
                 if (!palette.LibraryEntryIds.Contains(tile.LibraryEntryId)) throw new InvalidOperationException("セットの演出が変更されました。");
                 var source = settings.Library.Single(x => x.Id == tile.LibraryEntryId);

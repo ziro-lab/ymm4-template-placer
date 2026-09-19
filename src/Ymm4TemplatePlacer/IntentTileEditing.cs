@@ -39,6 +39,7 @@ public sealed partial class PlacerViewModel
         ShapeIntentTileCommand?.RaiseCanExecuteChanged(); OpenTileSettingsCommand?.RaiseCanExecuteChanged();
         ReorderIntentTileCommand?.RaiseCanExecuteChanged(); ExecuteIntentTileCommand?.RaiseCanExecuteChanged();
         ShapeIntentSetCommand?.RaiseCanExecuteChanged(); OpenIntentSetSettingsCommand?.RaiseCanExecuteChanged();
+        UpdateGenericLayerCommands();
         OnPropertyChanged(nameof(HasCurrentIntentSet)); OnPropertyChanged(nameof(IntentTileEditNotice));
     }
     private PaletteTileAppearance ReadIntentTileAppearance(IntentTileChoice tile)
