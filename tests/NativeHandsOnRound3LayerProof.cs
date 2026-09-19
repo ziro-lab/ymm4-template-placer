@@ -24,6 +24,9 @@ internal static partial class NativeProof
         {
             var next = PlacerSettingsStore.Copy(fixture); next.Palettes[0] = palette with { Layer = policy };
             scope.Apply(next, items, [], 100);
+            // Clearing selection intentionally does not change the remembered context.
+            // Enter Generic through the same bounded background-intent route as the UI.
+            vm.ObserveTimelinePointer(TimelinePointerOrigin.TimelineBackground); vm.EndTimelinePointer();
         }
         TextItem Occupied(int layer) => new() { Layer = layer, Frame = 109, Length = 30 };
         void Tile() => vm.ExecuteIntentTileCommand.Execute(vm.IntentTiles.Single());
@@ -38,6 +41,7 @@ internal static partial class NativeProof
             return good;
         }
         Apply(palette.Layer); await Idle();
+        Log($"R3-D surface: context={vm.PlacementContext}; set={vm.SelectedIntentSet?.Id}; draft={vm.GenericLayerTarget?.Target}; visible={surface.IsVisible}; box={surface.GenericTargetBox.IsVisible}; choices={surface.GenericOccupiedPicker.Items.Count}");
         Round3Assert(surface.IsVisible && surface.GenericTargetBox.IsVisible && surface.GenericOccupiedPicker.Items.Count == 3 &&
             GenericLayerTargetDraft.Behaviors.Select(x => x.Value).SequenceEqual(new[] { LayerSearchMode.DoNotPlace, LayerSearchMode.SearchUp, LayerSearchMode.SearchDown }),
             "D1", "live Generic surface is numeric with exactly three finite occupied choices; no clicked-layer mode");
