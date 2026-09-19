@@ -49,10 +49,14 @@ internal static partial class NativeProof
         surface.GenericTargetBox.Text = "9"; surface.GenericOccupiedPicker.SelectedValue = LayerSearchMode.SearchUp; await Idle();
         Assert(vm.GenericLayerTarget?.Target == "9" && !vm.ExecuteIntentTileCommand.CanExecute(vm.IntentTiles.Single()), "R3-D unapplied numeric draft disables placement instead of using the old saved target");
         Window.GetWindow(view)!.Activate(); Keyboard.Focus(surface.GenericTargetBox); await Idle();
+        Log($"R3-D before Enter: focus={Keyboard.FocusedElement?.GetType().FullName}; exactFocus={ReferenceEquals(Keyboard.FocusedElement, surface.GenericTargetBox)}; target={vm.GenericLayerTarget?.Target}; behavior={vm.GenericLayerTarget?.OccupiedBehavior}; canApply={vm.ApplyGenericLayerTargetCommand.CanExecute(null)}; settingsDirty={vm.IntentSettings?.HasChanges}");
+        Assert(ReferenceEquals(Keyboard.FocusedElement, surface.GenericTargetBox), "R3-D native Enter is delivered to the actual numeric editor");
         await Round3PressKey(Key.Enter);
-        Round3Assert(scope.Current.Palettes.Single().Layer == palette.Layer with { Preferred = 9, SearchMode = LayerSearchMode.SearchUp } &&
-            vm.GenericLayerTarget?.HasChanges == false && Signature(timeline) == before,
-            "D2", "actual Enter saves the direct target and occupied policy atomically, preserving bounds without Timeline mutation");
+        var savedLayer = scope.Current.Palettes.Single().Layer;
+        Log($"R3-D after Enter: saved={JsonSerializer.Serialize(savedLayer)}; target={vm.GenericLayerTarget?.Target}; dirty={vm.GenericLayerTarget?.HasChanges}; error={vm.HasError}; status={vm.Status}; unchanged={Signature(timeline) == before}");
+        Assert(savedLayer == palette.Layer with { Preferred = 9, SearchMode = LayerSearchMode.SearchUp }, "R3-D Enter persisted the exact target/policy and unchanged bounds");
+        Assert(vm.GenericLayerTarget?.HasChanges == false, "R3-D Enter replaced the applied draft with a clean snapshot");
+        Round3Assert(Signature(timeline) == before, "D2", "actual Enter saves the direct target and occupied policy atomically, preserving bounds without Timeline mutation");
         surface.GenericTargetBox.Text = "10"; await Idle(); Keyboard.Focus(surface.GenericTargetBox); await Round3PressKey(Key.Escape);
         Assert(vm.GenericLayerTarget is { Target: "9", HasChanges: false }, "R3-D actual Escape resets the quick layer draft without saving");
         Apply(palette.Layer); await Idle();
