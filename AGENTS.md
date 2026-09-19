@@ -2,31 +2,44 @@
 
 ## Current revision
 
-Current target: **v0.4.2 Hands-on Round 2**, branch `work/v0.4.2-hands-on-round2`, based exactly on native-verified PR #13 source `6873adba0497c334a81097bc61fbcadb7bd40a0a`.
+Current target: **v0.4.2 Hands-on Round 3 implementation preparation**, branch `work/v0.4.2-hands-on-round3-prep`, based exactly on the native-green Round 2 PR #14 source `a553ae8c32eeb8c1f125b8c005095bbe6fc98ebb`.
 
-Read these Round 2 documents first:
+Read these Round 3 documents first:
 
-1. `docs/V0.4.2_HANDS_ON_ROUND2_DESIGN.md`
-2. `docs/V0.4.2_HANDS_ON_ROUND2_HOST_EVIDENCE.md`
-3. `docs/V0.4.2_HANDS_ON_ROUND2_WORKPLAN.md`
-4. `docs/V0.4.2_HANDS_ON_ROUND2_ACCEPTANCE.md`
-5. `docs/V0.4.2_HANDS_ON_ROUND2_IMPLEMENTATION_PREP.md`
+1. `docs/V0.4.2_HANDS_ON_ROUND3_DESIGN.md`
+2. `docs/V0.4.2_HANDS_ON_ROUND3_HOST_EVIDENCE.md`
+3. `docs/V0.4.2_HANDS_ON_ROUND3_WORKPLAN.md`
+4. `docs/V0.4.2_HANDS_ON_ROUND3_ACCEPTANCE.md`
+5. `docs/V0.4.2_HANDS_ON_ROUND3_IMPLEMENTATION_PREP.md`
 
-Then read the Round 1 hands-on workplan/acceptance and the existing v0.4.2 relative-palette design/mental-model/roadmap documents for preserved history and safety contracts.
+Then read the Round 2 documents and earlier v0.4.2 design/roadmap documents for preserved history and safety contracts. Do not reimplement completed Round 2 A-F work.
 
-Round 2 is a child pass over the completed automated PR #13 implementation. Do not reimplement H1-H6 or earlier W/R checkpoints. Preserve the PR #13 native-green baseline (run `35334621300`, 986 assertions) while changing the user-facing workflow.
+Round 3 comes from the user's real Hands-on Round 2 editing feedback. Its purpose is to reduce UI friction and make the placement surface spatially stable for mouse + position-shortcut use.
 
-Pinned Round 2 host findings are already complete. In particular:
+Pinned/recorded host findings relevant to this round:
 
-- Tool Utility group uses `YukkuriMovieMaker.Resources.Localization.Texts.ToolGroupUtilityName`.
-- no dedicated supported public forced-preview redraw route was established.
-- Item / Timeline background / ruler pointer intent is distinguishable on exact 4.55.1.1.
-- `CurrentFrameChanged` is not a context-switch signal because ruler, keyboard and playback all produce it.
-- YMM4 visual-tree classification is version-specific; unknown routes must fail safe by keeping current context.
+- no supported semantic clicked-layer route was established on exact YMM4 4.55.1.1; do not infer a layer from screen Y;
+- public `TimelineViewModel.ContainFrameInViewport(int)` and `ScrollFrame(int)` support semantic viewport following, and ScrollFrame does not move CurrentFrame;
+- ordinary WPF focus and `TimelineViewModel.FocusService.Focus()` are not Preview-refresh routes;
+- `Timeline.CurrentFrame` alone can move the displayed playhead while actual Preview/playback start remains stale;
+- public `PreviewViewModel.SeekAsync(int)` synchronized actual playback start to the displayed target in real-host Lab proof;
+- version number alone must not gate these behaviors: context pointer, Preview seek and viewport follow degrade independently by capability.
 
-The user-visible hierarchy is now **context -> Set -> tile**. Hide the separate Intent level from the common path; preserve existing serialized Intent data for compatibility. UI unification does not authorize a core rewrite: targeted Sets continue to use IntentPalette/IntentExecutionPlan, Generic Sets continue to use Style Palette/QuickDropPlanner behind a small presentation adapter.
+The user-visible normal placement hierarchy remains **context -> Set -> tile**. Round 3 adds stable presentation/input controls; it does not authorize a core rewrite.
 
-Do not merge `main`. Keep PR #6, PR #11, PR #13 and the Round 2 PR Draft until the user accepts the next real editing candidate.
+The frozen Round 3 product choices are:
+
+- remove the obsolete tile drag/color bar and make color visible on the tile face;
+- Set-wide shape is a bulk update of existing per-entry shapes, not an inherited style model;
+- layout may remain Auto or be Fixed; position shortcuts are global slot bindings and never belong to tile/template identity;
+- all target Item types are direct in normal Settings; remove the "その他" hierarchy;
+- legacy compatibility data/code remains, but normal compatibility-workspace UI is hidden;
+- Generic fast layer targeting is numeric only, with finite DoNotPlace/SearchUp/SearchDown behavior;
+- top-level シーン更新 is removed in favor of event-driven Voice freshness;
+- expression row navigation synchronizes CurrentFrame + Voice selection + bounded public Preview seek and optional semantic viewport follow;
+- Preview/viewport host adapters are exact capability adapters, not fake input/private-state fallbacks.
+
+Do not merge `main`. Keep PR #6, #11, #13, #14 and the Round 3 PR Draft until a new real-user hands-on candidate is accepted.
 
 ## Product boundary
 
@@ -71,7 +84,7 @@ The hands-on UX polish may add immediate expression replacement/removal, but onl
 
 Resync is user-triggered, selection-scoped, uses current saved relations, and is best effort across independent bundles with truthful skip reporting and one native Undo for the successful updates. No continuous scene-wide tracking. Legacy Resync must not update just one member of a relative bundle.
 
-Keep the explicit compatibility workspace for old Library/Palette/Expression/Selection presets and old Quick Drop. No invented absolute-to-relative migration. Excel remains a secondary Voice assignment bridge; import validates before changing assignments and never mutates Timeline by itself. No Excel COM requirement.
+Preserve old Library/Palette/Expression/Selection presets and old Quick Drop data/code losslessly, but Round 3 removes the normal user-facing compatibility-workspace entry. Do not invent absolute-to-relative migration, and do not let a saved legacy-workspace flag strand normal startup in hidden UI. Excel remains a secondary Voice assignment bridge; import validates before changing assignments and never mutates Timeline by itself. No Excel COM requirement.
 
 ## Host and runtime
 
