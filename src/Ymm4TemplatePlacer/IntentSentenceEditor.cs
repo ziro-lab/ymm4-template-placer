@@ -6,7 +6,8 @@ namespace Ymm4TemplatePlacer;
 public sealed record IntentSentenceOption<T>(T Value, string Name, bool Available = true);
 public sealed class SettingsContextMatchConverter : IMultiValueConverter
 {
-    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) => values.Length == 2 && values[0] is IntentSettingsItemContext && ReferenceEquals(values[0], values[1]);
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) => values.Length == 2 && values[0] is IntentSettingsItemContext choice && values[1] is IntentSettingsItemContext active &&
+        (ReferenceEquals(choice, active) || (active.IsCurrentSelection && choice.TypeKeys.Count == 1 && active.TypeKeys.SequenceEqual(choice.TypeKeys)));
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
 }
 

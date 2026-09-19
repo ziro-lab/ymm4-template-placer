@@ -32,14 +32,19 @@
      </ItemsControl>
     </Expander>
    </StackPanel>
-   <DockPanel>
-    <TextBlock Text="セット" Width="84" VerticalAlignment="Center"/>
-    <Button x:Name="NewPaletteButton" Content="＋" Command="{Binding CreateIntentPaletteCommand}" DockPanel.Dock="Right" ToolTip="このアイテムで使うセットを作る" AutomationProperties.Name="このアイテムのセットを作成"/>
-    <ComboBox x:Name="PalettePicker" ItemsSource="{Binding IntentSettings.VisiblePalettes}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedPalette,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集するセット"/>
-    <ComboBox x:Name="GenericPalettePicker" ItemsSource="{Binding IntentSettings.GenericSets}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedGenericSet,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集する汎用セット"/>
-   </DockPanel>
-   <TextBlock Text="{Binding IntentSettings.ContextNotice}"/>
-   <Expander x:Name="SetManagement" Header="Set一覧・まとめて管理" IsExpanded="{Binding IntentSettings.ShowAllSets,Mode=TwoWay}" Margin="0,0,0,4">
+   <Grid>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <TextBlock Text="セット" Grid.Column="0" VerticalAlignment="Center"/>
+    <Button x:Name="NewPaletteButton" Content="＋" Command="{Binding CreateIntentPaletteCommand}" Grid.Column="2" ToolTip="このアイテムで使うセットを作る" AutomationProperties.Name="このアイテムのセットを作成"/>
+    <ComboBox Grid.Column="1" x:Name="PalettePicker" ItemsSource="{Binding IntentSettings.VisiblePalettes}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedPalette,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集するセット"/>
+    <ComboBox Grid.Column="1" x:Name="GenericPalettePicker" ItemsSource="{Binding IntentSettings.GenericSets}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedGenericSet,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集する汎用セット"/>
+   </Grid>
+   <TextBlock Text="{Binding IntentSettings.ContextNotice}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Opacity="0.72"/>
+
+  </StackPanel>
+  <ScrollViewer x:Name="SettingsScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+   <StackPanel>
+   <Expander x:Name="SetManagement" Header="セットの管理" IsExpanded="{Binding IntentSettings.ShowAllSets,Mode=TwoWay}" Margin="0,0,0,4">
     <WrapPanel>
      <Button x:Name="DuplicateButton" Content="複製" Command="{Binding DuplicateIntentPaletteCommand}"/>
      <Button Content="↑" ToolTip="セットを前へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="-1"/>
@@ -47,9 +52,6 @@
      <Button Content="削除" Command="{Binding DeleteIntentPaletteCommand}"/>
     </WrapPanel>
    </Expander>
-  </StackPanel>
-  <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-   <StackPanel>
     <local:GenericSetSettingsPanel x:Name="GenericSettingsSurface" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}"/>
     <StackPanel DataContext="{Binding IntentSettings.SelectedPalette}">
      <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
@@ -177,6 +179,8 @@
         <TextBox x:Name="EntryAliasBox" Text="{Binding DisplayAlias,UpdateSourceTrigger=PropertyChanged}" MaxLength="128" ToolTip="このセット内だけの別名です。YMM4のテンプレート名は変わりません。"/>
         <TextBlock Text="色ラベル"/>
         <ComboBox x:Name="EntryColorPicker" ItemsSource="{Binding DataContext.IntentTileColors,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Color,Mode=TwoWay}"/>
+        <TextBlock Text="形"/>
+        <ComboBox x:Name="EntryShapePicker" ItemsSource="{Binding DataContext.IntentTileShapes,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Shape,Mode=TwoWay}"/>
        </StackPanel>
        <Expander Header="選択した演出だけの微調整" DataContext="{Binding SelectedEntry}">
         <StackPanel Margin="8,5">

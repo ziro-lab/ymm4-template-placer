@@ -86,14 +86,10 @@ internal static partial class NativeProof
             Assert(cells.Length == 3 && cells.All(x => Math.Abs(x.ActualWidth - cells[0].ActualWidth) < 1 && Math.Abs(x.ActualHeight - cells[0].ActualHeight) < 1 &&
                 Math.Abs(x.ActualWidth - x.ActualHeight) < 12 && x.TranslatePoint(new Point(x.ActualWidth, 0), surface).X <= surface.ActualWidth + 1),
                 "H2 native 360px layout uses uniform near-square cells regardless of long names");
-            var handle = RelativeVisuals(cells[0]).OfType<Border>().Single(x => x.Name == "TileDragHandle");
-            Assert(handle.Cursor == Cursors.SizeAll && buttons.All(x => !x.IsAncestorOf(handle)) && handle.BorderBrush != null,
-                "H2 reorder has a dedicated sibling handle; label colors do not replace action-button text/background semantics");
-            var down = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseLeftButtonDownEvent };
-            var up = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseLeftButtonUpEvent };
-            handle.RaiseEvent(down); handle.RaiseEvent(up);
-            Assert(down.Handled && up.Handled && Signature(timeline) == signature,
-                "H2 native handle down/up are consumed and never invoke placement");
+            Assert(!RelativeVisuals(surface).OfType<FrameworkElement>().Any(x => x.Name == "TileDragHandle") && buttons.All(x => x.Command == vm.ExecuteIntentTileCommand),
+                "H2/R2-D whole-tile Buttons retain native command semantics without the superseded sibling handle");
+            Assert(buttons.All(x => x.ActualHeight >= 90 && x.ActualWidth >= 90) && Signature(timeline) == signature,
+                "H2/R2-D the whole visible tile is an action/drag surface; actual click suppression is additionally proved by OS input in Round 2 D");
             var oldTiles = vm.IntentTiles.ToArray();
             // WPF exposes no public fixture constructor. This test-only constructor creates routed drag input;
             // production uses only public DragDrop events and never reflection.

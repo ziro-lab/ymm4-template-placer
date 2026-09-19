@@ -35,7 +35,8 @@ public sealed class GenericSetDraft : IntentEditable
     }
     public void AddEntry(Guid id, IReadOnlyList<LibraryEntry> library)
     {
-        var entry = new IntentEntryDraft(new(id), library);
+        var appearance = original.AppearanceFor(id);
+        var entry = new IntentEntryDraft(new(id) { DisplayAlias = appearance.DisplayAlias, Color = appearance.Color, Shape = appearance.Shape }, library);
         entry.Edited += (_, _) => Notify(nameof(Entries)); Entries.Add(entry);
     }
     public void MoveEntry(int delta)
@@ -51,7 +52,10 @@ public sealed class GenericSetDraft : IntentEditable
             UseTemplateLayer = false, Minimum = Number(Minimum, "最小レイヤー"), Maximum = Number(Maximum, "最大レイヤー"), Preferred = Number(Preferred, "優先レイヤー")
         };
         layer.Validate();
-        return original with { Name = Name.Trim(), LibraryEntryIds = Entries.Select(x => x.LibraryEntryId).ToList(), Layer = layer };
+        var appearances = Entries.Select(x => x.Build()).ToDictionary(x => x.LibraryEntryId, x => new PaletteTileAppearance(x.DisplayAlias, x.Color, x.Shape));
+        foreach (var id in appearances.Where(x => x.Value == PaletteTileAppearance.Default).Select(x => x.Key).ToArray()) appearances.Remove(id);
+        return original with { Name = Name.Trim(), LibraryEntryIds = Entries.Select(x => x.LibraryEntryId).ToList(), Layer = layer,
+            TileAppearance = appearances.Count == 0 ? null : appearances };
     }
 }
 

@@ -24,12 +24,13 @@ public sealed partial class IntentSettingsSession
     public bool CanCreateForContext => SelectedItemContext != null;
     public bool IsGenericContext => SelectedItemContext?.IsGeneric == true;
     public bool IsTargetedContext => !IsGenericContext;
-    public IEnumerable<IntentSettingsItemContext> CommonItemContexts => ItemContexts.Where(IsCommonContext);
+    public IEnumerable<IntentSettingsItemContext> CommonItemContexts => ItemContexts.Where(x => x.IsGeneric)
+        .Concat(CommonSettingsTypes.Select(type => IntentSelectionContext.TypeKey(type)).SelectMany(key => ItemContexts.Where(x => !x.IsCurrentSelection && x.Key == key)));
     public IEnumerable<IntentSettingsItemContext> OtherItemContexts => ItemContexts.Where(x => !IsCommonContext(x));
-    private static bool IsCommonContext(IntentSettingsItemContext x) => x.IsGeneric || x.IsCurrentSelection ||
-        x.TypeKeys.Any(k => CommonSettingsTypes.Select(IntentSelectionContext.TypeKey).Contains(k, StringComparer.Ordinal));
+    private static bool IsCommonContext(IntentSettingsItemContext x) => x.IsGeneric || (!x.IsCurrentSelection &&
+        x.TypeKeys.Any(k => CommonSettingsTypes.Select(IntentSelectionContext.TypeKey).Contains(k, StringComparer.Ordinal)));
     private static readonly Type[] CommonSettingsTypes = [typeof(VoiceItem), typeof(TextItem), typeof(ImageItem), typeof(ShapeItem)];
-    public string ContextNotice => SelectedItemContext == null ? "タイムラインでアイテムを選ぶか、対象の種類を選んでください。" : "";
+    public string ContextNotice => SelectedItemContext == null ? "タイムラインでアイテムを選ぶか、対象の種類を選んでください。" : SelectedItemContext.IsCurrentSelection ? SelectedItemContext.Label : "";
     public IntentSettingsItemContext? SelectedItemContext
     {
         get => selectedItemContext;

@@ -13,10 +13,8 @@ public sealed partial class PlacerViewModel
             x => Guard(() => ReorderIntentTile((IntentTileReorderRequest)x!)));
         OnPropertyChanged(nameof(ReorderIntentTileCommand));
     }
-    private bool CanReorderIntentTile(IntentTileReorderRequest request) => settingsAvailable && !intentExecuting &&
-        IntentSettings?.HasChanges != true && request.Source.PaletteId == request.Target.PaletteId &&
-        selectedIntentSet?.Targeted?.Id == request.Source.PaletteId &&
-        IntentTiles.Any(x => ReferenceEquals(x, request.Source)) && IntentTiles.Any(x => ReferenceEquals(x, request.Target));
+    private bool CanReorderIntentTile(IntentTileReorderRequest request) => CanEditIntentTile(request.Source) &&
+        request.Source.PaletteId == request.Target.PaletteId && request.Source.IsGeneric == request.Target.IsGeneric && IsCurrentIntentTile(request.Target);
 
     public void ReorderIntentTile(IntentTileReorderRequest request)
     {
@@ -24,12 +22,22 @@ public sealed partial class PlacerViewModel
             throw new InvalidOperationException("セットまたは設定の下書きが変わりました。保存・破棄してから並び替えてください。");
         if (ReferenceEquals(request.Source, request.Target)) return;
         var next = PlacerSettingsStore.Copy(settings);
-        var palette = next.IntentPalettes.Single(x => x.Id == request.Source.PaletteId);
-        var from = palette.Entries.FindIndex(x => x.LibraryEntryId == request.Source.LibraryEntryId);
-        var to = palette.Entries.FindIndex(x => x.LibraryEntryId == request.Target.LibraryEntryId);
-        if (from < 0 || to < 0) throw new InvalidOperationException("並び替える演出が見つかりません。セットを開き直してください。");
-        var entry = palette.Entries[from]; palette.Entries.RemoveAt(from); palette.Entries.Insert(to, entry);
-        // Same protected store and same Entries order. No Timeline access / second order store.
+        if (request.Source.IsGeneric)
+        {
+            var palette = next.Palettes.Single(x => x.Id == request.Source.PaletteId && x.Kind == PaletteKind.Style);
+            var ids = palette.LibraryEntryIds; var from = ids.IndexOf(request.Source.LibraryEntryId); var to = ids.IndexOf(request.Target.LibraryEntryId);
+            if (from < 0 || to < 0) throw new InvalidOperationException("並び替える演出が見つかりません。セットを開き直してください。");
+            var id = ids[from]; ids.RemoveAt(from); ids.Insert(to, id);
+        }
+        else
+        {
+            var palette = next.IntentPalettes.Single(x => x.Id == request.Source.PaletteId);
+            var from = palette.Entries.FindIndex(x => x.LibraryEntryId == request.Source.LibraryEntryId);
+            var to = palette.Entries.FindIndex(x => x.LibraryEntryId == request.Target.LibraryEntryId);
+            if (from < 0 || to < 0) throw new InvalidOperationException("並び替える演出が見つかりません。セットを開き直してください。");
+            var entry = palette.Entries[from]; palette.Entries.RemoveAt(from); palette.Entries.Insert(to, entry);
+        }
+        // Same protected store and original order lists. No Timeline access / second order store.
         settingsStore.Save(next); settings = next;
         RefreshIntentWorkspace(); RefreshExpressionVocabulary(); ResetIntentSettings();
         HasError = false; Status = "タイルの並び順を保存しました。";

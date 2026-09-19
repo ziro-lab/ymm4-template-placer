@@ -31,6 +31,14 @@ public static class IntentTileAppearance
         }
         return result;
     }
+    public static string ShapeName(IntentTileShape shape) => shape switch
+    {
+        IntentTileShape.Square => "四角", IntentTileShape.Circle => "丸", _ => "角丸"
+    };
+    public static CornerRadius Radius(IntentTileShape shape) => new(shape switch
+    {
+        IntentTileShape.Square => 0, IntentTileShape.Circle => 52, _ => 8
+    });
     public static string ColorName(IntentTileColor color) => color switch
     {
         IntentTileColor.Rose => "ピンク", IntentTileColor.Amber => "黄", IntentTileColor.Green => "緑",

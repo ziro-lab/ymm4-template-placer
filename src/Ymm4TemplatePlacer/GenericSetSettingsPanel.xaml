@@ -24,5 +24,14 @@
    <Button Content="↓ 下へ" Command="{Binding DataContext.MoveIntentEntryCommand,RelativeSource={RelativeSource AncestorType=local:GenericSetSettingsPanel}}" CommandParameter="1" Padding="8,5" Margin="0,0,4,0"/>
    <Button Content="セットから外す" Command="{Binding DataContext.RemoveIntentEntryCommand,RelativeSource={RelativeSource AncestorType=local:GenericSetSettingsPanel}}" Padding="8,5"/>
   </WrapPanel>
+  <StackPanel x:Name="GenericEntryAppearanceEditor" DataContext="{Binding SelectedEntry}">
+   <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+   <TextBlock Text="タイルの表示名（空欄なら短い名前）"/>
+   <TextBox x:Name="EntryAliasBox" Text="{Binding DisplayAlias,UpdateSourceTrigger=PropertyChanged}" MaxLength="128" Margin="0,3,0,6"/>
+   <TextBlock Text="色ラベル"/>
+   <ComboBox x:Name="EntryColorPicker" ItemsSource="{Binding DataContext.IntentTileColors,RelativeSource={RelativeSource AncestorType=local:GenericSetSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Color,Mode=TwoWay}" Margin="0,3,0,6"/>
+   <TextBlock Text="形"/>
+   <ComboBox x:Name="EntryShapePicker" ItemsSource="{Binding DataContext.IntentTileShapes,RelativeSource={RelativeSource AncestorType=local:GenericSetSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Shape,Mode=TwoWay}" Margin="0,3,0,6"/>
+  </StackPanel>
  </StackPanel>
 </UserControl>

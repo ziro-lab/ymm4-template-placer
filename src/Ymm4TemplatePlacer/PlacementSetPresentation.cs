@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using System.Windows;
 
 namespace Ymm4TemplatePlacer;
 
@@ -22,11 +23,14 @@ public sealed record IntentTileChoice
     public string Label { get; }
     public string Detail { get; }
     public bool Available { get; }
-    public IntentTileColor Color => TargetedEntry?.Color ?? IntentTileColor.Neutral;
+    public PaletteTileAppearance? GenericAppearance { get; }
+    public IntentTileColor Color => TargetedEntry?.Color ?? GenericAppearance?.Color ?? IntentTileColor.Neutral;
+    public IntentTileShape Shape => TargetedEntry?.Shape ?? GenericAppearance?.Shape ?? IntentTileShape.Rounded;
+    public CornerRadius Radius => IntentTileAppearance.Radius(Shape);
     public Brush Accent => IntentTileAppearance.Accent(Color);
-    public string AppearanceDescription => $"{Detail}\n色ラベル: {IntentTileAppearance.ColorName(Color)}";
+    public string AppearanceDescription => $"{Detail}\n色ラベル: {IntentTileAppearance.ColorName(Color)} / 形: {IntentTileAppearance.ShapeName(Shape)}\nクリックで配置・ドラッグで並び替え・右クリックで編集";
     public IntentTileChoice(Guid paletteId, IntentEntry entry, string label, string detail, bool available)
     { PaletteId = paletteId; LibraryEntryId = entry.LibraryEntryId; TargetedEntry = entry; Label = label; Detail = detail; Available = available; }
-    public IntentTileChoice(Guid paletteId, Guid libraryEntryId, string label, string detail, bool available)
-    { PaletteId = paletteId; LibraryEntryId = libraryEntryId; Label = label; Detail = detail; Available = available; }
+    public IntentTileChoice(Guid paletteId, Guid libraryEntryId, string label, string detail, bool available, PaletteTileAppearance? appearance = null)
+    { GenericAppearance = appearance; PaletteId = paletteId; LibraryEntryId = libraryEntryId; Label = label; Detail = detail; Available = available; }
 }

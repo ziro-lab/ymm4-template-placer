@@ -46,11 +46,13 @@ public sealed class IntentEntryDraft : IntentEditable
     private bool intrinsic;
     private string displayAlias;
     private IntentTileColor color;
+    private IntentTileShape shape;
     private readonly LibraryEntry? source;
     public Guid LibraryEntryId { get; }
     public string Name => IntentTileAppearance.Label(new(LibraryEntryId) { DisplayAlias = DisplayAlias }, source);
     public string DisplayAlias { get => displayAlias; set { if (displayAlias == value) return; displayAlias = value; Notify(); Raise(nameof(Name)); } }
     public IntentTileColor Color { get => color; set { if (color == value) return; color = value; Notify(); } }
+    public IntentTileShape Shape { get => shape; set { if (shape == value) return; shape = value; Notify(); } }
     public string SourceDetail { get; }
     public string StartOffset { get => start; set { start = value; Notify(); } }
     public string EndOffset { get => end; set { end = value; Notify(); } }
@@ -60,12 +62,12 @@ public sealed class IntentEntryDraft : IntentEditable
     {
         LibraryEntryId = entry.LibraryEntryId;
         source = library.SingleOrDefault(x => x.Id == LibraryEntryId);
-        displayAlias = entry.DisplayAlias ?? ""; color = entry.Color;
+        displayAlias = entry.DisplayAlias ?? ""; color = entry.Color; shape = entry.Shape;
         SourceDetail = source == null ? "元の登録がありません。" : source.Source.Name + "\n" + TemplateResolver.ResolveBundle(source).Message;
         start = entry.StartOffsetDelta.ToString(CultureInfo.InvariantCulture); end = entry.EndOffsetDelta.ToString(CultureInfo.InvariantCulture);
         length = entry.FixedDurationOverride?.ToString(CultureInfo.InvariantCulture) ?? ""; intrinsic = entry.UseTemplateDuration;
     }
-    public IntentEntry Build() => new(LibraryEntryId) { DisplayAlias = string.IsNullOrWhiteSpace(DisplayAlias) ? null : DisplayAlias.Trim(), Color = Color, StartOffsetDelta = Number(StartOffset, "演出の開始差分"),
+    public IntentEntry Build() => new(LibraryEntryId) { DisplayAlias = string.IsNullOrWhiteSpace(DisplayAlias) ? null : DisplayAlias.Trim(), Color = Color, Shape = Shape, StartOffsetDelta = Number(StartOffset, "演出の開始差分"),
         EndOffsetDelta = Number(EndOffset, "演出の終了差分"), FixedDurationOverride = OptionalNumber(FixedDuration, "演出の固定長"), UseTemplateDuration = UseTemplateDuration };
 }
 

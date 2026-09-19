@@ -214,7 +214,11 @@ public sealed partial class PlacerViewModel
     {
         var palette = CurrentPalette ?? throw new InvalidOperationException("パレットを選んでください。");
         var id = SelectedPaletteEntry?.LibraryEntryId ?? throw new InvalidOperationException("パレットから外すテンプレートを選んでください。");
-        EditSettings(next => next.Palettes.Single(x => x.Id == palette.Id).LibraryEntryIds.Remove(id));
+        EditSettings(next =>
+        {
+            var target = next.Palettes.Single(x => x.Id == palette.Id);
+            target.LibraryEntryIds.Remove(id); target.TileAppearance?.Remove(id);
+        });
         HasError = false; Status = "このパレットから外しました。他のパレット・テンプレート管理・タイムラインは変更していません。";
     }
     private bool CanMoveSelectedPaletteEntry(int delta)
@@ -257,7 +261,7 @@ public sealed partial class PlacerViewModel
     }
     partial void OnLibraryUnregistered(PlacerSettings next, Guid id)
     {
-        foreach (var palette in next.Palettes) palette.LibraryEntryIds.Remove(id);
+        foreach (var palette in next.Palettes) { palette.LibraryEntryIds.Remove(id); palette.TileAppearance?.Remove(id); }
     }
     private void UpdatePaletteCommands()
     {

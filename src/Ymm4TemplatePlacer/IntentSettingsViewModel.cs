@@ -78,12 +78,13 @@ public sealed partial class PlacerViewModel
     }
     private void UpdateIntentSettingsCommands()
     {
-        ReorderIntentTileCommand?.RaiseCanExecuteChanged();
+        ReorderIntentTileCommand?.RaiseCanExecuteChanged(); UpdateIntentTileEditingCommands();
         SaveIntentSettingsCommand?.RaiseCanExecuteChanged(); DiscardIntentSettingsCommand?.RaiseCanExecuteChanged();
         CreateIntentPaletteCommand?.RaiseCanExecuteChanged(); DuplicateIntentPaletteCommand?.RaiseCanExecuteChanged(); DeleteIntentPaletteCommand?.RaiseCanExecuteChanged();
         MoveIntentPaletteCommand?.RaiseCanExecuteChanged(); MoveIntentEntryCommand?.RaiseCanExecuteChanged(); RemoveIntentEntryCommand?.RaiseCanExecuteChanged();
         AddIntentSourcesCommand?.RaiseCanExecuteChanged(); RescanIntentExpressionsCommand?.RaiseCanExecuteChanged();
     }
+    public IReadOnlyList<IntentOption<IntentTileShape>> IntentTileShapes { get; } = Enum.GetValues<IntentTileShape>().Select(x => new IntentOption<IntentTileShape>(x, IntentTileAppearance.ShapeName(x))).ToArray();
     public IReadOnlyList<IntentOption<IntentTileColor>> IntentTileColors { get; } = Enum.GetValues<IntentTileColor>().Select(x => new IntentOption<IntentTileColor>(x, IntentTileAppearance.ColorName(x))).ToArray();
     public IReadOnlyList<IntentOption<IntentTypeMatch>> IntentTypeModes { get; } = [new(IntentTypeMatch.UniformType,"選択した種類のどれか・全件同じ種類"), new(IntentTypeMatch.ExactMixedTypes,"指定した種類の組み合わせだけ")];
     public IReadOnlyList<IntentOption<IntentAnchor>> IntentAnchors { get; } = [new(IntentAnchor.SelectedStart,"選択アイテムの開始"),new(IntentAnchor.SelectedEnd,"選択アイテムの終了"),new(IntentAnchor.SelectedCenter,"選択アイテムの中央"),new(IntentAnchor.SelectionRangeStart,"選択範囲の開始"),new(IntentAnchor.SelectionRangeEnd,"選択範囲の終了"),new(IntentAnchor.PairBoundary,"選択した2件の境界"),new(IntentAnchor.RelatedStart,"周囲アイテムの開始"),new(IntentAnchor.RelatedEnd,"周囲アイテムの終了")];

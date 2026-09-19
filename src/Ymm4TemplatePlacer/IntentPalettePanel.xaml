@@ -31,19 +31,32 @@
   <Grid Grid.Row="3">
    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <ItemsControl x:Name="IntentTileItems" ItemsSource="{Binding IntentTiles}">
-     <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemWidth="104" ItemHeight="108"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+     <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemWidth="104" ItemHeight="104"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
      <ItemsControl.ItemTemplate><DataTemplate>
-      <Grid Margin="3" AllowDrop="True" DragOver="TileDragOver" Drop="TileDrop">
-       <Grid.RowDefinitions><RowDefinition Height="20"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-       <Border x:Name="TileDragHandle" Grid.Row="0" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="{Binding Accent}" BorderThickness="0,3,0,0"
-        Cursor="SizeAll" ToolTip="ドラッグで並び替え。設定の上へ・下へでも変更できます。" AutomationProperties.Name="並び替え用の取っ手"
-        PreviewMouseLeftButtonDown="TileHandleDown" PreviewMouseLeftButtonUp="TileHandleUp" PreviewMouseMove="TileHandleMove" LostMouseCapture="TileHandleLostCapture">
-        <TextBlock Text="···" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-       </Border>
-       <Button Grid.Row="1" Command="{Binding DataContext.ExecuteIntentTileCommand,RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-        CommandParameter="{Binding}" ToolTip="{Binding AppearanceDescription}" ToolTipService.ShowOnDisabled="True" Padding="6" Margin="0"
+      <Grid x:Name="TileCell" Margin="3" Background="Transparent" AllowDrop="True" DragOver="TileDragOver" Drop="TileDrop"
+       PreviewMouseLeftButtonDown="TilePointerDown" PreviewMouseLeftButtonUp="TilePointerUp" PreviewMouseMove="TilePointerMove" LostMouseCapture="TilePointerLostCapture"
+       ContextMenuOpening="TileContextOpening" ContextMenuService.ShowOnDisabled="True">
+       <Grid.ContextMenu><ContextMenu><MenuItem Header="編集"/></ContextMenu></Grid.ContextMenu>
+       <Button Command="{Binding DataContext.ExecuteIntentTileCommand,RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+        CommandParameter="{Binding}" ToolTip="{Binding AppearanceDescription}" ToolTipService.ShowOnDisabled="True" Padding="12" Margin="0"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
+        BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1"
         AutomationProperties.Name="{Binding Label}" AutomationProperties.HelpText="{Binding AppearanceDescription}">
-        <TextBlock Text="{Binding Label}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" TextAlignment="Center" MaxHeight="58"/>
+        <Button.Template><ControlTemplate TargetType="Button">
+         <Border x:Name="TileFace" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{Binding Radius}">
+          <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="False"/>
+         </Border>
+         <ControlTemplate.Triggers>
+          <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="TileFace" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/><Setter TargetName="TileFace" Property="BorderThickness" Value="2"/></Trigger>
+          <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="TileFace" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/><Setter TargetName="TileFace" Property="BorderThickness" Value="2"/></Trigger>
+          <Trigger Property="IsPressed" Value="True"><Setter TargetName="TileFace" Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"/></Trigger>
+          <Trigger Property="IsEnabled" Value="False"><Setter TargetName="TileFace" Property="Opacity" Value="0.55"/></Trigger>
+         </ControlTemplate.Triggers>
+        </ControlTemplate></Button.Template>
+        <StackPanel IsHitTestVisible="False">
+         <Border x:Name="TileColorAccent" Height="3" Width="26" Background="{Binding Accent}" Margin="0,0,0,5"/>
+         <TextBlock Text="{Binding Label}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" TextAlignment="Center" MaxHeight="54"/>
+        </StackPanel>
        </Button>
       </Grid>
      </DataTemplate></ItemsControl.ItemTemplate>

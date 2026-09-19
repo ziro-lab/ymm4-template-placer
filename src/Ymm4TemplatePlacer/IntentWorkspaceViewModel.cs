@@ -47,9 +47,9 @@ public sealed partial class PlacerViewModel
         if (!intentInitialized)
         {
             intentInitialized = true;
-            InitializeIntentTileOrdering();
+            InitializeIntentTileOrdering(); InitializeIntentTileEditing();
             useLegacyWorkspace = settings.LegacyWorkspace;
-            ExecuteIntentTileCommand = new ActionCommand(x => !intentExecuting && settingsAvailable && undo != null &&
+            ExecuteIntentTileCommand = new ActionCommand(x => !intentExecuting && tileEditState == IntentTileEditState.Idle && settingsAvailable && undo != null &&
                 x is IntentTileChoice tile && tile.Available && IntentTiles.Any(x => ReferenceEquals(x, tile)),
                 x => Guard(() => ExecuteIntentTile((IntentTileChoice)x!)));
             OpenIntentSettingsCommand = new ActionCommand(_ => true, _ => IntentSettingsRequested?.Invoke(this, EventArgs.Empty));
@@ -194,13 +194,13 @@ public sealed partial class PlacerViewModel
         else if (selectedIntentSet?.Generic is { } style)
         {
             var entries = style.LibraryEntryIds.Select(id => (Id: id, Source: settings.Library.SingleOrDefault(x => x.Id == id))).ToArray();
-            var labels = IntentTileAppearance.Distinguish(entries.Select(x => IntentTileAppearance.ShortName(x.Source?.DisplayName ?? "参照切れ")).ToArray());
+            var labels = IntentTileAppearance.Distinguish(entries.Select(x => style.AppearanceFor(x.Id).DisplayAlias is { } alias && !string.IsNullOrWhiteSpace(alias) ? alias.Trim() : IntentTileAppearance.ShortName(x.Source?.DisplayName ?? "参照切れ")).ToArray());
             for (var index = 0; index < entries.Length; index++)
             {
                 var item = entries[index]; var source = item.Source;
-                if (source == null) { IntentTiles.Add(new(style.Id, item.Id, labels[index], "元テンプレートの登録を確認してください。", false)); continue; }
+                if (source == null) { IntentTiles.Add(new(style.Id, item.Id, labels[index], "元テンプレートの登録を確認してください。", false, style.AppearanceFor(item.Id))); continue; }
                 var resolution = TemplateResolver.Resolve(source);
-                IntentTiles.Add(new(style.Id, source.Id, labels[index], resolution.Item == null ? resolution.Message : source.Source.Name, resolution.Item != null));
+                IntentTiles.Add(new(style.Id, source.Id, labels[index], resolution.Item == null ? resolution.Message : source.Source.Name, resolution.Item != null, style.AppearanceFor(source.Id)));
             }
         }
         IntentNotice = IntentTiles.Count == 0 ? $"「{selectedIntentSet?.Label ?? "このセット"}」には演出がありません。" : "";
@@ -210,7 +210,7 @@ public sealed partial class PlacerViewModel
     private void RaiseIntentSurfaceState()
     {
         OnPropertyChanged(nameof(HasIntentSets)); OnPropertyChanged(nameof(ShowSingleSetName)); OnPropertyChanged(nameof(UseSegmentedIntentSets)); OnPropertyChanged(nameof(UseIntentSetPicker));
-        OnPropertyChanged(nameof(ShowIntentEmptyAction));
+        OnPropertyChanged(nameof(ShowIntentEmptyAction)); UpdateIntentTileEditingCommands();
     }
     private void UpdateIntentContext(IntentSelectionContext? context)
     {
@@ -239,7 +239,7 @@ public sealed partial class PlacerViewModel
     }
     public int ExecuteIntentTile(IntentTileChoice tile)
     {
-        if (intentExecuting || !IntentTiles.Any(x => ReferenceEquals(x, tile)) || selectedIntentSet?.Id != tile.PaletteId)
+        if (intentExecuting || tileEditState != IntentTileEditState.Idle || !IntentTiles.Any(x => ReferenceEquals(x, tile)) || selectedIntentSet?.Id != tile.PaletteId)
             throw new InvalidOperationException("表示しているセットが変わりました。演出を選び直してください。");
         if (undo == null || !settingsAvailable) throw new InvalidOperationException("現在は配置できません。Toolと設定を確認してください。");
         intentExecuting = true; ExecuteIntentTileCommand.RaiseCanExecuteChanged();
