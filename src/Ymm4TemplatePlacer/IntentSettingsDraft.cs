@@ -69,7 +69,7 @@ public sealed class IntentEntryDraft : IntentEditable
         EndOffsetDelta = Number(EndOffset, "演出の終了差分"), FixedDurationOverride = OptionalNumber(FixedDuration, "演出の固定長"), UseTemplateDuration = UseTemplateDuration };
 }
 
-public sealed class IntentPaletteDraft : IntentEditable
+public sealed partial class IntentPaletteDraft : IntentEditable
 {
     private IntentPalette model;
     private readonly Dictionary<string, string> text = new(StringComparer.Ordinal);
@@ -92,6 +92,7 @@ public sealed class IntentPaletteDraft : IntentEditable
         Raise(nameof(Summary)); Raise(nameof(ShowTypeMatch)); Raise(nameof(ShowFixedDuration)); Raise(nameof(ShowNeighborSettings));
         Raise(nameof(ShowNeighborEdge)); Raise(nameof(ShowNeighborFallback)); Raise(nameof(ShowMaximumGap)); Raise(nameof(ShowBoundaryTolerance));
         Raise(nameof(ShowAlignment)); Raise(nameof(ShowCharacterName)); Raise(nameof(CharacterRestrictionLabel));
+        Raise(nameof(SentenceAnchors)); Raise(nameof(SentenceNeighbors)); Raise(nameof(SentenceAnchorJoin));
     }
     public string Name { get => Get(); set => Put(value); }
     public string Label => Name;
@@ -253,7 +254,7 @@ public sealed class IntentPaletteDraft : IntentEditable
             MaximumNeighborGap = ShowMaximumGap ? OptionalNumber(MaximumGap, "周囲参照の最大間隔") : model.Relation.MaximumNeighborGap,
             BoundaryTolerance = ShowBoundaryTolerance ? Number(BoundaryTolerance, "境界の許容間隔") : model.Relation.BoundaryTolerance,
             Layer = model.Relation.Layer with { Offset = Number(LayerOffset, "対象からの段数"), Minimum = Number(LayerMinimum, "探索レイヤーの最小"), Maximum = Number(LayerMaximum, "探索レイヤーの最大") } };
-        return model with { Name = Name.Trim(), Intent = Intent.Trim(), Target = target, Relation = relation, Entries = Entries.Select(x => x.Build()).ToList() };
+        return model with { Name = Name.Trim(), Intent = Intent, Target = target, Relation = relation, Entries = Entries.Select(x => x.Build()).ToList() };
     }
 }
 
@@ -274,12 +275,13 @@ public sealed partial class IntentSettingsSession : IntentEditable
     public IntentSettingsSession(PlacerSettings source, IEnumerable<Type> knownTypes, IReadOnlyList<IItem>? selection = null)
     {
         BaselineFingerprint = JsonSerializer.Serialize(source); working = PlacerSettingsStore.Copy(source);
-        KnownTypes = knownTypes.Append(typeof(VoiceItem)).Distinct().ToDictionary(IntentSelectionContext.TypeKey, TypeLabel, StringComparer.Ordinal);
+        KnownTypes = knownTypes.Concat(CommonSettingsTypes).Distinct().ToDictionary(IntentSelectionContext.TypeKey, TypeLabel, StringComparer.Ordinal);
         foreach (var palette in source.IntentPalettes) AddDraft(palette);
         selectedPalette = Palettes.FirstOrDefault();
         foreach (var template in ItemSettings.Default.Templates.Where(x => x.Items.Count > 0).OrderBy(x => x.Name, StringComparer.Ordinal)) Sources.Add(new(template));
         VisibleSources = CollectionViewSource.GetDefaultView(Sources);
         VisibleSources.Filter = x => x is IntentSourceOption option && (sourceSearch.Length == 0 || option.Name.Contains(sourceSearch, StringComparison.OrdinalIgnoreCase));
+        InitializeGenericSets();
         InitializeNavigation(selection ?? []);
         Palettes.CollectionChanged += (_, _) => { MarkDirty(); RefreshNavigation(); };
     }
@@ -298,6 +300,7 @@ public sealed partial class IntentSettingsSession : IntentEditable
     public PlacerSettings Build()
     {
         var next = PlacerSettingsStore.Copy(working); next.IntentPalettes = Palettes.Select(x => x.Build()).ToList();
+        ApplyGenericSets(next);
         next.LegacyWorkspace = false; IntentPaletteSettings.Upgrade(next); PlacerSettingsStore.Validate(next); return next;
     }
     public void Create(IReadOnlyList<IItem> selection)
@@ -320,23 +323,27 @@ public sealed partial class IntentSettingsSession : IntentEditable
     }
     public void Duplicate()
     {
+        if (IsGenericContext) { DuplicateGenericSet(); return; }
         var source = SelectedPalette?.Build() ?? throw new InvalidOperationException("複製するセットを選んでください。");
         SelectedPalette = AddDraft(IntentPaletteSettings.Copy(source) with { Id = Guid.NewGuid(), Name = UniqueName(source.Name) }); MarkDirty();
     }
     public void RemoveSelected()
     {
+        if (IsGenericContext) { RemoveGenericSet(); return; }
         if (SelectedPalette == null) return;
         Palettes.Remove(SelectedPalette);
         RefreshPaletteFilter(); MarkDirty();
     }
     public void MovePalette(int delta)
     {
+        if (IsGenericContext) { MoveGenericSet(delta); return; }
         if (SelectedPalette == null) return;
         var index = Palettes.IndexOf(SelectedPalette); var target = index + delta;
         if (target >= 0 && target < Palettes.Count) Palettes.Move(index, target);
     }
     public void MoveEntry(int delta)
     {
+        if (IsGenericContext) { SelectedGenericSet?.MoveEntry(delta); return; }
         var palette = SelectedPalette; var entry = palette?.SelectedEntry;
         if (palette == null || entry == null) return;
         var index = palette.Entries.IndexOf(entry); var target = index + delta;
@@ -344,6 +351,7 @@ public sealed partial class IntentSettingsSession : IntentEditable
     }
     public int AddSelectedSources()
     {
+        if (IsGenericContext) return AddGenericSources();
         var palette = SelectedPalette ?? throw new InvalidOperationException("追加先のセットを選んでください。");
         var selected = Sources.Where(x => x.Selected).ToArray(); if (selected.Length == 0) return 0;
         var nextLibrary = working.Library.ToList(); var additions = new List<(IntentEntry Entry, TemplateLocator Locator)>();
@@ -378,6 +386,7 @@ public sealed partial class IntentSettingsSession : IntentEditable
     {
         var scan = IntentPaletteBootstrap.Scan(Build(), true); working = scan.Settings;
         var selected = SelectedPalette?.Id; Palettes.Clear(); foreach (var palette in working.IntentPalettes) AddDraft(palette);
-        SelectedPalette = Palettes.FirstOrDefault(x => x.Id == selected) ?? Palettes.FirstOrDefault(); MarkDirty(); return scan.AddedEntries;
+        SelectedPalette = Palettes.FirstOrDefault(x => x.Id == selected) ?? Palettes.FirstOrDefault();
+        RefreshNavigation(); MarkDirty(); return scan.AddedEntries;
     }
 }

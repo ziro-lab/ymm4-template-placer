@@ -113,11 +113,11 @@ internal static partial class NativeProof
             draft.Duration = IntentDuration.TargetSpan; await Idle();
             Assert(!panel.NeighborPanel.IsVisible && !panel.NeighborEdgePanel.IsVisible && !panel.FallbackPanel.IsVisible && !panel.FixedDurationPanel.IsVisible && panel.AlignmentPanel.IsVisible,
                 "UIUX TargetSpan hides neighbor/fallback/fixed-duration parameters");
-            draft.Duration = IntentDuration.Fixed; await Idle();
-            Assert(panel.FixedDurationPanel.IsVisible && !panel.NeighborPanel.IsVisible, "UIUX fixed duration reveals its length only when it is actually needed");
+            draft.Duration = IntentDuration.Fixed; panel.RelationAdvanced.IsExpanded = true; await Idle();
+            Assert(panel.FixedDurationPanel.IsVisible && !panel.NeighborPanel.IsVisible, "UIUX/R2-C fine tuning reveals fixed length only when it is actually needed");
             draft.Anchor = IntentAnchor.PairBoundary; await Idle();
-            Assert(panel.BoundaryTolerancePanel.IsVisible, "UIUX pair-boundary selection alone reveals boundary tolerance");
-            draft.Anchor = IntentAnchor.SelectedStart; draft.Duration = IntentDuration.UntilRelated; await Idle();
+            Assert(panel.BoundaryTolerancePanel.IsVisible, "UIUX/R2-C fine tuning reveals boundary tolerance only for pair-boundary mode");
+            draft.Anchor = IntentAnchor.SelectedStart; draft.Duration = IntentDuration.UntilRelated; panel.RelationAdvanced.IsExpanded = false; await Idle();
             Assert(panel.NeighborPanel.IsVisible && panel.FallbackPanel.IsVisible && !panel.AlignmentPanel.IsVisible,
                 "UIUX choosing a neighbor-based relation reveals its neighbor and fallback while hiding irrelevant alignment");
 

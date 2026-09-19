@@ -9,6 +9,7 @@ public sealed partial class PlacerViewModel
 {
     private IntentSettingsSession? intentSettings;
     public IntentSettingsSession? IntentSettings { get => intentSettings; private set { intentSettings = value; OnPropertyChanged(); UpdateIntentSettingsCommands(); } }
+    public ActionCommand SelectSettingsContextCommand { get; private set; } = null!;
     public ActionCommand SaveIntentSettingsCommand { get; private set; } = null!;
     public ActionCommand DiscardIntentSettingsCommand { get; private set; } = null!;
     public ActionCommand CreateIntentPaletteCommand { get; private set; } = null!;
@@ -24,23 +25,26 @@ public sealed partial class PlacerViewModel
         CloseExpressionTrialSession();
         if (SaveIntentSettingsCommand == null)
         {
+            SelectSettingsContextCommand = new ActionCommand(x => x is IntentSettingsItemContext, x =>
+                { if (x is IntentSettingsItemContext context && IntentSettings != null) IntentSettings.SelectedItemContext = context; });
+            OnPropertyChanged(nameof(SelectSettingsContextCommand));
             SaveIntentSettingsCommand = new ActionCommand(_ => settingsAvailable && IntentSettings?.HasChanges == true, _ => Guard(SaveIntentSettings));
             DiscardIntentSettingsCommand = new ActionCommand(_ => IntentSettings != null, _ => ResetIntentSettings());
             CreateIntentPaletteCommand = new ActionCommand(_ => settingsAvailable && IntentSettings?.CanCreateForContext == true, _ => Guard(() => IntentSettings!.CreateForContext()));
-            DuplicateIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.SelectedPalette != null, _ => Guard(() => IntentSettings!.Duplicate()));
-            DeleteIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.SelectedPalette != null, _ => Guard(() =>
+            DuplicateIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSet == true, _ => Guard(() => IntentSettings!.Duplicate()));
+            DeleteIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSet == true, _ => Guard(() =>
             {
-                var palette = IntentSettings!.SelectedPalette!;
-                if (MessageBox.Show($"「{palette.Name}」と、そのセット内の演出{palette.Entries.Count}件を外します。\n元テンプレート・登録・タイムラインは削除しません。", Title, MessageBoxButton.OKCancel, MessageBoxImage.Question) == MessageBoxResult.OK)
-                    IntentSettings.RemoveSelected();
+                var session = IntentSettings!;
+                if (MessageBox.Show($"「{session.SelectedSetName}」と、そのセット内の演出{session.SelectedSetEntryCount}件を外します。\n元テンプレート・登録・タイムラインは削除しません。", Title, MessageBoxButton.OKCancel, MessageBoxImage.Question) == MessageBoxResult.OK)
+                    session.RemoveSelected();
             }));
-            MoveIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.SelectedPalette != null, x => Guard(() => IntentSettings!.MovePalette(Convert.ToInt32(x, System.Globalization.CultureInfo.InvariantCulture))));
-            MoveIntentEntryCommand = new ActionCommand(_ => IntentSettings?.SelectedPalette?.SelectedEntry != null, x => Guard(() => IntentSettings!.MoveEntry(Convert.ToInt32(x, System.Globalization.CultureInfo.InvariantCulture))));
-            RemoveIntentEntryCommand = new ActionCommand(_ => IntentSettings?.SelectedPalette?.SelectedEntry != null, _ => Guard(() =>
+            MoveIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSet == true, x => Guard(() => IntentSettings!.MovePalette(Convert.ToInt32(x, System.Globalization.CultureInfo.InvariantCulture))));
+            MoveIntentEntryCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSetEntry == true, x => Guard(() => IntentSettings!.MoveEntry(Convert.ToInt32(x, System.Globalization.CultureInfo.InvariantCulture))));
+            RemoveIntentEntryCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSetEntry == true, _ => Guard(() =>
             {
-                var palette = IntentSettings!.SelectedPalette!; palette.Entries.Remove(palette.SelectedEntry!); palette.SelectedEntry = null;
+                IntentSettings!.RemoveSelectedSetEntry();
             }));
-            AddIntentSourcesCommand = new ActionCommand(_ => IntentSettings?.SelectedPalette != null, _ => Guard(() =>
+            AddIntentSourcesCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSet == true, _ => Guard(() =>
             {
                 var count = IntentSettings!.AddSelectedSources(); HasError = false; Status = $"{count}件を下書きへ追加しました。［変更を保存］で確定します。";
             }));

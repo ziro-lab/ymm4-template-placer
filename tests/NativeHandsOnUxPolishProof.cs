@@ -44,9 +44,9 @@ internal static partial class NativeProof
             vm.ActivateIntentWorkspace(); vm.SetLegacyWorkspace(false); vm.Refresh(); vm.ResetIntentSettings();
             vm.OpenIntentSettingsCommand.Execute(null); await Idle();
             var panel = view.RelativeSettingsSurface; var session = vm.IntentSettings!; var signature = Signature(timeline);
-            Assert(panel.SettingsItemPicker.SelectedItem is IntentSettingsItemContext { IsCurrentSelection: true } context && context.Label.Contains("ボイス", StringComparison.Ordinal) &&
-                session.Intents.SequenceEqual(new[] { "表情" }) && session.VisiblePalettes.Cast<IntentPaletteDraft>().Single().Id == palette.Id,
-                "H1 real Item-first Settings start at the selected Voice and expose only its intent and Sets");
+            Assert(session.SelectedItemContext is IntentSettingsItemContext { IsCurrentSelection: true } context && context.Label.Contains("ボイス", StringComparison.Ordinal) &&
+                panel.SettingsTargetButtons.IsVisible && panel.FindName("SettingsIntentPicker") == null && session.VisiblePalettes.Cast<IntentPaletteDraft>().Single().Id == palette.Id,
+                "H1/R2-C direct target buttons start at the selected Voice and expose matching Sets without Intent navigation");
             Assert(!panel.TargetAdvanced.IsExpanded && !panel.TargetTypeChoices.IsVisible && !session.HasChanges,
                 "H1 the runtime type checkbox matrix is hidden and opening Settings is not a draft edit");
             session.SelectedItemContext = session.ItemContexts.Single(x => !x.IsCurrentSelection && x.TypeKeys.Contains(IntentSelectionContext.TypeKey(typeof(TextItem)))); await Idle();

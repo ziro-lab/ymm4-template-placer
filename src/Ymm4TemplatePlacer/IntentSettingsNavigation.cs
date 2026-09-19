@@ -9,6 +9,7 @@ public sealed record IntentSettingsItemContext(string Key, string Label, IReadOn
     IReadOnlyList<IItem>? Selection = null)
 {
     public bool IsCurrentSelection => Selection != null;
+    public bool IsGeneric => Key == "generic";
 }
 
 public sealed partial class IntentSettingsSession
@@ -21,6 +22,13 @@ public sealed partial class IntentSettingsSession
     public ObservableCollection<string> Intents { get; } = [];
     public ICollectionView VisiblePalettes { get; private set; } = null!;
     public bool CanCreateForContext => SelectedItemContext != null;
+    public bool IsGenericContext => SelectedItemContext?.IsGeneric == true;
+    public bool IsTargetedContext => !IsGenericContext;
+    public IEnumerable<IntentSettingsItemContext> CommonItemContexts => ItemContexts.Where(IsCommonContext);
+    public IEnumerable<IntentSettingsItemContext> OtherItemContexts => ItemContexts.Where(x => !IsCommonContext(x));
+    private static bool IsCommonContext(IntentSettingsItemContext x) => x.IsGeneric || x.IsCurrentSelection ||
+        x.TypeKeys.Any(k => CommonSettingsTypes.Select(IntentSelectionContext.TypeKey).Contains(k, StringComparer.Ordinal));
+    private static readonly Type[] CommonSettingsTypes = [typeof(VoiceItem), typeof(TextItem), typeof(ImageItem), typeof(ShapeItem)];
     public string ContextNotice => SelectedItemContext == null ? "タイムラインでアイテムを選ぶか、対象の種類を選んでください。" : "";
     public IntentSettingsItemContext? SelectedItemContext
     {
@@ -29,6 +37,7 @@ public sealed partial class IntentSettingsSession
         {
             if (refreshingNavigation || value == selectedItemContext || (value != null && !ItemContexts.Contains(value))) return;
             selectedItemContext = value; RefreshNavigation(); NavigationChanged();
+            Raise(nameof(IsGenericContext)); Raise(nameof(IsTargetedContext)); Raise(nameof(HasSelectedSet)); Raise(nameof(HasSelectedSetEntry));
             Raise(nameof(CanCreateForContext)); Raise(nameof(ContextNotice));
         }
     }
@@ -50,7 +59,8 @@ public sealed partial class IntentSettingsSession
     {
         VisiblePalettes = new ListCollectionView(Palettes);
         VisiblePalettes.Filter = x => x is IntentPaletteDraft draft &&
-            (ShowAllSets || (MatchesContext(draft) && draft.Intent == selectedIntent));
+            !IsGenericContext && (ShowAllSets || MatchesContext(draft));
+        ItemContexts.Add(new("generic", "汎用", []));
         var names = KnownTypes.Values.GroupBy(x => x, StringComparer.Ordinal).ToDictionary(x => x.Key, x => x.Count(), StringComparer.Ordinal);
         var ordinals = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var pair in KnownTypes.OrderBy(x => x.Value, StringComparer.Ordinal))
@@ -83,6 +93,8 @@ public sealed partial class IntentSettingsSession
         refreshingNavigation = false;
         RefreshNavigation(); NavigationChanged(nameof(SelectedItemContext));
         Raise(nameof(CanCreateForContext)); Raise(nameof(ContextNotice));
+        Raise(nameof(CommonItemContexts)); Raise(nameof(OtherItemContexts));
+        Raise(nameof(IsGenericContext)); Raise(nameof(IsTargetedContext));
     }
     private bool MatchesContext(IntentPaletteDraft draft)
     {
@@ -114,7 +126,7 @@ public sealed partial class IntentSettingsSession
             SelectFilteredPalette(preferred);
         }
         finally { refreshingNavigation = false; }
-        Raise(nameof(SelectedIntent)); NavigationChanged(nameof(SelectedPalette));
+        Raise(nameof(SelectedIntent)); Raise(nameof(HasSelectedSet)); Raise(nameof(HasSelectedSetEntry)); NavigationChanged(nameof(SelectedPalette));
     }
     private void RefreshPaletteFilter(Guid? preferred = null)
     {
@@ -133,6 +145,7 @@ public sealed partial class IntentSettingsSession
     public void CreateForContext()
     {
         var context = SelectedItemContext ?? throw new InvalidOperationException("セットを使うアイテムを先に選んでください。");
+        if (context.IsGeneric) { CreateGenericSet(); return; }
         if (context.Selection is { } selected) Create(selected);
         else
         {

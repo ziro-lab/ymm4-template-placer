@@ -43,7 +43,7 @@ internal static partial class NativeProof
                 "R11 create captures explicit live runtime type and logical CharacterName without a closed item enum");
             draft = session.SelectedPalette!;
             panel.SetNameBox.Text = "表情セット"; panel.SetNameBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)!.UpdateSource();
-            panel.IntentNameBox.Text = "表情"; panel.IntentNameBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)!.UpdateSource();
+            Assert(panel.FindName("IntentNameBox") == null && draft.Intent == "表情", "R11/R2-C new Voice Set automatically retains bounded compatibility Intent without a second name input");
             draft.ExpressionCandidates = true;
             session.Sources.Single(x => ReferenceEquals(x.Source, sourceA)).Selected = true;
             session.Sources.Single(x => ReferenceEquals(x.Source, sourceB)).Selected = true;
