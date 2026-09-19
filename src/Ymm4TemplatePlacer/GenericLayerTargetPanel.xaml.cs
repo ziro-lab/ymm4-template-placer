@@ -7,9 +7,7 @@ public partial class GenericLayerTargetPanel : UserControl
     public GenericLayerTargetPanel()
     {
         InitializeComponent();
-        // Listen only on our own numeric editor. Some host/text class handlers mark
-        // Enter handled before instance handlers; this does not install a global hook.
-        GenericTargetBox.AddHandler(Keyboard.PreviewKeyDownEvent, new KeyEventHandler(TargetKeyDown), true);
+        GenericTargetBox.PreviewKeyDown += TargetKeyDown;
     }
     private void TargetKeyDown(object sender, KeyEventArgs e)
     {
@@ -17,8 +15,10 @@ public partial class GenericLayerTargetPanel : UserControl
         NativeProof.TraceGenericLayerKey(e, DataContext);
 #endif
         if (DataContext is not PlacerViewModel root || e.Key is not (Key.Enter or Key.Escape)) return;
+        // Editor-local commit/reset, never placement. The native host can report
+        // IsRepeat on the first delivered Return. Successful apply/reset creates a
+        // clean draft, so command admission itself prevents repeated saves.
         e.Handled = true;
-        if (e.IsRepeat) return;
         var command = e.Key == Key.Enter ? root.ApplyGenericLayerTargetCommand : root.ResetGenericLayerTargetCommand;
         if (command?.CanExecute(null) == true) command.Execute(null);
     }
