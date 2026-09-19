@@ -55,5 +55,6 @@ internal static partial class NativeProof
         await VerifyHandsOnRound2Expression(timeline, undo);
         await VerifyRelativeFinal(timeline, undo);
         VerifyRelativeAcceptance();
+        VerifyHandsOnRound2Final();
     }
 }
