@@ -19,12 +19,14 @@ internal sealed record ExpressionNavigationHost(object? PreviewOwner, Func<int, 
     {
         try
         {
-            var main = Application.Current?.Windows.Cast<Window>().Where(x => x.IsVisible &&
-                x.DataContext?.GetType().FullName == "YukkuriMovieMaker.ViewModels.MainViewModel").ToArray() ?? [];
+            var app = Application.Current;
+            if (app == null) return Missing;
+            var main = app.Windows.Cast<Window>().Where(x => x.IsVisible &&
+                x.DataContext?.GetType().FullName == "YukkuriMovieMaker.ViewModels.MainViewModel").ToArray();
             if (main.Length != 1) return Missing;
             var previews = new HashSet<object>(ReferenceEqualityComparer.Instance);
             var viewports = new HashSet<object>(ReferenceEqualityComparer.Instance);
-            var windows = Application.Current.Windows.Cast<Window>().Where(x => x.IsVisible && OwnedBy(x, main[0])).Take(33).ToArray();
+            var windows = app.Windows.Cast<Window>().Where(x => x.IsVisible && OwnedBy(x, main[0])).Take(33).ToArray();
             if (windows.Length > 32) return Missing;
             var pending = new Stack<(DependencyObject Node, int Depth)>();
             foreach (var window in windows) pending.Push((window, 0));
