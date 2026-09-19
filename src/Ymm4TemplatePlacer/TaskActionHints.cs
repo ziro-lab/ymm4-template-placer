@@ -6,8 +6,8 @@ public sealed partial class PlacerViewModel
         CurrentPalette == null ? "パレットを選ぶか、［＋ テンプレートを追加］で始めてください。" :
         SelectedPaletteEntry?.Entry == null ? "パレット内のテンプレートを選んでください。" :
         "再生位置へ追加します。項目の左ダブルクリックも同じ操作です。";
-    public string ExpressionPlaceHint => !UsesRelativeExpressions && ExpressionPresetDirty ? "配置範囲を保存するか、編集を戻してください。" :
-        Rows.Count == 0 ? "YMM4で音声を追加して［シーン更新］してください。" :
+    public string ExpressionPlaceHint => ExpressionRowsStale ? ExpressionFreshnessNotice : !UsesRelativeExpressions && ExpressionPresetDirty ? "配置範囲を保存するか、編集を戻してください。" :
+        Rows.Count == 0 ? "YMM4で音声を追加すると、自動的に一覧へ表示されます。" :
         Rows.Any(x => !x.SelectedChoice.IsAvailable) ? "選択元を確認できない表情があります。候補を確認して選び直してください。" :
         !Rows.Any(x => x.SelectedChoice.Template != null) ? "「表情をまとめて」のテンプレート列で表情を選んでください。" :
         UsesRelativeExpressions ? "表情の選択は即時反映されます。このボタンはExcel読込など、まだタイムラインへ反映していない割り当てをまとめて確定するときだけ使います。" :

@@ -7,7 +7,6 @@
  <Grid Margin="8">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <DockPanel Grid.Row="0" Margin="0,0,0,6">
-   <Button x:Name="RefreshButton" Content="シーン更新" Command="{Binding RefreshCommand}" DockPanel.Dock="Left" Padding="12,4" Margin="0,0,8,0" ToolTip="現在のシーンの音声とテンプレートを読み直します。「表情をまとめて」の選択はクリアされます。"/>
    <TextBlock Text="{Binding SceneName}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
   </DockPanel>
   <TabControl x:Name="MainTabs" Grid.Row="1" SelectedIndex="0">
@@ -19,8 +18,11 @@
      <StackPanel Grid.Row="0" Margin="0,0,0,6">
       <TextBlock Text="{Binding Summary}" Opacity="0.75" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/>
       <local:ExpressionPresetPanel x:Name="PresetSurface"/>
+      <TextBlock x:Name="ExpressionFreshnessWarning" Text="{Binding ExpressionFreshnessNotice}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,4,0,0">
+       <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding ExpressionFreshnessNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+      </TextBlock>
      </StackPanel>
-     <DataGrid x:Name="VoiceGrid" Grid.Row="1" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="True" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" SelectionUnit="FullRow" SelectionMode="Single" RowHeight="36" HeadersVisibility="Column" GridLinesVisibility="Horizontal">
+     <DataGrid x:Name="VoiceGrid" IsEnabled="{Binding CanEditExpressionRows}" Grid.Row="1" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="True" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" SelectionUnit="FullRow" SelectionMode="Single" RowHeight="36" HeadersVisibility="Column" GridLinesVisibility="Horizontal">
       <DataGrid.RowStyle><Style TargetType="DataGridRow"><EventSetter Event="MouseLeftButtonUp" Handler="VoiceGridRow_Click"/><Setter Property="ToolTip"><Setter.Value><ToolTip><StackPanel MaxWidth="420"><TextBlock Text="{Binding Character}" FontWeight="SemiBold"/><TextBlock Text="{Binding Serif}" TextWrapping="Wrap"/><TextBlock Text="{Binding Frame,StringFormat=開始: {0} フレーム}"/><TextBlock Text="{Binding Length,StringFormat=長さ: {0} フレーム}"/></StackPanel></ToolTip></Setter.Value></Setter></Style></DataGrid.RowStyle>
       <DataGrid.Columns>
        <DataGridTextColumn Header="No" Binding="{Binding No}" IsReadOnly="True" Width="28"/>
@@ -36,7 +38,7 @@
        </Grid></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
       </DataGrid.Columns>
      </DataGrid>
-     <TextBlock x:Name="ExpressionEmptyNotice" Grid.Row="1" Text="このシーンには音声がありません。YMM4で音声を追加し、［シーン更新］してください。" TextWrapping="Wrap" Margin="8,28,8,8" IsHitTestVisible="False">
+     <TextBlock x:Name="ExpressionEmptyNotice" Grid.Row="1" Text="このシーンには音声がありません。YMM4で音声を追加すると、自動的に一覧へ表示されます。" TextWrapping="Wrap" Margin="8,28,8,8" IsHitTestVisible="False">
       <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Rows.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
      </TextBlock>
      <ScrollViewer x:Name="ExpressionRowDetail" Grid.Row="2" DataContext="{Binding SelectedItem,ElementName=VoiceGrid}" Visibility="Collapsed" MaxHeight="58" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="2,4,2,0">
@@ -51,7 +53,10 @@
         <WrapPanel Margin="0,3,0,0"><Button Content="Excelへ出力" Command="{Binding ExportCommand}" Padding="10,4" Margin="0,0,8,0"/><Button Content="Excelから読み込み" Command="{Binding ImportCommand}" Padding="10,4"/></WrapPanel>
        </Expander>
        <Expander x:Name="ExpressionMaintenance" Header="メンテナンス">
-        <Button x:Name="ResyncButton" Content="選択した表情を再同期" Command="{Binding ResyncCommand}" Padding="8,3" Margin="0,3,0,0" ToolTip="{Binding ResyncHint}" ToolTipService.ShowOnDisabled="True"/>
+        <StackPanel>
+         <Button x:Name="ResyncButton" Content="選択した表情を再同期" Command="{Binding ResyncCommand}" Padding="8,3" Margin="0,3,0,0" ToolTip="{Binding ResyncHint}" ToolTipService.ShowOnDisabled="True"/>
+         <Button x:Name="RefreshButton" Content="一覧を読み直す" Command="{Binding RefreshCommand}" Padding="8,3" Margin="0,3,0,0" ToolTip="未配置の割り当てを確認してから、現在の音声と候補を読み直します。"/>
+        </StackPanel>
        </Expander>
       </WrapPanel>
      </StackPanel>

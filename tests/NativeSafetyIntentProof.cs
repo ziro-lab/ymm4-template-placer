@@ -89,8 +89,9 @@ internal static partial class NativeProof
             "WUX11 Template Add discard is labelled Cancel rather than Back");
         Assert(view.BackFromManagementButton.Content?.ToString() == "戻る",
             "WUX11 nested Template Management navigation remains Back because it preserves the parent task");
-        Assert(view.RefreshButton.Content?.ToString() == "シーン更新" && view.ExpressionEmptyNotice.Text.Contains("［シーン更新］", StringComparison.Ordinal),
-            "WUX11 global refresh is named Scene Refresh in both action and recovery guidance");
+        Assert(view.RefreshButton.Content?.ToString() == "一覧を読み直す" && view.RefreshButton.Command == vm.RefreshCommand &&
+            !view.ExpressionEmptyNotice.Text.Contains("シーン更新", StringComparison.Ordinal) && view.ExpressionEmptyNotice.Text.Contains("自動", StringComparison.Ordinal),
+            "WUX11/R3-E explicit reload keeps its guarded command and is honestly named; normal Voice discovery is automatic");
 
         vm.ConfirmationOverride = null;
         vm.CloseTemplateManagementCommand.Execute(null); ShowTask(view, "palette"); await Idle();

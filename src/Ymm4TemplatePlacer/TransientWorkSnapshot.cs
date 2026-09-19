@@ -52,6 +52,7 @@ internal sealed record TransientWorkSnapshot(
 {
     public bool LegacyWorkspace { get; init; }
     public ExpressionResumeWork? DeferredExpressions { get; init; }
+    public PendingVoiceRowsWork? PendingVoiceRows { get; init; }
 }
 
 internal sealed record PresetDraftState(
@@ -143,22 +144,23 @@ public sealed partial class PlacerViewModel
         return new TransientWorkSnapshot(timeline, assignments, expression, selection,
             selectionEntry?.Id, selectionEntry, palette?.Id, SelectedPaletteEntry?.LibraryEntryId,
             layer, paletteName, creating, addition, libraryEdit, IsAddingTemplate, IsManagingTemplates)
-        { LegacyWorkspace = UseLegacyWorkspace, DeferredExpressions = deferredExpressionResume };
+        { LegacyWorkspace = UseLegacyWorkspace, DeferredExpressions = deferredExpressionResume, PendingVoiceRows = CapturePendingVoiceRows() };
     }
 
-    private static bool SameVoice(VoiceSnapshot left, VoiceSnapshot right) => ReferenceEquals(left.Voice, right.Voice) &&
-        left.Character == right.Character && left.Frame == right.Frame && left.Length == right.Length &&
-        left.Serif == right.Serif && left.Layer == right.Layer;
+    private static bool SameVoice(VoiceSnapshot left, VoiceSnapshot leftOther) => ReferenceEquals(left.Voice, leftOther.Voice) &&
+        left.Character == leftOther.Character && left.Frame == leftOther.Frame && left.Length == leftOther.Length &&
+        left.Serif == leftOther.Serif && left.Layer == leftOther.Layer;
 
     private void TryRestoreTransientWork()
     {
         var snapshot = pendingTransientWork;
         if (snapshot == null || timeline == null) return;
         pendingTransientWork = null;
+        var restoredPendingRows = RestorePendingVoiceRows(snapshot);
         if (!ReferenceEquals(snapshot.Timeline, timeline)) return;
 
         var skipped = 0;
-        RestoreOrDeferExpressionWork(snapshot, ref skipped);
+        if (!restoredPendingRows) RestoreOrDeferExpressionWork(snapshot, ref skipped);
 
         if (snapshot.ExpressionDraft is { } expression)
         {

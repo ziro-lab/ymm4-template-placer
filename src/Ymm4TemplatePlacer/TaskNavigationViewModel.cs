@@ -15,12 +15,15 @@ public sealed partial class PlacerViewModel
     }
     public void SetActiveTask(string task)
     {
-        if (activeTask != task)
+        var changed = activeTask != task;
+        if (changed)
         {
             if (task != "expression") CloseExpressionTrialSession();
             activeTask = task;
             if (!HasError && !keepPartialStatus) Status = "";
         }
         SetSelectionPreviewActive(task == "selection");
+        SetVoiceFreshnessActive(task.Length > 0);
+        if (changed && task == "expression") RequestVoiceFreshnessCheck();
     }
 }

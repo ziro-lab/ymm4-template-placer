@@ -21,12 +21,13 @@ public sealed class AssignmentRow : INotifyPropertyChanged
     public bool UsesIntentSources { get; private set; }
     public string State => !SelectedChoice.IsAvailable ? "選択元を確認" : !HasCandidates ? "候補なし" : SelectedChoice.Template == null ? "未選択" : "選択済み";
     private TemplateChoice selectedChoice;
+    internal bool AssignmentLocked { get; set; }
     public TemplateChoice SelectedChoice
     {
         get => selectedChoice;
         set
         {
-            if (value == null || !Choices.Contains(value) || ReferenceEquals(value, selectedChoice)) return;
+            if (AssignmentLocked || value == null || !Choices.Contains(value) || ReferenceEquals(value, selectedChoice)) return;
             selectedChoice = value; Changed(); Changed(nameof(State));
         }
     }
@@ -112,6 +113,8 @@ public sealed class AssignmentRow : INotifyPropertyChanged
         selectedChoice = Choices.First(x => ReferenceEquals(x.Template, selected));
         Changed(nameof(Choices)); Changed(nameof(SelectedChoice)); Changed(nameof(State));
     }
+    internal AssignmentRow CopyPending() => new(No, Target, Array.Empty<FaceTemplate>(), UsesIntentSources)
+    { Choices = Choices.ToArray(), selectedChoice = this.selectedChoice };
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
