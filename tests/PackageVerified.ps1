@@ -55,7 +55,12 @@ Copy-Item (Join-Path $OutputDir 'hands-on-ux-polish.json') $package
 Copy-Item (Join-Path $OutputDir 'hands-on-round2.json') $package
 $round3Payload=@('hands-on-round3.json','hands-on-round3-appearance.json','hands-on-round3-shortcuts.json','hands-on-round3-settings.json','hands-on-round3-layer.json','hands-on-round3-freshness.json','hands-on-round3-navigation.json','hands-on-round3-playback-observation.json','round3-evidence-guard-tests.json')
 foreach($name in $round3Payload){Copy-Item (Join-Path $OutputDir $name) $package}
-if ((Get-Content -Raw (Join-Path $package 'README.md')) -notmatch '^# YMM4 Template Placer v0\.4\.2') { throw 'Obsolete package usage documentation' }
+$usage=Get-Content -Raw (Join-Path $package 'README.md')
+if ($usage -notmatch '^# YMM4 Template Placer v0\.4\.2') { throw 'Obsolete package usage documentation' }
+foreach($section in @('Hands-on Round 3','## 固定列と位置ショートカット','## 汎用配置のレイヤーをすばやく指定する','## 表情をまとめて：行クリックと即時反映','## Excelと未配置作業の保護','画面外の時だけ追従','一覧を読み直す')) {
+ if (-not $usage.Contains($section,[StringComparison]::Ordinal)) {throw "Missing actual Round3 usage section: $section"}
+}
+if ($usage.Contains('主画面は「編集」',[StringComparison]::Ordinal) -or $usage.Contains('「以前の設定・互換操作」から',[StringComparison]::Ordinal)) {throw 'Obsolete normal-workspace instructions remain in the package'}
 Remove-Item (Join-Path $package '*.pdb') -ErrorAction SilentlyContinue
 $event=Get-Content -Raw $env:GITHUB_EVENT_PATH | ConvertFrom-Json
 $sourceHead=if ($env:GITHUB_EVENT_NAME -eq 'pull_request') { $event.pull_request.head.sha } else { $env:GITHUB_SHA }
@@ -112,7 +117,8 @@ Remove-Item $ymmeStage -Recurse -Force -ErrorAction SilentlyContinue
 
 Copy-Item $dll (Join-Path $OutputDir 'Ymm4TemplatePlacer.dll')
 $sourceArchive=Join-Path $OutputDir 'Ymm4TemplatePlacer-source.zip'
-git archive --format=zip -o $sourceArchive HEAD
+# Preserve repository blob bytes; Windows autocrlf must not rewrite the source archive.
+git -c core.autocrlf=false archive --format=zip -o $sourceArchive HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Source archive failed' }
 $sourceZip=[IO.Compression.ZipFile]::OpenRead((Resolve-Path $sourceArchive).Path)
 try {
