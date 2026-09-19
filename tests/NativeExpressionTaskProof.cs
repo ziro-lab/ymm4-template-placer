@@ -34,13 +34,15 @@ internal static partial class NativeProof
         vm.RevertExpressionPresetCommand.Execute(null); vm.DeleteExpressionPreset();
         vm.SelectedExpressionPreset = vm.ExpressionPresets.Single(x => x.Id == selectedPreset); await Idle();
         Assert(!preset.PresetSelector.IsVisible, "WUX4 returning to one saved range removes an unnecessary selection decision");
-        Assert(view.ResyncButton.IsVisible && !view.ResyncButton.IsEnabled && vm.ResyncHint.Contains("タイムライン", StringComparison.Ordinal) && ToolTipService.GetShowOnDisabled(view.ResyncButton),
-            "WUX4 expression-scoped Resync explains disabled selection context without occupying every task header");
+        Assert(view.ExpressionMaintenance.IsVisible && !view.ExpressionMaintenance.IsExpanded && !view.ResyncButton.IsVisible && vm.ResyncHint.Contains("タイムライン", StringComparison.Ordinal) && ToolTipService.GetShowOnDisabled(view.ResyncButton),
+            "WUX4/R2-E Resync stays reachable under a collapsed expression-scoped maintenance affordance instead of occupying the normal action row");
+        view.ExpressionMaintenance.IsExpanded = true; await Idle(); Assert(view.ResyncButton.IsVisible && !view.ResyncButton.IsEnabled, "WUX4/R2-E expanding maintenance reveals the existing Resync command");
         var linked = timeline.Items.OfType<VoiceItem>().First(x => AssociationTag.Voice(x.Remark, out _) == AssociationTagState.Valid);
         timeline.SelectedItems = [linked]; await Idle();
         Assert(view.ResyncButton.IsEnabled, "WUX4 a real selected associated Voice enables the same existing Resync command");
         timeline.SelectedItems = [timeline.Items.OfType<TachieItem>().First()]; await Idle();
         Assert(!view.ResyncButton.IsEnabled, "WUX4 an unrelated native item does not advertise Expression Resync");
+        view.ExpressionMaintenance.IsExpanded = false;
         ShowTask(view, "palette"); await Idle(); Assert(!view.ResyncButton.IsVisible, "WUX4 Palette has no global Expression recovery action");
         ShowTask(view, "selection"); await Idle(); Assert(!view.ResyncButton.IsVisible, "WUX4 Selection Placement has no global Expression recovery action");
         ShowTask(view, "expression"); timeline.SelectedItems = []; await Idle();
@@ -62,8 +64,8 @@ internal static partial class NativeProof
                 "WUX4 360px keeps the entire Template selector inside the view instead of requiring horizontal exploration");
             Assert(view.ExpressionRowDetail.IsVisible && view.ExpressionSelectedSerif.Text == row.Serif && WithinView(view.ExpressionRowDetail, view),
                 "WUX4 narrow task provides the selected native Serif at full available width");
-            Assert(WithinView(view.PlaceButton, view) && WithinView(view.ResyncButton, view),
-                "WUX4 primary placement and scoped recovery remain reachable without scrolling the whole task");
+            Assert(!view.PlaceButton.IsVisible && WithinView(view.ExpressionMaintenance, view),
+                "WUX4/R2-E normal immediate mode hides the batch-only Place action and keeps maintenance discovery reachable at 360px");
             SaveNamedView(view, "ux-expression-narrow.png");
             var missing = vm.Rows.Single(x => x.Character == "TestC");
             view.VoiceGrid.SelectedItem = missing; view.VoiceGrid.ScrollIntoView(missing); await Idle();

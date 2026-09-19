@@ -48,10 +48,10 @@ internal static partial class NativeProof
             view.VoiceGrid.SelectedItem = row; view.VoiceGrid.ScrollIntoView(row); await Idle(); view.VoiceGrid.UpdateLayout();
             var container = (DataGridRow)view.VoiceGrid.ItemContainerGenerator.ContainerFromItem(row);
             var navSignature = Signature(timeline); timeline.CurrentFrame = 0; timeline.SelectedItems = [manual];
-            var dbl = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = Control.MouseDoubleClickEvent };
-            container.RaiseEvent(dbl); await Idle();
-            Assert(dbl.Handled && timeline.CurrentFrame == voice.Frame && timeline.SelectedItems.Count == 1 && ReferenceEquals(timeline.SelectedItems[0], voice) &&
-                Signature(timeline) == navSignature, "H3 Voice-row double-click routes through the root and changes only CurrentFrame/selection");
+            var click = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = UIElement.MouseLeftButtonUpEvent };
+            container.RaiseEvent(click); await Idle();
+            Assert(click.Handled && timeline.CurrentFrame == voice.Frame && timeline.SelectedItems.Count == 1 && ReferenceEquals(timeline.SelectedItems[0], voice) &&
+                Signature(timeline) == navSignature, "H3/R2-E Voice-row single click routes through the root and changes only CurrentFrame/selection");
 
             var initial = Signature(timeline);
             await SelectInDropdown(view, row, sourceA.Name); await Idle();

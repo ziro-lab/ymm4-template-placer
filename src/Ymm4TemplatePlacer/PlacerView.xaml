@@ -21,7 +21,7 @@
       <local:ExpressionPresetPanel x:Name="PresetSurface"/>
      </StackPanel>
      <DataGrid x:Name="VoiceGrid" Grid.Row="1" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="True" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" SelectionUnit="FullRow" SelectionMode="Single" RowHeight="36" HeadersVisibility="Column" GridLinesVisibility="Horizontal">
-      <DataGrid.RowStyle><Style TargetType="DataGridRow"><EventSetter Event="MouseDoubleClick" Handler="VoiceGridRow_DoubleClick"/><Setter Property="ToolTip"><Setter.Value><ToolTip><StackPanel MaxWidth="420"><TextBlock Text="{Binding Character}" FontWeight="SemiBold"/><TextBlock Text="{Binding Serif}" TextWrapping="Wrap"/><TextBlock Text="{Binding Frame,StringFormat=開始: {0} フレーム}"/><TextBlock Text="{Binding Length,StringFormat=長さ: {0} フレーム}"/></StackPanel></ToolTip></Setter.Value></Setter></Style></DataGrid.RowStyle>
+      <DataGrid.RowStyle><Style TargetType="DataGridRow"><EventSetter Event="MouseLeftButtonUp" Handler="VoiceGridRow_Click"/><Setter Property="ToolTip"><Setter.Value><ToolTip><StackPanel MaxWidth="420"><TextBlock Text="{Binding Character}" FontWeight="SemiBold"/><TextBlock Text="{Binding Serif}" TextWrapping="Wrap"/><TextBlock Text="{Binding Frame,StringFormat=開始: {0} フレーム}"/><TextBlock Text="{Binding Length,StringFormat=長さ: {0} フレーム}"/></StackPanel></ToolTip></Setter.Value></Setter></Style></DataGrid.RowStyle>
       <DataGrid.Columns>
        <DataGridTextColumn Header="No" Binding="{Binding No}" IsReadOnly="True" Width="28"/>
        <DataGridTextColumn Header="キャラ" Binding="{Binding Character}" IsReadOnly="True" Width="64"/>
@@ -43,13 +43,17 @@
       <TextBlock x:Name="ExpressionSelectedSerif" Text="{Binding Serif}" TextWrapping="Wrap"><TextBlock.ToolTip><ToolTip><StackPanel><TextBlock Text="{Binding Frame,StringFormat=開始: {0} フレーム}"/><TextBlock Text="{Binding Length,StringFormat=長さ: {0} フレーム}"/></StackPanel></ToolTip></TextBlock.ToolTip></TextBlock>
      </ScrollViewer>
      <StackPanel Grid.Row="3" Margin="0,5,0,0">
+      <Button x:Name="PlaceButton" Content="表情を配置" Command="{Binding PlaceCommand}" Padding="12,5" Margin="0,0,0,4" HorizontalAlignment="Left" ToolTip="{Binding ExpressionPlaceHint}" ToolTipService.ShowOnDisabled="True">
+       <Button.Style><Style TargetType="Button"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowExpressionBatchPlace}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Button.Style>
+      </Button>
       <WrapPanel>
-       <Button x:Name="PlaceButton" Content="表情を配置" Command="{Binding PlaceCommand}" Padding="12,5" Margin="0,0,8,0" ToolTip="{Binding ExpressionPlaceHint}" ToolTipService.ShowOnDisabled="True"/>
-       <Button x:Name="ResyncButton" Content="選択した表情を再同期" Command="{Binding ResyncCommand}" Padding="8,3" VerticalAlignment="Center" ToolTip="{Binding ResyncHint}" ToolTipService.ShowOnDisabled="True"/>
+       <Expander x:Name="ExcelEditor" Header="Excelでまとめて編集" Margin="0,0,10,0">
+        <WrapPanel Margin="0,3,0,0"><Button Content="Excelへ出力" Command="{Binding ExportCommand}" Padding="10,4" Margin="0,0,8,0"/><Button Content="Excelから読み込み" Command="{Binding ImportCommand}" Padding="10,4"/></WrapPanel>
+       </Expander>
+       <Expander x:Name="ExpressionMaintenance" Header="メンテナンス">
+        <Button x:Name="ResyncButton" Content="選択した表情を再同期" Command="{Binding ResyncCommand}" Padding="8,3" Margin="0,3,0,0" ToolTip="{Binding ResyncHint}" ToolTipService.ShowOnDisabled="True"/>
+       </Expander>
       </WrapPanel>
-      <Expander x:Name="ExcelEditor" Header="Excelでまとめて編集" Margin="0,4,0,0">
-       <WrapPanel Margin="0,3,0,0"><Button Content="Excelへ出力" Command="{Binding ExportCommand}" Padding="10,4" Margin="0,0,8,0"/><Button Content="Excelから読み込み" Command="{Binding ImportCommand}" Padding="10,4"/></WrapPanel>
-      </Expander>
      </StackPanel>
     </Grid>
    </TabItem>

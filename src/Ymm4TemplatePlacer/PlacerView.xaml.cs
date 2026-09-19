@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using System.Windows.Data;
 using System.Windows.Input;
 
@@ -42,12 +44,18 @@ public partial class PlacerView : UserControl
         NativeProof.View = this;
 #endif
     }
-    private void VoiceGridRow_DoubleClick(object sender, MouseButtonEventArgs e)
+    private void VoiceGridRow_Click(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not DataGridRow { DataContext: AssignmentRow row } || observedViewModel == null) return;
+        if (sender is not DataGridRow { DataContext: AssignmentRow row } || observedViewModel == null || IsInteractiveExpressionSource(e.OriginalSource as DependencyObject, sender as DataGridRow)) return;
         if (!observedViewModel.NavigateExpressionRowCommand.CanExecute(row)) return;
         observedViewModel.NavigateExpressionRowCommand.Execute(row);
         e.Handled = true;
+    }
+    private static bool IsInteractiveExpressionSource(DependencyObject? source, DataGridRow? row)
+    {
+        for (var current = source; current != null && !ReferenceEquals(current, row); current = VisualTreeHelper.GetParent(current))
+            if (current is ComboBox or ButtonBase) return true;
+        return false;
     }
     private void ChangeViewModel(object sender, DependencyPropertyChangedEventArgs e)
     {

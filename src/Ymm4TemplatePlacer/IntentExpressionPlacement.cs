@@ -11,10 +11,10 @@ public sealed class IntentExpressionPlacement
     public int Skipped { get; }
     private IntentExpressionPlacement(PlacementPlan plan, long nextSerial, int skipped, IReadOnlyList<IntentExpressionMutation> mutations)
     { Plan = plan; NextSerial = nextSerial; Skipped = skipped; this.mutations = mutations; }
-    public static IntentExpressionPlacement Create(Timeline timeline, IReadOnlyList<AssignmentRow> rows, PlacerSettings settings)
+    public static IntentExpressionPlacement Create(Timeline timeline, IReadOnlyList<AssignmentRow> rows, PlacerSettings settings, long minimumSerial = 1)
     {
         PlacementEngine.ValidateSnapshot(timeline, rows.Select(x => x.Target).ToArray());
-        var allocator = new IntentAssociationSerialAllocator(timeline, settings.NextAssociationId);
+        var allocator = new IntentAssociationSerialAllocator(timeline, Math.Max(settings.NextAssociationId, minimumSerial));
         var mutations = new List<IntentExpressionMutation>(); var skipped = 0;
         foreach (var row in rows.Where(x => x.SelectedChoice.Template != null))
         {

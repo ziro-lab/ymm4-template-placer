@@ -27,6 +27,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public ActionCommand ExportCommand { get; }
     public ActionCommand ImportCommand { get; }
     public bool UsesRelativeExpressions => intentInitialized && !UseLegacyWorkspace;
+    public bool ShowExpressionBatchPlace => !UsesRelativeExpressions || HasPendingRelativeAssignments();
 
     public PlacerViewModel()
     {
@@ -105,7 +106,10 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         if (undo == null) throw new InvalidOperationException("YMM4の「元に戻す」に接続できません。プラグインを開き直してください。");
         if (UsesRelativeExpressions)
         {
-            var staged = IntentExpressionPlacement.Create(current, Rows.ToArray(), settings);
+            foreach (var row in Rows.Where(x => x.SelectedChoice.Template != null && !ExpressionChoiceMatchesTimeline(x)))
+                RequireExpressionDraftCompatible(current, row, row.SelectedChoice);
+            var staged = IntentExpressionPlacement.Create(current, Rows.ToArray(), settings, ExpressionSerialSeed(current));
+            ObserveExpressionSerial(staged.NextSerial);
             if (staged.NextSerial != settings.NextAssociationId) EditSettings(next => next.NextAssociationId = staged.NextSerial);
             var added = staged.Commit(current, undo, settings);
             HasError = false; Status = $"保存済みのパレット設定で{added}アイテムを関連付けて配置しました。設定による配置なし: {staged.Skipped}行。元に戻す1回で戻せます。";
@@ -127,7 +131,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     {
         CloseExpressionTrialSession();
         var current = RequireTimeline(); var next = WorkbookBridge.Import(path, current.Name, VoiceSnapshot.Capture(current), ExpressionCatalog());
-        SetRows(next, false); HasError = false;
+        SetRows(next, false); HasError = false; OnPropertyChanged(nameof(ShowExpressionBatchPlace));
         Status = UsesRelativeExpressions ? "Excelを読み込みました。表情を確認して［配置］してください。配置方法は現在保存されているパレットに従います。タイムラインはまだ変更していません。" :
             $"Excelを読み込みました。選択内容と現在のプリセット「{CurrentExpressionPreset.Name}」を確認して［配置］してください。タイムラインはまだ変更していません。";
     }
@@ -148,13 +152,13 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     {
         if (e.PropertyName == nameof(AssignmentRow.SelectedChoice))
         {
-            OnPropertyChanged(nameof(Summary)); UpdateCommands();
+            OnPropertyChanged(nameof(Summary)); OnPropertyChanged(nameof(ShowExpressionBatchPlace)); UpdateCommands();
             if (!suppressExpressionApply && UsesRelativeExpressions && sender is AssignmentRow row) ApplyImmediateExpressionChoice(row);
         }
     }
     private void UpdateCommands()
     {
-        OnPropertyChanged(nameof(ExpressionPlaceHint)); RefreshCommand?.RaiseCanExecuteChanged(); PlaceCommand?.RaiseCanExecuteChanged();
+        OnPropertyChanged(nameof(ExpressionPlaceHint)); OnPropertyChanged(nameof(ShowExpressionBatchPlace)); RefreshCommand?.RaiseCanExecuteChanged(); PlaceCommand?.RaiseCanExecuteChanged();
         ExportCommand?.RaiseCanExecuteChanged(); ImportCommand?.RaiseCanExecuteChanged(); resyncCommand?.RaiseCanExecuteChanged();
     }
     private void Guard(Action action)

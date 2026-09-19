@@ -202,6 +202,7 @@ public sealed partial class PlacerViewModel
 {
     private readonly ExpressionTrialSession expressionTrialSession = new();
     private bool suppressExpressionApply;
+    private long expressionAssociationNextSerial;
     public ActionCommand NavigateExpressionRowCommand { get; private set; } = null!;
     private void InitializeExpressionImmediate()
     {
@@ -222,17 +223,48 @@ public sealed partial class PlacerViewModel
         if (expressionTrialSession.IsOpen && !ReferenceEquals(expressionTrialSession.Voice, row?.Target.Voice)) CloseExpressionTrialSession();
     }
     internal void CloseExpressionTrialSession() => expressionTrialSession.Close();
+    private IntentAssociationSerialAllocator CreateExpressionSerialAllocator(Timeline current)
+    {
+        var seed = Math.Max(settings.NextAssociationId, Math.Max(1, expressionAssociationNextSerial));
+        var allocator = new IntentAssociationSerialAllocator(current, seed);
+        expressionAssociationNextSerial = Math.Max(expressionAssociationNextSerial, allocator.NextSerial);
+        return allocator;
+    }
+    private long ExpressionSerialSeed(Timeline current)
+    {
+        var allocator = CreateExpressionSerialAllocator(current);
+        return allocator.NextSerial;
+    }
+    private void ObserveExpressionSerial(long nextSerial) => expressionAssociationNextSerial = Math.Max(expressionAssociationNextSerial, nextSerial);
+    private void RequireExpressionDraftCompatible(Timeline current, AssignmentRow row, TemplateChoice choice)
+    {
+        var draft = IntentSettings;
+        if (draft?.HasChanges != true) return;
+        Guid paletteId, libraryId;
+        if (choice.Template?.IntentSource is { } source)
+        {
+            paletteId = source.Palette.Id; libraryId = source.Entry.LibraryEntryId;
+        }
+        else
+        {
+            var association = ManagedIntentExpressionReader.Read(current, row.Target.Voice);
+            if (association.Bundle is not { } bundle) return;
+            paletteId = bundle.Descriptor.Palette; libraryId = bundle.Descriptor.Entry;
+        }
+        if (draft.HasExpressionDependencyChanges(paletteId, libraryId, settings, out var setName))
+            throw new InvalidOperationException($"この表情Set「{setName}」に未保存の変更があります。保存または破棄してから表情を変更してください。");
+    }
     private void ApplyImmediateExpressionChoice(AssignmentRow row)
     {
         if (suppressExpressionApply || !UsesRelativeExpressions) return;
         try
         {
-            if (IntentSettings?.HasChanges == true) throw new InvalidOperationException("設定に未保存の変更があります。保存または破棄してから表情を試してください。");
             var current = RequireTimeline();
+            RequireExpressionDraftCompatible(current, row, row.SelectedChoice);
             if (undo == null) throw new InvalidOperationException("YMM4の「元に戻す」に接続できません。");
-            var allocator = new IntentAssociationSerialAllocator(current, settings.NextAssociationId);
+            var allocator = CreateExpressionSerialAllocator(current);
             var mutation = IntentExpressionMutation.Create(current, row, row.SelectedChoice, settings, allocator, false);
-            if (allocator.NextSerial != settings.NextAssociationId) PersistAssociationSerial(allocator.NextSerial);
+            ObserveExpressionSerial(allocator.NextSerial);
             if (mutation.Plan.ChangeCount != 0)
             {
                 expressionTrialSession.Begin(current, undo, row.Target.Voice);
@@ -246,13 +278,6 @@ public sealed partial class PlacerViewModel
             HasError = true; Status = "表情を変更できませんでした: " + ex.GetBaseException().Message; RestoreExpressionChoiceFromTimeline(row);
         }
         finally { OnPropertyChanged(nameof(Summary)); UpdateCommands(); }
-    }
-    private void PersistAssociationSerial(long nextSerial)
-    {
-        if (nextSerial == settings.NextAssociationId) return;
-        if (!settingsAvailable) throw new InvalidOperationException(LibraryNotice);
-        var next = PlacerSettingsStore.Copy(settings); next.NextAssociationId = nextSerial; settingsStore.Save(next); settings = next;
-        if (intentSettings != null) ResetIntentSettings();
     }
     private void RestoreExpressionChoiceFromTimeline(AssignmentRow row)
     {
