@@ -44,7 +44,17 @@ public static class IntentTileAppearance
         IntentTileColor.Rose => "ピンク", IntentTileColor.Amber => "黄", IntentTileColor.Green => "緑",
         IntentTileColor.Blue => "青", IntentTileColor.Violet => "紫", _ => "標準（色なし）"
     };
-    // A small accent, never a text background. All text retains host system brushes.
+    // Finite color is represented on the face and its full border. Text remains a
+    // system foreground; tint is blended against the current system background.
+    public static Brush Face(IntentTileColor color) => FaceForTheme(color, SystemParameters.HighContrast, SystemColors.ControlColor);
+    internal static Brush FaceForTheme(IntentTileColor color, bool highContrast, Color background)
+    {
+        if (highContrast || color == IntentTileColor.Neutral) return SystemColors.ControlBrush;
+        if (Accent(color) is not SolidColorBrush accent) return SystemColors.ControlBrush;
+        static byte Tint(byte background, byte color) => (byte)((background * 4 + color) / 5);
+        var brush = new SolidColorBrush(Color.FromRgb(Tint(background.R, accent.Color.R), Tint(background.G, accent.Color.G), Tint(background.B, accent.Color.B)));
+        brush.Freeze(); return brush;
+    }
     public static Brush Accent(IntentTileColor color)
     {
         if (SystemParameters.HighContrast) return SystemColors.ControlTextBrush;

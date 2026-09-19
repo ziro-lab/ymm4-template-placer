@@ -22,6 +22,7 @@ public sealed partial class PlacerViewModel
         tileEditState == IntentTileEditState.Idle && IntentSettings?.HasChanges != true && IsCurrentIntentTile(tile);
     private void InitializeIntentTileEditing()
     {
+        InitializeIntentSetAppearance();
         RenameIntentTileCommand = new(x => x is IntentTileChoice tile && CanEditIntentTile(tile),
             x => Guard(() => RenameIntentTile((IntentTileChoice)x!)));
         ColorIntentTileCommand = new(x => x is IntentTileColorRequest r && Enum.IsDefined(r.Color) && CanEditIntentTile(r.Tile),
@@ -37,7 +38,8 @@ public sealed partial class PlacerViewModel
         RenameIntentTileCommand?.RaiseCanExecuteChanged(); ColorIntentTileCommand?.RaiseCanExecuteChanged();
         ShapeIntentTileCommand?.RaiseCanExecuteChanged(); OpenTileSettingsCommand?.RaiseCanExecuteChanged();
         ReorderIntentTileCommand?.RaiseCanExecuteChanged(); ExecuteIntentTileCommand?.RaiseCanExecuteChanged();
-        OnPropertyChanged(nameof(IntentTileEditNotice));
+        ShapeIntentSetCommand?.RaiseCanExecuteChanged(); OpenIntentSetSettingsCommand?.RaiseCanExecuteChanged();
+        OnPropertyChanged(nameof(HasCurrentIntentSet)); OnPropertyChanged(nameof(IntentTileEditNotice));
     }
     private PaletteTileAppearance ReadIntentTileAppearance(IntentTileChoice tile)
     {
@@ -86,19 +88,23 @@ public sealed partial class PlacerViewModel
     private void OpenSettingsForTile(IntentTileChoice tile)
     {
         if (!IsCurrentIntentTile(tile)) throw new InvalidOperationException("表示中のSetが変わりました。タイルを選び直してください。");
+        OpenSettingsForSet(selectedIntentSet!, tile.LibraryEntryId);
+    }
+    private void OpenSettingsForSet(IntentSetChoice selected, Guid? entryId = null)
+    {
         BeginIntentSettings(); var session = IntentSettings!;
-        if (tile.IsGeneric)
+        if (selected.Generic != null)
         {
             session.SelectedItemContext = session.ItemContexts.Single(x => x.IsGeneric);
-            var set = session.GenericSets.SingleOrDefault(x => x.Id == tile.PaletteId) ?? throw new InvalidOperationException("下書きではこのSetを削除済みです。");
-            session.SelectedGenericSet = set; set.SelectedEntry = set.Entries.SingleOrDefault(x => x.LibraryEntryId == tile.LibraryEntryId);
+            var set = session.GenericSets.SingleOrDefault(x => x.Id == selected.Id) ?? throw new InvalidOperationException("下書きではこのSetを削除済みです。");
+            session.SelectedGenericSet = set; set.SelectedEntry = set.Entries.SingleOrDefault(x => x.LibraryEntryId == entryId);
         }
         else
         {
             session.SelectedItemContext = session.ItemContexts.FirstOrDefault(x => x.IsCurrentSelection);
-            var set = session.Palettes.SingleOrDefault(x => x.Id == tile.PaletteId) ?? throw new InvalidOperationException("下書きではこのSetを削除済みです。");
+            var set = session.Palettes.SingleOrDefault(x => x.Id == selected.Id) ?? throw new InvalidOperationException("下書きではこのSetを削除済みです。");
             if (!session.VisiblePalettes.Cast<IntentPaletteDraft>().Contains(set)) session.ShowAllSets = true;
-            session.SelectedPalette = set; set.SelectedEntry = set.Entries.SingleOrDefault(x => x.LibraryEntryId == tile.LibraryEntryId);
+            session.SelectedPalette = set; set.SelectedEntry = set.Entries.SingleOrDefault(x => x.LibraryEntryId == entryId);
         }
         IntentSettingsRequested?.Invoke(this, EventArgs.Empty);
     }

@@ -13,9 +13,12 @@
    </TextBlock>
   </StackPanel>
 
-  <TextBlock x:Name="SingleSetTitleText" Grid.Row="1" Text="{Binding SelectedIntentSet.Label}" FontWeight="SemiBold" Margin="4,0,4,6">
+  <DockPanel Grid.Row="1">
+   <Button x:Name="IntentSetSettingsButton" DockPanel.Dock="Right" Content="Set全体 ▾" HorizontalAlignment="Right" Padding="8,3" Margin="4,0,2,6" Click="SetSettingsClick" IsEnabled="{Binding HasCurrentIntentSet}" AutomationProperties.Name="このSet全体の設定"/>
+   <TextBlock x:Name="SingleSetTitleText" Text="{Binding SelectedIntentSet.Label}" FontWeight="SemiBold" Margin="4,0,4,6">
    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowSingleSetName}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
-  </TextBlock>
+   </TextBlock>
+  </DockPanel>
 
   <DockPanel x:Name="IntentSetRow" Grid.Row="2" Margin="2,6,2,8">
    <DockPanel.Style><Style TargetType="DockPanel"><Style.Triggers><DataTrigger Binding="{Binding HasIntentSets}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></DockPanel.Style>
@@ -42,8 +45,8 @@
        <Grid.ContextMenu><ContextMenu><MenuItem Header="編集"/></ContextMenu></Grid.ContextMenu>
        <Button Command="{Binding DataContext.ExecuteIntentTileCommand,RelativeSource={RelativeSource AncestorType=ItemsControl}}"
         CommandParameter="{Binding}" ToolTip="{Binding AppearanceDescription}" ToolTipService.ShowOnDisabled="True" Padding="12" Margin="0"
-        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1"
+        Background="{Binding Face}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
+        BorderBrush="{Binding Accent}" BorderThickness="2"
         AutomationProperties.Name="{Binding Label}" AutomationProperties.HelpText="{Binding AppearanceDescription}">
         <Button.Template><ControlTemplate TargetType="Button">
          <Border x:Name="TileFace" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{Binding Radius}">
@@ -56,10 +59,7 @@
           <Trigger Property="IsEnabled" Value="False"><Setter TargetName="TileFace" Property="Opacity" Value="0.55"/></Trigger>
          </ControlTemplate.Triggers>
         </ControlTemplate></Button.Template>
-        <StackPanel IsHitTestVisible="False">
-         <Border x:Name="TileColorAccent" Height="3" Width="26" Background="{Binding Accent}" Margin="0,0,0,5"/>
-         <TextBlock Text="{Binding Label}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" TextAlignment="Center" MaxHeight="54"/>
-        </StackPanel>
+        <TextBlock IsHitTestVisible="False" Text="{Binding Label}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" TextAlignment="Center" MaxHeight="54"/>
        </Button>
       </Grid>
      </DataTemplate></ItemsControl.ItemTemplate>

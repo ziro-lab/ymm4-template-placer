@@ -28,6 +28,7 @@ public sealed record IntentTileChoice
     public IntentTileShape Shape => TargetedEntry?.Shape ?? GenericAppearance?.Shape ?? IntentTileShape.Rounded;
     public CornerRadius Radius => IntentTileAppearance.Radius(Shape);
     public Brush Accent => IntentTileAppearance.Accent(Color);
+    public Brush Face => IntentTileAppearance.Face(Color);
     public string AppearanceDescription => $"{Detail}\n色ラベル: {IntentTileAppearance.ColorName(Color)} / 形: {IntentTileAppearance.ShapeName(Shape)}\nクリックで配置・ドラッグで並び替え・右クリックで編集";
     public IntentTileChoice(Guid paletteId, IntentEntry entry, string label, string detail, bool available)
     { PaletteId = paletteId; LibraryEntryId = entry.LibraryEntryId; TargetedEntry = entry; Label = label; Detail = detail; Available = available; }

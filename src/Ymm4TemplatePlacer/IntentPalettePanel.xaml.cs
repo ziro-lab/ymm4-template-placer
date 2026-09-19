@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -12,8 +13,27 @@ public partial class IntentPalettePanel : UserControl
     public IntentPalettePanel()
     {
         InitializeComponent();
-        Unloaded += (_, _) => { CancelLocalGesture(); CloseTileMenu(); };
+        Loaded += (_, _) => { SystemParameters.StaticPropertyChanged -= ThemeChanged; SystemParameters.StaticPropertyChanged += ThemeChanged; };
+        Unloaded += (_, _) => { SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); };
         DataContextChanged += (_, _) => { CancelLocalGesture(); CloseTileMenu(); };
+    }
+    private void ThemeChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Local visual refresh only; never rebuild the root's tiles/Rows or change settings.
+        if (IsLoaded) Dispatcher.InvokeAsync(() => IntentTileItems.Items.Refresh());
+    }
+    private void SetSettingsClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || DataContext is not PlacerViewModel { SelectedIntentSet: { } set } vm) return;
+        CancelLocalGesture(); CloseTileMenu();
+        var menu = new ContextMenu { PlacementTarget = button };
+        var shapes = new MenuItem { Header = "形をそろえる" };
+        foreach (var option in vm.IntentTileShapes)
+            shapes.Items.Add(new MenuItem { Header = option.Name, Command = vm.ShapeIntentSetCommand,
+                CommandParameter = new IntentSetShapeRequest(set, option.Value), ToolTip = vm.IntentTileEditNotice });
+        menu.Items.Add(shapes); menu.Items.Add(new Separator());
+        menu.Items.Add(new MenuItem { Header = "詳しい設定…", Command = vm.OpenIntentSetSettingsCommand, CommandParameter = set });
+        button.ContextMenu = menu; activeMenu = menu; menu.Closed += TileMenuClosed; menu.IsOpen = true;
     }
     private void CancelLocalGesture()
     {
