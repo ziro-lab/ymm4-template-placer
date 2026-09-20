@@ -22,6 +22,12 @@ public partial class GenericLayerTargetPanel : UserControl
         Unloaded += (_, _) => wheelRemainder = 0;
         GenericTargetBox.MouseLeave += (_, _) => wheelRemainder = 0;
     }
+    internal void FocusDirectNumberEntry()
+    {
+        GenericTargetBox.Focus();
+        GenericTargetBox.CaretIndex = GenericTargetBox.Text?.Length ?? 0;
+        GenericTargetBox.Select(0, 0);
+    }
     private void TargetKeyDown(object sender, KeyEventArgs e)
     {
 #if YMM4_PROOF
