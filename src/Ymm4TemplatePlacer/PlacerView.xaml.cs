@@ -14,6 +14,8 @@ public partial class PlacerView : UserControl
     internal TimelinePointerInputRouter PointerRouter { get; }
     internal PaletteShortcutInputRouter ShortcutRouter { get; }
     private TransientWorkSnapshot? suspendedWork;
+    private bool expressionRowHeightDragging;
+    private double expressionRowHeightDragStart, expressionRowHeightPreview;
     public IntentPalettePanel RelativePaletteSurface { get; } = new();
     public IntentSettingsPanel RelativeSettingsSurface { get; } = new();
     public PlacerView()
@@ -49,6 +51,38 @@ public partial class PlacerView : UserControl
 #if YMM4_PROOF
         NativeProof.View = this;
 #endif
+    }
+    private void ExpressionRowHeightDragStarted(object sender, DragStartedEventArgs e)
+    {
+        if (observedViewModel is not { CanEditExpressionRowHeight: true } vm) return;
+        expressionRowHeightDragging = true;
+        expressionRowHeightDragStart = vm.ExpressionRowHeight;
+        expressionRowHeightPreview = expressionRowHeightDragStart;
+        e.Handled = true;
+    }
+    private void ExpressionRowHeightDragDelta(object sender, DragDeltaEventArgs e)
+    {
+        if (!expressionRowHeightDragging) return;
+        expressionRowHeightPreview = Math.Clamp(expressionRowHeightPreview + e.VerticalChange, 32, 96);
+        var value = Math.Round(expressionRowHeightPreview);
+        // Presentation-only preview. SetCurrentValue preserves the existing bindings.
+        VoiceGrid.SetCurrentValue(DataGrid.RowHeightProperty, value);
+        ExpressionRowHeightValueText.SetCurrentValue(TextBlock.TextProperty, $"{(int)value}px");
+        e.Handled = true;
+    }
+    private void ExpressionRowHeightDragCompleted(object sender, DragCompletedEventArgs e)
+    {
+        if (!expressionRowHeightDragging) return;
+        expressionRowHeightDragging = false;
+        var vm = observedViewModel;
+        if (!e.Canceled && vm is { CanEditExpressionRowHeight: true })
+            vm.ExpressionRowHeight = (int)Math.Round(expressionRowHeightPreview);
+        var durable = vm?.ExpressionRowHeight ?? (int)Math.Round(expressionRowHeightDragStart);
+        // On persistence failure the durable value stays unchanged, so the preview
+        // snaps back automatically instead of leaving a false visual state.
+        VoiceGrid.SetCurrentValue(DataGrid.RowHeightProperty, (double)durable);
+        ExpressionRowHeightValueText.SetCurrentValue(TextBlock.TextProperty, $"{durable}px");
+        e.Handled = true;
     }
     private void VoiceGridRow_Click(object sender, MouseButtonEventArgs e)
     {
