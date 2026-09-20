@@ -2,21 +2,31 @@
 
 ## Current revision and Git authority
 
-Main contains the accepted Round 3 baseline, promoted by owner-approved PR #17 on 2026-09-20. Exact product source: `fdc3f3e5448cdf5ce7c9498776362b1bf598c2b1`; exact tree: `3aa91dd12a8262e60c1909293fb68f93a0a032d1`. Promotion merge: `b8c787b713e2dbfe253a8ab4ca7f9a6920c81f75`.
+Main contains the accepted Round 3 baseline, promoted by owner-approved PR #17 on 2026-09-20.
 
-Read `docs/DEVELOPMENT_WORKFLOW.md` first. It supersedes historical instructions to keep main unchanged or keep the old stacked PRs open. Do not reopen or separately merge incorporated historical candidates. Preserve their branches and evidence.
+Active PR #16 is now the **completed Round 4 A/B/C candidate**, not a preset implementation branch.
 
-Active next-round work is main-based Draft PR #16, `work/v0.4.2-hands-on-round4-prep`. Read that branch's Round 4 DESIGN / HOST_EVIDENCE / WORKPLAN / ACCEPTANCE / IMPLEMENTATION_PREP before implementing there. Do not mix unfinished Round 4 source or prep documents into this baseline. Keep an incomplete working PR Draft; merge only after applicable validation and owner acceptance.
+Completed scope:
 
-For the baseline's behavior and regression contracts read:
+- Voice/dropdown navigation and nested Settings wheel behavior;
+- compact Generic placement UI and global presentation;
+- common Voice row height;
+- protected automatic Settings persistence plus `今回の変更を戻す`;
+- tiered Focused / Checkpoint / Release validation.
 
-1. `docs/V0.4.2_HANDS_ON_ROUND3_DESIGN.md`
-2. `docs/V0.4.2_HANDS_ON_ROUND3_HOST_EVIDENCE.md`
-3. `docs/V0.4.2_HANDS_ON_ROUND3_ACCEPTANCE.md`
-4. Round 2 and earlier design documents for preserved contracts.
-5. `docs/NATIVE_VALIDATION_V0.4.md` and current evidence/package workflows.
+Experimental expression presets were deliberately split before implementation. Their frozen design and Lab evidence are in `docs/EXPERIMENTAL_PRESET_HANDOFF.md`. Do not add preset product code to PR #16.
 
-Do not reimplement completed rounds. Normal placement is context -> Set -> tile. Auto/Fixed layout and position shortcuts are global, never owned by a template. Generic layer targeting is numeric only; no coordinate-derived clicked-layer mode. Normal startup never enters the hidden legacy workspace. Voice freshness is event-driven, excluding association Remark-only changes. Voice navigation uses one root-owned latest-wins coordinator for CurrentFrame, selection, public Preview SeekAsync and independent viewport following. Never use fake input, frame jiggle or FocusService as a Preview-refresh workaround.
+Read in this order:
+
+1. `docs/DEVELOPMENT_WORKFLOW.md`
+2. `docs/VALIDATION_STRATEGY.md`
+3. `docs/V0.4.2_HANDS_ON_ROUND4_DESIGN.md`
+4. `docs/V0.4.2_HANDS_ON_ROUND4_ACCEPTANCE.md`
+5. `docs/V0.4.2_HANDS_ON_ROUND4_IMPLEMENTATION_STATUS.md`
+
+PR #16 remains Draft until owner hands-on acceptance. After acceptance, merge it to main and create a fresh preset feature branch/PR from that accepted main.
+
+Do not reimplement completed A/B/C work. Do not reopen historical stacked PRs. Preserve their branches/evidence.
 
 ## Product boundary
 
@@ -49,7 +59,7 @@ Preserve WPF/MVVM and PlacementPlan; do not rewrite into another architecture me
 - 上 means smaller Layer numbers; 下 means larger. Escape moves the complete bundle in one direction inside saved bounds, without opposite wrap.
 - Shared PlacementPlan and YMM4-native Undo/Redo are authoritative. No custom undo stack. Trial coalescing needs proved native support and must close before unrelated edits.
 - Revalidate stale source/context/settings before commit. Never report an empty success after a required validation failure.
-- Settings retain staged validation and atomic protected saves. Never overwrite corrupt, future-version or externally modified settings. In-memory migration preserves old meanings. A future approved autosave UX must still use these guards.
+- Settings use staged validation plus protected automatic persistence. Never overwrite corrupt, future-version or externally modified settings. Invalid/incomplete drafts remain local; session rollback and auto-commit both retain the existing atomic/digest guards.
 
 ## Association and compatibility
 
