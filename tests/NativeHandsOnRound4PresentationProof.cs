@@ -83,14 +83,18 @@ internal static partial class NativeProof
             Round4Assert(Enumerable.Range(1, 11).All(x => round3Checks.ContainsKey("D" + x)),
                 "B6", "all eleven retained native Generic layer planner safety checks passed on this run");
 
+            var keySource = RelativeVisuals(palette.IntentTileItems).OfType<Button>().First(x => x.CommandParameter is IntentTileChoice);
+            Keyboard.Focus(keySource); await Idle();
             var beforeKeyItems = timeline.Items.ToArray();
-            var shortcutDigit = view.ShortcutRouter.ProcessKey(Key.D1, ModifierKeys.None, palette.PanelQuickSettingsButton, false, false, false);
+            var shortcutDigit = view.ShortcutRouter.ProcessKey(Key.D1, ModifierKeys.None, Keyboard.FocusedElement as DependencyObject, false, false, false);
             await Idle();
             var shortcutDigitAdded = timeline.Items.Except(beforeKeyItems).ToArray();
             var shortcutWins = shortcutDigit && shortcutDigitAdded.Length == 1 && shortcutDigitAdded[0].Length == 17 &&
                 vm.GenericLayerTarget is { HasChanges: false };
-            await undo.UndoAsync(); await Idle();
-            var directDigit = view.ShortcutRouter.ProcessKey(Key.D7, ModifierKeys.None, palette.PanelQuickSettingsButton, false, false, false);
+            if (shortcutDigitAdded.Length > 0) { await undo.UndoAsync(); await Idle(); }
+            keySource = RelativeVisuals(palette.IntentTileItems).OfType<Button>().First(x => x.CommandParameter is IntentTileChoice);
+            Keyboard.Focus(keySource); await Idle();
+            var directDigit = view.ShortcutRouter.ProcessKey(Key.D7, ModifierKeys.None, Keyboard.FocusedElement as DependencyObject, false, false, false);
             await Idle();
             var directDraft = directDigit && vm.GenericLayerTarget is { Target: "7", HasChanges: true } &&
                 ReferenceEquals(Keyboard.FocusedElement, palette.GenericLayerSurface.GenericTargetBox) &&
