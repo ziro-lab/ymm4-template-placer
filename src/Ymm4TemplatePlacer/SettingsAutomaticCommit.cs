@@ -44,6 +44,8 @@ public sealed partial class PlacerViewModel
         CancelScheduledSettingsCommit(); settingsCommitRevision++;
         SetSettingsCommitState(SettingsCommitPhase.Idle, "変更を反映しました。今回の変更は元に戻せます。");
     }
+    // One Dispatcher operation coalesces an edit burst; there is no polling timer.
+    // Focused CI keeps this Settings path in the stable-core native suite.
     private void RequestSettingsAutoCommit()
     {
         rollbackIntentSettingsCommand?.RaiseCanExecuteChanged();
