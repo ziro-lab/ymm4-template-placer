@@ -1,5 +1,7 @@
 # UI Micro Polish — workplan
 
+Status: **U1-U4 DONE / U5 HANDS-ON PREPARATION**
+
 Base: accepted main after PR #16.
 
 `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`
@@ -18,7 +20,7 @@ Documentation only:
 
 No YMM4 run is required for docs-only prep.
 
-## U1 — Generic inline layer controls
+## U1 — Generic inline layer controls — DONE
 
 Primary files:
 
@@ -39,7 +41,7 @@ Do not change Generic planner/backend.
 
 Validation: Focused.
 
-## U2 — panel quick settings flyout
+## U2 — panel quick settings flyout — DONE
 
 Primary files:
 
@@ -67,7 +69,7 @@ Prefer reuse of `PalettePresentationDraft`/validation rather than a second prese
 
 Validation: Focused.
 
-## U3 — global Voice row-height drag
+## U3 — global Voice row-height drag — DONE
 
 Primary files:
 
@@ -89,7 +91,7 @@ Do not add per-row sizing.
 
 Validation: Focused.
 
-## U4 — optional direct numeric layer typing
+## U4 — direct numeric layer typing — DONE
 
 Only after U1-U3 are green.
 
@@ -106,7 +108,7 @@ If focus restoration or event routing requires brittle special cases, mark FUTUR
 
 Validation: Focused if implemented.
 
-## U5 — completion
+## U5 — completion — HANDS-ON PENDING
 
 When U1-U3 (and optional U4 if retained) are green:
 
