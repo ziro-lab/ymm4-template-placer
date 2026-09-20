@@ -20,6 +20,17 @@ public partial class IntentPalettePanel : UserControl
         Unloaded += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(null); SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); };
         DataContextChanged += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
         PanelQuickSettingsPopup.Closed += (_, _) => { PanelQuickSettingsButton.IsChecked = false; quickPopupSetId = null; quickPopupContext = ""; observedRoot?.EndPanelQuickSettings(); };
+        PreviewMouseDown += PanelPointerDown;
+        IsVisibleChanged += (_, _) => { if (!IsVisible) PanelQuickSettingsButton.IsChecked = false; };
+    }
+    private void PanelPointerDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!PanelQuickSettingsPopup.IsOpen || e.OriginalSource is not DependencyObject source) return;
+        for (var current = source; current != null; current = TimelinePointerIntentClassifier.Parent(current))
+            if (ReferenceEquals(current, PanelQuickSettingsButton)) return;
+        // Popup content is a separate visual tree. Any pointer routed through this
+        // placement panel is therefore outside the open quick-settings popup.
+        PanelQuickSettingsButton.IsChecked = false;
     }
     private void ObserveRoot(PlacerViewModel? next)
     {
