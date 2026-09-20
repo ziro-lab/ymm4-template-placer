@@ -22,7 +22,6 @@ public sealed partial class PlacerViewModel
     {
         // A content refresh uses this same latest-wins seek worker, but must not
         // finish an expression trial or pull the user back from a newer selection.
-        if (!refreshCurrentContent) CloseExpressionTrialSession();
         var current = RequireTimeline();
         if (voiceNavigationDisposed || !Rows.Contains(row) || !current.Items.Contains(row.Target.Voice))
             throw new InvalidOperationException("対象音声が現在のシーンにありません。メンテナンスから一覧を読み直してください。");
@@ -35,6 +34,13 @@ public sealed partial class PlacerViewModel
         }
         else
         {
+            // Reopening the chooser for an already-active Voice is activation,
+            // not leaving the current expression trial. Re-running navigation
+            // here would split every A -> B -> C trial into separate Undo steps.
+            if (expressionTrialSession.IsOpen && ReferenceEquals(expressionTrialSession.Voice, voice) &&
+                current.CurrentFrame == target && current.SelectedItems.Count == 1 &&
+                ReferenceEquals(current.SelectedItems[0], voice)) return;
+            CloseExpressionTrialSession();
             current.CurrentFrame = target;
             current.SelectItem(voice);
         }

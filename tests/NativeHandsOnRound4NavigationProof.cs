@@ -94,6 +94,11 @@ internal static partial class NativeProof
             rowLast.SelectedChoice = rowLast.Choices.Single(x => x.Template?.IntentSource?.Entry.LibraryEntryId == a.Id);
             await vm.NavigationCompletion; await Idle();
             var firstApplyStatus = vm.Status;
+            var beforeReopen = seeks.Count;
+            box.IsDropDownOpen = true; await vm.NavigationCompletion; await Idle();
+            Assert(box.IsDropDownOpen && seeks.Count == beforeReopen && vm.Status == firstApplyStatus,
+                "R4-A re-opening the active Voice chooser is idempotent and does not end the native trial");
+            box.IsDropDownOpen = false;
             rowLast.SelectedChoice = rowLast.Choices.Single(x => x.Template?.IntentSource?.Entry.LibraryEntryId == b.Id);
             await vm.NavigationCompletion; await Idle();
             Round4Assert(!vm.HasError && seeks.Count == calls + 2 && seeks.TakeLast(2).All(x => x == last.Frame) &&
