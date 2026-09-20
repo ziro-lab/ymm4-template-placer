@@ -7,8 +7,9 @@ internal static partial class NativeProof
     internal static void TraceRound4Activation(int row, bool content, bool trial, bool sameVoice,
         int frame, int selectedCount, bool selectedVoice, bool error, string status)
     {
-        if (stage.StartsWith("R4-A", StringComparison.Ordinal))
-            Log($"R4-A activate row={row} content={content} trial={trial} sameVoice={sameVoice} frame={frame} selected={selectedCount}/{selectedVoice} error={error} status={status}");
+        if (!stage.StartsWith("R4-A", StringComparison.Ordinal)) return;
+        Log($"R4-A activate row={row} content={content} trial={trial} sameVoice={sameVoice} frame={frame} selected={selectedCount}/{selectedVoice} error={error} status={status}");
+        ViewModel?.InstallRound4TrialDiagnostics(Log);
     }
     private static readonly Dictionary<string, string> round4Checks = new(StringComparer.Ordinal);
     private static void Round4Assert(bool condition, string id, string evidence)
@@ -18,6 +19,7 @@ internal static partial class NativeProof
     }
     private static void Round4Phase(string phase)
     {
+        if (phase == "A") ViewModel?.RemoveRound4TrialDiagnostics();
         var checks = round4Checks.Where(x => x.Key.StartsWith(phase, StringComparison.Ordinal))
             .Select(x => new { id = x.Key, result = "PASS", evidence = x.Value }).ToArray();
         File.WriteAllText(Path.Combine(output, "hands-on-round4-" + phase.ToLowerInvariant() + ".json"), JsonSerializer.Serialize(new
