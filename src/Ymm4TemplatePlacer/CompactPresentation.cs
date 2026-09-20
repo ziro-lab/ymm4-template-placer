@@ -38,4 +38,17 @@ public sealed partial class PlacerViewModel
         }
     }
     public bool CanEditExpressionRowHeight => settingsAvailable && IntentSettings?.HasChanges != true;
+    internal bool TrySetExpressionRowHeight(string text)
+    {
+        if (!int.TryParse(text, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var value) ||
+            value is < 32 or > 96)
+        {
+            HasError = true;
+            Status = "行の高さは32～96の整数で指定してください。";
+            return false;
+        }
+        var before = ExpressionRowHeight;
+        ExpressionRowHeight = value;
+        return ExpressionRowHeight == value || before == value;
+    }
 }
