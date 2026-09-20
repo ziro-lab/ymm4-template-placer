@@ -3,12 +3,13 @@ using System.Windows.Controls;
 namespace Ymm4TemplatePlacer;
 public partial class PlacerView
 {
-    // Opening the chooser is a Voice operation. Forward only; the root owns
-    // CurrentFrame, selection, the async seek worker and viewport policy.
+    // The grid's selected row is local presentation state. All host navigation
+    // still goes upward through exactly the same authoritative root command.
     private void ExpressionChoiceOpened(object? sender, EventArgs e)
     {
-        if (sender is ComboBox { DataContext: AssignmentRow row } &&
-            observedViewModel is { } vm && vm.NavigateExpressionRowCommand.CanExecute(row))
-            vm.NavigateExpressionRowCommand.Execute(row);
+        if (sender is not ComboBox { DataContext: AssignmentRow row } ||
+            observedViewModel is not { } vm || !vm.NavigateExpressionRowCommand.CanExecute(row)) return;
+        VoiceGrid.SelectedItem = row;
+        vm.NavigateExpressionRowCommand.Execute(row);
     }
 }
