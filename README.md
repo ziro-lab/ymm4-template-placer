@@ -10,7 +10,20 @@ YMM4の登録済みテンプレートを、選んだアイテムとの位置・�
 
 ## 現在のmain
 
-2026-09-20に、実機検証済みの **v0.4.2 Hands-on Round 3** をPR #17でmainへ統合しました。旧積み上げPRの開発方式を終え、以後はmainから作業ブランチを切って更新します。Round 4は別のDraft PR #16で開発中です。詳細は `docs/DEVELOPMENT_WORKFLOW.md` を参照してください。
+2026-09-20に、Hands-on確認済みの **Round 4 A/B/C** をPR #16でmainへ統合しました。
+
+現在のmain基準:
+
+- compact placement UI / Voice navigation;
+- global presentation / position shortcuts / common Voice row height;
+- protected automatic Settings persistence + `今回の変更を戻す`;
+- Focused / Checkpoint / Releaseの段階的検証。
+
+main mergeは `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`、main Release run #227 `35508468265` でフルNative回帰・実配布DLL smoke・verified packageまでPASSしています。
+
+次の実装はDraft PR #19 **Experimental expression preset source** です。
+
+現在仕様の正本は `docs/CURRENT_ARCHITECTURE.md`。用語は `docs/GLOSSARY.md`、未実装案は `docs/BACKLOG.md`、互換/旧経路の扱いは `docs/LEGACY_COMPATIBILITY_MAP.md` を参照してください。
 
 ## 主な機能
 
@@ -32,8 +45,8 @@ YMM4の登録済みテンプレートを、選んだアイテムとの位置・�
 
 回帰検証環境は **YMM4 4.55.1.1 Lite / Windows / .NET 10**。製品側は必要なAPIの有無を確認し、バージョン番号だけで機能全体を停止しません。ただし将来版やすべての第三者プラグインとの互換性を保証するものではありません。
 
-元のRound 3最終検証はrun `35462490239`、1,327 assertions、`HANDS_ON_ROUND3=PASS`。main昇格時にもrun `35490064220`で回帰・配布DLL smoke・パッケージ検証を通しています。正確なソース・run・ハッシュは対応ArtifactのprovenanceとPR #17で確認できます。
+現在mainの基準はPR #16 merge `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`。main Release run #227 `35508468265` でフルNative回帰、配布DLL smoke、verified packageを通しています。検証は `docs/VALIDATION_STRATEGY.md` のFocused / Checkpoint / Releaseに従います。
 
-Release/Proofのコンパイラ警告・エラー0件、既存の全回帰gate、独立した証拠検査と異常系、最終配布DLLのnative smokeを維持します。`.ymme`の内部ルートは常に `Ymm4TemplatePlacer/` です。
+ReleaseではRelease/Proofのコンパイラ警告・エラー0件、全Checkpoint回帰、独立した証拠検査と異常系、最終配布DLLのnative smokeを維持します。普段のDraft編集はFocusedで軽量化します。`.ymme`の内部ルートは常に `Ymm4TemplatePlacer/` です。
 
-実PSD素材、他プラグイン、DPI・テーマの組み合わせは実環境での確認が必要です。自動検証の成功と、あらゆる環境での表示一致は区別しています。既知の操作改善は次のRound 4へ分離しています。
+実PSD素材、他プラグイン、DPI・テーマの組み合わせは実環境での確認が必要です。自動検証の成功と、あらゆる環境での表示一致は区別しています。未実装の操作改善・Placement Recipe案は `docs/BACKLOG.md` に集約しています。
