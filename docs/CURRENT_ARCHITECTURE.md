@@ -191,11 +191,16 @@ This does **not** authorize:
 
 ## Current active feature
 
-UI Micro Polish is the current priority.
+UI Micro Polish is implemented and native-green on Draft PR #20; real-user Hands-on acceptance is the remaining gate.
 
-Its job is to remove remaining interaction friction without changing placement semantics, settings schema, or the PlacementPlan/native Undo architecture.
+It removes high-frequency interaction friction without changing placement semantics, settings schema, or the PlacementPlan/native Undo architecture:
 
-Experimental Tachie Preset support remains prepared separately on Draft PR #19 and resumes after the UI pass.
+- always-visible Generic layer controls with field-local wheel;
+- placement-panel quick settings;
+- direct common Voice row-height drag;
+- direct Generic digit entry through the existing bounded input router.
+
+Experimental Tachie Preset support remains prepared separately on Draft PR #19 and resumes after the UI pass is accepted and merged.
 
 ## Validation
 
