@@ -70,6 +70,7 @@ public partial class IntentPalettePanel : UserControl
     private void PanelQuickSettingsOpened(object sender, RoutedEventArgs e)
     {
         if (DataContext is not PlacerViewModel vm) return;
+        ObserveOwnerWindow(Window.GetWindow(this));
         quickPopupSetId = vm.SelectedIntentSet?.Id;
         vm.BeginPanelQuickSettings();
     }
