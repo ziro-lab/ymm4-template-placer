@@ -25,7 +25,7 @@ internal static partial class NativeProof
         static bool Rejected(Action action)
         {
             try { action(); return false; }
-            catch (Exception ex) when (ex is InvalidOperationException or IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is InvalidOperationException || ex is InvalidDataException || ex is IOException || ex is UnauthorizedAccessException)
             { return true; }
         }
         (PlacerSettingsStore Store, PlacerSettings Live, string Path) Fixture(string name)
