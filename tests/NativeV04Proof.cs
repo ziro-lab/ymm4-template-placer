@@ -21,6 +21,7 @@ internal static partial class NativeProof
         {
             await VerifyDirectTemplateAddition(timeline, undo);
             await VerifyLibrary(timeline);
+            await VerifyPalettes(timeline);
             await VerifyQuickDrop(timeline, undo);
             await VerifyAssociations(timeline, undo);
             await VerifySafetyIntent(timeline);
