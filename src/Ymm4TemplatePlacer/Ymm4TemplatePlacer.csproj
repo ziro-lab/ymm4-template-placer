@@ -3,7 +3,7 @@
   <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
   <UseWPF>true</UseWPF><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
   <AssemblyName>Ymm4TemplatePlacer</AssemblyName><RootNamespace>Ymm4TemplatePlacer</RootNamespace>
-  <Version>0.3.1</Version><CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  <Version>0.4.2</Version><CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   <DefineConstants Condition="'$(Ymm4Proof)' == 'true'">$(DefineConstants);YMM4_PROOF</DefineConstants>
  </PropertyGroup>
  <ItemGroup>

@@ -1,5 +1,38 @@
 # ROADMAP — v0.4 implementation and native YMM4 proof ladder
 
+
+## Current Hands-on Round 3 preparation
+
+Round 2 automated candidate is native-green at PR #14 source `a553ae8c32eeb8c1f125b8c005095bbe6fc98ebb`; real-user hands-on found the next UX corrections.
+
+Round 3 is frozen in:
+
+- `V0.4.2_HANDS_ON_ROUND3_DESIGN.md`
+- `V0.4.2_HANDS_ON_ROUND3_HOST_EVIDENCE.md`
+- `V0.4.2_HANDS_ON_ROUND3_WORKPLAN.md`
+- `V0.4.2_HANDS_ON_ROUND3_ACCEPTANCE.md`
+- `V0.4.2_HANDS_ON_ROUND3_IMPLEMENTATION_PREP.md`
+
+Primary changes:
+
+1. tile-face color/shape cleanup and Set-wide shape;
+2. Auto/Fixed columns plus position-based shortcuts;
+3. direct Settings target types and hidden legacy UI;
+4. Generic numeric target layer with one-direction collision behavior;
+5. automatic Voice freshness instead of top-level シーン更新;
+6. expression row navigation synchronized through public Preview `SeekAsync(int)`;
+7. semantic Timeline follow using public `ContainFrameInViewport / ScrollFrame`.
+
+Public Lab PR #57 established that clicked Timeline layer must **not** be inferred from screen coordinates, while Preview playback seek and viewport follow have usable public exact-host surfaces.
+
+This stage is implementation preparation only. Historical W/P/R checkpoints below remain preserved and are not instructions to rebuild completed work.
+
+## Completed integrated Candidate
+
+**W1-W12 are complete at the native-verified v0.4.0 checkpoint.** See `docs/W12_NATIVE_CHECKPOINT.md`: verified source `4938217471f183664ba40e5299fcd3bbb6432568`, run `34868820375`, 384 native assertions, all 18 Acceptance items, 0 compiler warnings/errors, release DLL smoke and versioned packaging PASS. PR #6 remains Draft; main is not merged.
+
+The sections below preserve the original implementation order and exit conditions. They are not an instruction to reimplement completed work. Current usage is `docs/USAGE.md`; exact Profile geometry is `docs/SELECTION_PLACEMENT.md`; verification mapping is `docs/V0.4_ACCEPTANCE.md`. Later documentation-only checkpoints or PR runs are identified by their own source/run provenance.
+
 ## Baseline
 
 v0.3.0 P0〜P8 is already implemented and verified on native YMM4 4.55.1.1 Lite. `docs/VERIFICATION.md` records the proven baseline. v0.4 must preserve those Golden Paths while changing the product from one Voice→Face replacement flow into Library / Palette / semantic add-only placement.

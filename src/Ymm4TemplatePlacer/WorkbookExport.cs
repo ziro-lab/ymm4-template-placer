@@ -9,13 +9,13 @@ public static partial class WorkbookBridge
 {
     public static void Export(string path, string sceneName, IReadOnlyList<AssignmentRow> rows, IReadOnlyList<FaceTemplate> catalog)
     {
-        if (rows.Count > MaxRows || catalog.Count > MaxRows) throw Bad("一度に扱えるVoice / Templateは50,000件までです。");
+        if (rows.Count > MaxRows || catalog.Count > MaxRows) throw Bad("一度に扱える音声 / テンプレートは50,000件までです。");
         var templates = catalog.OrderBy(x => x.Character, StringComparer.Ordinal).ThenBy(x => x.Name, StringComparer.Ordinal).ToArray();
-        if (templates.GroupBy(x => (x.Character, x.Name)).Any(x => x.Count() != 1)) throw Bad("同じCharacterに同名Templateが複数あります。名前を区別して登録し直してください。");
+        if (templates.GroupBy(x => (x.Character, x.Name)).Any(x => x.Count() != 1)) throw Bad("同じキャラクターに同名テンプレートが複数あります。名前を区別して登録し直してください。");
         foreach (var row in rows)
         {
             if (row.SelectedChoice.Template is FaceTemplate chosen && !templates.Any(x => ReferenceEquals(x.Template, chosen.Template) && x.Name == chosen.Name && x.Character == row.Character))
-                throw Bad("選択Templateが変更されています。［更新］して選び直してください。");
+                throw Bad("選択したテンプレートが変更されています。メンテナンスで一覧を読み直し、選び直してください。");
             foreach (var text in new[] { row.Character, row.Serif, row.SelectedChoice.Template?.Name ?? "" }) ValidateText(text);
         }
         var full = Path.GetFullPath(path);
@@ -59,8 +59,8 @@ public static partial class WorkbookBridge
                     for (var i = 0; i < rows.Count; i++) validations.Append(new DataValidation(new Formula1($"INDIRECT(IFERROR(INDEX(tpl_lists,MATCH($B{i + 2},tpl_chars,0)),\"tpl_empty\"))"))
                     {
                         Type = DataValidationValues.List, AllowBlank = true, ShowDropDown = false, ShowInputMessage = true,
-                        PromptTitle = "表情Template", Prompt = "同じCharacterの候補から選択。空欄は配置しません。",
-                        ShowErrorMessage = true, ErrorStyle = DataValidationErrorStyleValues.Stop, ErrorTitle = "候補から選択してください", Error = "同じCharacterのTemplateを選ぶか、空欄にしてください。",
+                        PromptTitle = "表情テンプレート", Prompt = "同じキャラクターの候補から選択。空欄は配置しません。",
+                        ShowErrorMessage = true, ErrorStyle = DataValidationErrorStyleValues.Stop, ErrorTitle = "候補から選択してください", Error = "同じキャラクターのテンプレートを選ぶか、空欄にしてください。",
                         SequenceOfReferences = new ListValue<StringValue> { InnerText = $"F{i + 2}" }
                     });
                     data.Append(validations);
@@ -70,13 +70,13 @@ public static partial class WorkbookBridge
                 WriteRows(AddSheet(book, "使い方", false, [25, 85]), new[]
                 {
                     new[] { "YMM4 Template Placer", "Assignment Snapshot" },
-                    new[] { "1. 編集", "AssignmentsのTemplate列をプルダウンで選択します。空欄の行には配置しません。" },
-                    new[] { "2. 読み込み", "保存してPluginの［Excelから読み込み］を実行。まだTimelineは変更しません。" },
-                    new[] { "3. 配置", "一覧を確認して［配置］。このSceneのCWT_TPL:face表情だけを置き換えます。" },
-                    new[] { "編集する列", "Template列だけです。他の列、行数、非表示シートは変更しないでください。" },
-                    new[] { "YMM4側を変更したら", "VoiceやTemplateを変更したら再出力してください。自動同期・差分マージは行いません。" },
-                    new[] { "配置Layer", "登録Template内の表情ItemのLayerを使います。重なりは配置前に停止します。" },
-                    new[] { "Template名", "YMM4の登録名（フォルダを含む）を使います。同名の曖昧な候補は読み込めません。" }
+                    new[] { "1. 編集", "Assignmentsシートのテンプレート列をプルダウンで選択します。空欄の行には配置しません。" },
+                    new[] { "2. 読み込み", "保存してプラグインの［Excelから読み込み］を実行します。まだタイムラインは変更しません。" },
+                    new[] { "3. 配置", "一覧を確認して［配置］。未選択は何もせず、既存アイテムは削除しません。" },
+                    new[] { "編集する列", "テンプレート列だけです。他の列、行数、非表示シートは変更しないでください。" },
+                    new[] { "YMM4側を変更したら", "音声やテンプレートを変更したら再出力してください。自動同期・差分マージは行いません。" },
+                    new[] { "配置レイヤー", "登録テンプレート内の表情アイテムのレイヤーを使います。重なりは配置前に停止します。" },
+                    new[] { "テンプレート名", "YMM4の登録名（フォルダを含む）を使います。同名の曖昧な候補は読み込めません。" }
                 });
                 book.Workbook.Save();
             }

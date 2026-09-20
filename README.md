@@ -1,114 +1,42 @@
-# YMM4 Template Placer — v0.3.1 implemented / v0.4 designed
+# YMM4 Template Placer v0.4.2 Candidate
 
-YMM4の登録済みItem Templateを、編集作業で使いやすい形に整理・配置するための支援Pluginです。
-
-## Current state
-
-**v0.3.1 is implemented and verified.** v0.3.0のVoice一覧 / Character対応Face Template / 配置 / Excel / Safety / 標準Undo/Redoを維持したまま、Timeline Toolを閉じて再表示できるlifecycle hotfixを追加しました。GitHub Actionsのnative Windows runner上の実YMM4 4.55.1.1 LiteでP1〜P9を通し、P9ではToolAreaの非表示→再表示とTimeline不変を確認しています。
-
-**v0.4 is the current implementation target.** v0.4では、v0.3のVoice→Faceだけを一般化するのではなく、YMM4 TemplateをPlugin Library / Paletteで整理し、有限のsemantic Placement Profileで安全に配置する構造へ拡張します。正本は [DESIGN](docs/DESIGN.md)、実装・実機検証順は [ROADMAP](docs/ROADMAP.md) です。
-
-v0.3.0で実証済みの実装詳細と検証境界は [IMPLEMENTATION](docs/IMPLEMENTATION.md) / [VERIFICATION](docs/VERIFICATION.md) に残しています。v0.3.1はそこへTool lifecycle hotfixとP9を追加した現在の回帰Baselineです。
-
-## v0.4 product direction
+YMM4の登録済みテンプレートを、選んだアイテムとの相対関係ごと使い回すTool Pluginです。
 
 ```text
-YMM4 Template
-    ↓ reference only
-Plugin Library
-    ↓ short display name / optional Character
-Palette
-    ↓
-Placement Profile + Preset
-    ↓
-preflight Placement Plan
-    ↓
-Timeline
+タイムラインで基準アイテムを選ぶ
+→ 表情・装飾などの「やりたいこと」
+→ 必要ならセットを切り替える
+→ 演出タイルを1クリック
 ```
 
-主な操作は次の4系統です。
+配置方法は設定時に決め、通常編集では同じ判断を繰り返しません。
 
-- **表情一覧** — VoiceごとにCharacter Paletteの表情Templateを割り当てる。Excel / AI bridgeもここに限定。
-- **選択配置** — 選択ItemへTarget Companion / Point Emphasis / Selection Range / Boundaryなどの定型関係でTemplateを置く。
-- **Character Palette** — VoiceItem / TachieFaceItemの単体選択からCharacterを一時自動判定し、そのCharacter用Templateだけを表示。Context終了後は以前の手動Paletteへ戻る。
-- **Style Palette** — 明るい / 暗い / 戦闘など、現在使いたい演出語彙を手動で切り替える。
+## v0.4.2
 
-Palette Entryの**ダブルクリックは現在再生位置へのQuick Drop**です。Quick DropはTemplate本来のLengthで追加し、Targetとの関連付けは作りません。
+選択中の実Item型・選択数・キャラクター名から用途を絞り込みます。同じ用途の複数セット、折り返す演出タイル、初回の表情テンプレート取り込み、複数テンプレートの一括登録、並べ替え・複製を備えています。
 
-Character PaletteのQuick Dropでは、Layer位置を次から選べる設計です。
+複数アイテムを含むテンプレートはBundleとして内部の時間差・レイヤー差・長さを保持します。衝突した場合は全体を同じ方向へ移動し、全件を安全に置けない場合は配置しません。
 
-```text
-基準
-前面（大きいLayer番号）
-背面（小さいLayer番号）
-```
+表情一覧とパレットは候補元を共有します。表情一覧から関連付けて配置したBundleは、選択した音声またはメンバーから全体を手動再同期できます。Excelは表情割り当ての補助経路です。
 
-PSD立ち絵Pluginで表情Itemを複数Layerへ重ねる用途を想定しています。既存Itemを動かさず、予定区間全体を見て空きLayerを探索します。
+## 安全性と互換操作
 
-## Lightweight resync
+元データはYMM4のテンプレートです。プラグインは参照だけを保存し、テンプレート本体の別DBを作りません。欠損・重複を推測修復せず、配置前に全件検証します。既存の無関係なアイテムを削除・移動・短縮せず、配置・再同期はYMM4のUndo/Redoで戻せます。
 
-v0.4ではFinal Cut型の常時Connected Clipは作りません。
+旧Library・Palette・Presetは読み込みだけでは書き換えず保持します。旧Quick Dropや旧プリセットは、設定の「以前の設定・互換操作」から利用できます。
 
-Target Voiceへ関連付き配置した場合だけ、Remarkへ単純な連番を目印として追加し、ユーザーが明示的に「再同期」した時だけ現在のPresetで関係を再計算します。
+## 配布と検証
 
-```text
-ID一致
-→ Character一致
-→ 一意なら再同期
-→ 0件 / 複数件なら推測せずSkip
-```
+対象ホストは **YMM4 4.55.1.1 Lite / .NET 10**。配布条件は、P1-P9、W3-W12、WUX1-WUX13、R1-R14、4種類の受入れmanifest、Release/Proof各0 Warning・0 Error、最終配布DLLのnative smoke、固定ルートの`.ymme`検査です。
 
-Quick Dropは再同期対象外です。通常Placementも既存Itemを勝手に削除しません。削除はYMM4標準操作で行います。
+`tests/ValidateRelativeEvidence.ps1`はv0.4.2の結果欠損・改変を拒否します。`tests/PackageVerified.ps1`はこの検査の10種類の異常系も試し、DLL・版番号・受入れ結果が揃った場合だけ配布します。run/SHA/件数はArtifact内の`provenance.json`を確認してください。
 
-## v0.3.x usage
+インストール用は`Ymm4TemplatePlacer-v0.4.2.ymme`。内部ルートは版番号を付けない`Ymm4TemplatePlacer/`です。
 
-現在のBaseline v0.3.1では、対象Sceneを開いてツールからYMM4 Template Placerを開き、Voice一覧のTemplateを選んで配置します。ToolはYMM4側で閉じて、必要な時に再表示できます。
+使い方は`docs/USAGE.md`、実装対応・検証境界は`docs/V0.4.2_CANDIDATE.md`、設計と工程番号は`docs/V0.4.2_RELATIVE_PALETTE_DESIGN.md`と`docs/V0.4.2_ROADMAP.md`を参照してください。
 
-```text
-対象Sceneを開く
-→ YMM4 Template Placer
-→ Voice一覧のTemplateを選ぶ
-→ 配置
-```
+## 実機受入れ
 
-Excelは任意のサブ経路です。
+自動検証は本物のYMM4・WPF操作と合成アイテムを使います。ユーザーの実PSD素材、他プラグインとの組み合わせ、物理マウス・インストーラ、全DPI/theme、将来ホスト、クラッシュ復旧は保証範囲に含めません。
 
-```text
-Excelへ出力
-→ Template列を編集
-→ Excelから読み込み
-→ 一覧を確認
-→ 配置
-```
-
-.xlsxの生成・読込にMicrosoft ExcelやCOM Automationは不要です。
-
-## Build baseline
-
-Windows、.NET 10 SDK、YMM4 4.55.1.1 Liteを使用します。
-
-```powershell
-dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release `
-  "-p:YMM4DirPath=C:\Tools\YMM4\" -p:Ymm4Proof=false --nologo -warnaserror
-```
-
-Targetは `net10.0-windows10.0.19041.0`、ExcelライブラリはOpen XML SDK 3.5.1です。native実機テストと配布生成は `.github/workflows/native-yymm4-proof.yml` を正本とします。
-
-## Design boundaries
-
-v0.4では次を作りません。
-
-- YMM4 Template本体をコピーする第二のTemplate DB
-- Generic Rule Engine / DSL / Node Editor
-- 自動全削除→再配置
-- 常時同期 / Voice移動event監視
-- Copy/Paste ID自動修復や曖昧Target推測
-- 過去Preset Snapshot
-- Persistent Connected Clip
-- Multi-item Template一般化
-- Protected Intro/Outro retiming
-- Parent / Follow / Track Matte
-- Beat / 音声解析 / word timing
-- AI API直接連携
-
-重いCIはソース・XAML・プロジェクト・テスト・fixture・workflow変更時と手動実行時だけ動かします。**docs-only変更ではYMM4のダウンロード・ビルド・起動を行いません。**
+`main`は実機受入れまで変更しません。PR #6はDraftのままです。v0.4.2は`feature/v0.4.2-character-template-bundles` / PR #11で管理します。
