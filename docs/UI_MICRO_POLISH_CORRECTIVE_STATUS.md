@@ -90,19 +90,21 @@ Native Round4 presentation proof has been revised to cover:
 
 Corrective branch current source is not yet Native-accepted.
 
-Latest corrective HEAD:
+Latest corrective product/source change before documentation-only authority updates:
 
-- `b7b7aeea5ec9f096c881d61bd91b940cdc475894`
+- `1bbe5e5db17bdbbee8cd4fd36b71bd183ea4f76e`
+
+Current branch/documentation HEAD continues beyond that without changing product semantics.
 
 Attempted Actions validation:
 
 - PR run #291 `35523841897`
-- dedicated Release run #292 `35523849044`
-- rerun attempt #2 of #292
+- dedicated Release run #292 `35523849044`, including rerun attempt #2
+- dedicated Release run #299 `35524227916`
 
-Both jobs failed before executing **any workflow step**; job step lists are empty. This is an Actions/runner-start condition, not product/test failure evidence.
+These jobs failed before executing **any workflow step**; job step lists are empty. This is an Actions/runner-start condition, not product/test failure evidence.
 
-Earlier Release #290 did start normally and exposed only a missing test `VisualTreeHelper` import; that compile issue was corrected in `b7b7aeea...`.
+Earlier Release #290 did start normally and exposed only a missing proof-source `VisualTreeHelper` import; that proof compile issue was corrected before the later corrective commits.
 
 Do not label the corrective candidate Native-green until a real Windows/YMM4 run executes.
 
