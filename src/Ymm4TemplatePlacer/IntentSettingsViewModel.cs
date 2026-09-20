@@ -78,6 +78,8 @@ public sealed partial class PlacerViewModel
     }
     private void UpdateIntentSettingsCommands()
     {
+        setSettingsShapeCommand?.RaiseCanExecuteChanged();
+        OnPropertyChanged(nameof(CanEditExpressionRowHeight)); OnPropertyChanged(nameof(ExpressionRowHeight));
         ReorderIntentTileCommand?.RaiseCanExecuteChanged(); UpdateIntentTileEditingCommands();
         SaveIntentSettingsCommand?.RaiseCanExecuteChanged(); DiscardIntentSettingsCommand?.RaiseCanExecuteChanged();
         CreateIntentPaletteCommand?.RaiseCanExecuteChanged(); DuplicateIntentPaletteCommand?.RaiseCanExecuteChanged(); DeleteIntentPaletteCommand?.RaiseCanExecuteChanged();

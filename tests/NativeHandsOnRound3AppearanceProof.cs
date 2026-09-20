@@ -120,16 +120,15 @@ internal static partial class NativeProof
             var saved = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().Palettes.Single();
             allShapes &= saved.LibraryEntryIds.All(x => saved.AppearanceFor(x).Shape == shape);
         }
-        // The Set button is a normal WPF control; its menu forwards to the root command.
-        var peer = new ButtonAutomationPeer(surface.IntentSetSettingsButton);
-        ((IInvokeProvider)peer.GetPattern(PatternInterface.Invoke)).Invoke(); await Idle();
-        var menu = surface.IntentSetSettingsButton.ContextMenu!;
-        var shapeMenu = menu.Items.OfType<MenuItem>().First();
-        allShapes &= menu.IsOpen && shapeMenu.Items.OfType<MenuItem>().Count() == 3 && shapeMenu.Items.OfType<MenuItem>().All(x => x.Command == vm.ShapeIntentSetCommand);
-        shapeMenu.IsSubmenuOpen = true; await Idle();
-        await Round2MenuInvoke(shapeMenu.Items.OfType<MenuItem>().Single(x => x.Header?.ToString() == "丸")); menu.IsOpen = false; await Idle();
+        // R4 replaces the permanent Set menu with current-Set Settings. Exercise the new affordance.
+        vm.OpenCurrentSetSettingsCommand.Execute(null); await Idle();
+        var shapeButtons = View!.RelativeSettingsSurface.SetShapeButtons.Children.OfType<Button>().ToArray();
+        allShapes &= shapeButtons.Length == 3 && shapeButtons.All(x => x.Command == vm.SetSettingsShapeCommand);
+        var circle = shapeButtons.Single(x => Equals(x.CommandParameter, IntentTileShape.Circle));
+        ((IInvokeProvider)new ButtonAutomationPeer(circle).GetPattern(PatternInterface.Invoke)).Invoke(); await Idle();
+        vm.SaveIntentSettings(); View.PaletteTab.IsSelected = true; await Idle();
         Round3Assert(allShapes && scope.Current.Palettes.Single().LibraryEntryIds.All(x => scope.Current.Palettes.Single().AppearanceFor(x).Shape == IntentTileShape.Circle),
-            "A7", "all three shapes bulk-write both backends and the live Set affordance uses that command");
+            "A7", "all three shapes bulk-write both backends and the replacement Settings affordance bulk-writes the same entry shapes");
         Round3Assert(typeof(IntentPalette).GetProperty("Shape") == null && typeof(PaletteDefinition).GetProperty("Shape") == null &&
             scope.Current.IntentPalettes.Single().Entries.Select(x => x.LibraryEntryId).SequenceEqual(new[] { b.Id, a.Id }) && Signature(timeline) == before,
             "A8", "bulk shape changes only existing entry fields; no Set shape inheritance, order or Timeline mutation");

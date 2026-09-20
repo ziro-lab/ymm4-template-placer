@@ -13,6 +13,7 @@
  <Grid Margin="6">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <StackPanel Grid.Row="0">
+   <local:PalettePresentationPanel x:Name="PresentationSettingsSurface"/>
    <StackPanel x:Name="ItemFirstContextPanel">
     <ItemsControl x:Name="SettingsTargetButtons" ItemsSource="{Binding IntentSettings.DirectItemContexts}" AutomationProperties.Name="Setを使う対象">
      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -39,6 +40,12 @@
   </StackPanel>
   <ScrollViewer x:Name="SettingsScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
    <StackPanel>
+   <WrapPanel x:Name="SetShapeButtons" Visibility="{Binding IntentSettings.HasSelectedSet,Converter={StaticResource VisibleWhen}}" Margin="0,2,0,4">
+    <TextBlock Text="このセットの形" VerticalAlignment="Center" Margin="0,0,8,0"/>
+    <Button Content="角丸" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Rounded}"/>
+    <Button Content="四角" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Square}"/>
+    <Button Content="丸" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Circle}"/>
+   </WrapPanel>
    <Expander x:Name="SetManagement" Header="セットの管理" IsExpanded="{Binding IntentSettings.ShowAllSets,Mode=TwoWay}" Margin="0,0,0,4">
     <WrapPanel>
      <Button x:Name="DuplicateButton" Content="複製" Command="{Binding DuplicateIntentPaletteCommand}"/>
@@ -199,7 +206,6 @@
       <Button Content="新しい表情を取り込む" Command="{Binding RescanIntentExpressionsCommand}" HorizontalAlignment="Left"/>
      </StackPanel>
     </Expander>
-    <local:PalettePresentationPanel x:Name="PresentationSettingsSurface"/>
    </StackPanel>
   </ScrollViewer>
   <StackPanel Grid.Row="2" Margin="0,6,0,0">

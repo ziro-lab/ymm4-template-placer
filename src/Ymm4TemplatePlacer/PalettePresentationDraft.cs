@@ -15,6 +15,7 @@ public sealed class PalettePresentationDraft : IntentEditable
 {
     private PaletteLayoutMode layout;
     private string columns;
+    private readonly int rowHeight;
     private bool enabled;
     private ExpressionViewportFollow follow;
     public PaletteLayoutMode LayoutMode { get => layout; set { if (layout == value) return; layout = value; Notify(); Raise(nameof(IsFixed)); } }
@@ -29,7 +30,7 @@ public sealed class PalettePresentationDraft : IntentEditable
     public IReadOnlyList<IntentOption<ExpressionViewportFollow>> ViewportModes { get; } = [new(ExpressionViewportFollow.Off,"追従しない"), new(ExpressionViewportFollow.WhenOutside,"画面外の時だけ追従"), new(ExpressionViewportFollow.Always,"常に追従")];
     public PalettePresentationDraft(PalettePresentationSettings source)
     {
-        layout = source.LayoutMode; columns = source.FixedColumns.ToString(CultureInfo.InvariantCulture); enabled = source.ShortcutsEnabled; follow = source.ViewportFollow;
+        rowHeight = source.ExpressionRowHeight; layout = source.LayoutMode; columns = source.FixedColumns.ToString(CultureInfo.InvariantCulture); enabled = source.ShortcutsEnabled; follow = source.ViewportFollow;
         foreach (var binding in source.PositionShortcuts) Add(new(binding.SlotIndex, binding.Gesture));
         AddShortcutCommand = new(_ => Shortcuts.Count < 64, _ =>
         {
@@ -47,7 +48,7 @@ public sealed class PalettePresentationDraft : IntentEditable
     public PalettePresentationSettings Build()
     {
         var result = new PalettePresentationSettings { LayoutMode = LayoutMode, FixedColumns = Number(FixedColumns,"固定列数"),
-            ShortcutsEnabled = ShortcutsEnabled, PositionShortcuts = Shortcuts.Select(x => x.Build()).ToList(), ViewportFollow = ViewportFollow };
+            ShortcutsEnabled = ShortcutsEnabled, PositionShortcuts = Shortcuts.Select(x => x.Build()).ToList(), ViewportFollow = ViewportFollow, ExpressionRowHeight = rowHeight };
         result.Validate(); return result;
     }
 }

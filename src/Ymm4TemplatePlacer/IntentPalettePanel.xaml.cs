@@ -9,31 +9,36 @@ public partial class IntentPalettePanel : UserControl
     private enum TilePointerPhase { Idle, Pressed, Dragging, SuppressRelease }
     private TilePointerPhase pointerPhase;
     private ContextMenu? activeMenu;
+    private PlacerViewModel? observedRoot;
+    private Guid? popupSet;
     private (Grid Cell, IntentTileChoice Tile, Point Point)? pendingDrag;
     public IntentPalettePanel()
     {
         InitializeComponent();
-        Loaded += (_, _) => { SystemParameters.StaticPropertyChanged -= ThemeChanged; SystemParameters.StaticPropertyChanged += ThemeChanged; };
-        Unloaded += (_, _) => { SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); };
-        DataContextChanged += (_, _) => { CancelLocalGesture(); CloseTileMenu(); };
+        GenericLayerPopup.Opened += (_, _) => popupSet = observedRoot?.GenericLayerTarget?.SetId;
+        Loaded += (_, _) => { ObserveRoot(DataContext as PlacerViewModel); SystemParameters.StaticPropertyChanged -= ThemeChanged; SystemParameters.StaticPropertyChanged += ThemeChanged; };
+        Unloaded += (_, _) => { SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); ObserveRoot(null); };
+        DataContextChanged += (_, _) => { CancelLocalGesture(); CloseTileMenu(); ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); };
     }
     private void ThemeChanged(object? sender, PropertyChangedEventArgs e)
     {
         // Local visual refresh only; never rebuild the root's tiles/Rows or change settings.
         if (IsLoaded) Dispatcher.InvokeAsync(() => IntentTileItems.Items.Refresh());
     }
-    private void SetSettingsClick(object sender, RoutedEventArgs e)
+    private void ObserveRoot(PlacerViewModel? next)
     {
-        if (sender is not Button button || DataContext is not PlacerViewModel { SelectedIntentSet: { } set } vm) return;
-        CancelLocalGesture(); CloseTileMenu();
-        var menu = new ContextMenu { PlacementTarget = button };
-        var shapes = new MenuItem { Header = "形をそろえる" };
-        foreach (var option in vm.IntentTileShapes)
-            shapes.Items.Add(new MenuItem { Header = option.Name, Command = vm.ShapeIntentSetCommand,
-                CommandParameter = new IntentSetShapeRequest(set, option.Value), ToolTip = vm.IntentTileEditNotice });
-        menu.Items.Add(shapes); menu.Items.Add(new Separator());
-        menu.Items.Add(new MenuItem { Header = "詳しい設定…", Command = vm.OpenIntentSetSettingsCommand, CommandParameter = set });
-        button.ContextMenu = menu; activeMenu = menu; menu.Closed += TileMenuClosed; menu.IsOpen = true;
+        if (ReferenceEquals(next, observedRoot)) return;
+        GenericLayerButton.IsChecked = false; popupSet = null;
+        if (observedRoot != null) observedRoot.PropertyChanged -= RootChanged;
+        observedRoot = next;
+        if (next != null) next.PropertyChanged += RootChanged;
+    }
+    private void RootChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Local popup lifetime only. A changed Set cannot leave an editor for the old Set open.
+        if (e.PropertyName == nameof(PlacerViewModel.GenericLayerTarget) && GenericLayerPopup.IsOpen &&
+            (observedRoot?.GenericLayerTarget == null || observedRoot.GenericLayerTarget.SetId != popupSet))
+            GenericLayerButton.IsChecked = false;
     }
     private void CancelLocalGesture()
     {

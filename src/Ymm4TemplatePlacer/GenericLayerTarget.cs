@@ -53,6 +53,8 @@ public sealed class GenericLayerTargetDraft : IntentEditable
 public sealed partial class PlacerViewModel
 {
     public GenericLayerTargetDraft? GenericLayerTarget { get; private set; }
+    public string GenericLayerButtonLabel => GenericLayerTarget is { } draft
+        ? $"レイヤー {(draft.Saved.UseTemplateLayer ? "元の位置" : draft.Saved.Preferred.ToString(CultureInfo.InvariantCulture))}{(draft.HasChanges ? " *" : "")} ▾" : "レイヤー ▾";
     public ActionCommand ApplyGenericLayerTargetCommand { get; private set; } = null!;
     public ActionCommand ResetGenericLayerTargetCommand { get; private set; } = null!;
     private bool GenericLayerReadyForExecution => GenericLayerTarget?.HasChanges != true;
@@ -68,6 +70,7 @@ public sealed partial class PlacerViewModel
     {
         ApplyGenericLayerTargetCommand?.RaiseCanExecuteChanged(); ResetGenericLayerTargetCommand?.RaiseCanExecuteChanged();
         ExecuteIntentTileCommand?.RaiseCanExecuteChanged();
+        OnPropertyChanged(nameof(GenericLayerButtonLabel));
     }
     private void UpdateGenericLayerTarget(bool force = false)
     {
