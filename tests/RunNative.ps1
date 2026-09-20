@@ -29,7 +29,7 @@ else {
  Get-ChildItem $OutputDir -Filter 'hands-on-round4*.json' -File | Remove-Item
  Remove-Item (Join-Path $OutputDir 'round4-checkpoint-guard-tests.json') -ErrorAction SilentlyContinue
  Remove-Item (Join-Path $OutputDir 'round3-evidence-guard-tests.json') -ErrorAction SilentlyContinue
- foreach ($name in @('proof-result.txt','proof-log.txt','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json','hands-on-ux-polish.json','hands-on-round2-input.json','hands-on-round2-sets.json','hands-on-round2-settings.json','hands-on-round2-tiles.json','hands-on-round2-expression.json','hands-on-round2.json','evidence-guard-tests.json')) { Remove-Item (Join-Path $OutputDir $name) -ErrorAction SilentlyContinue }
+ foreach ($name in @('proof-result.txt','proof-log.txt','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json','hands-on-ux-polish.json','hands-on-round2-input.json','hands-on-round2-sets.json','hands-on-round2-tiles.json','hands-on-round2-settings.json','hands-on-round2-expression.json','hands-on-round2.json','evidence-guard-tests.json')) { Remove-Item (Join-Path $OutputDir $name) -ErrorAction SilentlyContinue }
 }
 $p=Start-Process (Join-Path $Ymm4Dir 'YukkuriMovieMaker.exe') -WorkingDirectory $Ymm4Dir -PassThru
 try {
@@ -77,7 +77,7 @@ if ($ReleaseSmoke) {
  if (-not (Select-String -Path $log -Pattern '^HANDS_ON_ROUND2=PASS$')) { throw 'Hands-on Round 2 native acceptance is incomplete' }
  $null = & "$PSScriptRoot/ValidateRelativeEvidence.ps1" -OutputDir $OutputDir
  $null = & "$PSScriptRoot/ValidateRound3Evidence.ps1" -OutputDir $OutputDir
- $null = & "$PSScriptRoot/ValidateRound4Checkpoint.ps1" -OutputDir $OutputDir -Phases A,B
+ $null = & "$PSScriptRoot/ValidateRound4Checkpoint.ps1" -OutputDir $OutputDir -Phases A,B,CT
  $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
  if ($acceptance.version -ne '0.4.2' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 core acceptance evidence' }
  $ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-Json
