@@ -89,9 +89,70 @@ Requirements that remain from U3:
 
 The exact row-boundary/resize-handle implementation is not frozen yet.
 
+
+## F5 — Fixed columns leave unused horizontal space on wide windows
+
+Result: **POLISH CANDIDATE / likely low-cost**
+
+Observed hands-on behavior:
+
+- Fixed column count correctly preserves the number of columns;
+- each tile/cell remains approximately 104 DIP wide;
+- when the Tool/window becomes wider than `FixedColumns * 104`, the remaining horizontal area is visibly unused.
+
+Implementation inspection confirms the current `PaletteTilePanel` intentionally uses fixed 104-DIP cells in both Auto and Fixed modes.
+
+Desired direction:
+
+- keep the **column count fixed**;
+- keep slot-to-row/column mapping fixed;
+- when the viewport is wider than the minimum fixed grid width, distribute the available width evenly across the fixed columns;
+- when the viewport is narrower than the minimum comfortable tile width, keep the current horizontal-overflow behavior rather than shrinking tiles too far.
+
+Candidate geometry:
+
+```text
+minimum cell width = 104
+Fixed:
+    cell width = max(104, usable viewport width / fixed columns)
+Auto:
+    current 104-DIP behavior remains
+```
+
+This should improve visual fill without changing shortcut slot semantics, tile order, or the saved FixedColumns value.
+
+Exact max-width/capping behavior is not frozen yet.
+
+## F6 — quick-settings Popup can remain visually stranded when YMM4 loses foreground
+
+Result: **BUG / likely low-cost lifetime fix**
+
+Observed hands-on behavior:
+
+- open `⚙ 簡易設定`;
+- switch to another application so YMM4 is in the background;
+- the quick-settings popup may remain visible by itself even though the YMM4 window is no longer foreground.
+
+Implementation inspection:
+
+- the quick-settings surface is a WPF `Popup`;
+- current XAML uses `StaysOpen="True"`;
+- current close conditions cover Tool unload/visibility, DataContext changes and logical Set changes;
+- losing foreground/window activation is not currently part of the popup lifetime.
+
+Desired direction:
+
+- close quick settings when the owning YMM4/Tool window deactivates;
+- do not leave the popup visually floating above another application;
+- reopening YMM4 should not automatically reopen the old popup;
+- opening/closing remains settings-zero-write and Timeline-zero-write.
+
+Likely implementation direction is to bind popup lifetime to the actual owner Window/Tool activation lifecycle rather than adding polling or global hooks.
+
+
 ## Decision discipline
 
-Do not patch F2-F4 individually yet.
+Do not patch F2-F6 individually yet.
 
 After additional hands-on feedback is collected:
 
