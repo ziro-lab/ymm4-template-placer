@@ -47,8 +47,13 @@ public sealed partial class PlacerViewModel
             Status = "行の高さは32～96の整数で指定してください。";
             return false;
         }
-        var before = ExpressionRowHeight;
         ExpressionRowHeight = value;
-        return ExpressionRowHeight == value || before == value;
+        var accepted = ExpressionRowHeight == value;
+        if (accepted && HasError && Status == "行の高さは32～96の整数で指定してください。")
+        {
+            HasError = false;
+            Status = "";
+        }
+        return accepted;
     }
 }
