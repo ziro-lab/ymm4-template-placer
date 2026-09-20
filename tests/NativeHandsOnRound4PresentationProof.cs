@@ -83,30 +83,35 @@ internal static partial class NativeProof
             Round4Assert(Enumerable.Range(1, 11).All(x => round3Checks.ContainsKey("D" + x)),
                 "B6", "all eleven retained native Generic layer planner safety checks passed on this run");
 
-            await NativeRound2Click(palette.IntentSettingsButton.PointToScreen(new Point(palette.IntentSettingsButton.ActualWidth / 2,
-                palette.IntentSettingsButton.ActualHeight / 2))); await Idle();
-            Round4Assert(view.SelectionTab.IsSelected && vm.IntentSettings is { IsGenericContext: true } &&
-                vm.IntentSettings.SelectedGenericSet?.Id == left.Id, "B7", "bottom Settings opens the exact current Generic Set");
-            var settingsSurface = view.RelativeSettingsSurface;
-            var shapes = settingsSurface.SetShapeButtons.Children.OfType<Button>().ToArray();
+            await NativeRound2Click(palette.PanelQuickSettingsButton.PointToScreen(new Point(palette.PanelQuickSettingsButton.ActualWidth / 2,
+                palette.PanelQuickSettingsButton.ActualHeight / 2))); await Idle();
+            Round4Assert(view.PaletteTab.IsSelected && palette.PanelQuickSettingsPopup.IsOpen &&
+                vm.PanelQuickPresentation != null && vm.SelectedIntentSet?.Id == left.Id,
+                "B7", "bottom quick settings opens locally for the exact current Generic Set without switching tabs");
+            var quick = palette.PanelQuickSettingsSurface;
+            var shapes = RelativeVisuals(quick).OfType<Button>().Where(x => ReferenceEquals(x.Command, vm.ShapeCurrentIntentSetCommand)).ToArray();
             var all = shapes.Length == 3;
             foreach (var button in shapes)
             {
                 ((IInvokeProvider)new ButtonAutomationPeer(button).GetPattern(PatternInterface.Invoke)).Invoke(); await Idle();
                 var expected = (IntentTileShape)button.CommandParameter;
-                all &= vm.IntentSettings!.SelectedGenericSet!.Entries.All(x => x.Shape == expected);
+                all &= scope.Current.Palettes.Single(x => x.Id == left.Id).LibraryEntryIds.All(id =>
+                    scope.Current.Palettes.Single(x => x.Id == left.Id).AppearanceFor(id).Shape == expected);
             }
-            vm.SaveIntentSettings(); await Idle();
-            Round4Assert(all && scope.Current.Palettes.Single(x => x.Id == left.Id).LibraryEntryIds.All(id =>
-                scope.Current.Palettes.Single(x => x.Id == left.Id).AppearanceFor(id).Shape == IntentTileShape.Circle),
-                "B8", "Settings bulk shape controls write current membership shapes through the protected draft/store");
-            view.PaletteTab.IsSelected = true; await Idle();
+            Round4Assert(all && palette.PanelQuickSettingsPopup.IsOpen &&
+                scope.Current.Palettes.Single(x => x.Id == left.Id).LibraryEntryIds.All(id =>
+                    scope.Current.Palettes.Single(x => x.Id == left.Id).AppearanceFor(id).Shape == IntentTileShape.Circle),
+                "B8", "quick settings Set-wide shape writes current membership shapes through the protected store and stays open");
+            palette.PanelQuickSettingsButton.IsChecked = false; await Idle();
             vm.ChangeIntentTileAppearance(vm.IntentTiles[0], x => x with { Shape = IntentTileShape.Square }); await Idle();
             Round4Assert(vm.IntentTiles[0].Shape == IntentTileShape.Square && vm.IntentTiles[1].Shape == IntentTileShape.Circle,
                 "B9", "one tile still overrides its own shape after a Set-wide change");
+            vm.BeginIntentSettings(); view.SelectionTab.IsSelected = true; await Idle();
+            var settingsSurface = view.RelativeSettingsSurface;
             Round4Assert(!settingsSurface.SettingsScroll.IsAncestorOf(settingsSurface.PresentationSettingsSurface) &&
                 ((Expander)settingsSurface.PresentationSettingsSurface.Content).Header?.ToString() == "全体の表示・操作",
-                "B10", "global presentation is outside the selected-Set editor with an explicit global heading");
+                "B10", "full Settings still keeps global presentation outside the selected-Set editor");
+            view.PaletteTab.IsSelected = true; await Idle();
 
             var presentation = JsonSerializer.Serialize(scope.Current.Presentation);
             vm.SelectedIntentSet = vm.IntentSets.Single(x => x.Id == right.Id); await Idle();
