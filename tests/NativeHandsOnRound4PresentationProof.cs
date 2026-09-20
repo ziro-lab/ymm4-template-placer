@@ -153,10 +153,20 @@ internal static partial class NativeProof
             var container = (DataGridRow)view.VoiceGrid.ItemContainerGenerator.ContainerFromItem(rows[0]);
             var serif = RelativeVisuals(container).OfType<TextBlock>().First(x => x.Text == longSerif);
             var fontSize = serif.FontSize;
-            view.ExpressionRowHeightPicker.SelectedItem = 96; await Idle(); view.VoiceGrid.UpdateLayout();
-            Round4Assert(view.VoiceGrid.RowHeight == 96 && RelativeVisuals(view.VoiceGrid).OfType<DataGridRow>().All(x => Math.Abs(x.ActualHeight - 96) < 1) &&
+            var beforeDragBytes = File.ReadAllBytes(PlacerSettingsStore.DefaultPath);
+            view.ExpressionRowHeightGrip.RaiseEvent(new System.Windows.Controls.Primitives.DragStartedEventArgs(0, 0)
+                { RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragStartedEvent });
+            view.ExpressionRowHeightGrip.RaiseEvent(new System.Windows.Controls.Primitives.DragDeltaEventArgs(0, 80)
+                { RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragDeltaEvent });
+            await Idle(); view.VoiceGrid.UpdateLayout();
+            var previewOnly = view.VoiceGrid.RowHeight == 96 && File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(beforeDragBytes) &&
+                new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().Presentation.ExpressionRowHeight == 36;
+            view.ExpressionRowHeightGrip.RaiseEvent(new System.Windows.Controls.Primitives.DragCompletedEventArgs(0, 80, false)
+                { RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragCompletedEvent });
+            await Idle(); view.VoiceGrid.UpdateLayout();
+            Round4Assert(previewOnly && view.VoiceGrid.RowHeight == 96 && RelativeVisuals(view.VoiceGrid).OfType<DataGridRow>().All(x => Math.Abs(x.ActualHeight - 96) < 1) &&
                 vm.Rows.SequenceEqual(rows) && new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().Presentation.ExpressionRowHeight == 96,
-                "B18", "one durable row-height choice resizes all realized Voice rows without rebuilding their objects");
+                "B18", "row-height drag previews without persistence and saves one durable common height on release without rebuilding Rows");
             Round4Assert(serif.FontSize == fontSize, "B19", "row-height adjustment never shrinks the Serif font");
             Round4Assert(serif.TextWrapping == TextWrapping.Wrap && serif.TextTrimming == TextTrimming.CharacterEllipsis &&
                 serif.ActualHeight > fontSize * 2 && view.VoiceGrid.RowHeight == 96 && Signature(timeline) == before,
