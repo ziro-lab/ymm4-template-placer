@@ -18,7 +18,7 @@ public partial class IntentPalettePanel : UserControl
         Loaded += (_, _) => { ObserveRoot(DataContext as PlacerViewModel); SystemParameters.StaticPropertyChanged -= ThemeChanged; SystemParameters.StaticPropertyChanged += ThemeChanged; };
         Unloaded += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(null); SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); };
         DataContextChanged += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
-        PanelQuickSettingsPopup.Closed += (_, _) => { PanelQuickSettingsButton.IsChecked = false; quickPopupSetId = null; observedRoot?.EndPanelQuickSettings(); };
+        PanelQuickSettingsPopup.Closed += (_, _) => { PanelQuickSettingsButton.IsChecked = false; quickPopupSetId = null; };
         IsVisibleChanged += (_, _) => { if (!IsVisible) PanelQuickSettingsButton.IsChecked = false; };
     }
     private void ObserveRoot(PlacerViewModel? next)
@@ -74,7 +74,7 @@ public partial class IntentPalettePanel : UserControl
         var suppress = pointerPhase is TilePointerPhase.Dragging or TilePointerPhase.SuppressRelease;
         var cell = pendingDrag?.Cell; pendingDrag = null; pointerPhase = TilePointerPhase.Idle;
         if (cell?.IsMouseCaptured == true) cell.ReleaseMouseCapture();
-        e.Handled = true == suppress ? true : e.Handled;
+        if (suppress) e.Handled = true;
     }
     private void TilePointerLostCapture(object sender, MouseEventArgs e)
     {
