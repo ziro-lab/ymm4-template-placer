@@ -17,6 +17,8 @@ internal static partial class NativeProof
         var vm = ViewModel!; var view = View!;
         var field = typeof(PlacerViewModel).GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic)!;
         var original = (PlacerSettings)field.GetValue(vm)!;
+        var rootStore = (PlacerSettingsStore)typeof(PlacerViewModel).GetField("settingsStore", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!;
+        var originalDisk = File.Exists(PlacerSettingsStore.DefaultPath) ? File.ReadAllBytes(PlacerSettingsStore.DefaultPath) : null;
         var before = timeline.Items; var selected = timeline.SelectedItems; var legacy = vm.UseLegacyWorkspace;
         var character = new Character { Name = "R11 Voice" };
         var voice = new VoiceItem(character) { Frame = 120, Length = 60, Layer = 20 };
@@ -55,8 +57,8 @@ internal static partial class NativeProof
             Assert(draft.Entries.Count == 2 && draft.Entries.Single(x => x.Name == "Bundle").UseTemplateDuration,
                 "R11 one bulk action includes singleton and multi-item templates with bundle duration preserved");
             Assert(Signature(timeline) == signature && JsonSerializer.Serialize(fixture) == baseline &&
-                (!File.Exists(PlacerSettingsStore.DefaultPath) || File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(bytes)),
-                "R11 editing and bulk addition change only the settings draft, never Timeline, live settings or disk");
+                new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().IntentPalettes.Single().Entries.Count == 2,
+                "R11/R4 valid bulk edits persist automatically; the opening snapshot, Timeline and original templates are not mutated");
             var first = draft.Entries[0]; draft.SelectedEntry = first; session.MoveEntry(1);
             Assert(ReferenceEquals(draft.Entries[1], first), "R11 explicit user entry order is represented without automatic sorting");
             session.Duplicate();
@@ -94,17 +96,19 @@ internal static partial class NativeProof
             try
             {
                 view.Width = 360; view.Height = 400; await Idle(); SaveNamedView(view, "r11-settings-narrow.png");
-                Assert(panel.SaveButton.IsVisible && panel.SaveButton.ActualWidth > 0 && panel.ActualWidth <= 360,
-                    "R11 narrow native settings keeps the save action accessible outside the scrollable editor");
+                Assert(panel.RollbackButton.IsVisible && panel.RollbackButton.ActualWidth > 0 && panel.ActualWidth <= 360,
+                    "R11 narrow native settings keeps the session rollback action accessible outside the scrollable editor");
             }
             finally { view.Width = width; view.Height = height; await Idle(); }
-            await InvokeSelectionButton(panel.DiscardButton);
+            await InvokeSelectionButton(panel.RollbackButton);
             Assert(vm.IntentSettings!.Palettes.Count == 0 && !vm.IntentSettings.HasChanges && JsonSerializer.Serialize(fixture) == baseline && Signature(timeline) == signature,
-                "R11 discard restores live settings into a clean draft without persistent or Timeline writes");
+                "R11/R4 session rollback restores opening settings and a clean draft without Timeline writes");
             Log("R11=PASS");
         }
         finally
         {
+            if (originalDisk == null) File.Delete(PlacerSettingsStore.DefaultPath); else File.WriteAllBytes(PlacerSettingsStore.DefaultPath, originalDisk);
+            rootStore.Load();
             ItemSettings.Default.Templates.Remove(sourceA); ItemSettings.Default.Templates.Remove(sourceB);
             field.SetValue(vm, original); timeline.Items = before; timeline.SelectedItems = selected; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
             vm.SetLegacyWorkspace(legacy); vm.RefreshIntentWorkspace(); vm.ResetIntentSettings();

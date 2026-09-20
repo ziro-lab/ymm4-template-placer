@@ -55,27 +55,27 @@ internal static partial class NativeProof
             vm.ActivateIntentWorkspace(); vm.SetLegacyWorkspace(false); vm.Refresh(); vm.ResetIntentSettings();
             vm.OpenIntentSettingsCommand.Execute(null); await Idle();
             var panel = view.RelativeSettingsSurface;
-            Assert(panel.SaveButton.Command == vm.SaveIntentSettingsCommand && panel.NewPaletteButton.Command == vm.CreateIntentPaletteCommand,
+            Assert(panel.RollbackButton.Command == vm.RollbackIntentSettingsCommand && panel.NewPaletteButton.Command == vm.CreateIntentPaletteCommand,
                 "R14 deferred native settings controls hold the real commands, not null no-op bindings");
             var signature = Signature(timeline); var draft = vm.IntentSettings!;
             draft.SelectedPalette!.Name = "保存したセット";
-            await InvokeSelectionButton(panel.SaveButton);
+            await Idle(); // Valid edits persist through the real root auto-commit, without a Save click.
             var saved = (PlacerSettings)field.GetValue(vm)!;
             Assert(!vm.HasError && saved.IntentPalettes[0].Name == "保存したセット" && !vm.IntentSettings!.HasChanges &&
                 new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().IntentPalettes[0].Name == "保存したセット" && Signature(timeline) == signature,
-                "R14 actual native Save commits the validated settings atomically, resets the draft, and writes zero Timeline items");
+                "R14 automatic commit persists validated settings atomically, accepts the bound draft, and writes zero Timeline items");
             var savedBytes = File.ReadAllBytes(PlacerSettingsStore.DefaultPath);
             var savedJson = JsonSerializer.Serialize(saved);
             vm.IntentSettings!.SelectedPalette!.Name = "外部変更と競合する下書き";
             var external = savedBytes.Concat(Encoding.UTF8.GetBytes("\n")).ToArray(); File.WriteAllBytes(PlacerSettingsStore.DefaultPath, external);
-            await InvokeSelectionButton(panel.SaveButton);
+            await Idle(); // Valid edits persist through the real root auto-commit, without a Save click.
             Assert(vm.HasError && vm.IntentSettings!.HasChanges && vm.IntentSettings.SelectedPalette!.Name == "外部変更と競合する下書き" &&
                 File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(external) && JsonSerializer.Serialize(field.GetValue(vm)) == savedJson && Signature(timeline) == signature,
-                "R14 real Save rejects external settings modification without losing the editable draft or overwriting any external byte");
+                "R14 automatic commit rejects external settings modification without losing the editable draft or overwriting any external byte");
             File.WriteAllBytes(PlacerSettingsStore.DefaultPath, savedBytes); store.Load();
-            await InvokeSelectionButton(panel.DiscardButton);
-            Assert(!vm.IntentSettings!.HasChanges && vm.IntentSettings.SelectedPalette!.Name == "保存したセット" && Signature(timeline) == signature,
-                "R14 discard after a failed Save restores the committed configuration without Timeline writes");
+            await InvokeSelectionButton(panel.RollbackButton);
+            Assert(!vm.IntentSettings!.HasChanges && vm.IntentSettings.SelectedPalette!.Name == "セット1" && Signature(timeline) == signature,
+                "R14/R4 explicit session rollback restores the opening configuration after the external fixture conflict is resolved, without Timeline writes");
 
             view.PaletteTab.IsSelected = true; view.Width = 360; view.Height = 440; await Idle();
             var surface = view.RelativePaletteSurface; surface.UpdateLayout();
@@ -138,8 +138,8 @@ internal static partial class NativeProof
             ("Expression list and normal Palette share ordered live sources; detached same-name Character is not suppressed", "R10; NativeRelativeExpressionProof"),
             ("Actual host duplicate Character definitions fail closed; no object-identity/fuzzy substitution", "R10; native duplicate registry fixture"),
             ("Palette-backed bundle Excel export/import retains source identity and does not mutate Timeline", "R10; NativeRelativeExpressionProof"),
-            ("Settings isolated from execution; real bulk registration/reorder/duplicate/invalid text/discard/save", "R11/R14; NativeIntentSettingsProof/NativeRelativeFinalProof"),
-            ("Dense wrapping tiles at 360px; sticky settings save; no ordinary unrelated full-Library selection", "R7/R11/R12/R14"),
+            ("Settings isolated from execution; real bulk registration/reorder/duplicate/invalid text/automatic commit/session rollback", "R11/R14; NativeIntentSettingsProof/NativeRelativeFinalProof"),
+            ("Dense wrapping tiles at 360px; sticky settings rollback; no ordinary unrelated full-Library selection", "R7/R11/R12/R14"),
             ("Mental-model UI: context -> optional Set -> one tile; progressive Settings; natural-language summary; actionable empty states", "RELATIVE_UIUX; NativeRelativeUiUxProof"),
             ("Expression-list Template fidelity rebinds detached same-name Face clones to the target Voice Character while preserving cloned effect identity/value and source Template", "TEMPLATE_FIDELITY; NativeTemplateFidelityProof"),
             ("Weak bundle associations; selected non-Face member/Voice scope; whole-bundle manual Resync and native Undo", "R13; NativeRelativeExpressionProof"),

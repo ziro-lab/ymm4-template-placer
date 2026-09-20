@@ -63,7 +63,7 @@ internal static partial class NativeProof
             Assert(!panel.RelationAdvanced.IsExpanded && panel.RelationAdvanced.Header?.ToString() == "細かく調整" &&
                 !panel.FixedDurationPanel.IsVisible && !panel.BoundaryTolerancePanel.IsVisible,
                 "R2-C D5 numeric length/boundary/offset/gap/layer controls live under collapsed fine tuning");
-            await InvokeSelectionButton(panel.DiscardButton); session = vm.IntentSettings!;
+            await InvokeSelectionButton(panel.RollbackButton); session = vm.IntentSettings!;
             var genericButton = RelativeVisuals(panel.SettingsTargetButtons).OfType<Button>().Single(x => x.CommandParameter is IntentSettingsItemContext { IsGeneric: true });
             await InvokeSelectionButton(genericButton);
             Assert(session.IsGenericContext && session.SelectedPalette == null && session.SelectedGenericSet?.Id == style.Id &&
@@ -97,20 +97,20 @@ internal static partial class NativeProof
                 "R2-C Generic duplication keeps independent staged entries and shared exact source identity");
             session.RemoveSelected(); session.SelectedGenericSet = created; created.Name = "保存した汎用セット";
             Assert(JsonSerializer.Serialize(fixture) == before && Signature(timeline) == signature,
-                "R2-C C9 all targeted/Generic edits remain staged and Timeline/source/settings zero-write before Save");
-            await InvokeSelectionButton(panel.SaveButton); await Idle();
+                "R2-C C9 targeted/Generic edits preserve the immutable opening snapshot and Timeline while pending edits remain in the draft");
+            await Idle(); // Valid edits persist through the real root auto-commit, without a Save click.
             var saved = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
             Assert(!vm.HasError && saved.Palettes.Any(x => x.Id == created.Id && x.Name == "保存した汎用セット") &&
                 saved.IntentPalettes.Single(x => x.Id == first.Id).Intent == first.Intent && !vm.IntentSettings!.HasChanges,
-                "R2-C C4/C10 real Save atomically commits Generic and targeted Settings while preserving compatibility Intent");
+                "R2-C C4/C10 automatic persistence atomically commits Generic and targeted Settings while preserving compatibility Intent");
             var persistedBytes = File.ReadAllBytes(PlacerSettingsStore.DefaultPath);
             var reloaded = new IntentSettingsSession(saved, new[] { typeof(VoiceItem) }, [voice]);
             Assert(JsonSerializer.Serialize(reloaded.Build()) == JsonSerializer.Serialize(saved) &&
                 File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(persistedBytes),
                 "R2-C D9 saved/reloaded sentence state is reconstructed from finite models and does not rewrite on load");
             view.Width = 360; view.Height = 440; await Idle();
-            Assert(panel.SaveButton.IsVisible && panel.SaveButton.TranslatePoint(new Point(0, panel.SaveButton.ActualHeight), panel).Y <= panel.ActualHeight + 1,
-                "R2-C narrow Set-first Settings keeps the protected Save action reachable");
+            Assert(panel.RollbackButton.IsVisible && panel.RollbackButton.TranslatePoint(new Point(0, panel.RollbackButton.ActualHeight), panel).Y <= panel.ActualHeight + 1,
+                "R2-C narrow Set-first Settings keeps the protected rollback action reachable");
             SaveNamedView(view, "v042-round2-settings-360.png");
             File.WriteAllText(Path.Combine(output, "hands-on-round2-settings.json"), JsonSerializer.Serialize(new {
                 schema = "YMM4-Template-Placer-Round2-Settings/1", result = "PASS", host = "YMM4 4.55.1.1 Lite", source = "finite-model", generic = "Style Palette / QuickDrop" }));

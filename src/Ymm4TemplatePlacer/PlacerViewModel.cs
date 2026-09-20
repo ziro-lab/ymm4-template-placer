@@ -189,6 +189,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public void LoadState(ToolState stateData) { }
     public void Dispose()
     {
+        DisposeAutomaticSettingsSession();
         disposedTransientWork ??= CaptureTransientWork(); PropertyChanged -= ExpressionModeChanged;
         CancelExpressionNavigation(true); DisposeVoiceFreshness();
         CloseExpressionTrialSession(); expressionTrialSession.Dispose();

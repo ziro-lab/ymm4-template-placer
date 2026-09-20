@@ -209,8 +209,8 @@
    </StackPanel>
   </ScrollViewer>
   <StackPanel Grid.Row="2" Margin="0,6,0,0">
-   <TextBlock Text="{Binding IntentSettings.ChangeNotice}"/>
-   <WrapPanel><Button x:Name="SaveButton" Content="変更を保存" Command="{Binding SaveIntentSettingsCommand}"/><Button x:Name="DiscardButton" Content="変更を破棄" Command="{Binding DiscardIntentSettingsCommand}"/></WrapPanel>
+   <TextBlock x:Name="SettingsCommitNoticeText" Text="{Binding SettingsCommitNotice}" TextWrapping="Wrap"/>
+   <Button x:Name="RollbackButton" Content="今回の変更を戻す" Command="{Binding RollbackIntentSettingsCommand}" HorizontalAlignment="Left" ToolTip="設定を開いてから行った変更だけを戻します。タイムラインは変更しません。"/>
   </StackPanel>
  </Grid>
 </UserControl>

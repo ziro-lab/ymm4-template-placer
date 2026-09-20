@@ -19,8 +19,11 @@ public sealed partial class IntentSettingsSession
 public sealed partial class PlacerViewModel
 {
     private SettingsEditTransaction? settingsTransaction;
-    private void ResetSettingsTransaction() => settingsTransaction = settingsAvailable
-        ? new SettingsEditTransaction(settingsStore, settings) : null;
+    private void ResetSettingsTransaction()
+    {
+        ResetAutomaticSettingsSession();
+        settingsTransaction = settingsAvailable ? new SettingsEditTransaction(settingsStore, settings) : null;
+    }
     private SettingsEditTransaction RequireSettingsTransaction() => settingsTransaction
         ?? throw new InvalidOperationException("設定の編集を開始できません。設定を確認して開き直してください。");
     internal bool HasSessionSettingsChanges => IntentSettings?.HasChanges == true || settingsTransaction?.HasCommittedChanges == true;

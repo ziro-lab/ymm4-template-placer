@@ -65,14 +65,14 @@ internal static partial class NativeProof
             Assert(built.IntentPalettes[0].Entries[0].DisplayAlias == "にっこり" && built.IntentPalettes[0].Entries[0].Color == IntentTileColor.Rose &&
                 built.Library.Select(x => x.Source).SequenceEqual(locators) && sources[0].Name == "小夜/表情/うれしい" && Signature(timeline) == signature,
                 "H2 alias and finite color are draft-only entry metadata; live Template names and locators do not change");
-            await InvokeSelectionButton(panel.DiscardButton); session = vm.IntentSettings!;
+            await InvokeSelectionButton(panel.RollbackButton); session = vm.IntentSettings!;
             Assert(session.SelectedPalette!.Entries[0].DisplayAlias == "" && session.SelectedPalette!.Entries[0].Color == IntentTileColor.Neutral && !session.HasChanges,
-                "H2 Discard restores neutral/no-alias metadata without writing the Timeline");
+                "H2 session rollback restores opening neutral/no-alias metadata without writing the Timeline");
             session.SelectedPalette!.Entries[0].DisplayAlias = "にっこり"; session.SelectedPalette!.Entries[0].Color = IntentTileColor.Rose;
-            await InvokeSelectionButton(panel.SaveButton); await Idle();
+            await Idle(); // Valid edits persist through the real root auto-commit, without a Save click.
             var saved = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
             Assert(!vm.HasError && saved.IntentPalettes[0].Entries[0].DisplayAlias == "にっこり" && saved.IntentPalettes[0].Entries[0].Color == IntentTileColor.Rose && Signature(timeline) == signature,
-                "H2 actual native Save roundtrips alias/color through the existing protected store with Timeline zero-write");
+                "H2 native automatic commit roundtrips alias/color through the existing protected store with Timeline zero-write");
             view.PaletteTab.IsSelected = true; view.Width = 360; view.Height = 440; await Idle();
             var surface = view.RelativePaletteSurface; surface.UpdateLayout();
             Assert(view.PaletteTab.Header?.ToString() == "配置" && vm.IntentTiles[0].Label == "にっこり" && vm.IntentTiles[1].Label == "うれしい" &&
