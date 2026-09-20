@@ -17,22 +17,26 @@ Current architecture authority:
 - `VALIDATION_STRATEGY.md`
 - `LEGACY_COMPATIBILITY_MAP.md`
 
-## Active priority — UI Micro Polish
+## Active priority — UI Micro Polish corrective pass
 
-Preparation is frozen in:
+Owner Hands-on feedback is frozen in:
 
-- `UI_MICRO_POLISH_DESIGN.md`
-- `UI_MICRO_POLISH_ACCEPTANCE.md`
-- `UI_MICRO_POLISH_WORKPLAN.md`
-- `UI_MICRO_POLISH_IMPLEMENTATION_PREP.md`
+- `UI_MICRO_POLISH_HANDS_ON_FEEDBACK.md`
+- `UI_MICRO_POLISH_CORRECTIVE_DESIGN.md`
+- `UI_MICRO_POLISH_CORRECTIVE_ACCEPTANCE.md`
+- `UI_MICRO_POLISH_CORRECTIVE_WORKPLAN.md`
+- `UI_MICRO_POLISH_CORRECTIVE_STATUS.md`
 
-Required UI direction:
+Corrective implementation currently includes:
 
-1. always-visible Generic layer controls;
-2. wheel adjustment on the Generic numeric layer field;
-3. bottom-right placement-panel quick settings instead of duplicate Settings-tab navigation;
-4. direct common Voice row-height drag;
-5. optional plain-digit Generic layer entry only if it reuses the existing bounded input route safely.
+1. direct Generic digit interception removed;
+2. wheel success logging quieted;
+3. any-Voice-row bottom-boundary common-height drag + numeric height entry;
+4. Fixed square cells growing to fill wide viewport without changing slot mapping;
+5. quick settings closing when the owner YMM4 Window deactivates;
+6. small public-readiness cleanup only.
+
+The first candidate Release #262 remains historical green evidence. Corrective Native/Release validation is pending because recent Actions jobs are failing before executing any step.
 
 ## Next
 
