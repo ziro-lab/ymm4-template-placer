@@ -93,10 +93,12 @@ internal static partial class NativeProof
             var all = shapes.All(x => ReferenceEquals(x.Command, vm.ShapeCurrentIntentSetCommand));
             foreach (var button in shapes)
             {
-                ((IInvokeProvider)new ButtonAutomationPeer(button).GetPattern(PatternInterface.Invoke)).Invoke(); await Idle();
+                var point = button.PointToScreen(new Point(button.ActualWidth / 2, button.ActualHeight / 2));
+                await NativeRound2Click(point); await Idle();
                 var expected = (IntentTileShape)button.CommandParameter;
                 all &= scope.Current.Palettes.Single(x => x.Id == left.Id).LibraryEntryIds.All(id =>
                     scope.Current.Palettes.Single(x => x.Id == left.Id).AppearanceFor(id).Shape == expected);
+                if (!palette.PanelQuickSettingsPopup.IsOpen) break;
             }
             Log($"UI U2 B8 trace: buttons={shapes.Length}; all={all}; popup={palette.PanelQuickSettingsPopup.IsOpen}; currentSet={vm.SelectedIntentSet?.Id}; expectedSet={left.Id}; shapes={string.Join(",", scope.Current.Palettes.Single(x => x.Id == left.Id).LibraryEntryIds.Select(id => scope.Current.Palettes.Single(x => x.Id == left.Id).AppearanceFor(id).Shape))}");
             Round4Assert(all && palette.PanelQuickSettingsPopup.IsOpen &&
