@@ -50,12 +50,15 @@ internal static partial class NativeProof
         {
             Window.GetWindow(view)!.Activate();
             var box = palette.GenericLayerSurface.GenericTargetBox;
+            var statusBeforeWheel = vm.Status;
             await NativeRound2Click(box.PointToScreen(new Point(box.ActualWidth / 2, box.ActualHeight / 2))); await Idle();
             Round2Input.mouse_event(0x0800, 0, 0, 120, UIntPtr.Zero); await Task.Delay(100); await Idle();
             var incremented = scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred == 9;
             Round2Input.mouse_event(0x0800, 0, 0, unchecked((uint)-120), UIntPtr.Zero); await Task.Delay(100); await Idle();
             Round4Assert(incremented && scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred == 8 && Signature(timeline) == before,
                 "B4", "real wheel over inline layer number applies +1/-1 through the protected target path without Timeline mutation");
+            Assert(vm.Status == statusBeforeWheel,
+                "UI corrective C1 routine wheel success does not replace bottom Status with per-notch confirmation");
             var staleDraft = vm.GenericLayerTarget!;
             vm.StepGenericLayer(staleDraft, int.MaxValue); await Idle();
             Assert(scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred == 12,
@@ -105,6 +108,20 @@ internal static partial class NativeProof
                 scope.Current.Palettes.Single(x => x.Id == left.Id).LibraryEntryIds.All(id =>
                     scope.Current.Palettes.Single(x => x.Id == left.Id).AppearanceFor(id).Shape == IntentTileShape.Circle),
                 "B8", "quick settings Set-wide shape writes current membership shapes through the protected store and stays open");
+            var ownerWindow = Window.GetWindow(view)!;
+            var popupProbe = new Window { Width = 120, Height = 80, ShowInTaskbar = false, WindowStyle = WindowStyle.ToolWindow };
+            var popupClosedOnDeactivate = false;
+            try
+            {
+                popupProbe.Show(); popupProbe.Activate(); await Task.Delay(80); await Idle();
+                popupClosedOnDeactivate = !palette.PanelQuickSettingsPopup.IsOpen && palette.PanelQuickSettingsButton.IsChecked != true;
+            }
+            finally
+            {
+                popupProbe.Close(); ownerWindow.Activate(); await Idle();
+            }
+            Assert(popupClosedOnDeactivate && !palette.PanelQuickSettingsPopup.IsOpen,
+                "UI corrective C4 owner Window deactivation closes quick settings and activation does not reopen it");
             palette.PanelQuickSettingsButton.IsChecked = false; await Idle();
             vm.ChangeIntentTileAppearance(vm.IntentTiles[0], x => x with { Shape = IntentTileShape.Square }); await Idle();
             Round4Assert(vm.IntentTiles[0].Shape == IntentTileShape.Square && vm.IntentTiles[1].Shape == IntentTileShape.Circle,
@@ -115,6 +132,17 @@ internal static partial class NativeProof
                 ((Expander)settingsSurface.PresentationSettingsSurface.Content).Header?.ToString() == "全体の表示・操作",
                 "B10", "full Settings still keeps global presentation outside the selected-Set editor");
             view.PaletteTab.IsSelected = true; await Idle();
+
+            view.Width = 720; await Idle(); palette.UpdateLayout();
+            var tilePanel = RelativeVisuals(palette.IntentTileItems).OfType<PaletteTilePanel>().Single();
+            var wideCell = (FrameworkElement)VisualTreeHelper.GetChild(tilePanel, 0);
+            var wideResponsive = tilePanel.ColumnCount == 4 && tilePanel.CellSize > 104 &&
+                Math.Abs(wideCell.ActualWidth - tilePanel.CellSize) < 1 &&
+                Math.Abs(wideCell.ActualHeight - tilePanel.CellSize) < 1;
+            view.Width = 360; await Idle(); palette.UpdateLayout();
+            tilePanel = RelativeVisuals(palette.IntentTileItems).OfType<PaletteTilePanel>().Single();
+            Assert(wideResponsive && tilePanel.ColumnCount == 4 && Math.Abs(tilePanel.CellSize - 104) < 1,
+                "UI corrective C3 Fixed keeps four slots, grows square cells on wide viewport and retains 104-DIP minimum when narrow");
 
             var presentation = JsonSerializer.Serialize(scope.Current.Presentation);
             vm.SelectedIntentSet = vm.IntentSets.Single(x => x.Id == right.Id); await Idle();
@@ -146,30 +174,58 @@ internal static partial class NativeProof
                 try { (loaded.Presentation with { ExpressionRowHeight = height }).Validate(); return false; }
                 catch (InvalidDataException) { return true; }
             }
-            Round4Assert(Rejected(31) && Rejected(97) && vm.ExpressionRowHeights.All(x => x is >= 32 and <= 96),
-                "B17", "the store rejects row heights outside 32-96 and UI options stay within bounds");
+            Round4Assert(Rejected(31) && Rejected(97),
+                "B17", "the store rejects common row heights outside 32-96");
             view.ExpressionTab.IsSelected = true; await Idle();
             var rows = vm.Rows.ToArray(); view.VoiceGrid.ScrollIntoView(rows[0]); view.VoiceGrid.UpdateLayout(); await Idle();
             var container = (DataGridRow)view.VoiceGrid.ItemContainerGenerator.ContainerFromItem(rows[0]);
             var serif = RelativeVisuals(container).OfType<TextBlock>().First(x => x.Text == longSerif);
             var fontSize = serif.FontSize;
             var beforeDragBytes = File.ReadAllBytes(PlacerSettingsStore.DefaultPath);
-            view.ExpressionRowHeightGrip.RaiseEvent(new System.Windows.Controls.Primitives.DragStartedEventArgs(0, 0)
-                { RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragStartedEvent });
-            view.ExpressionRowHeightGrip.RaiseEvent(new System.Windows.Controls.Primitives.DragDeltaEventArgs(0, 80)
-                { RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragDeltaEvent });
-            await Idle(); view.VoiceGrid.UpdateLayout();
-            var previewOnly = view.VoiceGrid.RowHeight == 96 && File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(beforeDragBytes) &&
-                new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().Presentation.ExpressionRowHeight == 36;
-            view.ExpressionRowHeightGrip.RaiseEvent(new System.Windows.Controls.Primitives.DragCompletedEventArgs(0, 80, false)
-                { RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragCompletedEvent });
-            await Idle(); view.VoiceGrid.UpdateLayout();
-            Round4Assert(previewOnly && view.VoiceGrid.RowHeight == 96 && RelativeVisuals(view.VoiceGrid).OfType<DataGridRow>().All(x => Math.Abs(x.ActualHeight - 96) < 1) &&
-                vm.Rows.SequenceEqual(rows) && new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().Presentation.ExpressionRowHeight == 96,
-                "B18", "row-height drag previews without persistence and saves one durable common height on release without rebuilding Rows");
+            var rowPoint = container.TranslatePoint(new Point(20, container.ActualHeight - 1), view.VoiceGrid);
+            var startScreen = view.VoiceGrid.PointToScreen(rowPoint);
+            var targetScreen = view.VoiceGrid.PointToScreen(new Point(rowPoint.X, rowPoint.Y + 40));
+            Assert(Round2Input.SetCursorPos((int)Math.Round(startScreen.X), (int)Math.Round(startScreen.Y)),
+                "UI corrective C2 OS cursor moved to Voice row resize boundary");
+            var held = false;
+            double previewHeight;
+            try
+            {
+                Round2Input.mouse_event(0x0002, 0, 0, 0, UIntPtr.Zero); held = true; await Task.Delay(60);
+                Assert(Round2Input.SetCursorPos((int)Math.Round(targetScreen.X), (int)Math.Round(targetScreen.Y)),
+                    "UI corrective C2 OS cursor dragged the captured Voice row boundary");
+                await Task.Delay(100); await Idle(); view.VoiceGrid.UpdateLayout();
+                previewHeight = view.VoiceGrid.RowHeight;
+                Assert(previewHeight > 36 && previewHeight <= 96 &&
+                    File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(beforeDragBytes) &&
+                    new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().Presentation.ExpressionRowHeight == 36,
+                    "UI corrective C2 row-boundary DragDelta previews one common height with zero settings writes");
+            }
+            finally
+            {
+                if (held) Round2Input.mouse_event(0x0004, 0, 0, 0, UIntPtr.Zero);
+            }
+            await Task.Delay(100); await Idle(); view.VoiceGrid.UpdateLayout();
+            var durableAfterDrag = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().Presentation.ExpressionRowHeight;
+            var dragAccepted = durableAfterDrag == (int)Math.Round(previewHeight) &&
+                RelativeVisuals(view.VoiceGrid).OfType<DataGridRow>().All(x => Math.Abs(x.ActualHeight - durableAfterDrag) < 1) &&
+                vm.Rows.SequenceEqual(rows);
+
+            view.ExpressionRowHeightBox.Text = "80"; Keyboard.Focus(view.ExpressionRowHeightBox); await Round3PressKey(Key.Enter); await Idle(); view.VoiceGrid.UpdateLayout();
+            var numericAccepted = view.VoiceGrid.RowHeight == 80 &&
+                new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().Presentation.ExpressionRowHeight == 80;
+            view.ExpressionRowHeightBox.Text = "70"; Keyboard.Focus(view.ExpressionRowHeightBox); await Round3PressKey(Key.Escape); await Idle();
+            var escapeRestored = view.ExpressionRowHeightBox.Text == "80";
+            view.ExpressionRowHeightBox.Text = "97"; Keyboard.Focus(view.ExpressionRowHeightBox); await Round3PressKey(Key.Enter); await Idle();
+            var invalidRejected = view.ExpressionRowHeightBox.Text == "80" &&
+                new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().Presentation.ExpressionRowHeight == 80;
+            view.ExpressionRowHeightBox.Text = "80"; Keyboard.Focus(view.ExpressionRowHeightBox); await Round3PressKey(Key.Enter); await Idle();
+
+            Round4Assert(dragAccepted && numericAccepted && escapeRestored && invalidRejected && Signature(timeline) == before,
+                "B18", "any Voice row boundary previews/resizes the one common height; numeric Enter applies, Esc restores and invalid input never persists");
             Round4Assert(serif.FontSize == fontSize, "B19", "row-height adjustment never shrinks the Serif font");
             Round4Assert(serif.TextWrapping == TextWrapping.Wrap && serif.TextTrimming == TextTrimming.CharacterEllipsis &&
-                serif.ActualHeight > fontSize * 2 && view.VoiceGrid.RowHeight == 96 && Signature(timeline) == before,
+                serif.ActualHeight > fontSize * 2 && view.VoiceGrid.RowHeight == 80 && Signature(timeline) == before,
                 "B20", "larger bounded rows show multiple Serif lines without per-row auto-height or Timeline edits");
             SaveNamedView(view, "v042-round4-b-expression-height-360.png");
             view.PaletteTab.IsSelected = true; await Idle();
