@@ -16,11 +16,13 @@ YMM4の登録済みテンプレートを、選んだアイテムとの位置・�
 - main Release run #227: `35508468265`
 - full Native regression / exact distribution DLL smoke / verified package: PASS
 
-現在の最優先は **UI Micro Polish**。汎用レイヤー操作、配置パネル簡易設定、Voice行高の直接調整など、既存機能への操作摩擦を減らす作業です。
+現在の **UI Micro Polish** はDraft PR #20で実装・Native Checkpointまで完了し、実機Hands-on待ちです。汎用レイヤー常時操作、配置パネル簡易設定、Voice行高ドラッグ、汎用レイヤーの数字直接入力を追加しています。
 
-Tachie Preset Draft PR #19はUI pass完了まで保留しています。
+Tachie Preset Draft PR #19はUI passのHands-on/merge完了まで保留しています。
 
 現在仕様の正本は `docs/CURRENT_ARCHITECTURE.md`、用語は `docs/GLOSSARY.md`、未実装案は `docs/BACKLOG.md` を参照してください。
+
+UI Micro Polishの自動検証は source `9a09d53f8d1b827e44eb3c9779e7312994e4bbe5` / Checkpoint run #255 `35520073021` で、1,437 assertions PASS / 0 FAIL、Round4 A/B/C PASS、Distribution/Proof build 0 warnings / 0 errorsです。
 
 ## 主な機能
 
