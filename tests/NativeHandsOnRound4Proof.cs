@@ -20,7 +20,9 @@ internal static partial class NativeProof
     private static void Round4Phase(string phase)
     {
         if (phase == "A") ViewModel?.RemoveRound4TrialDiagnostics();
-        var checks = round4Checks.Where(x => x.Key.StartsWith(phase, StringComparison.Ordinal))
+        // A subcheckpoint such as CT must never leak into the later full C manifest.
+        var checks = round4Checks.Where(x => x.Key.Length > phase.Length && x.Key.StartsWith(phase, StringComparison.Ordinal) &&
+                x.Key[phase.Length..].All(c => c is >= '0' and <= '9'))
             .Select(x => new { id = x.Key, result = "PASS", evidence = x.Value }).ToArray();
         File.WriteAllText(Path.Combine(output, "hands-on-round4-" + phase.ToLowerInvariant() + ".json"), JsonSerializer.Serialize(new
         {
