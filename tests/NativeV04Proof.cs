@@ -29,6 +29,7 @@ internal static partial class NativeProof
             await VerifyIntentSettings(timeline, undo);
             await VerifyRelativeExpressions(timeline, undo);
             await VerifyTemplateFidelity(timeline, undo);
+            await VerifyHandsOnRound3Layers(timeline, undo);
             await VerifyHandsOnRound3Navigation(timeline, undo);
             await VerifyHandsOnRound4Navigation(timeline, undo);
             await VerifyHandsOnRound4Presentation(timeline, undo);
