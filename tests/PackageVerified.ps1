@@ -57,8 +57,8 @@ $round3Payload=@('hands-on-round3.json','hands-on-round3-appearance.json','hands
 foreach($name in $round3Payload){Copy-Item (Join-Path $OutputDir $name) $package}
 $usage=Get-Content -Raw (Join-Path $package 'README.md')
 if ($usage -notmatch '^# YMM4 Template Placer v0\.4\.2') { throw 'Obsolete package usage documentation' }
-foreach($section in @('Hands-on Round 3','## 固定列と位置ショートカット','## 汎用配置のレイヤーをすばやく指定する','## 表情をまとめて：行クリックと即時反映','## Excelと未配置作業の保護','画面外の時だけ追従','一覧を読み直す')) {
- if (-not $usage.Contains($section,[StringComparison]::Ordinal)) {throw "Missing actual Round3 usage section: $section"}
+foreach($section in @('Hands-on Round 4 A/B/C Candidate','## 固定列と位置ショートカット','## 汎用配置のレイヤーをすばやく指定する','## 表情をまとめて：行クリックと即時反映','## Excelと未配置作業の保護','全体の表示・操作','今回の変更を戻す','レイヤー N ▾','一覧を読み直す')) {
+ if (-not $usage.Contains($section,[StringComparison]::Ordinal)) {throw "Missing actual Round4 A/B/C usage section: $section"}
 }
 if ($usage.Contains('主画面は「編集」',[StringComparison]::Ordinal) -or $usage.Contains('「以前の設定・互換操作」から',[StringComparison]::Ordinal)) {throw 'Obsolete normal-workspace instructions remain in the package'}
 Remove-Item (Join-Path $package '*.pdb') -ErrorAction SilentlyContinue
