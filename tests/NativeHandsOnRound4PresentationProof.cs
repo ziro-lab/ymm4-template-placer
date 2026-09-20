@@ -97,6 +97,7 @@ internal static partial class NativeProof
                 scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred == 9 && Signature(timeline) == before;
             palette.GenericLayerSurface.GenericTargetBox.Text = "12"; await Idle();
             Keyboard.Focus(palette.GenericLayerSurface.GenericTargetBox); await Round3PressKey(Key.Enter); await Idle();
+            Log($"UI U4 trace: attached={view.ShortcutRouter.IsAttached}; shortcutDigit={shortcutDigit}; shortcutAdded={shortcutDigitAdded.Length}; shortcutLength={(shortcutDigitAdded.SingleOrDefault()?.Length.ToString() ?? "-")}; shortcutWins={shortcutWins}; directDigit={directDigit}; directDraft={directDraft}; focus={Keyboard.FocusedElement?.GetType().Name ?? "-"}; target={vm.GenericLayerTarget?.Target ?? "-"}; dirty={vm.GenericLayerTarget?.HasChanges}; preferred={scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred}; signatureRestored={Signature(timeline) == before}");
             Assert(shortcutWins && directDraft && scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred == 12 &&
                 vm.GenericLayerTarget is { Target: "12", HasChanges: false },
                 "UI U4 digit shortcut wins when reserved; otherwise a digit starts focused Generic layer entry and Enter uses the existing protected apply path");
