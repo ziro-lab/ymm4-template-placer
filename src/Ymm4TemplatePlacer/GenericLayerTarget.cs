@@ -81,7 +81,9 @@ public sealed partial class PlacerViewModel
         if (GenericLayerTarget != null) GenericLayerTarget.Edited += GenericLayerTargetEdited;
         OnPropertyChanged(nameof(GenericLayerTarget)); UpdateGenericLayerCommands();
     }
-    public void ApplyGenericLayerTarget()
+    public void ApplyGenericLayerTarget() => ApplyGenericLayerTarget(true);
+
+    internal void ApplyGenericLayerTarget(bool announceSuccess)
     {
         var draft = GenericLayerTarget ?? throw new InvalidOperationException("汎用Setを選んでください。");
         var set = selectedIntentSet;
@@ -98,6 +100,17 @@ public sealed partial class PlacerViewModel
         CloseExpressionTrialSession();
         settingsStore.Save(next); settings = next;
         RefreshV04(); RefreshIntentWorkspace(); ResetIntentSettings();
-        HasError = false; Status = $"汎用Setの指定レイヤーを{layer.Preferred}に保存しました。";
+        if (announceSuccess)
+        {
+            HasError = false;
+            Status = $"汎用Setの指定レイヤーを{layer.Preferred}に保存しました。";
+        }
+        else if (HasError)
+        {
+            // A corrected wheel step may clear a preceding wheel/apply error, but
+            // routine success never replaces the bottom status with per-step noise.
+            HasError = false;
+            Status = "";
+        }
     }
 }
