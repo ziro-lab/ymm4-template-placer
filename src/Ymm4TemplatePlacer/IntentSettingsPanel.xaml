@@ -19,7 +19,7 @@
      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
      <ItemsControl.ItemTemplate><DataTemplate>
       <Button Content="{Binding Label}" MaxWidth="320" Command="{Binding DataContext.SelectSettingsContextCommand,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" CommandParameter="{Binding}">
-       <Button.Style><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Style.Triggers>
+       <Button.Style><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Padding" Value="7,2"/><Setter Property="Margin" Value="0,0,5,4"/><Setter Property="MinHeight" Value="25"/><Style.Triggers>
         <DataTrigger Value="True"><DataTrigger.Binding><MultiBinding Converter="{StaticResource ContextMatch}"><Binding/><Binding Path="DataContext.IntentSettings.SelectedItemContext" RelativeSource="{RelativeSource AncestorType=local:IntentSettingsPanel}"/></MultiBinding></DataTrigger.Binding>
          <Setter Property="FontWeight" Value="Bold"/><Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/><Setter Property="BorderThickness" Value="2"/>
         </DataTrigger>
