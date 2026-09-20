@@ -191,16 +191,21 @@ This does **not** authorize:
 
 ## Current active feature
 
-UI Micro Polish is implemented and native-green on Draft PR #20; real-user Hands-on acceptance is the remaining gate.
+UI Micro Polish corrective implementation is present on Draft PR #20 after owner Hands-on feedback F1-F7.
 
-It removes high-frequency interaction friction without changing placement semantics, settings schema, or the PlacementPlan/native Undo architecture:
+Current corrective direction:
 
-- always-visible Generic layer controls with field-local wheel;
-- placement-panel quick settings;
-- direct common Voice row-height drag;
-- direct Generic digit entry through the existing bounded input router.
+- keep always-visible Generic layer controls and field-local wheel;
+- remove application-level direct Generic digit interception;
+- keep wheel success quiet while preserving explicit/error feedback;
+- keep placement-panel quick settings, but close them when the owning YMM4 Window deactivates;
+- change common Voice row-height control to any-row bottom-boundary drag plus numeric entry;
+- make Fixed columns preserve slot count while square tiles grow to fill wider viewports;
+- limit public-readiness work to small cleanup, not legacy architecture deletion.
 
-Experimental Tachie Preset support remains prepared separately on Draft PR #19 and resumes after the UI pass is accepted and merged.
+The first candidate was Native/Release green, but the corrective HEAD is **not yet Native-accepted** because current GitHub Actions jobs are failing before any workflow step starts. See `docs/UI_MICRO_POLISH_CORRECTIVE_STATUS.md`.
+
+Experimental Tachie Preset support remains prepared separately on Draft PR #19 and resumes only after the corrected UI pass is accepted and merged.
 
 ## Validation
 
@@ -219,7 +224,7 @@ For current work, prefer documents in this order:
 1. this file;
 2. `docs/GLOSSARY.md`;
 3. `docs/VALIDATION_STRATEGY.md`;
-4. feature-specific active handoff/spec (currently `UI_MICRO_POLISH_DESIGN.md` / `UI_MICRO_POLISH_WORKPLAN.md`);
+4. feature-specific active handoff/spec (currently `UI_MICRO_POLISH_CORRECTIVE_DESIGN.md` / `UI_MICRO_POLISH_CORRECTIVE_WORKPLAN.md`);
 5. `docs/BACKLOG.md`;
 6. historical Round/W documents as evidence.
 
