@@ -4,6 +4,12 @@ using System.Text.Json;
 namespace Ymm4TemplatePlacer;
 internal static partial class NativeProof
 {
+    internal static void TraceRound4Activation(int row, bool content, bool trial, bool sameVoice,
+        int frame, int selectedCount, bool selectedVoice, bool error, string status)
+    {
+        if (stage.StartsWith("R4-A", StringComparison.Ordinal))
+            Log($"R4-A activate row={row} content={content} trial={trial} sameVoice={sameVoice} frame={frame} selected={selectedCount}/{selectedVoice} error={error} status={status}");
+    }
     private static readonly Dictionary<string, string> round4Checks = new(StringComparer.Ordinal);
     private static void Round4Assert(bool condition, string id, string evidence)
     {

@@ -27,6 +27,11 @@ public sealed partial class PlacerViewModel
             throw new InvalidOperationException("対象音声が現在のシーンにありません。メンテナンスから一覧を読み直してください。");
         var voice = row.Target.Voice;
         var target = voice.Frame;
+#if YMM4_PROOF
+        NativeProof.TraceRound4Activation(row.No, refreshCurrentContent, expressionTrialSession.IsOpen,
+            ReferenceEquals(expressionTrialSession.Voice, voice), current.CurrentFrame,
+            current.SelectedItems.Count, ReferenceEquals(current.SelectedItem, voice), HasError, Status);
+#endif
         if (refreshCurrentContent)
         {
             if (current.CurrentFrame != target || current.SelectedItems.Count != 1 ||
