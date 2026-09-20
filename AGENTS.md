@@ -2,31 +2,32 @@
 
 ## Current revision and Git authority
 
-Main contains the accepted Round 3 baseline, promoted by owner-approved PR #17 on 2026-09-20.
+Main contains the accepted Round 4 A/B/C candidate merged by PR #16.
 
-Active PR #16 is now the **completed Round 4 A/B/C candidate**, not a preset implementation branch.
+Accepted baseline:
 
-Completed scope:
+- merge commit `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`
+- main Release run #227 `35508468265`: full native regression, exact distribution DLL smoke and verified package succeeded.
 
-- Voice/dropdown navigation and nested Settings wheel behavior;
-- compact Generic placement UI and global presentation;
-- common Voice row height;
-- protected automatic Settings persistence plus `今回の変更を戻す`;
-- tiered Focused / Checkpoint / Release validation.
+Current priority is **UI Micro Polish** on branch `work/ui-micro-polish-prep`.
 
-Experimental expression presets were deliberately split before implementation. Their frozen design and Lab evidence are in `docs/EXPERIMENTAL_PRESET_HANDOFF.md`. Do not add preset product code to PR #16.
+Tachie Preset Draft PR #19 remains paused until the UI pass is accepted and merged.
 
 Read in this order:
 
-1. `docs/DEVELOPMENT_WORKFLOW.md`
-2. `docs/VALIDATION_STRATEGY.md`
-3. `docs/V0.4.2_HANDS_ON_ROUND4_DESIGN.md`
-4. `docs/V0.4.2_HANDS_ON_ROUND4_ACCEPTANCE.md`
-5. `docs/V0.4.2_HANDS_ON_ROUND4_IMPLEMENTATION_STATUS.md`
+1. `docs/CURRENT_ARCHITECTURE.md`
+2. `docs/GLOSSARY.md`
+3. `docs/UI_MICRO_POLISH_DESIGN.md`
+4. `docs/UI_MICRO_POLISH_ACCEPTANCE.md`
+5. `docs/UI_MICRO_POLISH_WORKPLAN.md`
+6. `docs/UI_MICRO_POLISH_IMPLEMENTATION_PREP.md`
+7. `docs/VALIDATION_STRATEGY.md`
+8. `docs/BACKLOG.md` only for scope context
+9. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
 
-PR #16 remains Draft until owner hands-on acceptance. After acceptance, merge it to main and create a fresh preset feature branch/PR from that accepted main.
+This pass is UI-only. Do not add Tachie Preset or Placement Recipe product code.
 
-Do not reimplement completed A/B/C work. Do not reopen historical stacked PRs. Preserve their branches/evidence.
+Do not reimplement completed Round 4 A/B/C work. Preserve its Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety and validation tiers.
 
 ## Product boundary
 
