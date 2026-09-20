@@ -71,8 +71,8 @@ Run heavy native/build/package work in the existing Windows Actions lane, not th
 
 - Work through a main-based branch/PR. Preserve accepted baseline identity and history. Never force-push or reroute a write rejected by a safety check; report the exact failure and last successful checkpoint.
 - Use small auditable changes. Documentation-only commits must not launch native builds; source/project/XAML/tests/fixtures/workflow changes require the Windows lane before promotion.
-- Retain P1-P9, W3-W12, WUX1-WUX13, R1-R14, TEMPLATE_FIDELITY, RELATIVE_UIUX, HANDS_ON_UX_POLISH, HANDS_ON_ROUND2, HANDS_ON_ROUND3 and the current acceptance manifests. New stages are additive; keep independent invalid-evidence fixtures.
-- Release/Proof builds require zero compiler warnings/errors and the exact distribution DLL must pass native smoke. Package root stays `Ymm4TemplatePlacer/`; record source/checkout/run/attempt/provenance and final hashes.
+- Retain P1-P9, W3-W12, WUX1-WUX13, R1-R14, TEMPLATE_FIDELITY, RELATIVE_UIUX, HANDS_ON_UX_POLISH, HANDS_ON_ROUND2, HANDS_ON_ROUND3 and current acceptance assets. Follow `docs/VALIDATION_STRATEGY.md`: Focused runs a compact stable core for ordinary Draft edits; Checkpoint/Release retain the complete historical semantic ladder and evidence-negative fixtures.
+- Release/Proof builds require zero compiler warnings/errors. Exact distribution-DLL smoke, final package/provenance and stable `Ymm4TemplatePlacer/` root are Release gates rather than a tax on every Focused edit. Record source/checkout/run/attempt/provenance and final hashes at Release.
 - Label DONE/PARTIAL/FUTURE/BLOCKED accurately. Native PASS is not human acceptance. Update usage documentation only after the new implemented UI is native-green, not speculatively during partial work.
 
 External research is evidence, not permission to copy assets/code without checking licenses. Prefer the smallest change against proved YMM4 APIs.
