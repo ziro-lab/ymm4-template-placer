@@ -10,6 +10,29 @@ public sealed partial class PlacerViewModel
 {
     public PaletteLayoutMode PaletteLayout => settings.Presentation.LayoutMode;
     public int PaletteFixedColumns => settings.Presentation.FixedColumns;
+    internal bool IsPositionShortcutReserved(Key key, ModifierKeys modifiers)
+    {
+        var presentation = settings.Presentation;
+        return activeTask == "palette" && HasIntentTimeline && ReferenceEquals(intentTimeline, timeline) && !UseLegacyWorkspace &&
+            presentation.ShortcutsEnabled && presentation.LayoutMode == PaletteLayoutMode.Fixed &&
+            presentation.PositionShortcuts.Any(x => x.Key == key && x.Modifiers == modifiers);
+    }
+    internal bool TryBeginGenericLayerNumberInput(Key key, ModifierKeys modifiers)
+    {
+        if (modifiers != ModifierKeys.None || activeTask != "palette" || !HasIntentTimeline ||
+            !ReferenceEquals(intentTimeline, timeline) || UseLegacyWorkspace || PlacementContext != PlacementContext.Generic ||
+            GenericLayerTarget is not { HasChanges: false } draft || selectedIntentSet is not { Generic: not null } set ||
+            set.Id != draft.SetId || !CanEditIntentSet(set)) return false;
+        var digit = key switch
+        {
+            >= Key.D0 and <= Key.D9 => (int)key - (int)Key.D0,
+            >= Key.NumPad0 and <= Key.NumPad9 => (int)key - (int)Key.NumPad0,
+            _ => -1
+        };
+        if (digit < 0) return false;
+        draft.Target = digit.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return true;
+    }
     internal bool TryExecutePositionShortcut(Key key, ModifierKeys modifiers)
     {
         var presentation = settings.Presentation;
