@@ -24,10 +24,14 @@ Canonical public Lab evidence remains `ziro-lab/chat-native-work-lab-001` PR #58
 
 Read in this order:
 
-1. `docs/DEVELOPMENT_WORKFLOW.md`
-2. `docs/VALIDATION_STRATEGY.md`
-3. `docs/EXPERIMENTAL_PRESET_HANDOFF.md`
-4. the accepted Round 4 A/B/C docs for preserved behavior
+1. `docs/CURRENT_ARCHITECTURE.md`
+2. `docs/GLOSSARY.md`
+3. `docs/DEVELOPMENT_WORKFLOW.md`
+4. `docs/VALIDATION_STRATEGY.md`
+5. `docs/EXPERIMENTAL_PRESET_HANDOFF.md`
+6. `docs/BACKLOG.md` only for scope context; backlog entries are not implicit implementation tasks
+7. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
+8. accepted Round/W documents only when historical evidence is needed
 
 Use Focused validation for ordinary implementation iterations, Checkpoint when a preset capability/placement checkpoint is complete, and Release only when the whole feature candidate is ready.
 
