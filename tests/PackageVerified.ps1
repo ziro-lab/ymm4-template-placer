@@ -57,7 +57,7 @@ $round3Payload=@('hands-on-round3.json','hands-on-round3-appearance.json','hands
 foreach($name in $round3Payload){Copy-Item (Join-Path $OutputDir $name) $package}
 $usage=Get-Content -Raw (Join-Path $package 'README.md')
 if ($usage -notmatch '^# YMM4 Template Placer v0\.4\.2') { throw 'Obsolete package usage documentation' }
-foreach($section in @('UI Micro Polish Hands-on Candidate','## 配置パネルの簡易設定・固定列・位置ショートカット','## 汎用配置のレイヤーをすばやく指定する','## 表情をまとめて：行クリックと即時反映','## Excelと未配置作業の保護','⚙ 簡易設定','マウスホイールで±1','数字キーを押すだけでレイヤー入力を開始','↕ グリップ','今回の変更を戻す','一覧を読み直す')) {
+foreach($section in @('UI Micro Polish Hands-on Candidate','## 配置パネルの簡易設定・固定列・位置ショートカット','## 汎用配置のレイヤーをすばやく指定する','## 表情をまとめて：行クリックと即時反映','## Excelと未配置作業の保護','⚙ 簡易設定','マウスホイールで±1','行の下端にマウスを合わせて上下ドラッグ','数値を直接入力してEnter','今回の変更を戻す','一覧を読み直す')) {
  if (-not $usage.Contains($section,[StringComparison]::Ordinal)) {throw "Missing actual UI Micro Polish usage section: $section"}
 }
 if ($usage.Contains('主画面は「編集」',[StringComparison]::Ordinal) -or $usage.Contains('「以前の設定・互換操作」から',[StringComparison]::Ordinal)) {throw 'Obsolete normal-workspace instructions remain in the package'}
