@@ -96,3 +96,65 @@ The first successful tier comparison used the same Round 4 C product state plus 
 - Focused skipped release DLL smoke, final packaging and historical evidence-negative validators as designed.
 
 Do not optimize for a smaller assertion count by itself. Further reductions need a concrete runtime/maintenance benefit and must preserve the stable-core risk boundary.
+
+
+## Test lifecycle and retirement
+
+Round/feature-specific tests are allowed while behavior is new or the host boundary is still being learned. They are not automatically permanent Checkpoint/Release requirements.
+
+A historical test may be consolidated into a current invariant proof, or retired from normal execution, only when **all** of the following are true:
+
+1. a current invariant test covers the same failure class;
+2. the historical test has no unique host/API/UI/compatibility boundary that would otherwise be lost;
+3. the invariant test has an equal-or-stronger mutation/safety boundary (for example Timeline zero-write, exact association, native Undo, or settings conflict rejection);
+4. Checkpoint validation passes before and after the consolidation with no lost required behavior;
+5. at least one Release validation passes after the consolidation.
+
+Retirement does not require deleting history. Prefer one of these outcomes:
+
+- remove the historical test from Checkpoint/Release execution but keep the source/evidence for traceability;
+- replace several round-labeled tests with one stable invariant proof;
+- delete a genuinely obsolete test only when its behavior and evidence are fully represented elsewhere and no compatibility value remains.
+
+Do **not** keep a test mandatory merely because it belongs to an older Round. A test stays mandatory because it protects a current product invariant or a unique compatibility boundary.
+
+Examples of consolidation candidates:
+
+- several configuration/navigation operations that independently prove zero Timeline mutation;
+- repeated Set-switch tests that protect the same global-presentation invariant;
+- repeated UI-entry tests whose only remaining contract is one authoritative root action.
+
+Examples that should usually remain distinct:
+
+- a host-specific public API capability boundary;
+- exact native Undo/Redo behavior;
+- Template fidelity;
+- exact managed-association replacement/removal;
+- settings external-change/digest conflict protection;
+- a compatibility migration that can regress independently.
+
+## Growth-control thresholds
+
+Track at least these values at meaningful checkpoints:
+
+- Focused wall-clock time;
+- Focused native assertion count;
+- Checkpoint wall-clock time;
+- Checkpoint native assertion count.
+
+These are observation metrics, not score targets.
+
+Review validation growth when either of these becomes true:
+
+- Focused exceeds roughly **4-5 minutes** on the current pinned runner/host;
+- Focused or Checkpoint grows by roughly **25-30%** from the last reviewed baseline without a comparable increase in product risk/coverage.
+
+At that point, first look for invariant consolidation and obsolete historical duplication. Do not immediately add file-to-test routing logic.
+
+## Deferred optimization triggers
+
+Do not introduce change-area-specific Focused selection while the current Focused lane remains around the present cost. File-to-test routing becomes its own maintenance and validation system.
+
+Do not split the proof harness out of the product build merely to save a small amount of build time. Reconsider a separate proof harness only when the second proof build is a demonstrated dominant bottleneck (for example, total Focused time has grown beyond the agreed review threshold and proof compilation is a substantial share).
+
+The goal is long-term bounded complexity, not minimizing every second of CI time.
