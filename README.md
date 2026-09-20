@@ -16,7 +16,7 @@ YMM4の登録済みテンプレートを、選んだアイテムとの位置・�
 - main Release run #227: `35508468265`
 - full Native regression / exact distribution DLL smoke / verified package: PASS
 
-現在の **UI Micro Polish** はDraft PR #20で実装・Native Checkpointまで完了し、実機Hands-on待ちです。汎用レイヤー常時操作、配置パネル簡易設定、Voice行高ドラッグ、汎用レイヤーの数字直接入力を追加しています。
+現在の **UI Micro Polish** はDraft PR #20でHands-on修正中です。汎用レイヤー常時操作、配置パネル簡易設定、Voice行高の直接調整、固定列のレスポンシブ表示を扱っています。
 
 Tachie Preset Draft PR #19はUI passのHands-on/merge完了まで保留しています。
 
