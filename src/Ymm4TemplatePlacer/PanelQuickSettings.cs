@@ -63,12 +63,6 @@ public sealed partial class PlacerViewModel
         ShapeCurrentIntentSetCommand.RaiseCanExecuteChanged();
     }
 
-    public void EndPanelQuickSettings()
-    {
-        // Popup lifetime is presentation-only. Edits schedule their own commit;
-        // opening/closing the popup itself never writes settings.
-    }
-
     private void PanelQuickPresentationEdited(object? sender, EventArgs e)
     {
         if (!ReferenceEquals(sender, PanelQuickPresentation)) return;
