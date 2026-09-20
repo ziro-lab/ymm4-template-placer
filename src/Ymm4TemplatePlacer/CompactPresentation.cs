@@ -18,7 +18,6 @@ public sealed partial class PlacerViewModel
             if (entries == null) return;
             foreach (var entry in entries) entry.Shape = (IntentTileShape)x!;
         }));
-    public IReadOnlyList<int> ExpressionRowHeights { get; } = [32, 36, 48, 64, 80, 96];
     public int ExpressionRowHeight
     {
         get => settings.Presentation.ExpressionRowHeight;
