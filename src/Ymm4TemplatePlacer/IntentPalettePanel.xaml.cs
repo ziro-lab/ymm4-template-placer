@@ -11,7 +11,6 @@ public partial class IntentPalettePanel : UserControl
     private ContextMenu? activeMenu;
     private PlacerViewModel? observedRoot;
     private Guid? quickPopupSetId;
-    private string quickPopupContext = "";
     private (Grid Cell, IntentTileChoice Tile, Point Point)? pendingDrag;
     public IntentPalettePanel()
     {
@@ -19,7 +18,7 @@ public partial class IntentPalettePanel : UserControl
         Loaded += (_, _) => { ObserveRoot(DataContext as PlacerViewModel); SystemParameters.StaticPropertyChanged -= ThemeChanged; SystemParameters.StaticPropertyChanged += ThemeChanged; };
         Unloaded += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(null); SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); };
         DataContextChanged += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
-        PanelQuickSettingsPopup.Closed += (_, _) => { PanelQuickSettingsButton.IsChecked = false; quickPopupSetId = null; quickPopupContext = ""; observedRoot?.EndPanelQuickSettings(); };
+        PanelQuickSettingsPopup.Closed += (_, _) => { PanelQuickSettingsButton.IsChecked = false; quickPopupSetId = null; observedRoot?.EndPanelQuickSettings(); };
         PreviewMouseDown += PanelPointerDown;
         IsVisibleChanged += (_, _) => { if (!IsVisible) PanelQuickSettingsButton.IsChecked = false; };
     }
@@ -42,16 +41,16 @@ public partial class IntentPalettePanel : UserControl
     private void RootChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (!PanelQuickSettingsPopup.IsOpen || observedRoot == null ||
-            e.PropertyName is not (nameof(PlacerViewModel.SelectedIntentSet) or nameof(PlacerViewModel.IntentContextTitle))) return;
-        if (observedRoot.SelectedIntentSet?.Id != quickPopupSetId ||
-            !string.Equals(observedRoot.IntentContextTitle, quickPopupContext, StringComparison.Ordinal))
+            e.PropertyName != nameof(PlacerViewModel.SelectedIntentSet)) return;
+        // RefreshIntentWorkspace briefly clears/rebuilds descriptive Context text.
+        // Popup lifetime follows the logical Set identity instead of those transient labels.
+        if (observedRoot.SelectedIntentSet?.Id != quickPopupSetId)
             PanelQuickSettingsButton.IsChecked = false;
     }
     private void PanelQuickSettingsOpened(object sender, RoutedEventArgs e)
     {
         if (DataContext is not PlacerViewModel vm) return;
         quickPopupSetId = vm.SelectedIntentSet?.Id;
-        quickPopupContext = vm.IntentContextTitle;
         vm.BeginPanelQuickSettings();
     }
     private void ThemeChanged(object? sender, PropertyChangedEventArgs e)
