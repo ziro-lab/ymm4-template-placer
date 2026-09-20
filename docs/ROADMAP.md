@@ -1,31 +1,55 @@
-# ROADMAP — v0.4 implementation and native YMM4 proof ladder
+# ROADMAP — current product direction
 
+This file is now a navigation roadmap. The older W1-W12 implementation ladder is retained below as historical evidence.
 
-## Current Hands-on Round 3 preparation
+## Current accepted baseline
 
-Round 2 automated candidate is native-green at PR #14 source `a553ae8c32eeb8c1f125b8c005095bbe6fc98ebb`; real-user hands-on found the next UX corrections.
+Round 4 A/B/C is merged to main through PR #16.
 
-Round 3 is frozen in:
+- main merge: `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`
+- main Release run #227: `35508468265`
+- full native regression / exact distribution DLL smoke / verified package: PASS
 
-- `V0.4.2_HANDS_ON_ROUND3_DESIGN.md`
-- `V0.4.2_HANDS_ON_ROUND3_HOST_EVIDENCE.md`
-- `V0.4.2_HANDS_ON_ROUND3_WORKPLAN.md`
-- `V0.4.2_HANDS_ON_ROUND3_ACCEPTANCE.md`
-- `V0.4.2_HANDS_ON_ROUND3_IMPLEMENTATION_PREP.md`
+Current architecture authority:
 
-Primary changes:
+- `CURRENT_ARCHITECTURE.md`
+- `GLOSSARY.md`
+- `VALIDATION_STRATEGY.md`
+- `LEGACY_COMPATIBILITY_MAP.md`
 
-1. tile-face color/shape cleanup and Set-wide shape;
-2. Auto/Fixed columns plus position-based shortcuts;
-3. direct Settings target types and hidden legacy UI;
-4. Generic numeric target layer with one-direction collision behavior;
-5. automatic Voice freshness instead of top-level シーン更新;
-6. expression row navigation synchronized through public Preview `SeekAsync(int)`;
-7. semantic Timeline follow using public `ContainFrameInViewport / ScrollFrame`.
+## Active feature
 
-Public Lab PR #57 established that clicked Timeline layer must **not** be inferred from screen coordinates, while Preview playback seek and viewport follow have usable public exact-host surfaces.
+Experimental Tachie Preset source — Draft PR #19.
 
-This stage is implementation preparation only. Historical W/P/R checkpoints below remain preserved and are not instructions to rebuild completed work.
+Use:
+
+- `EXPERIMENTAL_PRESET_HANDOFF.md`
+- public Lab PR #58 evidence referenced there.
+
+Do not reopen the accepted A/B/C architecture as part of preset work.
+
+## Collected future improvements
+
+Unimplemented ideas live in `BACKLOG.md`.
+
+Current groups:
+
+- UI polish: always-visible Generic layer controls; panel quick settings;
+- Placement Recipe extensions: Template Pivot, Absolute Layer, Composite Placement Steps;
+- later finite Context extensions: stronger Target conditions, Fan-out, Neighbor selectors;
+- explicit out-of-scope boundary: existing-item transformation, generic scripting/DSL/AI target guessing.
+
+Implementation priority is intentionally not frozen while ideas are still being collected.
+
+## Validation growth control
+
+Use `VALIDATION_STRATEGY.md`.
+
+Round-specific tests may consolidate/retire when the current invariant proof is equal-or-stronger and the retirement gates pass. Do not make each new feature permanently additive to Checkpoint/Release by default.
+
+---
+
+# Historical v0.4 implementation ladder
 
 ## Completed integrated Candidate
 
