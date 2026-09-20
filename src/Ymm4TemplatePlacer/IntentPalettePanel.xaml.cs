@@ -21,6 +21,21 @@ public partial class IntentPalettePanel : UserControl
         PanelQuickSettingsPopup.Closed += (_, _) => { PanelQuickSettingsButton.IsChecked = false; quickPopupSetId = null; };
         IsVisibleChanged += (_, _) => { if (!IsVisible) PanelQuickSettingsButton.IsChecked = false; };
     }
+    private void ObserveOwnerWindow(Window? next)
+    {
+        if (ReferenceEquals(observedOwnerWindow, next)) return;
+        if (observedOwnerWindow != null) observedOwnerWindow.Deactivated -= OwnerWindowDeactivated;
+        observedOwnerWindow = next;
+        if (observedOwnerWindow != null) observedOwnerWindow.Deactivated += OwnerWindowDeactivated;
+    }
+
+    private void OwnerWindowDeactivated(object? sender, EventArgs e)
+    {
+        // WPF Popup owns a separate native surface. Tie its visibility back to the
+        // actual YMM4 owner window so it cannot remain stranded over another app.
+        PanelQuickSettingsButton.IsChecked = false;
+    }
+
     private void ObserveRoot(PlacerViewModel? next)
     {
         if (ReferenceEquals(observedRoot, next)) return;
