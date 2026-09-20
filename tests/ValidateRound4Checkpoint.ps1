@@ -1,6 +1,6 @@
-param([Parameter(Mandatory=$true)][string]$OutputDir,[ValidateSet('A','B','C','D','E','CT')][string[]]$Phases=@('A'))
+param([Parameter(Mandatory=$true)][string]$OutputDir,[ValidateSet('A','B','C','D','E','CT','CS')][string[]]$Phases=@('A'))
 $ErrorActionPreference='Stop'
-$counts=@{A=12;B=20;C=22;D=22;E=24;CT=20}
+$counts=@{A=12;B=20;C=22;D=22;E=24;CT=20;CS=10}
 $log=Get-Content -Raw (Join-Path $OutputDir 'proof-log.txt')
 function Assert-Phase($doc,[string]$phase,[string]$nativeLog) {
  if($null-eq$doc-or$doc.schema-cne'YMM4-Template-Placer-Round4-Phase/1'-or$doc.phase-cne$phase-or$doc.result-cne'PASS'-or$doc.host-cne'YMM4 4.55.1.1 Lite'){throw 'Invalid R4 phase header'}

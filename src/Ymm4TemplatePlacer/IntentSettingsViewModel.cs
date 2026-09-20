@@ -66,14 +66,16 @@ public sealed partial class PlacerViewModel
         if (intentSettings != null) intentSettings.Edited -= IntentSettingsEdited;
         var types = (timeline?.Items.Select(x => x.GetType()) ?? []).Concat(ItemSettings.Default.Templates.SelectMany(x => x.Items).Select(x => x.GetType()));
         IntentSettings = new(settings, types, timeline?.SelectedItems.ToArray() ?? []); IntentSettings.Edited += IntentSettingsEdited;
+        ResetSettingsTransaction();
     }
     public void SaveIntentSettings()
     {
         if (!settingsAvailable || IntentSettings == null) throw new InvalidOperationException("設定を保存できません。");
-        if (JsonSerializer.Serialize(settings) != IntentSettings.BaselineFingerprint)
-            throw new InvalidOperationException("編集中に別の操作で設定が変更されました。下書きは保持しています。変更を確認してから開き直してください。");
-        var next = IntentSettings.Build(); settingsStore.Save(next); settings = next;
-        RefreshV04(); RefreshIntentWorkspace(); ResetIntentSettings();
+        var next = IntentSettings.Build();
+        settings = RequireSettingsTransaction().Commit(settings, next);
+        IntentSettings.AcceptCommitted(settings);
+        RefreshV04(); RefreshIntentWorkspace(); RefreshExpressionVocabulary();
+        UpdateIntentSettingsCommands();
         HasError = false; Status = "パレット設定を保存しました。タイムラインと元テンプレートは変更していません。";
     }
     private void UpdateIntentSettingsCommands()
