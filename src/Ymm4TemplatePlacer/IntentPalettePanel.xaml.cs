@@ -10,6 +10,8 @@ public partial class IntentPalettePanel : UserControl
     private TilePointerPhase pointerPhase;
     private ContextMenu? activeMenu;
     private PlacerViewModel? observedRoot;
+    private Guid? quickPopupSetId;
+    private string quickPopupContext = "";
     private (Grid Cell, IntentTileChoice Tile, Point Point)? pendingDrag;
     public IntentPalettePanel()
     {
@@ -17,7 +19,7 @@ public partial class IntentPalettePanel : UserControl
         Loaded += (_, _) => { ObserveRoot(DataContext as PlacerViewModel); SystemParameters.StaticPropertyChanged -= ThemeChanged; SystemParameters.StaticPropertyChanged += ThemeChanged; };
         Unloaded += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(null); SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); };
         DataContextChanged += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
-        PanelQuickSettingsPopup.Closed += (_, _) => { PanelQuickSettingsButton.IsChecked = false; observedRoot?.EndPanelQuickSettings(); };
+        PanelQuickSettingsPopup.Closed += (_, _) => { PanelQuickSettingsButton.IsChecked = false; quickPopupSetId = null; quickPopupContext = ""; observedRoot?.EndPanelQuickSettings(); };
     }
     private void ObserveRoot(PlacerViewModel? next)
     {
