@@ -10,13 +10,28 @@ public partial class IntentPalettePanel : UserControl
     private TilePointerPhase pointerPhase;
     private ContextMenu? activeMenu;
     private PlacerViewModel? observedRoot;
+    private Window? observedOwnerWindow;
     private Guid? quickPopupSetId;
     private (Grid Cell, IntentTileChoice Tile, Point Point)? pendingDrag;
     public IntentPalettePanel()
     {
         InitializeComponent();
-        Loaded += (_, _) => { ObserveRoot(DataContext as PlacerViewModel); SystemParameters.StaticPropertyChanged -= ThemeChanged; SystemParameters.StaticPropertyChanged += ThemeChanged; };
-        Unloaded += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(null); SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); };
+        Loaded += (_, _) =>
+        {
+            ObserveRoot(DataContext as PlacerViewModel);
+            ObserveOwnerWindow(Window.GetWindow(this));
+            SystemParameters.StaticPropertyChanged -= ThemeChanged;
+            SystemParameters.StaticPropertyChanged += ThemeChanged;
+        };
+        Unloaded += (_, _) =>
+        {
+            PanelQuickSettingsButton.IsChecked = false;
+            ObserveOwnerWindow(null);
+            ObserveRoot(null);
+            SystemParameters.StaticPropertyChanged -= ThemeChanged;
+            CancelLocalGesture();
+            CloseTileMenu();
+        };
         DataContextChanged += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
         PanelQuickSettingsPopup.Closed += (_, _) => { PanelQuickSettingsButton.IsChecked = false; quickPopupSetId = null; };
         IsVisibleChanged += (_, _) => { if (!IsVisible) PanelQuickSettingsButton.IsChecked = false; };
