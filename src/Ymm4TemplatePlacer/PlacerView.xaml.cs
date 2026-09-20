@@ -27,7 +27,14 @@ public partial class PlacerView : UserControl
         SizeChanged += (_, _) => RefreshExpressionDetail();
         PresetSurface.PresetEditor.Expanded += (_, _) => ExcelEditor.IsExpanded = false;
         ExcelEditor.Expanded += (_, _) => PresetSurface.PresetEditor.IsExpanded = false;
-        VoiceGrid.SelectionChanged += (_, _) => { RefreshExpressionDetail(); observedViewModel?.SetExpressionRowContext(VoiceGrid.SelectedItem as AssignmentRow); };
+        VoiceGrid.SelectionChanged += (_, e) =>
+        {
+            // Selector.SelectionChanged bubbles: a nested expression ComboBox
+            // changing its choice is NOT a different Voice-row selection.
+            if (!ReferenceEquals(e.OriginalSource, VoiceGrid)) return;
+            RefreshExpressionDetail();
+            observedViewModel?.SetExpressionRowContext(VoiceGrid.SelectedItem as AssignmentRow);
+        };
         MainTabs.SelectionChanged += (_, e) => { if (ReferenceEquals(e.OriginalSource, MainTabs)) SynchronizeTask(); };
         PreviewKeyDown += (_, e) =>
         {

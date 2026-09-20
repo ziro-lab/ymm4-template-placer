@@ -42,12 +42,13 @@ public sealed record PalettePresentationSettings
 {
     public PaletteLayoutMode LayoutMode { get; init; } = PaletteLayoutMode.Auto;
     public int FixedColumns { get; init; } = 4;
+    public int ExpressionRowHeight { get; init; } = 36;
     public bool ShortcutsEnabled { get; init; }
     public List<PositionShortcut> PositionShortcuts { get; init; } = [];
     public ExpressionViewportFollow ViewportFollow { get; init; } = ExpressionViewportFollow.WhenOutside;
     public void Validate()
     {
-        if (!Enum.IsDefined(LayoutMode) || FixedColumns is < 1 or > 16 || !Enum.IsDefined(ViewportFollow) ||
+        if (!Enum.IsDefined(LayoutMode) || FixedColumns is < 1 or > 16 || ExpressionRowHeight is < 32 or > 96 || !Enum.IsDefined(ViewportFollow) ||
             PositionShortcuts == null || PositionShortcuts.Count > 64 || PositionShortcuts.Any(x => x == null))
             throw new InvalidDataException("配置パレットの表示・操作設定が不正です。");
         foreach (var binding in PositionShortcuts) binding.Validate();

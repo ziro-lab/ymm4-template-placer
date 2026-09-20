@@ -11,6 +11,7 @@
     SelectedValue="{Binding OccupiedBehavior,Mode=TwoWay}" Width="144" Margin="5,0" ToolTip="指定レイヤーが塞がっていた場合" AutomationProperties.Name="レイヤーが塞がった時の動作"/>
    <Button x:Name="ApplyGenericLayerButton" Content="適用" Padding="7,3" Command="{Binding DataContext.ApplyGenericLayerTargetCommand,RelativeSource={RelativeSource AncestorType=local:GenericLayerTargetPanel}}" ToolTip="Enterでも適用できます。Escで入力を戻します。"/>
   </WrapPanel>
+  <TextBlock Text="{Binding BoundsHint}" TextWrapping="Wrap" Opacity="0.72" Margin="0,4,0,2"/>
   <TextBlock Text="{Binding LegacyNotice}" TextWrapping="Wrap" FontSize="11" Margin="0,2,0,0">
    <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding LegacyNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
   </TextBlock>

@@ -13,12 +13,13 @@
  <Grid Margin="6">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <StackPanel Grid.Row="0">
+   <local:PalettePresentationPanel x:Name="PresentationSettingsSurface"/>
    <StackPanel x:Name="ItemFirstContextPanel">
     <ItemsControl x:Name="SettingsTargetButtons" ItemsSource="{Binding IntentSettings.DirectItemContexts}" AutomationProperties.Name="Setを使う対象">
      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
      <ItemsControl.ItemTemplate><DataTemplate>
       <Button Content="{Binding Label}" MaxWidth="320" Command="{Binding DataContext.SelectSettingsContextCommand,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" CommandParameter="{Binding}">
-       <Button.Style><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Style.Triggers>
+       <Button.Style><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Padding" Value="7,2"/><Setter Property="Margin" Value="0,0,5,4"/><Setter Property="MinHeight" Value="25"/><Style.Triggers>
         <DataTrigger Value="True"><DataTrigger.Binding><MultiBinding Converter="{StaticResource ContextMatch}"><Binding/><Binding Path="DataContext.IntentSettings.SelectedItemContext" RelativeSource="{RelativeSource AncestorType=local:IntentSettingsPanel}"/></MultiBinding></DataTrigger.Binding>
          <Setter Property="FontWeight" Value="Bold"/><Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/><Setter Property="BorderThickness" Value="2"/>
         </DataTrigger>
@@ -39,6 +40,12 @@
   </StackPanel>
   <ScrollViewer x:Name="SettingsScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
    <StackPanel>
+   <WrapPanel x:Name="SetShapeButtons" Visibility="{Binding IntentSettings.HasSelectedSet,Converter={StaticResource VisibleWhen}}" Margin="0,2,0,4">
+    <TextBlock Text="このセットの形" VerticalAlignment="Center" Margin="0,0,8,0"/>
+    <Button Content="角丸" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Rounded}"/>
+    <Button Content="四角" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Square}"/>
+    <Button Content="丸" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Circle}"/>
+   </WrapPanel>
    <Expander x:Name="SetManagement" Header="セットの管理" IsExpanded="{Binding IntentSettings.ShowAllSets,Mode=TwoWay}" Margin="0,0,0,4">
     <WrapPanel>
      <Button x:Name="DuplicateButton" Content="複製" Command="{Binding DuplicateIntentPaletteCommand}"/>
@@ -199,12 +206,11 @@
       <Button Content="新しい表情を取り込む" Command="{Binding RescanIntentExpressionsCommand}" HorizontalAlignment="Left"/>
      </StackPanel>
     </Expander>
-    <local:PalettePresentationPanel x:Name="PresentationSettingsSurface"/>
    </StackPanel>
   </ScrollViewer>
   <StackPanel Grid.Row="2" Margin="0,6,0,0">
-   <TextBlock Text="{Binding IntentSettings.ChangeNotice}"/>
-   <WrapPanel><Button x:Name="SaveButton" Content="変更を保存" Command="{Binding SaveIntentSettingsCommand}"/><Button x:Name="DiscardButton" Content="変更を破棄" Command="{Binding DiscardIntentSettingsCommand}"/></WrapPanel>
+   <TextBlock x:Name="SettingsCommitNoticeText" Text="{Binding SettingsCommitNotice}" TextWrapping="Wrap"/>
+   <Button x:Name="RollbackButton" Content="今回の変更を戻す" Command="{Binding RollbackIntentSettingsCommand}" HorizontalAlignment="Left" ToolTip="設定を開いてから行った変更だけを戻します。タイムラインは変更しません。"/>
   </StackPanel>
  </Grid>
 </UserControl>

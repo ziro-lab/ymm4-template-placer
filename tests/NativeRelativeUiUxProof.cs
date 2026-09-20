@@ -16,6 +16,8 @@ internal static partial class NativeProof
         stage = "v0.4.2 relative UI/UX acceptance";
         var vm = ViewModel!; var view = View!;
         var field = typeof(PlacerViewModel).GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var store = (PlacerSettingsStore)typeof(PlacerViewModel).GetField("settingsStore", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!;
+        var disk = File.Exists(PlacerSettingsStore.DefaultPath) ? File.ReadAllBytes(PlacerSettingsStore.DefaultPath) : null;
         var original = (PlacerSettings)field.GetValue(vm)!; var items = timeline.Items; var selection = timeline.SelectedItems;
         var mode = vm.UseLegacyWorkspace; var width = view.Width; var height = view.Height;
         var character = new Character { Name = "UX Character" };
@@ -137,9 +139,9 @@ internal static partial class NativeProof
             var emptySession = new IntentSettingsSession(fixture, new[] { typeof(VoiceItem), typeof(TextItem) });
             RejectWithoutMutation(timeline, () => emptySession.Create([]), "UIUX creating a set with no Timeline context never silently defaults to Voice");
             view.Width = 360; view.Height = 360; panel.RelationAdvanced.IsExpanded = false; panel.TargetAdvanced.IsExpanded = false; await Idle();
-            Assert(panel.SaveButton.IsVisible && panel.SaveButton.ActualHeight > 0 && panel.RelationSummaryText.IsVisible && panel.ActualWidth <= 360 &&
-                panel.SaveButton.TranslatePoint(new Point(panel.SaveButton.ActualWidth, panel.SaveButton.ActualHeight), panel).Y <= panel.ActualHeight + 1,
-                "UIUX narrow Settings keep the result summary and save action available while advanced parameters stay collapsed");
+            Assert(panel.RollbackButton.IsVisible && panel.RollbackButton.ActualHeight > 0 && panel.RelationSummaryText.IsVisible && panel.ActualWidth <= 360 &&
+                panel.RollbackButton.TranslatePoint(new Point(panel.RollbackButton.ActualWidth, panel.RollbackButton.ActualHeight), panel).Y <= panel.ActualHeight + 1,
+                "UIUX narrow Settings keep the result summary and rollback action available while advanced parameters stay collapsed");
             SaveNamedView(view, "v042-uiux-settings-360.png");
 
             var checks = new (string Requirement, string Evidence)[]
@@ -151,7 +153,7 @@ internal static partial class NativeProof
                 ("Settings progressive disclosure follows duration, neighbor, fallback, boundary, Character and type-match choices", "native visibility transitions"),
                 ("Settings expose a natural-language relation summary and keep rare parameters under collapsed Advanced sections", "native summary plus Advanced state"),
                 ("Unsupported contexts provide an actionable recovery and never fall back to an unrelated Library", "native Text empty-state -> Text set creation"),
-                ("360px keeps context, Set, tiles, Settings discovery and Save understandable", "native narrow edit/settings captures"),
+                ("360px keeps context, Set, tiles, Settings discovery and rollback understandable", "native narrow edit/settings captures"),
                 ("Raw runtime type keys and internal IDs stay out of ordinary user-facing controls", "native Settings control metadata audit"),
                 ("Navigation and Set switching are zero-write; tile placement retains shared planning and one native Undo", "native signatures and Undo proof plus retained regression ladder")
             };
@@ -164,6 +166,8 @@ internal static partial class NativeProof
         }
         finally
         {
+            if (disk == null) File.Delete(PlacerSettingsStore.DefaultPath); else File.WriteAllBytes(PlacerSettingsStore.DefaultPath, disk);
+            store.Load();
             foreach (var source in sources) ItemSettings.Default.Templates.Remove(source);
             field.SetValue(vm, original); timeline.Items = items; timeline.SelectedItems = selection; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
             view.Width = width; view.Height = height; vm.SetLegacyWorkspace(mode); vm.Refresh(); vm.ResetIntentSettings();

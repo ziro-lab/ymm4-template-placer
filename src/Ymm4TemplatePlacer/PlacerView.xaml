@@ -17,19 +17,23 @@
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
      <StackPanel Grid.Row="0" Margin="0,0,0,6">
       <TextBlock Text="{Binding Summary}" Opacity="0.75" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/>
+      <WrapPanel HorizontalAlignment="Right">
+       <TextBlock Text="行の高さ" VerticalAlignment="Center" Margin="0,0,5,0"/>
+       <ComboBox x:Name="ExpressionRowHeightPicker" ItemsSource="{Binding ExpressionRowHeights}" SelectedItem="{Binding ExpressionRowHeight,Mode=TwoWay}" IsEnabled="{Binding CanEditExpressionRowHeight}" Width="58" AutomationProperties.Name="セリフ一覧の行の高さ"/>
+      </WrapPanel>
       <local:ExpressionPresetPanel x:Name="PresetSurface"/>
       <TextBlock x:Name="ExpressionFreshnessWarning" Text="{Binding ExpressionFreshnessNotice}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,4,0,0">
        <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding ExpressionFreshnessNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
       </TextBlock>
      </StackPanel>
-     <DataGrid x:Name="VoiceGrid" IsEnabled="{Binding CanEditExpressionRows}" Grid.Row="1" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="True" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" SelectionUnit="FullRow" SelectionMode="Single" RowHeight="36" HeadersVisibility="Column" GridLinesVisibility="Horizontal">
+     <DataGrid x:Name="VoiceGrid" IsEnabled="{Binding CanEditExpressionRows}" Grid.Row="1" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="True" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" SelectionUnit="FullRow" SelectionMode="Single" RowHeight="{Binding ExpressionRowHeight}" HeadersVisibility="Column" GridLinesVisibility="Horizontal">
       <DataGrid.RowStyle><Style TargetType="DataGridRow"><EventSetter Event="MouseLeftButtonUp" Handler="VoiceGridRow_Click"/><Setter Property="ToolTip"><Setter.Value><ToolTip><StackPanel MaxWidth="420"><TextBlock Text="{Binding Character}" FontWeight="SemiBold"/><TextBlock Text="{Binding Serif}" TextWrapping="Wrap"/><TextBlock Text="{Binding Frame,StringFormat=開始: {0} フレーム}"/><TextBlock Text="{Binding Length,StringFormat=長さ: {0} フレーム}"/></StackPanel></ToolTip></Setter.Value></Setter></Style></DataGrid.RowStyle>
       <DataGrid.Columns>
        <DataGridTextColumn Header="No" Binding="{Binding No}" IsReadOnly="True" Width="28"/>
        <DataGridTextColumn Header="キャラ" Binding="{Binding Character}" IsReadOnly="True" Width="64"/>
-       <DataGridTemplateColumn Header="セリフ" Width="*" MinWidth="86" SortMemberPath="Serif"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Serif}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="5,0" ToolTip="{Binding Serif}" ToolTipService.ShowDuration="60000"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+       <DataGridTemplateColumn Header="セリフ" Width="*" MinWidth="86" SortMemberPath="Serif"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Serif}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" ClipToBounds="True" VerticalAlignment="Center" Margin="5,0" ToolTip="{Binding Serif}" ToolTipService.ShowDuration="60000"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
        <DataGridTemplateColumn Header="テンプレート" Width="1.2*" MinWidth="112"><DataGridTemplateColumn.CellTemplate><DataTemplate><Grid>
-        <ComboBox ItemsSource="{Binding Choices}" DisplayMemberPath="DisplayName" SelectedItem="{Binding SelectedChoice,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="2" VerticalContentAlignment="Center" ToolTip="{Binding SelectedChoice.Label}">
+        <ComboBox DropDownOpened="ExpressionChoiceOpened" ItemsSource="{Binding Choices}" DisplayMemberPath="DisplayName" SelectedItem="{Binding SelectedChoice,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="2" VerticalContentAlignment="Center" ToolTip="{Binding SelectedChoice.Label}">
          <ComboBox.Style><Style TargetType="ComboBox"><Style.Triggers><DataTrigger Binding="{Binding HasCandidates}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></ComboBox.Style>
         </ComboBox>
         <Button Content="＋ 表情を追加" Command="{Binding DataContext.AddExpressionTemplateCommand,RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Margin="2" ToolTip="このキャラクターの表情テンプレートがありません。ここから追加できます。">

@@ -175,18 +175,18 @@ internal static partial class NativeProof
             var old = new PlacerSettingsStore(oldPath).Load();
             Assert(old.IntentPalettes.All(x => x.Entries.All(e => e.Shape == IntentTileShape.Rounded)) && old.Palettes.All(x => x.TileAppearance == null) && File.ReadAllBytes(oldPath).SequenceEqual(oldBytes),
                 "R2-D E10 old missing appearance fields default safely and load never rewrites bytes");
-            vm.IntentSettings!.Palettes.Single().Name = "無関係な下書き"; var sameDraft = vm.IntentSettings!;
+            vm.IntentSettings!.Palettes.Single().LayerOffset = "未確定"; var sameDraft = vm.IntentSettings!;
             vm.OpenTileSettingsCommand.Execute(vm.IntentTiles[0]); await Idle();
             Assert(ReferenceEquals(sameDraft, vm.IntentSettings) && sameDraft.HasChanges && sameDraft.IsGenericContext && sameDraft.SelectedGenericSet?.SelectedEntry != null &&
                 File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(priorBytes) && Signature(timeline) == signature,
-                "R2-D E4/E9 opening exact Set settings preserves an unrelated unsaved draft and performs no save/placement");
+                "R2-D E4/E9 opening exact Set settings preserves an unrelated invalid draft and performs no save/placement");
             vm.ResetIntentSettings(); view.SelectionTab.IsSelected = true; view.Height = 440;
             var settingsPanel = view.RelativeSettingsSurface; settingsPanel.SourceEditor.IsExpanded = false;
             // Round 3 exposes all types directly; retain this compact-layout gate without a removed expander.
             settingsPanel.SetManagement.IsExpanded = false; settingsPanel.SettingsScroll.ScrollToTop(); await Idle();
             Assert(settingsPanel.PalettePicker.ActualWidth > 150 && settingsPanel.SettingsScroll.ViewportHeight > 140 &&
-                settingsPanel.SaveButton.TranslatePoint(new Point(0, settingsPanel.SaveButton.ActualHeight), view).Y <= view.ActualHeight,
-                "R2-D/C narrow Settings uses compact direct targets and a full-width Set picker, retaining a usable scrolling viewport and visible Save");
+                settingsPanel.RollbackButton.TranslatePoint(new Point(0, settingsPanel.RollbackButton.ActualHeight), view).Y <= view.ActualHeight,
+                "R2-D/C narrow Settings uses compact direct targets and a full-width Set picker, retaining a usable scrolling viewport and visible rollback");
             SaveNamedView(view, "v042-round2-settings-compact.png");
             view.PaletteTab.IsSelected = true; view.Height = 360; await Idle(); SaveNamedView(view, "v042-round2-tiles-360.png");
             Assert(clickCount == 1, "R2-D all tested drag/edit/context operations generated no extra placement click");

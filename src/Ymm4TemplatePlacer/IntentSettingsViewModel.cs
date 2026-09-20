@@ -46,38 +46,48 @@ public sealed partial class PlacerViewModel
             }));
             AddIntentSourcesCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSet == true, _ => Guard(() =>
             {
-                var count = IntentSettings!.AddSelectedSources(); HasError = false; Status = $"{count}件を下書きへ追加しました。［変更を保存］で確定します。";
+                var count = IntentSettings!.AddSelectedSources(); HasError = false; Status = $"{count}件を追加しました。設定を確認し、自動で反映します。";
             }));
             RescanIntentExpressionsCommand = new ActionCommand(_ => IntentSettings != null, _ => Guard(() =>
             {
-                var count = IntentSettings!.ImportNewExpressions(); HasError = false; Status = $"新しい表情{count}件を下書きへ取り込みました。［変更を保存］で確定します。";
+                var count = IntentSettings!.ImportNewExpressions(); HasError = false; Status = $"新しい表情{count}件を取り込みました。設定を確認し、自動で反映します。";
             }));
             foreach (var property in new[] { nameof(SaveIntentSettingsCommand), nameof(DiscardIntentSettingsCommand),
                 nameof(CreateIntentPaletteCommand), nameof(DuplicateIntentPaletteCommand), nameof(DeleteIntentPaletteCommand),
                 nameof(MoveIntentPaletteCommand), nameof(MoveIntentEntryCommand), nameof(RemoveIntentEntryCommand),
                 nameof(AddIntentSourcesCommand), nameof(RescanIntentExpressionsCommand) }) OnPropertyChanged(property);
         }
-        if (IntentSettings == null) ResetIntentSettings();
+        if (IntentSettings == null || (settingsSessionClosed && !IntentSettings.HasChanges)) ResetIntentSettings();
         else IntentSettings.UpdateSelectionContext(timeline?.SelectedItems.ToArray() ?? []);
     }
-    private void IntentSettingsEdited(object? sender, EventArgs e) => UpdateIntentSettingsCommands();
+    private void IntentSettingsEdited(object? sender, EventArgs e)
+    {
+        if (!ReferenceEquals(sender, IntentSettings)) return;
+        UpdateIntentSettingsCommands(); RequestSettingsAutoCommit();
+    }
     public void ResetIntentSettings()
     {
         if (intentSettings != null) intentSettings.Edited -= IntentSettingsEdited;
         var types = (timeline?.Items.Select(x => x.GetType()) ?? []).Concat(ItemSettings.Default.Templates.SelectMany(x => x.Items).Select(x => x.GetType()));
         IntentSettings = new(settings, types, timeline?.SelectedItems.ToArray() ?? []); IntentSettings.Edited += IntentSettingsEdited;
+        ResetSettingsTransaction();
     }
     public void SaveIntentSettings()
     {
         if (!settingsAvailable || IntentSettings == null) throw new InvalidOperationException("設定を保存できません。");
-        if (JsonSerializer.Serialize(settings) != IntentSettings.BaselineFingerprint)
-            throw new InvalidOperationException("編集中に別の操作で設定が変更されました。下書きは保持しています。変更を確認してから開き直してください。");
-        var next = IntentSettings.Build(); settingsStore.Save(next); settings = next;
-        RefreshV04(); RefreshIntentWorkspace(); ResetIntentSettings();
+        var next = IntentSettings.Build();
+        settings = RequireSettingsTransaction().Commit(settings, next);
+        IntentSettings.AcceptCommitted(settings);
+        SettingsCommitCompleted();
+        RefreshV04(); RefreshIntentWorkspace(); RefreshExpressionVocabulary();
+        UpdateIntentSettingsCommands();
         HasError = false; Status = "パレット設定を保存しました。タイムラインと元テンプレートは変更していません。";
     }
     private void UpdateIntentSettingsCommands()
     {
+        rollbackIntentSettingsCommand?.RaiseCanExecuteChanged();
+        setSettingsShapeCommand?.RaiseCanExecuteChanged();
+        OnPropertyChanged(nameof(CanEditExpressionRowHeight)); OnPropertyChanged(nameof(ExpressionRowHeight));
         ReorderIntentTileCommand?.RaiseCanExecuteChanged(); UpdateIntentTileEditingCommands();
         SaveIntentSettingsCommand?.RaiseCanExecuteChanged(); DiscardIntentSettingsCommand?.RaiseCanExecuteChanged();
         CreateIntentPaletteCommand?.RaiseCanExecuteChanged(); DuplicateIntentPaletteCommand?.RaiseCanExecuteChanged(); DeleteIntentPaletteCommand?.RaiseCanExecuteChanged();

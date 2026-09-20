@@ -5,21 +5,34 @@
  <Grid Margin="6">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
 
-  <StackPanel x:Name="IntentContextHeader" Grid.Row="0" Margin="3,1,3,7">
-   <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding IntentContextTitle}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-   <TextBlock x:Name="IntentContextTitleText" Text="{Binding IntentContextTitle}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis"/>
-   <TextBlock x:Name="IntentContextDetailText" Text="{Binding IntentContextDetail}" Opacity="0.72" TextTrimming="CharacterEllipsis" ToolTip="{Binding IntentContextDetail}"/>
-   <TextBlock x:Name="ContextCompatibilityNoticeText" Text="{Binding PlacementContextCompatibilityNotice}" TextWrapping="Wrap" Margin="0,4,0,0" FontWeight="SemiBold">
-    <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding PlacementContextCompatibilityNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
-   </TextBlock>
-  </StackPanel>
+  <Grid x:Name="IntentContextHeader" Grid.Row="0" Margin="3,1,3,7">
+   <Grid.Style><Style TargetType="Grid"><Style.Triggers><DataTrigger Binding="{Binding IntentContextTitle}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Grid.Style>
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <StackPanel Grid.Column="0">
+    <TextBlock x:Name="IntentContextTitleText" Text="{Binding IntentContextTitle}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis"/>
+    <TextBlock x:Name="IntentContextDetailText" Text="{Binding IntentContextDetail}" Opacity="0.72" TextTrimming="CharacterEllipsis" ToolTip="{Binding IntentContextDetail}"/>
+    <TextBlock x:Name="ContextCompatibilityNoticeText" Text="{Binding PlacementContextCompatibilityNotice}" TextWrapping="Wrap" Margin="0,4,0,0" FontWeight="SemiBold">
+     <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding PlacementContextCompatibilityNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+    </TextBlock>
+   </StackPanel>
+   <ToggleButton x:Name="GenericLayerButton" Grid.Column="1" Content="{Binding GenericLayerButtonLabel}" VerticalAlignment="Top" Padding="7,3" Margin="6,0,0,0" AutomationProperties.Name="汎用配置のレイヤー設定">
+    <ToggleButton.Style><Style TargetType="ToggleButton"><Style.Triggers>
+     <DataTrigger Binding="{Binding GenericLayerTarget}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+     <DataTrigger Binding="{Binding IsOpen,ElementName=GenericLayerPopup}" Value="True"><Setter Property="IsHitTestVisible" Value="False"/></DataTrigger>
+    </Style.Triggers></Style></ToggleButton.Style>
+   </ToggleButton>
+   <Popup x:Name="GenericLayerPopup" Placement="Bottom" PlacementTarget="{Binding ElementName=GenericLayerButton}" StaysOpen="False" AllowsTransparency="True"
+    IsOpen="{Binding IsChecked,ElementName=GenericLayerButton,Mode=TwoWay}"
+    DataContext="{Binding PlacementTarget.DataContext,RelativeSource={RelativeSource Self}}">
+    <Border Padding="10" MaxWidth="340" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1">
+     <local:GenericLayerTargetPanel x:Name="GenericLayerSurface"/>
+    </Border>
+   </Popup>
+  </Grid>
 
-  <DockPanel Grid.Row="1">
-   <Button x:Name="IntentSetSettingsButton" DockPanel.Dock="Right" Content="Set全体 ▾" HorizontalAlignment="Right" Padding="8,3" Margin="4,0,2,6" Click="SetSettingsClick" IsEnabled="{Binding HasCurrentIntentSet}" AutomationProperties.Name="このSet全体の設定"/>
-   <TextBlock x:Name="SingleSetTitleText" Text="{Binding SelectedIntentSet.Label}" FontWeight="SemiBold" Margin="4,0,4,6">
+  <TextBlock x:Name="SingleSetTitleText" Grid.Row="1" Text="{Binding SelectedIntentSet.Label}" FontWeight="SemiBold" Margin="4,0,4,6">
    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowSingleSetName}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
-   </TextBlock>
-  </DockPanel>
+  </TextBlock>
 
   <DockPanel x:Name="IntentSetRow" Grid.Row="2" Margin="2,6,2,8">
    <DockPanel.Style><Style TargetType="DockPanel"><Style.Triggers><DataTrigger Binding="{Binding HasIntentSets}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></DockPanel.Style>
@@ -35,7 +48,6 @@
    </ListBox>
   </DockPanel>
 
-  <local:GenericLayerTargetPanel x:Name="GenericLayerSurface" Grid.Row="3"/>
 
   <Grid Grid.Row="4">
    <ScrollViewer x:Name="PaletteTileScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
@@ -76,6 +88,6 @@
    </StackPanel>
   </Grid>
 
-  <Button x:Name="IntentSettingsButton" Grid.Row="5" Content="⚙ 設定" Command="{Binding OpenIntentSettingsCommand}" HorizontalAlignment="Right" Padding="10,5" Margin="0,6,0,0"/>
+  <Button x:Name="IntentSettingsButton" Grid.Row="5" Content="⚙ 設定" Command="{Binding OpenCurrentSetSettingsCommand}" HorizontalAlignment="Right" Padding="10,5" Margin="0,6,0,0"/>
  </Grid>
 </UserControl>

@@ -1,10 +1,20 @@
 name: native-yymm4-proof
 on:
   workflow_dispatch:
+    inputs:
+      validation_level:
+        description: Validation level
+        type: choice
+        options:
+          - focused
+          - checkpoint
+          - release
+        default: checkpoint
   push:
     branches: [main, 'work/v0.4-native-validation']
     paths: ['src/**/*.cs', 'src/**/*.csproj', 'src/**/*.xaml', 'tests/**/*.cs', 'tests/**/*.csproj', 'tests/**/*.ps1', 'fixtures/**/*.json', 'fixtures/**/*.ymmp', 'fixtures/**/*.png', 'fixtures/**/*.xlsx', '.github/workflows/native-yymm4-proof.yml']
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths: ['src/**/*.cs', 'src/**/*.csproj', 'src/**/*.xaml', 'tests/**/*.cs', 'tests/**/*.csproj', 'tests/**/*.ps1', 'fixtures/**/*.json', 'fixtures/**/*.ymmp', 'fixtures/**/*.png', 'fixtures/**/*.xlsx', '.github/workflows/native-yymm4-proof.yml']
 permissions:
   contents: read
@@ -20,9 +30,11 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Gate native work by actual changed paths
+      - name: Choose native validation level from actual changed paths
         id: scope
         shell: pwsh
+        env:
+          REQUESTED_VALIDATION_LEVEL: ${{ inputs.validation_level }}
         run: ./tests/CiScope.ps1
       - name: Confirm .NET 10 SDK
         if: steps.scope.outputs.run == 'true'
@@ -52,7 +64,6 @@ jobs:
           $proof=Join-Path $env:RUNNER_TEMP 'placer-proof-build'
           dotnet build src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj -c Release "-p:YMM4DirPath=$env:YMM4_DIR" -p:Ymm4Proof=true -o $proof --nologo -warnaserror 2>&1 | Tee-Object out/build-proof.txt
           if ($LASTEXITCODE -ne 0) { throw 'Proof build failed' }
-          # Shared platform assemblies belong to YMM4, not this distributable.
           foreach ($folder in @('out/package',$proof)) {
             foreach ($file in @('Microsoft.Windows.SDK.NET.dll','WinRT.Runtime.dll')) {
               Remove-Item (Join-Path $folder $file) -ErrorAction SilentlyContinue
@@ -62,28 +73,28 @@ jobs:
           New-Item -ItemType Directory -Force $dest | Out-Null
           Copy-Item "$proof/*.dll" $dest
           Copy-Item "$proof/*.deps.json" $dest
-      - name: Run P1-P9 and integrated v0.4 acceptance in actual YMM4
+      - name: Run native validation
         if: steps.scope.outputs.run == 'true'
         shell: pwsh
-        run: ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -DistributionDir (Join-Path $PWD 'out/package')
+        run: ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -DistributionDir (Join-Path $PWD 'out/package') -Profile ${{ steps.scope.outputs.level }}
       - name: Native release DLL identity smoke test
-        if: steps.scope.outputs.run == 'true'
+        if: steps.scope.outputs.run == 'true' && steps.scope.outputs.level == 'release'
         shell: pwsh
         run: |
           $dest=Join-Path $env:YMM4_DIR 'user/plugin/Ymm4TemplatePlacer'
           Remove-Item "$dest/*" -Recurse -Force
           Copy-Item out/package/*.dll $dest
           Copy-Item out/package/*.deps.json $dest
-          ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -ReleaseSmoke
-      - name: Package verified v0.4 distributable and source
-        if: steps.scope.outputs.run == 'true'
+          ./tests/RunNative.ps1 -Ymm4Dir $env:YMM4_DIR -OutputDir (Join-Path $PWD 'out') -Profile release -ReleaseSmoke
+      - name: Package verified distributable and source
+        if: steps.scope.outputs.run == 'true' && steps.scope.outputs.level == 'release'
         shell: pwsh
         run: ./tests/PackageVerified.ps1 -OutputDir out
-      - name: Upload native proof and distributable
+      - name: Upload native evidence
         if: always() && steps.scope.outputs.run == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: native-yymm4-proof
+          name: native-yymm4-${{ steps.scope.outputs.level }}
           path: |
             out/
             dotnet-sdks.txt

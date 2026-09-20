@@ -15,6 +15,31 @@ internal static partial class NativeProof
         legacyFixture.ExpressionBootstrapComplete = true; legacyFixture.LegacyWorkspace = true;
         settingsField.SetValue(ViewModel!, legacyFixture);
         ViewModel!.ActivateIntentWorkspace(); ViewModel.SetLegacyWorkspace(true); ViewModel.Refresh();
+
+        var profile = (Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_NATIVE_PROFILE") ?? "checkpoint").ToLowerInvariant();
+        if (profile == "focused")
+        {
+            await VerifyDirectTemplateAddition(timeline, undo);
+            await VerifyLibrary(timeline);
+            await VerifyPalettes(timeline);
+            await VerifyQuickDrop(timeline, undo);
+            await VerifyAssociations(timeline, undo);
+            await VerifySafetyIntent(timeline);
+            await VerifyIntentCore(timeline, undo);
+            await VerifyIntentSettings(timeline, undo);
+            await VerifyRelativeExpressions(timeline, undo);
+            await VerifyTemplateFidelity(timeline, undo);
+            await VerifyHandsOnRound3Layers(timeline, undo);
+            await VerifyHandsOnRound3Navigation(timeline, undo);
+            await VerifyHandsOnRound4Navigation(timeline, undo);
+            await VerifyHandsOnRound4Presentation(timeline, undo);
+            VerifyHandsOnRound4SettingsTransaction(timeline);
+            VerifyHandsOnRound4SettingsSession(timeline, undo);
+            await VerifyHandsOnRound4Settings(timeline, undo);
+            Log("FOCUSED_NATIVE=PASS");
+            return;
+        }
+
         await VerifyDirectTemplateAddition(timeline, undo);
         await VerifyLibrary(timeline);
         await VerifyPalettes(timeline);
@@ -63,5 +88,10 @@ internal static partial class NativeProof
         await VerifyHandsOnRound3Freshness(timeline, undo);
         await VerifyHandsOnRound3Navigation(timeline, undo);
         await VerifyHandsOnRound3Final(timeline, undo);
+        await VerifyHandsOnRound4Navigation(timeline, undo);
+        await VerifyHandsOnRound4Presentation(timeline, undo);
+        VerifyHandsOnRound4SettingsTransaction(timeline);
+        VerifyHandsOnRound4SettingsSession(timeline, undo);
+        await VerifyHandsOnRound4Settings(timeline, undo);
     }
 }

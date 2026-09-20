@@ -37,3 +37,12 @@ Heavy builds, native YMM4 proofs, release-DLL smoke and packaging run in the exi
 Keep all historical semantic regression gates and independent evidence-negative fixtures. A superseded UI entry may be tested through its approved replacement, but its underlying safety/behavior coverage must not be removed. Add new checkpoint evidence without claiming the entire round passed prematurely.
 
 The `.ymme` root remains `Ymm4TemplatePlacer/`. Record exact source, checkout tree, run/attempt, artifact and package/DLL/source hashes. Native PASS and human acceptance are different claims.
+
+
+## Tiered validation
+
+Validation is tiered; see `docs/VALIDATION_STRATEGY.md`.
+
+Ordinary Draft-PR product edits use Focused native validation. Changes to tests/fixtures/workflow, PR Ready transitions and explicit checkpoint runs use the full semantic Checkpoint lane. Main pushes use Release, which adds exact distribution-DLL smoke and verified packaging.
+
+Historical gates remain required at Checkpoint/Release. They are no longer required after every small Focused edit. This is an execution-cost change, not permission to delete safety coverage or weaken final promotion evidence.

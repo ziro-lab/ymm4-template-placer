@@ -5,6 +5,7 @@ public partial class IntentSettingsPanel : UserControl
     public IntentSettingsPanel()
     {
         InitializeComponent();
+        NestedWheelRouting.SetEnabled(SettingsScroll, true);
         Loaded += (_, _) => (DataContext as PlacerViewModel)?.BeginIntentSettings();
         DataContextChanged += (_, _) => { if (IsLoaded) (DataContext as PlacerViewModel)?.BeginIntentSettings(); };
     }

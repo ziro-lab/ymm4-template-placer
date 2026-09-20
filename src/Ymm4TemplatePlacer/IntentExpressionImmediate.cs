@@ -265,6 +265,7 @@ public sealed partial class PlacerViewModel
                 HasError = false; Status = row.SelectedChoice.Template == null ? "この音声の関連表情を外しました。" : $"「{row.SelectedChoice.DisplayName}」を即時反映しました（{changed}変更）。";
             }
             RestoreExpressionChoiceFromTimeline(row);
+            if (mutation.Plan.ChangeCount != 0) QueueExpressionNavigation(row, refreshCurrentContent: true);
         }
         catch (Exception ex)
         {
