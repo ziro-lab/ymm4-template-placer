@@ -20,6 +20,7 @@ internal static partial class NativeProof
         var point = thumb.PointToScreen(new Point(thumb.ActualWidth / 2, thumb.ActualHeight / 2));
         Round2Input.SetCursorPos((int)Math.Round(point.X), (int)Math.Round(point.Y)); await Task.Delay(80); await Idle();
         var hit = Mouse.DirectlyOver as DependencyObject;
+        Log($"R4-A scrollbar hit: point={point} viewer={viewer.ActualWidth}x{viewer.ActualHeight} thumb={thumb.ActualWidth}x{thumb.ActualHeight} hit={hit?.GetType().FullName}");
         Assert(hit != null && (ReferenceEquals(hit, thumb) || thumb.IsAncestorOf(hit)), "R4-A actual pointer reaches the scrollbar thumb before dragging");
         var before = viewer.VerticalOffset;
         Round2Input.mouse_event(0x0002, 0, 0, 0, UIntPtr.Zero); await Task.Delay(50);
@@ -113,7 +114,11 @@ internal static partial class NativeProof
                 "R4-A native Redo restores the final exact expression and preserves the manual item");
 
             vm.BeginIntentSettings(); view.SelectionTab.IsSelected = true; await Idle();
-            var surface = view.RelativeSettingsSurface; surface.SourceEditor.IsExpanded = true;
+            var surface = view.RelativeSettingsSurface;
+            // The preceding R3-G proof deliberately expanded the presentation editor.
+            // Restore a focused SourceList viewport instead of aiming at a clipped thumb.
+            ((Expander)surface.PresentationSettingsSurface.Content).IsExpanded = false;
+            surface.SourceEditor.IsExpanded = true;
             surface.SettingsScroll.ScrollToBottom(); view.UpdateLayout(); await Idle();
             var root = surface.SettingsScroll;
             var inner = Descendant<ScrollViewer>(surface.SourceList) ?? throw new InvalidOperationException("R4-A inner source ScrollViewer missing");
@@ -141,7 +146,8 @@ internal static partial class NativeProof
             Round4Assert(wheel.Handled && root.VerticalOffset > outerBefore && inner.VerticalOffset == innerBefore,
                 "A10", "wheel over outer content outside the source list scrolls only outer Settings");
             var outerDrag = await Round4DragScrollThumb(root);
-            root.ScrollToBottom(); await Idle();
+            surface.SourceList.BringIntoView(); await Idle();
+            SaveNamedView(view, "v042-round4-a-before-inner-thumb.png");
             var innerDrag = await Round4DragScrollThumb(inner);
             Round4Assert(outerDrag && innerDrag, "A11", "native mouse thumb drags still move both outer and inner scrollbar ranges");
             Round4Assert(!NestedWheelRouting.TryScroll(root, inner, -120, ModifierKeys.Control) &&
