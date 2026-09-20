@@ -1,6 +1,6 @@
 # UI Micro Polish — Hands-on feedback
 
-Status: **COLLECTING — do not implement yet**
+Status: **COLLECTION COMPLETE — corrective design next**
 
 This file records owner hands-on feedback for PR #20 before any corrective implementation is chosen.
 
@@ -150,9 +150,93 @@ Desired direction:
 Likely implementation direction is to bind popup lifetime to the actual owner Window/Tool activation lifecycle rather than adding polling or global hooks.
 
 
+
+## F7 — public-readiness / AI-responsibility audit
+
+Result: **NO MAJOR SAFETY RED FLAG / small cleanup pass recommended**
+
+A separate review of main high-risk areas plus PR #20 found no major signs of an unreviewed “AI-generated and shipped as-is” plugin.
+
+Observed positives:
+
+- no Harmony host patching;
+- no broad private/non-public reflection;
+- reflection is limited to explicit bounded compatibility surfaces;
+- no OS-global hook;
+- WPF `InputManager` is attached/detached with the Tool/input lifetime;
+- no UI Automation/fake input path;
+- no sleep/retry loops used to mask races;
+- ambiguous/missing state generally fails closed rather than guessed repair;
+- most comments explain design boundaries / forbidden behavior rather than narrating obvious code.
+
+Bounded reflection remains intentional:
+
+- `IntentCharacterRegistry.cs`: resolves one known internal CharacterSettings type name, then reads public `Default` / `Characters`; read-only, fail-closed.
+- `ExpressionNavigationHost.cs`: resolves known Preview/Timeline host types and exact public method signatures only.
+
+These are compatibility boundaries, not permission to expand reflection usage.
+
+### Cleanup candidates found
+
+#### C1 — awkward boolean assignment
+
+Current PR #20 contains:
+
+```csharp
+e.Handled = true == suppress ? true : e.Handled;
+```
+
+Prefer a normal readable form such as:
+
+```csharp
+if (suppress) e.Handled = true;
+```
+
+This is not a behavioral bug, but it is exactly the kind of strange expression worth removing before public release.
+
+#### C2 — no-op lifecycle method
+
+`EndPanelQuickSettings()` currently has no behavior beyond a comment.
+
+Before release decide one of:
+
+- remove it and the call if no symmetry/lifetime contract is needed;
+- or keep it only if a concrete lifecycle responsibility is added/clearly justified.
+
+Do not preserve an empty method merely as speculative future structure.
+
+#### C3 — catch-all review
+
+Some `catch (Exception)` sites are intentional failure containment.
+
+No broad “exception swallowing festival” was found.
+
+One silent compatibility-resolution catch in `ExpressionNavigationHost.Resolve()` may deserve a short explicit rationale and/or debug-only diagnostic path, but the fail-soft behavior itself is reasonable because Preview/host compatibility must not crash the whole plugin.
+
+#### C4 — historical complexity
+
+The larger maintainability cost is not dangerous APIs but accumulated compatibility/current code families.
+
+Keep using:
+
+- `CURRENT_ARCHITECTURE.md`;
+- `LEGACY_COMPATIBILITY_MAP.md`;
+
+to distinguish current route vs compatibility route.
+
+Do not start a broad legacy deletion/refactor as part of UI corrective work.
+
+## Feedback collection close
+
+Hands-on feedback collection for this candidate is now considered **COMPLETE** unless a new blocking issue is discovered.
+
+Next phase should be one coherent corrective design pass covering F2-F7, then implementation.
+
+Do not patch cleanup items or UX items independently before that design pass.
+
 ## Decision discipline
 
-Do not patch F2-F6 individually yet.
+Do not patch F2-F7 individually yet.
 
 After additional hands-on feedback is collected:
 
