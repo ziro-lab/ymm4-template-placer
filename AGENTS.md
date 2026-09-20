@@ -2,44 +2,44 @@
 
 ## Current revision
 
-Current target: **v0.4.2 Hands-on Round 3 implementation preparation**, branch `work/v0.4.2-hands-on-round3-prep`, based exactly on the native-green Round 2 PR #14 source `a553ae8c32eeb8c1f125b8c005095bbe6fc98ebb`.
+Current target: **v0.4.2 Hands-on Round 4 implementation preparation**, branch `work/v0.4.2-hands-on-round4-prep`, based exactly on the completed Round 3 Draft PR #15 source `fdc3f3e5448cdf5ce7c9498776362b1bf598c2b1` / tree `3aa91dd12a8262e60c1909293fb68f93a0a032d1`.
 
-Read these Round 3 documents first:
+Read these Round 4 documents first:
 
-1. `docs/V0.4.2_HANDS_ON_ROUND3_DESIGN.md`
-2. `docs/V0.4.2_HANDS_ON_ROUND3_HOST_EVIDENCE.md`
-3. `docs/V0.4.2_HANDS_ON_ROUND3_WORKPLAN.md`
-4. `docs/V0.4.2_HANDS_ON_ROUND3_ACCEPTANCE.md`
-5. `docs/V0.4.2_HANDS_ON_ROUND3_IMPLEMENTATION_PREP.md`
+1. `docs/V0.4.2_HANDS_ON_ROUND4_DESIGN.md`
+2. `docs/V0.4.2_HANDS_ON_ROUND4_HOST_EVIDENCE.md`
+3. `docs/V0.4.2_HANDS_ON_ROUND4_WORKPLAN.md`
+4. `docs/V0.4.2_HANDS_ON_ROUND4_ACCEPTANCE.md`
+5. `docs/V0.4.2_HANDS_ON_ROUND4_IMPLEMENTATION_PREP.md`
 
-Then read the Round 2 documents and earlier v0.4.2 design/roadmap documents for preserved history and safety contracts. Do not reimplement completed Round 2 A-F work.
+Then read the Round 3 documents for the completed parent contracts. Do not reimplement completed Round 3 A-F work.
 
-Round 3 comes from the user's real Hands-on Round 2 editing feedback. Its purpose is to reduce UI friction and make the placement surface spatially stable for mouse + position-shortcut use.
+Round 4 comes from the user’s real hands-on pass after the native-green Round 3 candidate. Its required direction is:
 
-Pinned/recorded host findings relevant to this round:
+- compact the Generic placement header and move Set-wide configuration into Settings;
+- keep Auto/Fixed columns and position shortcuts visibly/global across all Sets;
+- make Voice operation authoritative: row click and expression dropdown-open share the same navigation/Preview route;
+- add bounded common Voice-row height rather than shrinking text or auto-expanding every row;
+- fix nested Settings wheel routing;
+- replace the user-facing Save/Discard Settings workflow with safe automatic commits plus **今回の変更を戻す**, while preserving the current atomic/digest conflict guards;
+- add a one-button **テンプレート / プリセット（実験的）** expression source switch;
+- discover experimental tachie presets structurally, preferably by reusing the tachie plugin’s own YMM4 PropertyEditor against a fresh FaceParameter, not by maintaining a plugin allowlist.
 
-- no supported semantic clicked-layer route was established on exact YMM4 4.55.1.1; do not infer a layer from screen Y;
-- public `TimelineViewModel.ContainFrameInViewport(int)` and `ScrollFrame(int)` support semantic viewport following, and ScrollFrame does not move CurrentFrame;
-- ordinary WPF focus and `TimelineViewModel.FocusService.Focus()` are not Preview-refresh routes;
-- `Timeline.CurrentFrame` alone can move the displayed playhead while actual Preview/playback start remains stale;
-- public `PreviewViewModel.SeekAsync(int)` synchronized actual playback start to the displayed target in real-host Lab proof;
-- version number alone must not gate these behaviors: context pointer, Preview seek and viewport follow degrade independently by capability.
+Canonical Lab for the experimental preset capability is `ziro-lab/chat-native-work-lab-001` Draft PR #58. Final pinned result: source `621cff8199c6fe6daf54aa5ccd7c44e35e3c0ce7`, run `35488799463`, artifact `10598378796`, `PASS_GENERIC_EXPRESSION_PRESET_CAPABILITY_SURVEY`.
 
-The user-visible normal placement hierarchy remains **context -> Set -> tile**. Round 3 adds stable presentation/input controls; it does not authorize a core rewrite.
+The pinned host proved:
 
-The frozen Round 3 product choices are:
+- built-in AnimationTachie preset editor can be discovered structurally, enumerate choices and mutate Eye/Eyebrow/Mouth on a fresh FaceParameter;
+- built-in PSD preset editor can be discovered structurally, enumerate choices and mutate EnableLayers;
+- direct writable Preset-name shape works without a plugin allowlist;
+- a modern `PropertyEditorAttribute2 + IPropertyEditorForTachieParameterAttribute` third-party-style shape works through the same generic route;
+- unrelated Preset noise can be rejected and a throwing editor can be contained locally.
 
-- remove the obsolete tile drag/color bar and make color visible on the tile face;
-- Set-wide shape is a bulk update of existing per-entry shapes, not an inherited style model;
-- layout may remain Auto or be Fixed; position shortcuts are global slot bindings and never belong to tile/template identity;
-- all target Item types are direct in normal Settings; remove the "その他" hierarchy;
-- legacy compatibility data/code remains, but normal compatibility-workspace UI is hidden;
-- Generic fast layer targeting is numeric only, with finite DoNotPlace/SearchUp/SearchDown behavior;
-- top-level シーン更新 is removed in favor of event-driven Voice freshness;
-- expression row navigation synchronizes CurrentFrame + Voice selection + bounded public Preview seek and optional semantic viewport follow;
-- Preview/viewport host adapters are exact capability adapters, not fake input/private-state fallbacks.
+Treat this as an **experimental compatibility feature**, not a claim that every third-party tachie plugin is supported.
 
-Do not merge `main`. Keep PR #6, #11, #13, #14 and the Round 3 PR Draft until a new real-user hands-on candidate is accepted.
+Implementation order is frozen: R4-A Voice/navigation+wheel -> R4-B compact/global presentation -> R4-C Settings transaction -> R4-D experimental preset source -> final native/evidence/package. Item-type custom ordering is optional/non-blocking.
+
+Keep PR #6, #11, #13, #14, #15 and the future Round 4 PR Draft/open/unmerged until a new real-user hands-on candidate is accepted. Do not merge main.
 
 ## Product boundary
 
