@@ -28,6 +28,10 @@ internal static partial class NativeProof
         fixture.ManualStylePaletteId = style.Id; fixture.ManualCharacterPaletteId = null;
         scope.Apply(fixture, [voice], [voice]); vm.BeginIntentSettings();
         vm.SaveIntentSettings(); // Fixture persistence only; assertions below never use a Save button.
+        // The fixture write is setup, not part of the user's Round 4 Settings session.
+        // Start a fresh protected session so "今回の変更を戻す" is anchored to
+        // the fully persisted fixture state, exactly like opening Settings normally.
+        vm.ResetIntentSettings();
         view.SelectionTab.IsSelected = true; await Idle();
         var panel = view.RelativeSettingsSurface; var session = vm.IntentSettings!;
         session.SelectedItemContext = session.ItemContexts.Single(x => x.IsGeneric); await Idle();
