@@ -17,13 +17,14 @@ Read in this order:
 
 1. `docs/CURRENT_ARCHITECTURE.md`
 2. `docs/GLOSSARY.md`
-3. `docs/UI_MICRO_POLISH_DESIGN.md`
-4. `docs/UI_MICRO_POLISH_ACCEPTANCE.md`
-5. `docs/UI_MICRO_POLISH_WORKPLAN.md`
-6. `docs/UI_MICRO_POLISH_IMPLEMENTATION_PREP.md`
-7. `docs/VALIDATION_STRATEGY.md`
-8. `docs/BACKLOG.md` only for scope context
-9. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
+3. `docs/UI_MICRO_POLISH_CORRECTIVE_DESIGN.md`
+4. `docs/UI_MICRO_POLISH_CORRECTIVE_ACCEPTANCE.md`
+5. `docs/UI_MICRO_POLISH_CORRECTIVE_WORKPLAN.md`
+6. `docs/UI_MICRO_POLISH_CORRECTIVE_STATUS.md`
+7. `docs/UI_MICRO_POLISH_HANDS_ON_FEEDBACK.md`
+8. `docs/VALIDATION_STRATEGY.md`
+9. `docs/BACKLOG.md` only for scope context
+10. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
 
 This pass is UI-only. Do not add Tachie Preset or Placement Recipe product code.
 
