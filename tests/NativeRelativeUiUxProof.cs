@@ -78,9 +78,9 @@ internal static partial class NativeProof
             var narrowButtons = RelativeVisuals(surface.IntentTileItems).OfType<Button>().Where(x => x.CommandParameter is IntentTileChoice).ToArray();
             Assert(surface.IntentContextHeader.IsVisible && surface.IntentSetSegments.IsVisible && narrowButtons.Length == 2 &&
                 narrowButtons.All(x => x.ActualWidth > 0 && x.TranslatePoint(new Point(x.ActualWidth, 0), surface).X <= surface.ActualWidth + 1) &&
-                surface.IntentSettingsButton.IsVisible && surface.IntentSettingsButton.ActualHeight > 0 &&
-                surface.IntentSettingsButton.TranslatePoint(new Point(surface.IntentSettingsButton.ActualWidth, surface.IntentSettingsButton.ActualHeight), surface).Y <= surface.ActualHeight + 1,
-                "UIUX 360px keeps context, directly segmented Sets, action tiles and settings discovery understandable");
+                surface.PanelQuickSettingsButton.IsVisible && surface.PanelQuickSettingsButton.ActualHeight > 0 &&
+                surface.PanelQuickSettingsButton.TranslatePoint(new Point(surface.PanelQuickSettingsButton.ActualWidth, surface.PanelQuickSettingsButton.ActualHeight), surface).Y <= surface.ActualHeight + 1,
+                "UIUX 360px keeps context, directly segmented Sets, action tiles and quick-settings discovery understandable");
             SaveNamedView(view, "v042-uiux-edit-360.png");
 
             var many = PlacerSettingsStore.Copy(fixture);
