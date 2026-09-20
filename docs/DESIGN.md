@@ -1,10 +1,18 @@
+> **Historical design note**
+>
+> This document preserves the v0.4 target design that led to the current implementation.
+> It is no longer the primary authority for current behavior.
+> Read `docs/CURRENT_ARCHITECTURE.md` first, then `docs/GLOSSARY.md` and the active feature handoff.
+>
+> Do not rewrite this historical document merely to mirror every later Round.
+
 # DESIGN — TARGET v0.4
 
 ## Status
 
 - **Implemented baseline:** v0.3.1. Native YMM4 4.55.1.1 Liteでv0.3.0のVoice一覧 / Face Template配置 / Excel / Safety / Undo/Redoを維持し、P9としてTimeline Toolの非表示→再表示とTimeline不変まで検証済み。
-- **Current implementation target:** v0.4。
-- `docs/IMPLEMENTATION.md` / `docs/VERIFICATION.md` はv0.3.0で実証済みの機能事実を記録する。v0.3.1はその機能BaselineへTool lifecycle hotfixを追加した現在の回帰Baseline。v0.4実装は本書と `docs/ROADMAP.md` を正本とする。
+- **Historical target:** v0.4。
+- 現在仕様の正本は `docs/CURRENT_ARCHITECTURE.md`。本書と旧 `docs/ROADMAP.md` のW/Round記述は設計・検証履歴として保持する。
 
 ## Product definition
 
