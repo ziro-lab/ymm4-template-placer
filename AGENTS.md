@@ -2,31 +2,36 @@
 
 ## Current revision and Git authority
 
-Main contains the accepted Round 3 baseline, promoted by owner-approved PR #17 on 2026-09-20.
+Main now contains the accepted Round 4 A/B/C candidate merged by PR #16.
 
-Active PR #16 is now the **completed Round 4 A/B/C candidate**, not a preset implementation branch.
+Accepted main merge:
 
-Completed scope:
+- merge commit `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`
+- main Release validation run #227 `35508468265`: full native regression, exact distribution DLL smoke and verified package succeeded.
 
-- Voice/dropdown navigation and nested Settings wheel behavior;
-- compact Generic placement UI and global presentation;
-- common Voice row height;
-- protected automatic Settings persistence plus `今回の変更を戻す`;
-- tiered Focused / Checkpoint / Release validation.
+Active next work is:
 
-Experimental expression presets were deliberately split before implementation. Their frozen design and Lab evidence are in `docs/EXPERIMENTAL_PRESET_HANDOFF.md`. Do not add preset product code to PR #16.
+- branch `feature/experimental-expression-presets`
+- feature: experimental structural expression-preset source
+
+Start from `docs/EXPERIMENTAL_PRESET_HANDOFF.md`. Do **not** repeat the generic preset research unless implementation reveals a concrete unsupported host behavior.
+
+Canonical public Lab evidence remains `ziro-lab/chat-native-work-lab-001` PR #58:
+
+- source `621cff8199c6fe6daf54aa5ccd7c44e35e3c0ce7`
+- run `35488799463`
+- marker `PASS_GENERIC_EXPRESSION_PRESET_CAPABILITY_SURVEY`
 
 Read in this order:
 
 1. `docs/DEVELOPMENT_WORKFLOW.md`
 2. `docs/VALIDATION_STRATEGY.md`
-3. `docs/V0.4.2_HANDS_ON_ROUND4_DESIGN.md`
-4. `docs/V0.4.2_HANDS_ON_ROUND4_ACCEPTANCE.md`
-5. `docs/V0.4.2_HANDS_ON_ROUND4_IMPLEMENTATION_STATUS.md`
+3. `docs/EXPERIMENTAL_PRESET_HANDOFF.md`
+4. the accepted Round 4 A/B/C docs for preserved behavior
 
-PR #16 remains Draft until owner hands-on acceptance. After acceptance, merge it to main and create a fresh preset feature branch/PR from that accepted main.
+Use Focused validation for ordinary implementation iterations, Checkpoint when a preset capability/placement checkpoint is complete, and Release only when the whole feature candidate is ready.
 
-Do not reimplement completed A/B/C work. Do not reopen historical stacked PRs. Preserve their branches/evidence.
+Do not reopen or redesign the accepted A/B/C UX, Settings transaction model, PlacementPlan/native Undo architecture, or validation tiers as part of preset work.
 
 ## Product boundary
 
