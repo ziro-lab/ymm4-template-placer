@@ -1,3 +1,9 @@
+> **Historical first-candidate status**
+>
+> This document records the pre-Hands-on UI candidate that was Native-green before F1-F7 feedback.
+> It is superseded for current implementation by `UI_MICRO_POLISH_CORRECTIVE_STATUS.md`.
+> In particular, U4 direct digit entry was later rejected/removed and the row-height UX was redesigned.
+>
 # UI Micro Polish — implementation status
 
 Status: **AUTOMATED CANDIDATE COMPLETE / HANDS-ON PENDING**
