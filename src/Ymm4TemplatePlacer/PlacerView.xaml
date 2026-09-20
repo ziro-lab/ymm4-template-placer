@@ -19,7 +19,18 @@
       <TextBlock Text="{Binding Summary}" Opacity="0.75" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/>
       <WrapPanel HorizontalAlignment="Right">
        <TextBlock Text="行の高さ" VerticalAlignment="Center" Margin="0,0,5,0"/>
-       <ComboBox x:Name="ExpressionRowHeightPicker" ItemsSource="{Binding ExpressionRowHeights}" SelectedItem="{Binding ExpressionRowHeight,Mode=TwoWay}" IsEnabled="{Binding CanEditExpressionRowHeight}" Width="58" AutomationProperties.Name="セリフ一覧の行の高さ"/>
+       <TextBlock x:Name="ExpressionRowHeightValueText" Text="{Binding ExpressionRowHeight,StringFormat={}{0}px}" VerticalAlignment="Center" Width="38" TextAlignment="Right" Margin="0,0,6,0"/>
+       <Thumb x:Name="ExpressionRowHeightGrip" Width="58" Height="12" Cursor="SizeNS" IsEnabled="{Binding CanEditExpressionRowHeight}"
+        DragStarted="ExpressionRowHeightDragStarted" DragDelta="ExpressionRowHeightDragDelta" DragCompleted="ExpressionRowHeightDragCompleted"
+        ToolTip="上下にドラッグして、すべての音声行の高さを調整します。" AutomationProperties.Name="セリフ一覧の行の高さをドラッグ調整">
+        <Thumb.Template>
+         <ControlTemplate TargetType="Thumb">
+          <Border BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="0,1,0,1" Background="Transparent">
+           <TextBlock Text="↕" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+          </Border>
+         </ControlTemplate>
+        </Thumb.Template>
+       </Thumb>
       </WrapPanel>
       <local:ExpressionPresetPanel x:Name="PresetSurface"/>
       <TextBlock x:Name="ExpressionFreshnessWarning" Text="{Binding ExpressionFreshnessNotice}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,4,0,0">
