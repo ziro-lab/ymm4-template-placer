@@ -32,7 +32,7 @@ internal static partial class NativeProof
         settings.ManualCharacterPaletteId = null; settings.ManualStylePaletteId = left.Id;
         settings.ExpressionBootstrapComplete = true;
         settings.Presentation = new() { LayoutMode = PaletteLayoutMode.Fixed, FixedColumns = 4, ShortcutsEnabled = true,
-            PositionShortcuts = [new(0, Key.F20)] };
+            PositionShortcuts = [new(0, Key.F20), new(1, Key.D1)] };
         scope.Apply(settings, [first, last], [], 100);
         vm.ObserveTimelinePointer(TimelinePointerOrigin.TimelineBackground); vm.EndTimelinePointer(); await Idle();
         var palette = view.RelativePaletteSurface;
@@ -82,6 +82,24 @@ internal static partial class NativeProof
                 "B5", "inline Enter saves the existing numeric draft and Escape restores it; dirty input cannot execute an old target");
             Round4Assert(Enumerable.Range(1, 11).All(x => round3Checks.ContainsKey("D" + x)),
                 "B6", "all eleven retained native Generic layer planner safety checks passed on this run");
+
+            var beforeKeyItems = timeline.Items.ToArray();
+            var shortcutDigit = view.ShortcutRouter.ProcessKey(Key.D1, ModifierKeys.None, palette.PanelQuickSettingsButton, false, false, false);
+            await Idle();
+            var shortcutDigitAdded = timeline.Items.Except(beforeKeyItems).ToArray();
+            var shortcutWins = shortcutDigit && shortcutDigitAdded.Length == 1 && shortcutDigitAdded[0].Length == 17 &&
+                vm.GenericLayerTarget is { HasChanges: false };
+            await undo.UndoAsync(); await Idle();
+            var directDigit = view.ShortcutRouter.ProcessKey(Key.D7, ModifierKeys.None, palette.PanelQuickSettingsButton, false, false, false);
+            await Idle();
+            var directDraft = directDigit && vm.GenericLayerTarget is { Target: "7", HasChanges: true } &&
+                ReferenceEquals(Keyboard.FocusedElement, palette.GenericLayerSurface.GenericTargetBox) &&
+                scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred == 9 && Signature(timeline) == before;
+            palette.GenericLayerSurface.GenericTargetBox.Text = "12"; await Idle();
+            Keyboard.Focus(palette.GenericLayerSurface.GenericTargetBox); await Round3PressKey(Key.Enter); await Idle();
+            Assert(shortcutWins && directDraft && scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred == 12 &&
+                vm.GenericLayerTarget is { Target: "12", HasChanges: false },
+                "UI U4 digit shortcut wins when reserved; otherwise a digit starts focused Generic layer entry and Enter uses the existing protected apply path");
 
             await NativeRound2Click(palette.PanelQuickSettingsButton.PointToScreen(new Point(palette.PanelQuickSettingsButton.ActualWidth / 2,
                 palette.PanelQuickSettingsButton.ActualHeight / 2))); await Idle();
