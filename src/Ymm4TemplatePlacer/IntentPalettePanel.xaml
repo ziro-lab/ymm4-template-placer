@@ -76,6 +76,15 @@
    </StackPanel>
   </Grid>
 
-  <Button x:Name="IntentSettingsButton" Grid.Row="5" Content="⚙ 設定" Command="{Binding OpenCurrentSetSettingsCommand}" HorizontalAlignment="Right" Padding="10,5" Margin="0,6,0,0"/>
+  <Grid Grid.Row="5" HorizontalAlignment="Right" Margin="0,6,0,0">
+   <ToggleButton x:Name="PanelQuickSettingsButton" Content="⚙ 簡易設定" Padding="10,5" Checked="PanelQuickSettingsOpened" AutomationProperties.Name="配置パネルの簡易設定"/>
+   <Popup x:Name="PanelQuickSettingsPopup" Placement="Top" PlacementTarget="{Binding ElementName=PanelQuickSettingsButton}" StaysOpen="False" AllowsTransparency="True"
+    IsOpen="{Binding IsChecked,ElementName=PanelQuickSettingsButton,Mode=TwoWay}"
+    DataContext="{Binding PlacementTarget.DataContext,RelativeSource={RelativeSource Self}}">
+    <Border Padding="10" Width="340" MaxHeight="410" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1">
+     <local:PanelQuickSettingsPanel x:Name="PanelQuickSettingsSurface"/>
+    </Border>
+   </Popup>
+  </Grid>
  </Grid>
 </UserControl>
