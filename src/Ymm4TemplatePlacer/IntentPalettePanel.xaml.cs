@@ -30,12 +30,18 @@ public partial class IntentPalettePanel : UserControl
     }
     private void RootChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(PlacerViewModel.SelectedIntentSet) or nameof(PlacerViewModel.IntentContextTitle))
+        if (!PanelQuickSettingsPopup.IsOpen || observedRoot == null ||
+            e.PropertyName is not (nameof(PlacerViewModel.SelectedIntentSet) or nameof(PlacerViewModel.IntentContextTitle))) return;
+        if (observedRoot.SelectedIntentSet?.Id != quickPopupSetId ||
+            !string.Equals(observedRoot.IntentContextTitle, quickPopupContext, StringComparison.Ordinal))
             PanelQuickSettingsButton.IsChecked = false;
     }
     private void PanelQuickSettingsOpened(object sender, RoutedEventArgs e)
     {
-        if (DataContext is PlacerViewModel vm) vm.BeginPanelQuickSettings();
+        if (DataContext is not PlacerViewModel vm) return;
+        quickPopupSetId = vm.SelectedIntentSet?.Id;
+        quickPopupContext = vm.IntentContextTitle;
+        vm.BeginPanelQuickSettings();
     }
     private void ThemeChanged(object? sender, PropertyChangedEventArgs e)
     {
