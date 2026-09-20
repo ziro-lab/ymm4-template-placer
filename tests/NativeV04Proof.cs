@@ -63,5 +63,6 @@ internal static partial class NativeProof
         await VerifyHandsOnRound3Freshness(timeline, undo);
         await VerifyHandsOnRound3Navigation(timeline, undo);
         await VerifyHandsOnRound3Final(timeline, undo);
+        await VerifyHandsOnRound4Navigation(timeline, undo);
     }
 }

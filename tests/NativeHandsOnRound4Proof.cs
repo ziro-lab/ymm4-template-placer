@@ -1,0 +1,27 @@
+using System.IO;
+using System.Text.Json;
+
+namespace Ymm4TemplatePlacer;
+internal static partial class NativeProof
+{
+    private static readonly Dictionary<string, string> round4Checks = new(StringComparer.Ordinal);
+    private static void Round4Assert(bool condition, string id, string evidence)
+    {
+        Assert(condition, $"R4 {id}: {evidence}");
+        if (!round4Checks.TryAdd(id, evidence)) throw new InvalidOperationException("Duplicate Round 4 check: " + id);
+    }
+    private static void Round4Phase(string phase)
+    {
+        var checks = round4Checks.Where(x => x.Key.StartsWith(phase, StringComparison.Ordinal))
+            .Select(x => new { id = x.Key, result = "PASS", evidence = x.Value }).ToArray();
+        File.WriteAllText(Path.Combine(output, "hands-on-round4-" + phase.ToLowerInvariant() + ".json"), JsonSerializer.Serialize(new
+        {
+            schema = "YMM4-Template-Placer-Round4-Phase/1", phase, host = "YMM4 4.55.1.1 Lite", result = "PASS",
+            sourceHead = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_SOURCE_HEAD"),
+            checkoutTree = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_CHECKOUT_TREE"),
+            runId = Environment.GetEnvironmentVariable("GITHUB_RUN_ID"),
+            runAttempt = Environment.GetEnvironmentVariable("GITHUB_RUN_ATTEMPT"), checks
+        }, new JsonSerializerOptions { WriteIndented = true }));
+        Log("HANDS_ON_ROUND4_" + phase + "=PASS");
+    }
+}

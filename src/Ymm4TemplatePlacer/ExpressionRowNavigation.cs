@@ -18,20 +18,30 @@ public sealed partial class PlacerViewModel
     internal Task NavigationCompletion => voiceNavigationTask;
     internal bool NavigationWorkerActive => voiceNavigationWorkerActive;
 
-    private void QueueExpressionNavigation(AssignmentRow row)
+    private void QueueExpressionNavigation(AssignmentRow row, bool refreshCurrentContent = false)
     {
-        CloseExpressionTrialSession();
+        // A content refresh uses this same latest-wins seek worker, but must not
+        // finish an expression trial or pull the user back from a newer selection.
+        if (!refreshCurrentContent) CloseExpressionTrialSession();
         var current = RequireTimeline();
         if (voiceNavigationDisposed || !Rows.Contains(row) || !current.Items.Contains(row.Target.Voice))
             throw new InvalidOperationException("対象音声が現在のシーンにありません。メンテナンスから一覧を読み直してください。");
         var voice = row.Target.Voice;
         var target = voice.Frame;
-        current.CurrentFrame = target;
-        current.SelectItem(voice);
-        var message = $"No.{row.No} の音声位置へ移動しました。";
+        if (refreshCurrentContent)
+        {
+            if (current.CurrentFrame != target || current.SelectedItems.Count != 1 ||
+                !ReferenceEquals(current.SelectedItems[0], voice)) return;
+        }
+        else
+        {
+            current.CurrentFrame = target;
+            current.SelectItem(voice);
+        }
+        var message = refreshCurrentContent ? Status : $"No.{row.No} の音声位置へ移動しました。";
         var request = new VoiceNavigation(++voiceNavigationRevision, current, voice, target, row.No, message);
         pendingVoiceNavigation = request;
-        HasError = false; Status = message;
+        if (!refreshCurrentContent) { HasError = false; Status = message; }
         if (voiceNavigationWorkerActive) return;
         voiceNavigationWorkerActive = true;
         voiceNavigationTask = DrainVoiceNavigationAsync();
