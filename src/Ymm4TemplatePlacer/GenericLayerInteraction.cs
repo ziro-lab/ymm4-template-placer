@@ -15,6 +15,6 @@ public sealed partial class PlacerViewModel
         var next = (int)Math.Clamp((long)value + steps, draft.Saved.Minimum, draft.Saved.Maximum);
         if (next == value) return;
         draft.Target = next.ToString(CultureInfo.InvariantCulture);
-        ApplyGenericLayerTarget(); // The same protected apply as Enter; no alternate planner/store.
+        ApplyGenericLayerTarget(false); // Same protected apply as Enter; routine wheel success stays quiet.
     });
 }
