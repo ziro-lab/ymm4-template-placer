@@ -15,19 +15,7 @@
      <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding PlacementContextCompatibilityNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
     </TextBlock>
    </StackPanel>
-   <ToggleButton x:Name="GenericLayerButton" Grid.Column="1" Content="{Binding GenericLayerButtonLabel}" VerticalAlignment="Top" Padding="7,3" Margin="6,0,0,0" AutomationProperties.Name="汎用配置のレイヤー設定">
-    <ToggleButton.Style><Style TargetType="ToggleButton"><Style.Triggers>
-     <DataTrigger Binding="{Binding GenericLayerTarget}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
-     <DataTrigger Binding="{Binding IsOpen,ElementName=GenericLayerPopup}" Value="True"><Setter Property="IsHitTestVisible" Value="False"/></DataTrigger>
-    </Style.Triggers></Style></ToggleButton.Style>
-   </ToggleButton>
-   <Popup x:Name="GenericLayerPopup" Placement="Bottom" PlacementTarget="{Binding ElementName=GenericLayerButton}" StaysOpen="False" AllowsTransparency="True"
-    IsOpen="{Binding IsChecked,ElementName=GenericLayerButton,Mode=TwoWay}"
-    DataContext="{Binding PlacementTarget.DataContext,RelativeSource={RelativeSource Self}}">
-    <Border Padding="10" MaxWidth="340" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1">
-     <local:GenericLayerTargetPanel x:Name="GenericLayerSurface"/>
-    </Border>
-   </Popup>
+   <local:GenericLayerTargetPanel x:Name="GenericLayerSurface" Grid.Column="1" Width="134" VerticalAlignment="Top" Margin="6,0,0,0"/>
   </Grid>
 
   <TextBlock x:Name="SingleSetTitleText" Grid.Row="1" Text="{Binding SelectedIntentSet.Label}" FontWeight="SemiBold" Margin="4,0,4,6">

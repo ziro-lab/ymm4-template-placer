@@ -40,26 +40,38 @@ internal static partial class NativeProof
         Round4Assert(!RelativeVisuals(palette).OfType<FrameworkElement>().Any(x => x.Name == "IntentSetSettingsButton"),
             "B1", "normal placement has no permanent Set-wide button");
         var titleY = palette.IntentContextTitleText.TranslatePoint(new Point(), palette).Y;
-        var layerY = palette.GenericLayerButton.TranslatePoint(new Point(), palette).Y;
-        Round4Assert(palette.GenericLayerButton.IsVisible && Math.Abs(titleY - layerY) < 2,
-            "B2", "Generic layer affordance shares the context title row at the real narrow width");
-        Round4Assert(!palette.GenericLayerPopup.IsOpen && !palette.GenericLayerSurface.IsVisible &&
-            palette.GenericLayerPopup.Child != null, "B3", "the former full-width layer editor lives in a closed popup instead of consuming tile space");
-        async Task OpenLayer()
-        {
-            Window.GetWindow(view)!.Activate();
-            var button = palette.GenericLayerButton;
-            var point = button.PointToScreen(new Point(button.ActualWidth / 2, button.ActualHeight / 2));
-            Round2Input.SetCursorPos((int)Math.Round(point.X), (int)Math.Round(point.Y)); await Task.Delay(60); await Idle();
-            await NativeRound2Click(point); await Idle();
-        }
+        var layerY = palette.GenericLayerSurface.TranslatePoint(new Point(), palette).Y;
+        Round4Assert(palette.GenericLayerSurface.IsVisible && Math.Abs(titleY - layerY) < 2,
+            "B2", "inline Generic layer editor shares the context title row at the real narrow width");
+        Round4Assert(palette.GenericLayerSurface.GenericTargetBox.IsVisible && palette.GenericLayerSurface.GenericOccupiedPicker.IsVisible &&
+            palette.GenericLayerSurface.ActualHeight <= 48 && palette.IntentContextHeader.ActualHeight <= 54,
+            "B3", "layer target and occupied behavior stay visible inside the two-line header; no full-width row or popup");
         try
         {
-            await OpenLayer(); var opened = palette.GenericLayerPopup.IsOpen;
-            palette.GenericLayerButton.IsChecked = false; await Idle();
-            await OpenLayer();
-            Round4Assert(opened && palette.GenericLayerPopup.IsOpen && palette.GenericLayerSurface.GenericTargetBox.IsVisible,
-                "B4", "repeated native left-click opens the layer popup and it stays open after button release");
+            Window.GetWindow(view)!.Activate();
+            var box = palette.GenericLayerSurface.GenericTargetBox;
+            await NativeRound2Click(box.PointToScreen(new Point(box.ActualWidth / 2, box.ActualHeight / 2))); await Idle();
+            Round2Input.mouse_event(0x0800, 0, 0, 120, UIntPtr.Zero); await Task.Delay(100); await Idle();
+            var incremented = scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred == 9;
+            Round2Input.mouse_event(0x0800, 0, 0, unchecked((uint)-120), UIntPtr.Zero); await Task.Delay(100); await Idle();
+            Round4Assert(incremented && scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred == 8 && Signature(timeline) == before,
+                "B4", "real wheel over inline layer number applies +1/-1 through the protected target path without Timeline mutation");
+            var staleDraft = vm.GenericLayerTarget!;
+            vm.StepGenericLayer(staleDraft, int.MaxValue); await Idle();
+            Assert(scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred == 12,
+                "UI U1 wheel clamps at saved upper bound instead of overflowing or changing the range");
+            vm.StepGenericLayer(vm.GenericLayerTarget!, int.MinValue); await Idle();
+            Assert(scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred == 4,
+                "UI U1 wheel clamps at saved lower bound");
+            var unchanged = JsonSerializer.Serialize(scope.Current);
+            vm.StepGenericLayer(staleDraft, 1); await Idle();
+            Assert(vm.HasError && JsonSerializer.Serialize(scope.Current) == unchanged,
+                "UI U1 stale wheel request cannot write through a replaced draft");
+            vm.GenericLayerTarget!.Target = "not a number";
+            vm.StepGenericLayer(vm.GenericLayerTarget, 1); await Idle();
+            Assert(vm.HasError && vm.GenericLayerTarget.Target == "not a number" && JsonSerializer.Serialize(scope.Current) == unchanged,
+                "UI U1 wheel preserves incomplete input instead of guessing a numeric target");
+            vm.ResetGenericLayerTargetCommand.Execute(null);
             var editor = palette.GenericLayerSurface;
             editor.GenericTargetBox.Text = "9"; await Idle();
             var blocked = !vm.ExecuteIntentTileCommand.CanExecute(vm.IntentTiles[0]);
@@ -67,8 +79,7 @@ internal static partial class NativeProof
             var applied = scope.Current.Palettes.Single(x => x.Id == left.Id).Layer.Preferred == 9;
             editor.GenericTargetBox.Text = "10"; await Idle(); Keyboard.Focus(editor.GenericTargetBox); await Round3PressKey(Key.Escape); await Idle();
             Round4Assert(blocked && applied && vm.GenericLayerTarget is { Target: "9", HasChanges: false } && Signature(timeline) == before,
-                "B5", "popup Enter saves the existing numeric draft and Escape restores it; dirty input cannot execute an old target");
-            palette.GenericLayerButton.IsChecked = false; await Idle();
+                "B5", "inline Enter saves the existing numeric draft and Escape restores it; dirty input cannot execute an old target");
             Round4Assert(Enumerable.Range(1, 11).All(x => round3Checks.ContainsKey("D" + x)),
                 "B6", "all eleven retained native Generic layer planner safety checks passed on this run");
 
@@ -147,6 +158,6 @@ internal static partial class NativeProof
             SaveNamedView(view, "v042-round4-b-compact-palette-360.png");
             Round4Phase("B");
         }
-        finally { palette.GenericLayerButton.IsChecked = false; vm.CloseExpressionTrialSession(); await vm.NavigationCompletion; }
+        finally { vm.CloseExpressionTrialSession(); await vm.NavigationCompletion; }
     }
 }

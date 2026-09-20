@@ -41,7 +41,6 @@ internal static partial class NativeProof
             return good;
         }
         Apply(palette.Layer); await Idle();
-        view.RelativePaletteSurface.GenericLayerButton.IsChecked = true; await Idle();
         Log($"R3-D surface: context={vm.PlacementContext}; set={vm.SelectedIntentSet?.Id}; draft={vm.GenericLayerTarget?.Target}; visible={surface.IsVisible}; box={surface.GenericTargetBox.IsVisible}; choices={surface.GenericOccupiedPicker.Items.Count}");
         Round3Assert(surface.IsVisible && surface.GenericTargetBox.IsVisible && surface.GenericOccupiedPicker.Items.Count == 3 &&
             GenericLayerTargetDraft.Behaviors.Select(x => x.Value).SequenceEqual(new[] { LayerSearchMode.DoNotPlace, LayerSearchMode.SearchUp, LayerSearchMode.SearchDown }),
@@ -60,7 +59,6 @@ internal static partial class NativeProof
         Round3Assert(Signature(timeline) == before, "D2", "actual Enter saves the direct target and occupied policy atomically, preserving bounds without Timeline mutation");
         surface.GenericTargetBox.Text = "10"; await Idle(); Keyboard.Focus(surface.GenericTargetBox); await Round3PressKey(Key.Escape);
         Assert(vm.GenericLayerTarget is { Target: "9", HasChanges: false }, "R3-D actual Escape resets the quick layer draft without saving");
-        view.RelativePaletteSurface.GenericLayerButton.IsChecked = false;
         Apply(palette.Layer); await Idle();
         Round3Assert(await PlacesAt(8), "D3", "free target is used exactly, not the source template layer or another free layer");
         Apply(palette.Layer, Occupied(8)); await Idle(); before = Signature(timeline); Tile(); await Idle();

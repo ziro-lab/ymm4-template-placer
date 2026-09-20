@@ -9,36 +9,18 @@ public partial class IntentPalettePanel : UserControl
     private enum TilePointerPhase { Idle, Pressed, Dragging, SuppressRelease }
     private TilePointerPhase pointerPhase;
     private ContextMenu? activeMenu;
-    private PlacerViewModel? observedRoot;
-    private Guid? popupSet;
     private (Grid Cell, IntentTileChoice Tile, Point Point)? pendingDrag;
     public IntentPalettePanel()
     {
         InitializeComponent();
-        GenericLayerPopup.Opened += (_, _) => popupSet = observedRoot?.GenericLayerTarget?.SetId;
-        Loaded += (_, _) => { ObserveRoot(DataContext as PlacerViewModel); SystemParameters.StaticPropertyChanged -= ThemeChanged; SystemParameters.StaticPropertyChanged += ThemeChanged; };
-        Unloaded += (_, _) => { SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); ObserveRoot(null); };
-        DataContextChanged += (_, _) => { CancelLocalGesture(); CloseTileMenu(); ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); };
+        Loaded += (_, _) => { SystemParameters.StaticPropertyChanged -= ThemeChanged; SystemParameters.StaticPropertyChanged += ThemeChanged; };
+        Unloaded += (_, _) => { SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); };
+        DataContextChanged += (_, _) => { CancelLocalGesture(); CloseTileMenu(); };
     }
     private void ThemeChanged(object? sender, PropertyChangedEventArgs e)
     {
         // Local visual refresh only; never rebuild the root's tiles/Rows or change settings.
         if (IsLoaded) Dispatcher.InvokeAsync(() => IntentTileItems.Items.Refresh());
-    }
-    private void ObserveRoot(PlacerViewModel? next)
-    {
-        if (ReferenceEquals(next, observedRoot)) return;
-        GenericLayerButton.IsChecked = false; popupSet = null;
-        if (observedRoot != null) observedRoot.PropertyChanged -= RootChanged;
-        observedRoot = next;
-        if (next != null) next.PropertyChanged += RootChanged;
-    }
-    private void RootChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        // Local popup lifetime only. A changed Set cannot leave an editor for the old Set open.
-        if (e.PropertyName == nameof(PlacerViewModel.GenericLayerTarget) && GenericLayerPopup.IsOpen &&
-            (observedRoot?.GenericLayerTarget == null || observedRoot.GenericLayerTarget.SetId != popupSet))
-            GenericLayerButton.IsChecked = false;
     }
     private void CancelLocalGesture()
     {
@@ -66,7 +48,7 @@ public partial class IntentPalettePanel : UserControl
         var suppress = pointerPhase is TilePointerPhase.Dragging or TilePointerPhase.SuppressRelease;
         var cell = pendingDrag?.Cell; pendingDrag = null; pointerPhase = TilePointerPhase.Idle;
         if (cell?.IsMouseCaptured == true) cell.ReleaseMouseCapture();
-        if (suppress) e.Handled = true;
+        e.Handled = true == suppress ? true : e.Handled;
     }
     private void TilePointerLostCapture(object sender, MouseEventArgs e)
     {
