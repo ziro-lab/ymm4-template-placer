@@ -9,13 +9,31 @@ public partial class IntentPalettePanel : UserControl
     private enum TilePointerPhase { Idle, Pressed, Dragging, SuppressRelease }
     private TilePointerPhase pointerPhase;
     private ContextMenu? activeMenu;
+    private PlacerViewModel? observedRoot;
     private (Grid Cell, IntentTileChoice Tile, Point Point)? pendingDrag;
     public IntentPalettePanel()
     {
         InitializeComponent();
-        Loaded += (_, _) => { SystemParameters.StaticPropertyChanged -= ThemeChanged; SystemParameters.StaticPropertyChanged += ThemeChanged; };
-        Unloaded += (_, _) => { SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); };
-        DataContextChanged += (_, _) => { CancelLocalGesture(); CloseTileMenu(); };
+        Loaded += (_, _) => { ObserveRoot(DataContext as PlacerViewModel); SystemParameters.StaticPropertyChanged -= ThemeChanged; SystemParameters.StaticPropertyChanged += ThemeChanged; };
+        Unloaded += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(null); SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); };
+        DataContextChanged += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
+        PanelQuickSettingsPopup.Closed += (_, _) => { PanelQuickSettingsButton.IsChecked = false; observedRoot?.EndPanelQuickSettings(); };
+    }
+    private void ObserveRoot(PlacerViewModel? next)
+    {
+        if (ReferenceEquals(observedRoot, next)) return;
+        if (observedRoot != null) observedRoot.PropertyChanged -= RootChanged;
+        observedRoot = next;
+        if (observedRoot != null) observedRoot.PropertyChanged += RootChanged;
+    }
+    private void RootChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(PlacerViewModel.SelectedIntentSet) or nameof(PlacerViewModel.IntentContextTitle))
+            PanelQuickSettingsButton.IsChecked = false;
+    }
+    private void PanelQuickSettingsOpened(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is PlacerViewModel vm) vm.BeginPanelQuickSettings();
     }
     private void ThemeChanged(object? sender, PropertyChangedEventArgs e)
     {
