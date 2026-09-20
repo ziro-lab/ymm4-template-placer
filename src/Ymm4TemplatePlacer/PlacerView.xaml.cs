@@ -85,12 +85,12 @@ public partial class PlacerView : UserControl
     {
         if (sender is not DataGridRow row || observedViewModel is not { CanEditExpressionRowHeight: true } vm ||
             !IsExpressionRowResizeHit(row, e)) return;
+        if (!row.CaptureMouse()) return;
         expressionRowHeightResizeRow = row;
         expressionRowHeightDragStart = vm.ExpressionRowHeight;
         expressionRowHeightPreview = expressionRowHeightDragStart;
         expressionRowHeightPointerStart = e.GetPosition(VoiceGrid).Y;
         row.Cursor = Cursors.SizeNS;
-        row.CaptureMouse();
         e.Handled = true;
     }
 
