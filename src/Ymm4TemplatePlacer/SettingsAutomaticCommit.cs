@@ -45,7 +45,7 @@ public sealed partial class PlacerViewModel
         SetSettingsCommitState(SettingsCommitPhase.Idle, "変更を反映しました。今回の変更は元に戻せます。");
     }
     // One Dispatcher operation coalesces an edit burst; there is no polling timer.
-    // Focused validation keeps this high-risk Settings path in the stable-core native suite.
+    // Settings persistence is high-risk, so this path stays in the stable-core Focused native profile.
     private void RequestSettingsAutoCommit()
     {
         rollbackIntentSettingsCommand?.RaiseCanExecuteChanged();
