@@ -1,45 +1,22 @@
 # AGENTS.md
 
-## Current revision
+## Current revision and Git authority
 
-Current target: **v0.4.2 Hands-on Round 4 implementation preparation**, branch `work/v0.4.2-hands-on-round4-prep`, based exactly on the completed Round 3 Draft PR #15 source `fdc3f3e5448cdf5ce7c9498776362b1bf598c2b1` / tree `3aa91dd12a8262e60c1909293fb68f93a0a032d1`.
+Main contains the accepted Round 3 baseline, promoted by owner-approved PR #17 on 2026-09-20. Exact product source: `fdc3f3e5448cdf5ce7c9498776362b1bf598c2b1`; exact tree: `3aa91dd12a8262e60c1909293fb68f93a0a032d1`. Promotion merge: `b8c787b713e2dbfe253a8ab4ca7f9a6920c81f75`.
 
-Read these Round 4 documents first:
+Read `docs/DEVELOPMENT_WORKFLOW.md` first. It supersedes historical instructions to keep main unchanged or keep the old stacked PRs open. Do not reopen or separately merge incorporated historical candidates. Preserve their branches and evidence.
 
-1. `docs/V0.4.2_HANDS_ON_ROUND4_DESIGN.md`
-2. `docs/V0.4.2_HANDS_ON_ROUND4_HOST_EVIDENCE.md`
-3. `docs/V0.4.2_HANDS_ON_ROUND4_WORKPLAN.md`
-4. `docs/V0.4.2_HANDS_ON_ROUND4_ACCEPTANCE.md`
-5. `docs/V0.4.2_HANDS_ON_ROUND4_IMPLEMENTATION_PREP.md`
+Active next-round work is main-based Draft PR #16, `work/v0.4.2-hands-on-round4-prep`. Read that branch's Round 4 DESIGN / HOST_EVIDENCE / WORKPLAN / ACCEPTANCE / IMPLEMENTATION_PREP before implementing there. Do not mix unfinished Round 4 source or prep documents into this baseline. Keep an incomplete working PR Draft; merge only after applicable validation and owner acceptance.
 
-Then read the Round 3 documents for the completed parent contracts. Do not reimplement completed Round 3 A-F work.
+For the baseline's behavior and regression contracts read:
 
-Round 4 comes from the user’s real hands-on pass after the native-green Round 3 candidate. Its required direction is:
+1. `docs/V0.4.2_HANDS_ON_ROUND3_DESIGN.md`
+2. `docs/V0.4.2_HANDS_ON_ROUND3_HOST_EVIDENCE.md`
+3. `docs/V0.4.2_HANDS_ON_ROUND3_ACCEPTANCE.md`
+4. Round 2 and earlier design documents for preserved contracts.
+5. `docs/NATIVE_VALIDATION_V0.4.md` and current evidence/package workflows.
 
-- compact the Generic placement header and move Set-wide configuration into Settings;
-- keep Auto/Fixed columns and position shortcuts visibly/global across all Sets;
-- make Voice operation authoritative: row click and expression dropdown-open share the same navigation/Preview route;
-- add bounded common Voice-row height rather than shrinking text or auto-expanding every row;
-- fix nested Settings wheel routing;
-- replace the user-facing Save/Discard Settings workflow with safe automatic commits plus **今回の変更を戻す**, while preserving the current atomic/digest conflict guards;
-- add a one-button **テンプレート / プリセット（実験的）** expression source switch;
-- discover experimental tachie presets structurally, preferably by reusing the tachie plugin’s own YMM4 PropertyEditor against a fresh FaceParameter, not by maintaining a plugin allowlist.
-
-Canonical Lab for the experimental preset capability is `ziro-lab/chat-native-work-lab-001` Draft PR #58. Final pinned result: source `621cff8199c6fe6daf54aa5ccd7c44e35e3c0ce7`, run `35488799463`, artifact `10598378796`, `PASS_GENERIC_EXPRESSION_PRESET_CAPABILITY_SURVEY`.
-
-The pinned host proved:
-
-- built-in AnimationTachie preset editor can be discovered structurally, enumerate choices and mutate Eye/Eyebrow/Mouth on a fresh FaceParameter;
-- built-in PSD preset editor can be discovered structurally, enumerate choices and mutate EnableLayers;
-- direct writable Preset-name shape works without a plugin allowlist;
-- a modern `PropertyEditorAttribute2 + IPropertyEditorForTachieParameterAttribute` third-party-style shape works through the same generic route;
-- unrelated Preset noise can be rejected and a throwing editor can be contained locally.
-
-Treat this as an **experimental compatibility feature**, not a claim that every third-party tachie plugin is supported.
-
-Implementation order is frozen: R4-A Voice/navigation+wheel -> R4-B compact/global presentation -> R4-C Settings transaction -> R4-D experimental preset source -> final native/evidence/package. Item-type custom ordering is optional/non-blocking.
-
-Keep PR #6, #11, #13, #14, #15 and the future Round 4 PR Draft/open/unmerged until a new real-user hands-on candidate is accepted. Do not merge main.
+Do not reimplement completed rounds. Normal placement is context -> Set -> tile. Auto/Fixed layout and position shortcuts are global, never owned by a template. Generic layer targeting is numeric only; no coordinate-derived clicked-layer mode. Normal startup never enters the hidden legacy workspace. Voice freshness is event-driven, excluding association Remark-only changes. Voice navigation uses one root-owned latest-wins coordinator for CurrentFrame, selection, public Preview SeekAsync and independent viewport following. Never use fake input, frame jiggle or FocusService as a Preview-refresh workaround.
 
 ## Product boundary
 
@@ -49,57 +26,53 @@ Runtime Item type is the primary applicability key. Uniform and mixed multi-sele
 
 First expression bootstrap scans live Face-containing Templates. It does not repeatedly re-add user-deleted memberships. New expression import is explicit. Settings organization is separate from normal execution. No arbitrary expression, script, property-path engine, boolean tree, regex rules, DSL or node graph.
 
-The `表情をまとめて` workspace is a specialist high-throughput expression-placement workflow. It may replace or remove **only the exact Plugin-managed associated bundle for the row's Voice**, after complete strict resolution and preflight. This is not permission to make normal placement destructive or to delete/rebuild manual/unassociated items.
+The `表情をまとめて` workspace is a specialist high-throughput expression-placement workflow. It may replace or remove only the exact Plugin-managed associated bundle for the row's Voice, after complete strict resolution and preflight. This is not permission to make normal placement destructive or to delete/rebuild manual/unassociated items.
 
 ## GUI coordination guardrails
 
-Preserve the current WPF/MVVM and PlacementPlan architecture; do not rewrite it into MVP, Chain of Responsibility, or another pattern merely for terminology compliance. Apply the following rules when adding or changing GUI behavior so AI-assisted incremental work cannot create hidden cross-screen state coupling.
+Preserve WPF/MVVM and PlacementPlan; do not rewrite into another architecture merely for terminology compliance.
 
-- Treat Views and child panels as passive surfaces. They may render bound state, perform purely local visual/layout work, and forward user intent. Do not let a View or code-behind directly change a sibling View, sibling ViewModel, Timeline, settings, or another feature's workflow state to make a behavior happen.
-- Keep child ViewModels responsible only for their own local feature state. Any request that affects workspace mode, competing operations, global visibility/navigation, operation admission, cancellation, or another component must be raised to the owning parent and ultimately the root coordinator (`PlacerViewModel` or its explicit successor).
-- UI events must have one upward ownership path. Prefer commands/events that bubble through the existing owner hierarchy over sibling-to-sibling calls, shared mutable flags, or ad-hoc callbacks. The component that receives an event either handles the part it owns or delegates upward; it must not reach sideways to orchestrate another component.
-- The root coordinator is the single arbiter for mutually exclusive UI/workflow state. Do not add sleeps, retry loops, temporary locks, duplicated timers, or competing show/hide decisions in separate components to reconcile races after the fact.
-- When a new feature introduces mutually exclusive or order-sensitive application states, model them explicitly as a finite state/transition model (an enum/state object or an equally explicit transition table) instead of encoding the new global state as an unchecked combination of booleans. Keep invalid transitions impossible or rejected at the coordinator boundary. The new expression immediate-apply/replace flow is such a stateful workflow.
-- A user action must have one authoritative route from input to decision to effect. Repeated input, cancel/close, mode switch, Tool hide/reopen, row change during immediate apply, and re-entry during an executing operation must be covered by regression tests when the changed feature can interact with those paths.
-- Do not move placement/domain decisions into the GUI coordinator. Keep the existing direction: UI intent -> coordinator/admission -> resolver/plan -> complete preflight -> `PlacementPlan` commit -> native Undo. GUI coordination rules are a guardrail around the proven placement core, not a replacement for it.
+- Views/child panels render bound state, perform local visual/layout work and forward user intent. They never directly change a sibling View, sibling ViewModel, Timeline, settings or another workflow.
+- Child ViewModels own local feature state. Requests affecting global navigation, operation admission, cancellation, visibility or other components go upward to the root coordinator, not sideways through shared mutable flags or ad-hoc callbacks.
+- The root is the single arbiter for mutually exclusive/order-sensitive workflow states. Model their finite transitions explicitly. Do not add sleeps, retry loops, duplicated timers or independent show/hide decisions to mask races.
+- A user action has one authoritative route from input to decision to effect. Cover repeated input, cancellation, mode/row changes, Tool hide/reopen, DataContext replacement and re-entry during executing operations.
+- Keep domain decisions in the existing direction: UI intent -> coordinator/admission -> resolver/plan -> complete preflight -> PlacementPlan commit -> native Undo. These guardrails are not permission to create a new placement engine.
 
 ## Safety core
 
-- Live YMM4 `ItemSettings.Default.Templates` is the source of truth. Library/settings store references, aliases, appearance metadata and relation parameters, never copied Template bodies.
-- `ItemTemplate.SceneId` is not a unique ID. Strict TemplateLocator must resolve exactly one source. Missing/ambiguous references remain unresolved; only explicit relink may change their meaning.
-- Normal placement is add-only. Never delete/rebuild or move/shorten existing unrelated/manual items to make room. The only planned UX-polish exception is atomic replacement/removal of a validated exact associated expression bundle in the specialist expression workspace.
-- Resolve time, whole-duration collisions and already-planned occupancy for the complete operation before mutation. A required-plan failure leaves zero partial placement. Expression replacement must fully prepare the new result before the old associated result is changed.
-- Clone bundle members independently, normalize the minimum source Frame and preserve internal Frame/Layer/Length/content. Do not invent native Group identities.
-- `GetClone()` preserves the source Character object identity in the pinned host. For a character-bearing clone whose logical `CharacterName` matches the selected target, rebind only the clone to that selected canonical Character after planning; never rewrite the live Template. For `TachieFaceItem`, preserve the already-cloned Face parameter/effect objects across Character setter refresh. Keep `TEMPLATE_FIDELITY=PASS` as a release gate. Exact CharactorMotion 1.1.1 `ZoomCorrection=5` / disabled state has separate lab corroboration; real PsdTachie content still requires hands-on acceptance.
-- 上 means smaller layer numbers; 下 means larger numbers. Collision escape translates the whole bundle in the same direction only, within the saved bounds. No opposite-side wrap.
-- Commit through the shared PlacementPlan and YMM4-native Undo/Redo. No custom undo stack. Trial-switch history coalescing is gated by proved host support.
-- Validate stale source/context/settings again before committing. Do not turn failures into empty-success reports.
-- Settings edits are staged and atomically saved. Corrupt/future/external-modified settings must not be overwritten. Load-time migration is in memory and preserves old meanings.
+- Live `ItemSettings.Default.Templates` is authoritative. Store references, aliases, appearance and relation parameters, never copied template bodies in a second database.
+- `ItemTemplate.SceneId` is not a unique ID. Strict TemplateLocator resolves exactly one source. Missing/ambiguous references remain unresolved; only explicit relink changes their meaning.
+- Normal placement is add-only. Never move, shorten or delete unrelated/manual items to create space. The specialist expression workspace may atomically replace/remove an exact validated managed bundle only.
+- Resolve whole-operation time, full-duration collisions and planned reservations before mutation. Any required-plan failure is zero-write. Fully prepare a replacement before changing the old bundle.
+- Clone bundle members independently, normalize minimum source Frame and preserve internal Frame/Layer/Length/content. Do not invent native Group identities.
+- `GetClone()` preserves source Character identity in the pinned host. Rebind only planned matching clones to the selected canonical Character, never live templates. Preserve already-cloned TachieFaceParameter/effect objects across the Character setter. Retain TEMPLATE_FIDELITY evidence; exact CharactorMotion 1.1.1 corroboration is not universal third-party PSD rendering proof.
+- 上 means smaller Layer numbers; 下 means larger. Escape moves the complete bundle in one direction inside saved bounds, without opposite wrap.
+- Shared PlacementPlan and YMM4-native Undo/Redo are authoritative. No custom undo stack. Trial coalescing needs proved native support and must close before unrelated edits.
+- Revalidate stale source/context/settings before commit. Never report an empty success after a required validation failure.
+- Settings retain staged validation and atomic protected saves. Never overwrite corrupt, future-version or externally modified settings. In-memory migration preserves old meanings. A future approved autosave UX must still use these guards.
 
 ## Association and compatibility
 
-Normal tiles are unassociated. Expression-list placement may associate one Voice with multiple generated members through weak Remark tags. Preserve user remarks. Each member must be identifiable; explicit Resync updates whole bundles or skips the invalid bundle, never partially reconstructs it. A copied/missing member or ambiguous target is not repaired by proximity/text/order.
+Normal tiles are unassociated. Expression placement can associate one Voice with multiple members via weak Remark tags. Preserve user remarks and identify every member. Missing, copied or ambiguous associations are not repaired using proximity, text or order. Refresh/reopen reconstructs choices by exact source identity, not by first match.
 
-The hands-on UX polish may add immediate expression replacement/removal, but only by exact association identity and whole-bundle atomic preflight. Opening/refreshing the list must reconstruct current choices from exact association identity, never by visual position, text similarity or first match.
+Resync is explicit, selection-scoped, uses current saved relations and reports skipped independent bundles truthfully. One native Undo covers successful changes. No continuous scene-wide tracking; legacy Resync must not update only one member of a relative bundle.
 
-Resync is user-triggered, selection-scoped, uses current saved relations, and is best effort across independent bundles with truthful skip reporting and one native Undo for the successful updates. No continuous scene-wide tracking. Legacy Resync must not update just one member of a relative bundle.
-
-Preserve old Library/Palette/Expression/Selection presets and old Quick Drop data/code losslessly, but Round 3 removes the normal user-facing compatibility-workspace entry. Do not invent absolute-to-relative migration, and do not let a saved legacy-workspace flag strand normal startup in hidden UI. Excel remains a secondary Voice assignment bridge; import validates before changing assignments and never mutates Timeline by itself. No Excel COM requirement.
+Preserve old Library/Palette/Expression/Selection presets and Quick Drop data/code losslessly. Hidden legacy UI is not a migration scheme, and a saved legacy flag must not strand normal startup. Excel is a secondary assignment bridge: validate before changing assignments and never mutate Timeline during import. No Excel COM dependency.
 
 ## Host and runtime
 
-Pinned native host: YMM4 4.55.1.1 Lite, .NET 10, WPF, `net10.0-windows10.0.19041.0`. Prefer proved public Timeline APIs documented in `docs/NATIVE_VALIDATION_V0.4.md`; selection is event-driven, not polling or private Timeline ViewModel reflection. The isolated fixed read-only Character registry compatibility adapter is documented separately; do not generalize it into arbitrary reflection.
+Pinned native regression host: YMM4 4.55.1.1 Lite / .NET 10 / WPF / net10.0-windows10.0.19041.0. Production compatibility depends on required capabilities, not a blanket version-number gate. Missing context, Preview or viewport support degrades only that feature.
 
-Run heavy native YMM4/build/package work in the existing Windows GitHub Actions lane, not the chat container. Keep fixtures tiny, deterministic and redistribution-safe. Check actual commands/state plus screenshots. Do not infer real PSD rendering fidelity from synthetic fixtures.
+Use proved public Timeline APIs. No polling or private Timeline ViewModel state for selection. Existing isolated read-only Character-registry compatibility does not authorize arbitrary reflection.
 
-## Release and git discipline
+Run heavy native/build/package work in the existing Windows Actions lane, not the chat container. Use small deterministic redistribution-safe fixtures. Check actual commands/state and screenshots. Never infer real PSD visual fidelity from synthetic fixtures.
 
-- Work on the specified branch; preserve main, PR #6, PR #11 and the accepted baseline.
-- Use small auditable changes/checkpoints. If a safety check rejects a write, do not reroute it; record the exact operation and last successful commit.
-- Documentation-only changes must not download/build/launch YMM4; source/project/XAML/tests/fixtures/workflow changes require the native lane before promotion.
-- Require P1-P9, W3-W12, WUX1-WUX13, R1-R14, `TEMPLATE_FIDELITY=PASS`, `RELATIVE_UIUX=PASS`, and after implementation `HANDS_ON_UX_POLISH=PASS`, plus current acceptance manifests, zero compiler warnings/errors, exact release DLL native smoke and stable-root archive checks.
-- `ValidateRelativeEvidence.ps1` is the independent relative acceptance consumer; keep its negative tests and extend rather than weaken it for the new stage.
-- `.ymme` root must always be `Ymm4TemplatePlacer/`, never a versioned plugin folder. Record source/checkout/run provenance and all final hashes.
-- Separate DONE/PARTIAL/FUTURE/BLOCKED accurately. Native PASS is not hands-on user acceptance.
+## Release and change discipline
 
-Existing external projects/research are evidence, not permission to copy assets or code without checking licenses. Prefer the smallest implementation against proved YMM4 APIs.
+- Work through a main-based branch/PR. Preserve accepted baseline identity and history. Never force-push or reroute a write rejected by a safety check; report the exact failure and last successful checkpoint.
+- Use small auditable changes. Documentation-only commits must not launch native builds; source/project/XAML/tests/fixtures/workflow changes require the Windows lane before promotion.
+- Retain P1-P9, W3-W12, WUX1-WUX13, R1-R14, TEMPLATE_FIDELITY, RELATIVE_UIUX, HANDS_ON_UX_POLISH, HANDS_ON_ROUND2, HANDS_ON_ROUND3 and the current acceptance manifests. New stages are additive; keep independent invalid-evidence fixtures.
+- Release/Proof builds require zero compiler warnings/errors and the exact distribution DLL must pass native smoke. Package root stays `Ymm4TemplatePlacer/`; record source/checkout/run/attempt/provenance and final hashes.
+- Label DONE/PARTIAL/FUTURE/BLOCKED accurately. Native PASS is not human acceptance. Update usage documentation only after the new implemented UI is native-green, not speculatively during partial work.
+
+External research is evidence, not permission to copy assets/code without checking licenses. Prefer the smallest change against proved YMM4 APIs.
