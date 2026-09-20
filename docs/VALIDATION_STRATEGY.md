@@ -40,7 +40,7 @@ It intentionally skips release-DLL smoke and final packaging.
 
 ## Release
 
-Use on push to main or explicit Release workflow dispatch.
+Use on push to main, push to the dedicated `work/v0.4-native-validation` release-candidate branch, or explicit Release workflow dispatch.
 
 Release runs everything Checkpoint runs, then also:
 
@@ -56,7 +56,8 @@ This is authoritative promotion/release evidence.
 - Draft PR ordinary src change -> Focused.
 - PR change touching tests/, fixtures/ or the native workflow -> Checkpoint.
 - PR ready_for_review -> Checkpoint.
-- non-main validation-branch push -> Checkpoint.
+- push to `work/v0.4-native-validation` -> Release candidate validation.
+- other non-main validation-branch push -> Checkpoint.
 - main push -> Release.
 - workflow_dispatch -> explicit Focused / Checkpoint / Release choice.
 - documentation-only synchronize events still avoid YMM4 entirely.
