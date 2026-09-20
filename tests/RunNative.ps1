@@ -1,4 +1,11 @@
-param([Parameter(Mandatory=$true)][string]$Ymm4Dir, [Parameter(Mandatory=$true)][string]$OutputDir, [string]$DistributionDir, [switch]$ReleaseSmoke, [int]$TimeoutSeconds=300)
+param(
+ [Parameter(Mandatory=$true)][string]$Ymm4Dir,
+ [Parameter(Mandatory=$true)][string]$OutputDir,
+ [string]$DistributionDir,
+ [ValidateSet('focused','checkpoint','release')][string]$Profile='checkpoint',
+ [switch]$ReleaseSmoke,
+ [int]$TimeoutSeconds=300
+)
 $ErrorActionPreference='Stop'
 if ($TimeoutSeconds -lt 1) { throw 'TimeoutSeconds must be at least 1.' }
 Add-Type -TypeDefinition @'
@@ -18,6 +25,7 @@ $result=Join-Path $OutputDir 'proof-result.txt'
 Remove-Item $marker -ErrorAction SilentlyContinue
 $env:YMM4_TEMPLATE_PLACER_CI_MARKER=$marker
 $env:YMM4_TEMPLATE_PLACER_DIST_DIR=$DistributionDir
+$env:YMM4_TEMPLATE_PLACER_NATIVE_PROFILE=$Profile
 if ($ReleaseSmoke) { Remove-Item Env:YMM4_TEMPLATE_PLACER_PROOF_DIR -ErrorAction SilentlyContinue }
 else {
  $env:YMM4_TEMPLATE_PLACER_PROOF_DIR=$OutputDir
@@ -57,31 +65,42 @@ try {
   Start-Sleep -Seconds 1
  }
 } finally { if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } }
+
 if ($ReleaseSmoke) {
  if (-not (Test-Path $marker)) { throw "Release DLL did not load in native YMM4 within $TimeoutSeconds seconds" }
  $text=Get-Content -Raw $marker
  $installed=Join-Path $Ymm4Dir 'user/plugin/Ymm4TemplatePlacer/Ymm4TemplatePlacer.dll'
  $expected=(Get-FileHash $installed -Algorithm SHA256).Hash.ToLowerInvariant()
- if ($text -notmatch '(?m)^build=distribution\r?$' -or $text -notmatch "(?m)^sha256=$expected\r?`$") { throw 'Loaded assembly is not the exact distribution DLL' }
+ $hashPattern='(?m)^sha256='+[regex]::Escape($expected)+'\r?$'
+ if ($text -notmatch '(?m)^build=distribution\r?$' -or $text -notmatch $hashPattern) { throw 'Loaded assembly is not the exact distribution DLL' }
  Get-Content $marker
-} else {
- $log=Join-Path $OutputDir 'proof-log.txt'
- if (Test-Path $log) { Get-Content $log }
- if (-not (Test-Path $result)) { throw "Native proof did not finish within $TimeoutSeconds seconds; inspect windows-seen and build evidence" }
- Get-Content $result
- if (-not (Select-String -Path $result -Pattern '^PASS P1 P2 P3 P4 P5 P6 P7 P8 P9$')) { throw 'Native functional proof failed' }
- if (-not (Select-String -Path $log -Pattern '^V04=PASS$')) { throw 'Integrated v0.4 native proof is incomplete' }
- if (-not (Select-String -Path $log -Pattern '^UX_ACCEPTANCE=PASS$')) { throw 'Task UX acceptance is incomplete' }
- if (-not (Select-String -Path $log -Pattern '^UX_WORKFLOW_ACCEPTANCE=PASS$') -or -not (Select-String -Path $log -Pattern '^WUX13=PASS$')) { throw 'v0.4.2 UX workflow acceptance is incomplete' }
- if (-not (Select-String -Path $log -Pattern '^HANDS_ON_UX_POLISH=PASS$')) { throw 'Hands-on UX polish native acceptance is incomplete' }
- if (-not (Select-String -Path $log -Pattern '^HANDS_ON_ROUND2=PASS$')) { throw 'Hands-on Round 2 native acceptance is incomplete' }
- $null = & "$PSScriptRoot/ValidateRelativeEvidence.ps1" -OutputDir $OutputDir
- $null = & "$PSScriptRoot/ValidateRound3Evidence.ps1" -OutputDir $OutputDir
- $null = & "$PSScriptRoot/ValidateRound4Checkpoint.ps1" -OutputDir $OutputDir -Phases A,B,CT,CS,C
- $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
- if ($acceptance.version -ne '0.4.2' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 core acceptance evidence' }
- $ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-Json
- if ($ux.version -ne '0.4.0' -or $ux.result -ne 'PASS' -or @($ux.checks).Count -ne 12 -or @($ux.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete retained Task UX acceptance evidence' }
- $workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
- if ($workflow.version -ne '0.4.2' -or $workflow.result -ne 'PASS' -or @($workflow.checks).Count -ne 10 -or @($workflow.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 UX workflow acceptance evidence' }
+ return
 }
+
+$log=Join-Path $OutputDir 'proof-log.txt'
+if (Test-Path $log) { Get-Content $log }
+if (-not (Test-Path $result)) { throw "Native proof did not finish within $TimeoutSeconds seconds; inspect windows-seen and build evidence" }
+Get-Content $result
+if (-not (Select-String -Path $result -Pattern '^PASS P1 P2 P3 P4 P5 P6 P7 P8 P9$')) { throw 'Native functional proof failed' }
+
+if ($Profile -eq 'focused') {
+ if (-not (Select-String -Path $log -Pattern '^FOCUSED_NATIVE=PASS$')) { throw 'Focused stable-core native proof is incomplete' }
+ Write-Host 'Focused native validation: stable core + current Round 4 checkpoints PASS'
+ return
+}
+
+if (-not (Select-String -Path $log -Pattern '^V04=PASS$')) { throw 'Integrated v0.4 native proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^UX_ACCEPTANCE=PASS$')) { throw 'Task UX acceptance is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^UX_WORKFLOW_ACCEPTANCE=PASS$') -or -not (Select-String -Path $log -Pattern '^WUX13=PASS$')) { throw 'v0.4.2 UX workflow acceptance is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^HANDS_ON_UX_POLISH=PASS$')) { throw 'Hands-on UX polish native acceptance is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^HANDS_ON_ROUND2=PASS$')) { throw 'Hands-on Round 2 native acceptance is incomplete' }
+$null = & "$PSScriptRoot/ValidateRelativeEvidence.ps1" -OutputDir $OutputDir
+$null = & "$PSScriptRoot/ValidateRound3Evidence.ps1" -OutputDir $OutputDir
+$null = & "$PSScriptRoot/ValidateRound4Checkpoint.ps1" -OutputDir $OutputDir -Phases A,B,CT,CS,C
+$acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
+if ($acceptance.version -ne '0.4.2' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 core acceptance evidence' }
+$ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-Json
+if ($ux.version -ne '0.4.0' -or $ux.result -ne 'PASS' -or @($ux.checks).Count -ne 12 -or @($ux.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete retained Task UX acceptance evidence' }
+$workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
+if ($workflow.version -ne '0.4.2' -or $workflow.result -ne 'PASS' -or @($workflow.checks).Count -ne 10 -or @($workflow.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 UX workflow acceptance evidence' }
+Write-Host 'Checkpoint native validation: full semantic regression and evidence guards PASS'
