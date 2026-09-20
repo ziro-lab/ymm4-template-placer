@@ -4,11 +4,15 @@ Effective 2026-09-20, explicitly approved by the repository owner.
 
 ## Current baseline
 
-The completed Round 3 source `fdc3f3e5448cdf5ce7c9498776362b1bf598c2b1` was promoted to main by PR #17, merge `b8c787b713e2dbfe253a8ab4ca7f9a6920c81f75`. The promoted tree is exactly `3aa91dd12a8262e60c1909293fb68f93a0a032d1`.
+Round 4 A/B/C was accepted by the owner and merged through PR #16.
 
-Promotion was checked by the fresh Windows/YMM4 native run `35490064220`, job `106023365142`, including full historical regression, exact distribution DLL smoke and verified packaging. The original Round 3 evidence remains in PR #15 / run `35462490239` (1,327 assertions, `HANDS_ON_ROUND3=PASS`). A new main merge identity does not rewrite the original source/run evidence.
+- merge commit: `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`
+- main Release run #227: `35508468265`
+- full native regression / exact distribution DLL smoke / verified package: PASS
 
-This is an accepted development baseline, not a claim of no known UX issues or compatibility with every third-party renderer. The subsequent hands-on changes belong to Round 4.
+The current priority is a separate UI Micro Polish pass. Experimental Tachie Preset work remains in paused Draft PR #19 and resumes after the UI pass merges.
+
+Current architecture authority is `docs/CURRENT_ARCHITECTURE.md`.
 
 ## Superseded temporary Git rules
 
@@ -18,7 +22,7 @@ Historical documents and PR descriptions said to keep main unchanged and PR #6/#
 - GitHub automatically recognized main-targeting ancestor PR #6 as merged.
 - PR #11/#13/#14/#15 were closed as incorporated/superseded, not merged into their historical feature bases.
 - Historical branches, commits, comments and evidence are retained. No force-push or branch deletion was needed.
-- Round 4 is Draft PR #16, now based on main. Its preparation and unfinished implementation do not belong to the stable baseline.
+- PR #16 is merged and preserved as the accepted Round 4 A/B/C history. Current work uses fresh main-based branches.
 
 ## Ongoing development
 
