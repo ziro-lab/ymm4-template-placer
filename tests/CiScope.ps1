@@ -33,7 +33,7 @@ $event=Get-Content -Raw $env:GITHUB_EVENT_PATH | ConvertFrom-Json
 $run=$true; $changed=@(); $requested=[string]$env:REQUESTED_VALIDATION_LEVEL
 if (-not [string]::IsNullOrWhiteSpace($requested)) {
  $level=Normalize-Level $requested
-} elseif ($env:GITHUB_EVENT_NAME -eq 'push' -and $env:GITHUB_REF -eq 'refs/heads/main') {
+} elseif ($env:GITHUB_EVENT_NAME -eq 'push' -and $env:GITHUB_REF -in @('refs/heads/main','refs/heads/work/v0.4-native-validation')) {
  $level='release'
 } elseif ($env:GITHUB_EVENT_NAME -eq 'push') {
  $level='checkpoint'
