@@ -10,7 +10,17 @@ YMM4の登録済みテンプレートを、選んだアイテムとの位置・�
 
 ## 現在のmain
 
-2026-09-20に、実機検証済みの **v0.4.2 Hands-on Round 3** をPR #17でmainへ統合しました。旧積み上げPRの開発方式を終え、以後はmainから作業ブランチを切って更新します。Round 4は別のDraft PR #16で開発中です。詳細は `docs/DEVELOPMENT_WORKFLOW.md` を参照してください。
+2026-09-20に、Hands-on確認済みの **Round 4 A/B/C** をPR #16でmainへ統合しました。
+
+- main merge: `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`
+- main Release run #227: `35508468265`
+- full Native regression / exact distribution DLL smoke / verified package: PASS
+
+現在の最優先は **UI Micro Polish**。汎用レイヤー操作、配置パネル簡易設定、Voice行高の直接調整など、既存機能への操作摩擦を減らす作業です。
+
+Tachie Preset Draft PR #19はUI pass完了まで保留しています。
+
+現在仕様の正本は `docs/CURRENT_ARCHITECTURE.md`、用語は `docs/GLOSSARY.md`、未実装案は `docs/BACKLOG.md` を参照してください。
 
 ## 主な機能
 
