@@ -21,7 +21,7 @@ public partial class PlacerView : UserControl
     public PlacerView()
     {
         PointerRouter = new(origin => observedViewModel?.ObserveTimelinePointer(origin), () => observedViewModel?.EndTimelinePointer());
-        ShortcutRouter = new((key, modifiers) => observedViewModel?.TryExecutePositionShortcut(key, modifiers) == true);
+        ShortcutRouter = new(HandlePaletteKey);
         InitializeComponent();
         var choiceStyle = new Style(typeof(ComboBoxItem));
         choiceStyle.Setters.Add(new Setter(IsEnabledProperty, new Binding(nameof(TemplateChoice.IsAvailable))));
@@ -51,6 +51,17 @@ public partial class PlacerView : UserControl
 #if YMM4_PROOF
         NativeProof.View = this;
 #endif
+    }
+    private bool HandlePaletteKey(Key key, ModifierKeys modifiers)
+    {
+        var vm = observedViewModel;
+        if (vm == null) return false;
+        if (vm.TryExecutePositionShortcut(key, modifiers)) return true;
+        if (vm.IsPositionShortcutReserved(key, modifiers)) return false;
+        if (!vm.TryBeginGenericLayerNumberInput(key, modifiers)) return false;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input,
+            new Action(() => RelativePaletteSurface.GenericLayerSurface.FocusDirectNumberEntry()));
+        return true;
     }
     private void ExpressionRowHeightDragStarted(object sender, DragStartedEventArgs e)
     {
