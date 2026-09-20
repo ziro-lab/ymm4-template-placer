@@ -82,3 +82,16 @@ The experimental preset feature starts from this tiered model:
 - package/release proof waits until the whole candidate is ready.
 
 This avoids turning the upcoming D/E acceptance set into a permanent 40+ check tax on every edit.
+
+
+## Rollout measurement
+
+The first successful tier comparison used the same Round 4 C product state plus validation-tier changes.
+
+- Checkpoint run #209 (`35506188787`): 1,428 native assertions, 0 failures, 5m04s wall-clock, artifact 4,205,014 bytes.
+- Focused run #210 (`35506440656`): 473 native assertions, 0 failures, 2m57s wall-clock, artifact 2,833,603 bytes.
+- Native assertion volume fell by about 67%.
+- End-to-end Actions time fell by about 42%; YMM4 download and both warning-as-error builds remain fixed overhead.
+- Focused skipped release DLL smoke, final packaging and historical evidence-negative validators as designed.
+
+Do not optimize for a smaller assertion count by itself. Further reductions need a concrete runtime/maintenance benefit and must preserve the stable-core risk boundary.
