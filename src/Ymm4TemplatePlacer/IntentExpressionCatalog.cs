@@ -30,13 +30,15 @@ public static class IntentExpressionCatalog
     {
         var result = new List<FaceTemplate>();
         // Palette order, then entry order, is authoritative. Repeated source membership is a union: the first set wins.
+        // Build the Library index once instead of performing a linear lookup for every tile.
+        var library = settings.Library.ToDictionary(x => x.Id);
         var seen = new HashSet<YukkuriMovieMaker.Settings.ItemTemplate>(ReferenceEqualityComparer.Instance);
         foreach (var palette in settings.IntentPalettes.Where(x => x.ExpressionCandidates && x.Target.TypeMatch == IntentTypeMatch.UniformType &&
             x.Target.MinimumCount <= 1 && x.Target.MaximumCount >= 1))
         {
             foreach (var tile in palette.Entries)
             {
-                var source = settings.Library.SingleOrDefault(x => x.Id == tile.LibraryEntryId);
+                library.TryGetValue(tile.LibraryEntryId, out var source);
                 if (source == null) continue;
                 var resolution = TemplateResolver.ResolveBundle(source);
                 var bundle = resolution.Bundle;
