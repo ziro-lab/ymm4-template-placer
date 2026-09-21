@@ -14,12 +14,13 @@ public sealed partial class PlacerViewModel
 {
     private Timeline? watchedVoiceTimeline, voiceRowsTimeline;
     private readonly HashSet<VoiceItem> watchedVoices = new(ReferenceEqualityComparer.Instance);
+    private readonly HashSet<VoiceItem> dirtyVoices = new(ReferenceEqualityComparer.Instance);
     private DispatcherOperation? queuedVoiceFreshness;
-    private bool voiceFreshnessActive, voiceFreshnessDisposed;
+    private bool voiceFreshnessActive, voiceFreshnessDisposed, fullVoiceReconcilePending;
     private ExpressionRowsFreshness voiceRowsFreshness;
     private string voiceFreshnessProblem = "";
-    public bool CanEditExpressionRows => voiceRowsFreshness != ExpressionRowsFreshness.StalePending;
-    public bool ExpressionRowsStale => !CanEditExpressionRows;
+    public bool CanEditExpressionRows => voiceRowsFreshness != ExpressionRowsFreshness.StalePending && !IsExpressionLoading;
+    public bool ExpressionRowsStale => voiceRowsFreshness == ExpressionRowsFreshness.StalePending;
     public string ExpressionFreshnessNotice => ExpressionRowsStale
         ? "音声やシーンが変わりました。未配置の割り当ては保持しています。Excelを読み込み直すか、内容を確認して［一覧を読み直す］を選んでください。"
         : voiceFreshnessProblem;
@@ -41,13 +42,18 @@ public sealed partial class PlacerViewModel
     private void RememberVoiceRows(bool restoreAssociations)
     {
         voiceRowsTimeline = timeline; voiceFreshnessProblem = "";
-        SetVoiceFreshnessState(!restoreAssociations && HasPendingRelativeAssignments()
+        SetVoiceFreshnessState(!restoreAssociations && PendingRelativeExpressionCount > 0
             ? ExpressionRowsFreshness.PendingBatch : ExpressionRowsFreshness.Current);
     }
-    private void CompletePendingVoiceWork() => SetVoiceFreshnessState(ExpressionRowsFreshness.Current);
+    private void CompletePendingVoiceWork()
+    {
+        SetVoiceFreshnessState(ExpressionRowsFreshness.Current);
+        expressionCacheDirty = true;
+        if (activeTask == "expression" && UsesRelativeExpressions) RequestExpressionLoad(true);
+    }
     private void RequireFreshExpressionRows()
     {
-        if (ExpressionRowsStale) throw new InvalidOperationException(ExpressionFreshnessNotice);
+        if (ExpressionRowsStale || IsExpressionLoading) throw new InvalidOperationException(IsExpressionLoading ? "表情一覧の読み込み完了後に実行してください。" : ExpressionFreshnessNotice);
     }
     private void SetVoiceFreshnessActive(bool active)
     {
@@ -61,18 +67,20 @@ public sealed partial class PlacerViewModel
         queuedVoiceFreshness?.Abort(); queuedVoiceFreshness = null;
         if (watchedVoiceTimeline != null) watchedVoiceTimeline.PropertyChanged -= VoiceTimelineChanged;
         foreach (var voice in watchedVoices) voice.PropertyChanged -= VoiceItemChanged;
-        watchedVoices.Clear(); watchedVoiceTimeline = null;
+        watchedVoices.Clear(); dirtyVoices.Clear(); watchedVoiceTimeline = null; fullVoiceReconcilePending = false;
         if (!voiceFreshnessActive || voiceFreshnessDisposed || timeline == null) return;
         watchedVoiceTimeline = timeline;
         watchedVoiceTimeline.PropertyChanged += VoiceTimelineChanged;
-        RewireVoiceItems(); RequestVoiceFreshnessCheck();
+        // Voice subscriptions are populated by the same one-pass host capture used by
+        // expression loading. Do not immediately enumerate Timeline.Items again here.
     }
-    private void RewireVoiceItems()
+    internal void ReconcileVoiceWatchers(IReadOnlyList<VoiceSnapshot> voices)
     {
-        var current = new HashSet<VoiceItem>(watchedVoiceTimeline?.Items.OfType<VoiceItem>() ?? [], ReferenceEqualityComparer.Instance);
+        if (!voiceFreshnessActive || voiceFreshnessDisposed || timeline == null || !ReferenceEquals(timeline, watchedVoiceTimeline)) return;
+        var current = voices.Select(x => x.Voice).ToHashSet(ReferenceEqualityComparer.Instance);
         foreach (var removed in watchedVoices.Where(x => !current.Contains(x)).ToArray())
         {
-            removed.PropertyChanged -= VoiceItemChanged; watchedVoices.Remove(removed);
+            removed.PropertyChanged -= VoiceItemChanged; watchedVoices.Remove(removed); dirtyVoices.Remove(removed);
         }
         foreach (var added in current)
             if (watchedVoices.Add(added)) added.PropertyChanged += VoiceItemChanged;
@@ -82,7 +90,7 @@ public sealed partial class PlacerViewModel
         if (!ReferenceEquals(sender, watchedVoiceTimeline)) return;
         if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(Timeline.Items))
         {
-            RewireVoiceItems(); RequestVoiceFreshnessCheck();
+            fullVoiceReconcilePending = true; RequestVoiceFreshnessCheck();
         }
     }
     private void VoiceItemChanged(object? sender, PropertyChangedEventArgs e)
@@ -90,9 +98,14 @@ public sealed partial class PlacerViewModel
         if (sender is not VoiceItem voice || !watchedVoices.Contains(voice)) return;
         // Remark deliberately does not participate. Managed expression association writes
         // and non-Voice item insertions must not tear down the user's current Rows.
-        if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName is nameof(VoiceItem.Character) or nameof(VoiceItem.CharacterName)
-            or nameof(VoiceItem.Frame) or nameof(VoiceItem.Length) or nameof(VoiceItem.Layer) or nameof(VoiceItem.Serif))
-            RequestVoiceFreshnessCheck();
+        if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName is nameof(VoiceItem.Character) or nameof(VoiceItem.CharacterName))
+        {
+            fullVoiceReconcilePending = true; RequestVoiceFreshnessCheck(); return;
+        }
+        if (e.PropertyName is nameof(VoiceItem.Frame) or nameof(VoiceItem.Length) or nameof(VoiceItem.Layer) or nameof(VoiceItem.Serif))
+        {
+            dirtyVoices.Add(voice); RequestVoiceFreshnessCheck();
+        }
     }
     internal void RequestVoiceFreshnessCheck()
     {
@@ -101,33 +114,30 @@ public sealed partial class PlacerViewModel
         if (dispatcher == null || dispatcher.HasShutdownStarted) return;
         queuedVoiceFreshness = dispatcher.InvokeAsync(CheckVoiceFreshness, DispatcherPriority.Background);
     }
-    private bool VoiceRowsMatch(Timeline current, IReadOnlyList<VoiceSnapshot> next) => ReferenceEquals(voiceRowsTimeline, current) &&
-        Rows.Count == next.Count && Rows.Select((row, index) => SameVoice(row.Target, next[index])).All(x => x);
     internal void CheckVoiceFreshness()
     {
         queuedVoiceFreshness = null;
         if (!voiceFreshnessActive || voiceFreshnessDisposed || timeline == null || !ReferenceEquals(timeline, watchedVoiceTimeline)) return;
         VoiceFreshnessCheckCount++;
-        try
+        if (HasProtectedPendingVoiceWork())
         {
-            var next = VoiceSnapshot.Capture(timeline);
-            if (VoiceRowsMatch(timeline, next)) return;
-            if (HasProtectedPendingVoiceWork())
-            {
-                SetVoiceFreshnessState(ExpressionRowsFreshness.StalePending); return;
-            }
-            CloseExpressionTrialSession();
-            var catalog = ExpressionCatalog();
-            SetRows(next.Select((snapshot, index) => new AssignmentRow(index + 1, snapshot, catalog, UsesRelativeExpressions)).ToArray());
-            AutomaticVoiceRebuildCount++;
-            // Automatic information never clears unrelated errors/partial results or writes settings/Timeline.
+            dirtyVoices.Clear(); fullVoiceReconcilePending = false; SetVoiceFreshnessState(ExpressionRowsFreshness.StalePending); return;
         }
+        if (fullVoiceReconcilePending)
+        {
+            dirtyVoices.Clear(); fullVoiceReconcilePending = false; expressionCacheDirty = true; RequestExpressionLoad(true); return;
+        }
+        if (dirtyVoices.Count == 0) return;
+        var changed = dirtyVoices.ToArray(); dirtyVoices.Clear();
+        try { ApplyIncrementalVoiceChanges(changed); }
         catch (Exception ex)
         {
             voiceFreshnessProblem = "音声一覧を更新できませんでした。現在の割り当ては保持しています: " + ex.GetBaseException().Message;
             OnPropertyChanged(nameof(ExpressionFreshnessNotice));
         }
     }
+    private bool VoiceRowsMatch(Timeline current, IReadOnlyList<VoiceSnapshot> next) => ReferenceEquals(voiceRowsTimeline, current) &&
+        Rows.Count == next.Count && Rows.Select((row, index) => SameVoice(row.Target, next[index])).All(x => x);
     private PendingVoiceRowsWork? CapturePendingVoiceRows() => HasProtectedPendingVoiceWork()
         ? new(voiceRowsTimeline, Rows.Select(x => x.CopyPending()).ToArray(), ExpressionRowsStale) : null;
     private bool RestorePendingVoiceRows(TransientWorkSnapshot snapshot)
@@ -141,6 +151,6 @@ public sealed partial class PlacerViewModel
     }
     private void DisposeVoiceFreshness()
     {
-        voiceFreshnessDisposed = true; voiceFreshnessActive = false; RebindVoiceFreshness();
+        voiceFreshnessDisposed = true; voiceFreshnessActive = false; CancelExpressionLoad(); RebindVoiceFreshness();
     }
 }
