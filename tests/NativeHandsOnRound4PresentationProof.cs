@@ -117,15 +117,27 @@ internal static partial class NativeProof
             Assert(nestedInteractionStayedOpen && palette.PanelQuickSettingsPopup.IsOpen,
                 "UI Round2 F8 internal quick-settings ComboBox interaction stays open");
 
+            var outsideTarget = palette.IntentContextTitleText;
+            var outsidePoint = outsideTarget.PointToScreen(new Point(Math.Min(8, Math.Max(1, outsideTarget.ActualWidth / 2)), outsideTarget.ActualHeight / 2));
+            Assert(Round2Input.SetCursorPos((int)Math.Round(outsidePoint.X), (int)Math.Round(outsidePoint.Y)),
+                "UI Round2 F8 OS cursor moved to an owner-window point outside quick settings");
+            await Task.Delay(80); await Idle();
+            var outsideHit = Mouse.DirectlyOver as DependencyObject;
+            var popupRoot = palette.PanelQuickSettingsPopup.Child as FrameworkElement;
+            Assert(outsideHit != null &&
+                (ReferenceEquals(outsideHit, outsideTarget) || outsideTarget.IsAncestorOf(outsideHit)) &&
+                (popupRoot == null || (!ReferenceEquals(outsideHit, popupRoot) && !popupRoot.IsAncestorOf(outsideHit))),
+                "UI Round2 F8 physical pointer reaches the intended owner-window outside target, not Popup content");
+
             var outsideDelivered = false;
             var outsideHandledOnArrival = true;
             MouseButtonEventHandler outsideProbe = (_, e) => { outsideDelivered = true; outsideHandledOnArrival = e.Handled; };
-            box.AddHandler(Mouse.PreviewMouseDownEvent, outsideProbe, true);
+            outsideTarget.AddHandler(Mouse.PreviewMouseDownEvent, outsideProbe, true);
             try
             {
-                await NativeRound2Click(box.PointToScreen(new Point(box.ActualWidth / 2, box.ActualHeight / 2))); await Idle();
+                await NativeRound2Click(outsidePoint); await Idle();
             }
-            finally { box.RemoveHandler(Mouse.PreviewMouseDownEvent, outsideProbe); }
+            finally { outsideTarget.RemoveHandler(Mouse.PreviewMouseDownEvent, outsideProbe); }
             Assert(outsideDelivered && !outsideHandledOnArrival && !palette.PanelQuickSettingsPopup.IsOpen &&
                 palette.PanelQuickSettingsButton.IsChecked != true,
                 "UI Round2 F8 owner-window outside click closes quick settings without swallowing the YMM4 click");
