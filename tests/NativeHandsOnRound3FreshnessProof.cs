@@ -45,20 +45,25 @@ internal static partial class NativeProof
                 snapshot.Layer == voice.Layer && snapshot.Character == voice.CharacterName && snapshot.Serif == voice.Serif;
         }
         var fullBefore = vm.ExpressionPerformance; voice.Character = new Character { Name = "R3 Freshness other" }; await Idle();
+        for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
         var characterRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
         var fullAfter = vm.ExpressionPerformance;
         fieldChecks &= fullAfter.HostCaptures == fullBefore.HostCaptures + 1 &&
-            fullAfter.FullRowPublishes == fullBefore.FullRowPublishes + 1 &&
+            fullAfter.FullRowPublishes == fullBefore.FullRowPublishes &&
+            fullAfter.BatchCollectionPublishes == fullBefore.BatchCollectionPublishes &&
+            ReferenceEquals(characterRow, trackedRow) &&
             characterRow.Target.Character == voice.CharacterName;
         voice.Character = character; await Idle();
+        for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
         // A different Voice with identical value fields must still replace its snapshot by reference identity.
         fullBefore = vm.ExpressionPerformance;
         var replacement = new VoiceItem(character) { Frame = second.Frame, Length = second.Length, Layer = second.Layer, Serif = second.Serif };
         timeline.Items = timeline.Items.Replace(second, replacement); await Idle();
+        for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
         fullAfter = vm.ExpressionPerformance;
         fieldChecks &= fullAfter.HostCaptures == fullBefore.HostCaptures + 1 &&
             vm.Rows.Any(x => ReferenceEquals(x.Target.Voice, replacement)) && !vm.Rows.Any(x => ReferenceEquals(x.Target.Voice, second));
-        Round3Assert(fieldChecks, "E3", "Frame/Length/Layer/Serif update only the dirty Voice; Character and reference-identity changes use one exact full reconcile");
+        Round3Assert(fieldChecks, "E3", "Frame/Length/Layer/Serif update only the dirty Voice; Character changes reconcile in place and reference-identity changes use one exact full capture");
         var rows = vm.Rows.ToArray(); var rebuilds = vm.AutomaticVoiceRebuildCount;
         var row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
         await SelectInDropdown(view, row, "R3E/expression"); await Idle();
