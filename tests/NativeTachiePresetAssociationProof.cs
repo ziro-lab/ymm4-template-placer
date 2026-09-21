@@ -54,6 +54,9 @@ internal static partial class NativeProof
             IntentAssociationTag.Read(expectedTemplateLine, out var parsedTemplate) == AssociationTagState.Valid &&
             parsedTemplate == templateTag,
             "existing Template IntentAssociationTag bytes remain unchanged");
+        Check(ManagedExpressionSourceDescriptor.Read(expectedTemplateLine, out var templateUnion) == AssociationTagState.Valid &&
+            templateUnion?.Kind == ManagedExpressionSourceKind.Template && templateUnion.Template == templateTag,
+            "source-union parser preserves the exact historical Template descriptor");
 
         var templateVoice = new VoiceItem(character) { Frame = 100, Length = 20, Layer = 20, Serif = "template" };
         var presetVoice = new VoiceItem(character) { Frame = 200, Length = 20, Layer = 20, Serif = "preset" };
