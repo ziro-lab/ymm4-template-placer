@@ -1,155 +1,145 @@
 # UI Micro Polish — corrective implementation status
 
-Status: **C0-C4 IMPLEMENTED / CHECKPOINT GREEN / RELEASE PENDING**
+Status: **C0-C4 RELEASE GREEN / OWNER HANDS-ON ROUND 2 DESIGN FROZEN / IMPLEMENTATION READY**
 
-## Accepted evidence before corrective pass
+## Release-green baseline before owner Hands-on Round 2
 
-The first UI Micro Polish Hands-on candidate remains a valid historical checkpoint:
+Exact candidate:
 
-- source `e58d267286399d16c1ffe19bbd7411af58039f55`
-- Release run #262 `35521238124`
-- 1,437 assertions PASS / 0 FAIL
-- exact distribution DLL smoke PASS
-- verified package PASS
+- source `1b8a88255da2e28289996b4d99470a195d6ec6a4`
+- Release run #305 `35551459441`
+- 1,443 Native assertions PASS / 0 FAIL
+- Release/Proof build: 0 warnings / 0 errors
+- `HANDS_ON_ROUND4_A/B/C=PASS`
+- exact distribution DLL native smoke PASS
+- verified stable-root `.ymme` / source / provenance package PASS
+- `LICENSE.md` included in distributable and source archive
 
-Owner Hands-on then produced F1-F7 in `UI_MICRO_POLISH_HANDS_ON_FEEDBACK.md`.
+C0-C4 remain valid accepted implementation/evidence for:
 
-That Release does **not** prove the corrective changes below.
+- rejected direct Generic digit route removed;
+- wheel success stays quiet;
+- Voice row-boundary common-height resize + numeric entry;
+- responsive Fixed grid;
+- owner-Window deactivation closing quick settings.
 
-## Corrective authority
+PR #20 was intentionally not merged before owner Hands-on.
 
-- `UI_MICRO_POLISH_CORRECTIVE_DESIGN.md`
-- `UI_MICRO_POLISH_CORRECTIVE_ACCEPTANCE.md`
-- `UI_MICRO_POLISH_CORRECTIVE_WORKPLAN.md`
+## Owner Hands-on Round 2 feedback
 
-## Implemented corrective scope
+Owner testing of the Release #305 candidate produced three additional findings:
 
-### C0 — rejected U4 removal / public cleanup
+### F8 — quick settings light-dismiss
 
-Implemented:
+The Popup closes on owner Window deactivation, but clicking another place inside YMM4 does not close it.
 
-- removed direct application-level Generic digit interception;
-- restored palette input router to explicit position shortcuts only;
-- removed U4-only focus forwarding/proof;
-- simplified awkward handled assignment;
-- removed no-op `EndPanelQuickSettings()`;
-- documented intentional fail-soft compatibility catches in `ExpressionNavigationHost`.
+Wanted:
 
-### C1 — quiet wheel success
+- internal quick-settings interaction keeps it open;
+- click elsewhere in the owning YMM4 Window closes it;
+- existing deactivation close remains.
 
-Implemented:
+### F9 — targeted Sets should be Item-owned
 
-- wheel still uses the same protected Generic apply/store path;
-- routine wheel success does not replace bottom Status per notch;
-- explicit apply may still announce success;
-- errors remain visible.
+Current code has a global `ShowAllSets` management mode and permits one `IntentPalette` to target multiple Item types.
 
-### C2 — common Voice row height from row boundaries
+Wanted normal model:
 
-Implemented:
+```text
+Item type -> its own Sets -> entries
+```
 
-- removed top standalone drag grip;
-- any realized Voice row bottom edge is a bounded common-height resize gesture;
-- one common 32-96 height remains authoritative;
-- DragDelta is presentation-only;
-- release persists once;
-- top numeric field supports direct height entry with Enter/Esc;
-- no per-row height state or DataGridRow template replacement.
+Set management should never turn into a global all-targeted-Set list.
 
-### C3 — responsive Fixed grid
+### F10 — cross-Item reuse by snapshot copy
 
-Implemented:
+Reuse between Item types should be explicit copy, not one shared Set.
 
-- Auto retains 104x104 cells;
-- Fixed preserves exact saved column count and slot order;
-- Fixed square cells grow to use wider viewport width;
-- cells never shrink below 104x104;
-- no settings schema change.
+A copied Set is a one-time snapshot and becomes fully independent.
 
-### C4 — quick-settings owner lifetime
+## Round 2 authority
 
-Implemented:
+Frozen documents:
 
-- placement panel observes its owning WPF Window while loaded;
-- owner Window `Deactivated` closes quick settings;
-- no polling/global activation hook.
+- `UI_MICRO_POLISH_HANDS_ON_ROUND2_FEEDBACK.md`
+- `UI_MICRO_POLISH_HANDS_ON_ROUND2_DESIGN.md`
+- `UI_MICRO_POLISH_HANDS_ON_ROUND2_ACCEPTANCE.md`
+- `UI_MICRO_POLISH_HANDS_ON_ROUND2_WORKPLAN.md`
+- `UI_MICRO_POLISH_HANDS_ON_ROUND2_IMPLEMENTATION_PREP.md`
 
-## Updated proof/package expectations
+## Frozen implementation direction
 
-Native Round4 presentation proof covers:
+### Quick settings
 
-- quiet wheel Status;
-- popup closing on actual owner-window deactivation;
-- an explicit activation-transfer precondition so a CI desktop cannot falsely count a no-op `Activate()` as C4 evidence;
-- wide/narrow Fixed grid geometry;
-- real mouse Voice-row boundary drag;
-- numeric height Enter/Esc/invalid rejection.
+Keep `Popup.StaysOpen=True` and existing owner `Deactivated` handling.
 
-`USAGE.md` and `PackageVerified.ps1` describe/require the corrective UI rather than rejected U4/top-grip behavior.
+Add one Popup-lifetime-scoped owner `PreviewMouseDown` route:
 
-Public-release preparation is also carried forward from main:
+- internal Popup interaction stays open;
+- click elsewhere in owner Window closes;
+- outside click is not swallowed;
+- no application/global/OS mouse hook.
 
-- the Japanese public README and `LICENSE.md` are present;
-- the verified `.ymme` package now includes `LICENSE.md` alongside `THIRD_PARTY_NOTICES.md`;
-- the source archive explicitly requires the license entry.
+### Item-owned normal Sets
 
-## Native revalidation
+Normal targeted Set:
 
-The earlier Actions startup blocker was not a product/test failure. Before the repository became public, hosted jobs were being created and failing before any workflow step. After public visibility removed the private-repository usage limit, hosted runners resumed normally.
+```text
+Target.ItemTypeKeys.Count == 1
+TypeMatch == UniformType
+```
 
-### First resumed Release attempt
+Do not add a second serialized owner field.
 
-Release run #299 `35524227916`, attempt 3:
+Remove normal `ShowAllSets` behavior and normal multi-type target creation/editing.
 
-- checkout / .NET / YMM4 download: PASS;
-- Distribution build: PASS;
-- Proof build: PASS;
-- Native proof reached Round4 B;
-- C0-C3 passed;
-- C4 owner-deactivation assertion failed once.
+Keep:
 
-The failure was isolated to the activation proof: the old test did not establish whether its probe Window had actually taken activation from the owner before judging product behavior.
+- same-type multi-selection count rules;
+- optional CharacterName restriction;
+- current relation/entry semantics.
 
-### Strengthened C4 proof
+### Existing multi-type Sets
 
-Test change:
+Preserve existing serialized multi-type Sets losslessly.
 
-- `e44133da9e4b638de8ef59eb5d785d804305a42f`
+If any exist, expose them only through a bounded `複数種類` compatibility context.
 
-Checkpoint run #302 `35550873470`:
+Do not silently split, broaden or assign them to an arbitrary Item parent.
 
-- level: Checkpoint;
-- full Native validation: PASS;
-- `HANDS_ON_ROUND4_A=PASS`;
-- `HANDS_ON_ROUND4_B=PASS`;
-- `HANDS_ON_ROUND4_C=PASS`;
-- C4 trace proved owner active -> probe active -> owner `Deactivated` once -> popup closed -> toggle false.
+### Cross-Item copy
 
-The stronger assertion is retained because it prevents hosted-desktop activation flakiness from being mistaken for a product result.
+Inside Set management:
 
-### License-in-package checkpoint
+- same-owner `複製` remains;
+- add explicit copy-to-another-Item operation;
+- new Guid;
+- destination gets exactly one Item type / `UniformType`;
+- all other Set state is copied as the current snapshot;
+- no live link;
+- destination-local name collision handling;
+- protected Settings persistence only;
+- zero Timeline writes.
 
-Latest product/test/package change:
+## Current branch state
 
-- `7f89c9744d8f2ab8e54a277a5a305a891d6f443b`
+Everything after Release baseline `1b8a8825...` in this preparation is documentation-only.
 
-Checkpoint run #303 `35551157812`:
-
-- level: Checkpoint;
-- **1,443 assertions PASS / 0 FAIL**;
-- Release build: 0 warnings / 0 errors;
-- Proof build: 0 warnings / 0 errors;
-- `HANDS_ON_ROUND4_A/B/C=PASS`;
-- license packaging gate included in the tested source.
-
-This is the current corrective Native-green checkpoint.
+No Round 2 product code has been changed yet.
 
 ## Next action
 
-1. fast-forward `work/v0.4-native-validation` to the current corrective HEAD;
-2. run Release;
-3. require exact distribution-DLL native smoke + verified `.ymme` / source / provenance package;
-4. produce the corrected Hands-on `.ymme`;
-5. owner Hands-on;
-6. only then merge PR #20;
-7. refresh paused Tachie Preset PR #19 from accepted main.
+Implement the frozen workplan in PR #20:
+
+1. R2C0 quick-settings light-dismiss;
+2. R2C1 remove global targeted-Set management;
+3. R2C2 single-owner normal creation/editor;
+4. R2C3 owner-local naming/order;
+5. R2C4 cross-Item snapshot copy;
+6. R2C5 bounded legacy multi-type compatibility;
+7. update native proof/docs;
+8. full Checkpoint;
+9. exact Release;
+10. new owner Hands-on;
+11. merge PR #20 only after acceptance;
+12. then refresh paused Tachie Preset PR #19 from accepted main.
