@@ -45,6 +45,9 @@ internal sealed record ExpressionNavigationHost(object? PreviewOwner, Func<int, 
             // Ambiguity in one surface does not disable the other surface.
             return FromKnownInstances(previews.Count == 1 ? previews.Single() : null, viewports.Count == 1 ? viewports.Single() : null);
         }
+        // Optional host-surface discovery is a compatibility probe. Any host/UI
+        // shape failure disables only Preview/viewport coordination; it must not
+        // crash placement or the Tool.
         catch (Exception) { return Missing; }
     }
     private static bool OwnedBy(Window window, Window main)
@@ -70,6 +73,8 @@ internal sealed record ExpressionNavigationHost(object? PreviewOwner, Func<int, 
             return method is { IsGenericMethod: false } && method.ReturnType == returnType
                 ? method.CreateDelegate(typeof(T), instance) as T : null;
         }
+        // Exact public-method binding is optional compatibility only; a host
+        // mismatch degrades this one capability instead of failing the Tool.
         catch (Exception) { return null; }
     }
 }

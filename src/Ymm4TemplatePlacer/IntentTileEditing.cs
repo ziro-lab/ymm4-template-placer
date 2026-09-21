@@ -39,6 +39,7 @@ public sealed partial class PlacerViewModel
         ShapeIntentTileCommand?.RaiseCanExecuteChanged(); OpenTileSettingsCommand?.RaiseCanExecuteChanged();
         ReorderIntentTileCommand?.RaiseCanExecuteChanged(); ExecuteIntentTileCommand?.RaiseCanExecuteChanged();
         ShapeIntentSetCommand?.RaiseCanExecuteChanged(); OpenIntentSetSettingsCommand?.RaiseCanExecuteChanged();
+        ShapeCurrentIntentSetCommand?.RaiseCanExecuteChanged(); RefreshPanelQuickSettingsAdmission();
         UpdateGenericLayerCommands();
         OnPropertyChanged(nameof(HasCurrentIntentSet)); OnPropertyChanged(nameof(IntentTileEditNotice));
     }
@@ -102,10 +103,10 @@ public sealed partial class PlacerViewModel
         }
         else
         {
-            session.SelectedItemContext = session.ItemContexts.FirstOrDefault(x => x.IsCurrentSelection);
             var set = session.Palettes.SingleOrDefault(x => x.Id == selected.Id) ?? throw new InvalidOperationException("下書きではこのSetを削除済みです。");
-            if (!session.VisiblePalettes.Cast<IntentPaletteDraft>().Contains(set)) session.ShowAllSets = true;
-            session.SelectedPalette = set; set.SelectedEntry = set.Entries.SingleOrDefault(x => x.LibraryEntryId == entryId);
+            session.SelectedItemContext = session.ContextForPalette(set);
+            session.SelectedPalette = set;
+            set.SelectedEntry = set.Entries.SingleOrDefault(x => x.LibraryEntryId == entryId);
         }
         IntentSettingsRequested?.Invoke(this, EventArgs.Empty);
     }

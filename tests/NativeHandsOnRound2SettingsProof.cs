@@ -45,8 +45,8 @@ internal static partial class NativeProof
             Assert(panel.FindName("SettingsIntentPicker") == null && panel.FindName("IntentNameBox") == null &&
                 session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(new[] { first.Id, second.Id }),
                 "R2-C C2/C3 targeted Settings shows all matching Set names across preserved Intent categories");
-            Assert(!session.HasChanges && !panel.TargetAdvanced.IsExpanded && !panel.TargetTypeChoices.IsVisible && Signature(timeline) == signature,
-                "R2-C C6/C9 opening and target navigation are clean and Timeline zero-write; multi-type details stay collapsed");
+            Assert(!session.HasChanges && !panel.TargetAdvanced.IsExpanded && panel.FindName("TargetTypeChoices") == null && Signature(timeline) == signature,
+                "R2-C C6/C9 opening and target navigation are clean and Timeline zero-write; normal Settings has one Item owner and no multi-type matrix");
             var draft = session.SelectedPalette!;
             Assert(draft.SentenceAnchors.Single(x => x.Value == IntentAnchor.PairBoundary).Available == false &&
                 draft.SentenceNeighbors.All(x => x.Value != IntentNeighbor.None),

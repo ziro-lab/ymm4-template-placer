@@ -1,31 +1,56 @@
-# ROADMAP — v0.4 implementation and native YMM4 proof ladder
+# ROADMAP — current product direction
 
+This file is now a navigation roadmap. The older W1-W12 implementation ladder is retained below as historical evidence.
 
-## Current Hands-on Round 3 preparation
+## Current accepted baseline
 
-Round 2 automated candidate is native-green at PR #14 source `a553ae8c32eeb8c1f125b8c005095bbe6fc98ebb`; real-user hands-on found the next UX corrections.
+Round 4 A/B/C is merged to main through PR #16.
 
-Round 3 is frozen in:
+- main merge: `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`
+- main Release run #227: `35508468265`
+- full native regression / exact distribution DLL smoke / verified package: PASS
 
-- `V0.4.2_HANDS_ON_ROUND3_DESIGN.md`
-- `V0.4.2_HANDS_ON_ROUND3_HOST_EVIDENCE.md`
-- `V0.4.2_HANDS_ON_ROUND3_WORKPLAN.md`
-- `V0.4.2_HANDS_ON_ROUND3_ACCEPTANCE.md`
-- `V0.4.2_HANDS_ON_ROUND3_IMPLEMENTATION_PREP.md`
+Current architecture authority:
 
-Primary changes:
+- `CURRENT_ARCHITECTURE.md`
+- `GLOSSARY.md`
+- `VALIDATION_STRATEGY.md`
+- `LEGACY_COMPATIBILITY_MAP.md`
 
-1. tile-face color/shape cleanup and Set-wide shape;
-2. Auto/Fixed columns plus position-based shortcuts;
-3. direct Settings target types and hidden legacy UI;
-4. Generic numeric target layer with one-direction collision behavior;
-5. automatic Voice freshness instead of top-level シーン更新;
-6. expression row navigation synchronized through public Preview `SeekAsync(int)`;
-7. semantic Timeline follow using public `ContainFrameInViewport / ScrollFrame`.
+## Active priority — UI Micro Polish corrective pass
 
-Public Lab PR #57 established that clicked Timeline layer must **not** be inferred from screen coordinates, while Preview playback seek and viewport follow have usable public exact-host surfaces.
+Owner Hands-on feedback is frozen in:
 
-This stage is implementation preparation only. Historical W/P/R checkpoints below remain preserved and are not instructions to rebuild completed work.
+- `UI_MICRO_POLISH_HANDS_ON_FEEDBACK.md`
+- `UI_MICRO_POLISH_CORRECTIVE_DESIGN.md`
+- `UI_MICRO_POLISH_CORRECTIVE_ACCEPTANCE.md`
+- `UI_MICRO_POLISH_CORRECTIVE_WORKPLAN.md`
+- `UI_MICRO_POLISH_CORRECTIVE_STATUS.md`
+
+Corrective implementation currently includes:
+
+1. direct Generic digit interception removed;
+2. wheel success logging quieted;
+3. any-Voice-row bottom-boundary common-height drag + numeric height entry;
+4. Fixed square cells growing to fill wide viewport without changing slot mapping;
+5. quick settings closing when the owner YMM4 Window deactivates;
+6. small public-readiness cleanup only.
+
+The first candidate Release #262 remains historical green evidence. Corrective Native/Release validation is pending because recent Actions jobs are failing before executing any step.
+
+## Next
+
+Experimental Tachie Preset — paused Draft PR #19.
+
+Resume only after the UI pass is accepted/merged and PR #19 is refreshed from that main.
+
+## Later
+
+Placement Recipe extensions and other collected ideas remain in `BACKLOG.md`. Their implementation order is not frozen.
+
+---
+
+# Historical v0.4 implementation ladder
 
 ## Completed integrated Candidate
 

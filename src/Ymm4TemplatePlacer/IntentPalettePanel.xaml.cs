@@ -10,35 +10,103 @@ public partial class IntentPalettePanel : UserControl
     private TilePointerPhase pointerPhase;
     private ContextMenu? activeMenu;
     private PlacerViewModel? observedRoot;
-    private Guid? popupSet;
+    private Window? observedOwnerWindow;
+    private bool ownerQuickDismissAttached;
+    private Guid? quickPopupSetId;
     private (Grid Cell, IntentTileChoice Tile, Point Point)? pendingDrag;
     public IntentPalettePanel()
     {
         InitializeComponent();
-        GenericLayerPopup.Opened += (_, _) => popupSet = observedRoot?.GenericLayerTarget?.SetId;
-        Loaded += (_, _) => { ObserveRoot(DataContext as PlacerViewModel); SystemParameters.StaticPropertyChanged -= ThemeChanged; SystemParameters.StaticPropertyChanged += ThemeChanged; };
-        Unloaded += (_, _) => { SystemParameters.StaticPropertyChanged -= ThemeChanged; CancelLocalGesture(); CloseTileMenu(); ObserveRoot(null); };
-        DataContextChanged += (_, _) => { CancelLocalGesture(); CloseTileMenu(); ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); };
+        Loaded += (_, _) =>
+        {
+            ObserveRoot(DataContext as PlacerViewModel);
+            ObserveOwnerWindow(Window.GetWindow(this));
+            SystemParameters.StaticPropertyChanged -= ThemeChanged;
+            SystemParameters.StaticPropertyChanged += ThemeChanged;
+        };
+        Unloaded += (_, _) =>
+        {
+            PanelQuickSettingsButton.IsChecked = false;
+            ObserveOwnerWindow(null);
+            ObserveRoot(null);
+            SystemParameters.StaticPropertyChanged -= ThemeChanged;
+            CancelLocalGesture();
+            CloseTileMenu();
+        };
+        DataContextChanged += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
+        PanelQuickSettingsPopup.Closed += (_, _) => { DetachOwnerQuickDismiss(); PanelQuickSettingsButton.IsChecked = false; quickPopupSetId = null; };
+        IsVisibleChanged += (_, _) => { if (!IsVisible) PanelQuickSettingsButton.IsChecked = false; };
+    }
+    private void ObserveOwnerWindow(Window? next)
+    {
+        if (ReferenceEquals(observedOwnerWindow, next)) return;
+        DetachOwnerQuickDismiss();
+        if (observedOwnerWindow != null) observedOwnerWindow.Deactivated -= OwnerWindowDeactivated;
+        observedOwnerWindow = next;
+        if (observedOwnerWindow != null) observedOwnerWindow.Deactivated += OwnerWindowDeactivated;
+        if (PanelQuickSettingsPopup.IsOpen) AttachOwnerQuickDismiss();
+    }
+    private void AttachOwnerQuickDismiss()
+    {
+        if (ownerQuickDismissAttached || observedOwnerWindow == null) return;
+        observedOwnerWindow.AddHandler(Mouse.PreviewMouseDownEvent, new MouseButtonEventHandler(OwnerWindowPreviewMouseDown), true);
+        ownerQuickDismissAttached = true;
+    }
+    private void DetachOwnerQuickDismiss()
+    {
+        if (!ownerQuickDismissAttached || observedOwnerWindow == null) { ownerQuickDismissAttached = false; return; }
+        observedOwnerWindow.RemoveHandler(Mouse.PreviewMouseDownEvent, new MouseButtonEventHandler(OwnerWindowPreviewMouseDown));
+        ownerQuickDismissAttached = false;
+    }
+    private void OwnerWindowPreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!PanelQuickSettingsPopup.IsOpen) return;
+        if (e.OriginalSource is DependencyObject source)
+        {
+            if (ReferenceEquals(source, PanelQuickSettingsButton) || PanelQuickSettingsButton.IsAncestorOf(source)) return;
+            if (PanelQuickSettingsPopup.Child is FrameworkElement popupRoot &&
+                (ReferenceEquals(source, popupRoot) || popupRoot.IsAncestorOf(source))) return;
+        }
+        // Keep interaction inside the Popup open. Any remaining owner-window mouse
+        // input is outside quick settings, so close without consuming that YMM4 click.
+        PanelQuickSettingsButton.IsChecked = false;
+    }
+
+    private void OwnerWindowDeactivated(object? sender, EventArgs e)
+    {
+        // WPF Popup owns a separate native surface. Tie its visibility back to the
+        // actual YMM4 owner window so it cannot remain stranded over another app.
+        PanelQuickSettingsButton.IsChecked = false;
+    }
+
+    private void ObserveRoot(PlacerViewModel? next)
+    {
+        if (ReferenceEquals(observedRoot, next)) return;
+        if (observedRoot != null) observedRoot.PropertyChanged -= RootChanged;
+        observedRoot = next;
+        if (observedRoot != null) observedRoot.PropertyChanged += RootChanged;
+    }
+    private void RootChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (!PanelQuickSettingsPopup.IsOpen || observedRoot == null ||
+            e.PropertyName != nameof(PlacerViewModel.SelectedIntentSet)) return;
+        // RefreshIntentWorkspace briefly clears/rebuilds descriptive Context text.
+        // Popup lifetime follows the logical Set identity instead of those transient labels.
+        if (observedRoot.SelectedIntentSet?.Id != quickPopupSetId)
+            PanelQuickSettingsButton.IsChecked = false;
+    }
+    private void PanelQuickSettingsOpened(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PlacerViewModel vm) return;
+        ObserveOwnerWindow(Window.GetWindow(this));
+        quickPopupSetId = vm.SelectedIntentSet?.Id;
+        AttachOwnerQuickDismiss();
+        vm.BeginPanelQuickSettings();
     }
     private void ThemeChanged(object? sender, PropertyChangedEventArgs e)
     {
         // Local visual refresh only; never rebuild the root's tiles/Rows or change settings.
         if (IsLoaded) Dispatcher.InvokeAsync(() => IntentTileItems.Items.Refresh());
-    }
-    private void ObserveRoot(PlacerViewModel? next)
-    {
-        if (ReferenceEquals(next, observedRoot)) return;
-        GenericLayerButton.IsChecked = false; popupSet = null;
-        if (observedRoot != null) observedRoot.PropertyChanged -= RootChanged;
-        observedRoot = next;
-        if (next != null) next.PropertyChanged += RootChanged;
-    }
-    private void RootChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        // Local popup lifetime only. A changed Set cannot leave an editor for the old Set open.
-        if (e.PropertyName == nameof(PlacerViewModel.GenericLayerTarget) && GenericLayerPopup.IsOpen &&
-            (observedRoot?.GenericLayerTarget == null || observedRoot.GenericLayerTarget.SetId != popupSet))
-            GenericLayerButton.IsChecked = false;
     }
     private void CancelLocalGesture()
     {
