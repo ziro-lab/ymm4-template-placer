@@ -8,7 +8,7 @@ Being listed here is not implementation approval or priority commitment.
 
 ### Experimental Tachie Preset source
 
-Status: **PAUSED / NEXT — Draft PR #19**
+Status: **ACTIVE PREPARATION — Draft PR #19**
 
 Use `docs/EXPERIMENTAL_PRESET_HANDOFF.md`.
 
@@ -21,80 +21,14 @@ Goal:
 
 Do not repeat completed generic-preset research.
 
-## UI polish — active preparation
+## Accepted UI polish / known residual
 
-Status: **ACTIVE — UI Micro Polish prep**
+The former UI Micro Polish items are implemented in the accepted v0.4.2 baseline (PR #20 / #23) and are no longer backlog implementation work.
 
-### Generic layer controls always visible
+Known deferred minor issue:
 
-Current popup adds one click before a high-frequency operation.
-
-Desired compact header concept:
-
-```text
-汎用・時間配置                         レイヤー操作
-再生位置にテンプレートの長さで配置
-```
-
-Within the existing header height, keep layer target and occupied-layer behavior directly operable.
-
-Desired interaction direction:
-
-- numeric layer target visible without opening a popup;
-- occupied-layer behavior reachable in the same compact region;
-- ideally, when Generic placement is active and no text editor owns input, direct number typing can enter the layer target;
-- Enter applies a valid numeric draft;
-- Esc restores the saved target;
-- do not steal keys from normal text/ComboBox/DataGrid editing or position shortcuts.
-
-This is a UX idea only; exact focus/key admission should be designed later.
-
-
-### Voice row-height drag
-
-Replace the coarse preset-only row-height choice with a direct global resize gesture.
-
-Desired direction:
-
-- one common row height remains authoritative for every Voice row;
-- a compact drag grip adjusts the common height continuously on screen;
-- valid range remains 32-96;
-- dragging does not persist on every pixel movement;
-- release commits the final height once through the protected settings store;
-- failed persistence restores the saved height;
-- do not introduce per-row heights or break DataGrid virtualization.
-
-### Generic layer mouse-wheel adjustment
-
-When the pointer is directly over the Generic numeric layer field:
-
-- wheel up/down adjusts by one numeric layer step;
-- bounds are respected;
-- the changed complete number is applied immediately through the existing Generic target command/path;
-- wheel elsewhere keeps normal panel/outer scrolling;
-- no modified-wheel global interception.
-
-### Bottom-right panel quick settings
-
-Current bottom-right Settings button only jumps to the Settings tab, which is already one direct tab click away.
-
-Replace that duplicate navigation role with a **panel quick-settings flyout**.
-
-Candidate quick settings:
-
-- Set-wide tile shape (rounded / square / circle);
-- global Auto / Fixed layout;
-- fixed column count;
-- position shortcuts on/off;
-- position shortcut assignments;
-- other small appearance/operation controls proven useful during placement.
-
-Boundary:
-
-- quick settings = how this placement panel looks/operates;
-- full Settings tab = what the Set means and how it places things.
-
-Do not duplicate structural Set creation/deletion/applicability/relation editing into the flyout.
+- continuous wheel rotation while crossing from an inner Settings/list area to outer content can still pause for a few wheel notches before self-recovering;
+- revisit only if it becomes persistent, requires explicit recovery, affects normal controls, or a bounded local fix is proved.
 
 ## Placement Recipe extensions — collect before implementation
 
