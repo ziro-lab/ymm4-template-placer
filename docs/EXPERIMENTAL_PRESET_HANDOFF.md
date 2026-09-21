@@ -1,6 +1,6 @@
 # Experimental Tachie Preset source — refreshed feature handoff
 
-Status: **P0 + P1 GREEN ON ACCEPTED v0.4.2 / READY FOR P2**
+Status: **P0 + P1 + P2 GREEN ON ACCEPTED v0.4.2 / READY FOR P3**
 
 This handoff replaces the pre-performance assumptions of the original PR #19 preparation while retaining the canonical Lab evidence.
 
@@ -93,6 +93,28 @@ The exact YMM4 4.55.1.1 Lite run proved:
 - full Checkpoint semantic regression/evidence guards pass.
 
 P1 deliberately contains no Tachie Preset capability detector. Tachie Preset mode currently exposes only the source/placement-rule boundary and a truthful preparation state; P2/P3 add the immutable model and bounded detector.
+
+### P2 immutable capability model evidence
+
+Product source:
+
+- source `7d60808f02bae9450760be8b07aa67ef44a07a95`;
+- Focused run `35622493374`;
+- native job `106408713620`;
+- artifact `10649933330`;
+- artifact SHA256 `36a8f04a5db1fc3b758968c5108f6c58f9712a8e31cfd35f4e9abda4363f34df`;
+- marker `FOCUSED_NATIVE=PASS`.
+
+P2 adds one pure immutable model file only:
+
+- `TachiePresetCapabilityFingerprint`;
+- `TachiePresetRouteDescriptor` + bounded route kind;
+- `TachiePresetCandidateDescriptor`;
+- `TachiePresetCapabilityResult` with `Strong / Experimental / None`.
+
+The model stores only bounded strings, `Guid` and enums. It has no YMM4/plugin/WPF/Timeline object reference. Candidate identity duplicates fail closed to `None`; candidates with mixed confidence keep the overall result Experimental.
+
+P2 does not discover, cache or apply presets. Those UI-affine operations remain P3.
 
 ## Product surface
 

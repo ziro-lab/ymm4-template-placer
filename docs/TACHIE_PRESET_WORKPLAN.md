@@ -58,6 +58,17 @@ Add product types for:
 
 No Timeline mutation.
 
+Validation: **DONE.**
+
+- source `7d60808f02bae9450760be8b07aa67ef44a07a95`;
+- Focused run `35622493374`;
+- job `106408713620`;
+- artifact `10649933330`;
+- artifact SHA256 `36a8f04a5db1fc3b758968c5108f6c58f9712a8e31cfd35f4e9abda4363f34df`;
+- marker `FOCUSED_NATIVE=PASS`.
+
+Exit: **DONE.** The model contains bounded immutable identity only and no host/plugin/WPF/Timeline references. Duplicate candidate identities fail closed.
+
 ## P3 — bounded UI-affine capability coordinator
 
 Implement exact Character/plugin resolution and fresh-parameter probing.

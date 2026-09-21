@@ -1,6 +1,6 @@
 # Tachie Preset source — implementation prep
 
-Status: P0 + P1 GREEN / READY FOR P2
+Status: P0 + P1 + P2 GREEN / READY FOR P3
 
 Base before this refresh:
 
@@ -140,3 +140,19 @@ Pinned proof:
 The source mode remains session-local, Template-default and zero-write. Tachie Preset gates Template-only Excel/placement/resync/navigation and cancels stale Template work. Protected imported Template/Excel work blocks source entry without data loss.
 
 P2 should add only immutable capability/fingerprint/route/candidate/result types. Do not move YMM4/plugin/WPF probing into P2.
+
+
+## P2 implementation result
+
+Immutable capability model is green.
+
+Pinned proof:
+
+- source `7d60808f02bae9450760be8b07aa67ef44a07a95`;
+- Focused run `35622493374`;
+- job `106408713620`;
+- artifact `10649933330`;
+- artifact SHA256 `36a8f04a5db1fc3b758968c5108f6c58f9712a8e31cfd35f4e9abda4363f34df`;
+- marker `FOCUSED_NATIVE=PASS`.
+
+The P2 model is host-object-free. P3 may populate these descriptors on the UI thread, but must not add live plugin/editor/WPF objects to them or weaken duplicate-identity fail-closed behavior.

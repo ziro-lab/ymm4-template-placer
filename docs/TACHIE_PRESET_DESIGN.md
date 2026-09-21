@@ -1,6 +1,6 @@
 # Tachie Preset source — design
 
-Status: FROZEN / P0 + P1 GREEN / P2 READY
+Status: FROZEN / P0 + P1 + P2 GREEN / P3 READY
 
 This feature adds Tachie Preset content as an experimental second source in the existing high-throughput expression workspace.
 
