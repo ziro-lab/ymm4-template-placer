@@ -73,17 +73,23 @@ internal static partial class NativeProof
                 copied.OwnerTypeKey == IntentSelectionContext.TypeKey(typeof(TextItem)) && copied.Name == "表情セット 2" &&
                 savedCopy.Target.ItemTypeKeys.SequenceEqual(new[] { IntentSelectionContext.TypeKey(typeof(TextItem)) }) &&
                 savedCopy.Target.TypeMatch == IntentTypeMatch.UniformType && savedCopy.Relation == palette.Relation &&
-                savedCopy.Target.CharacterName == palette.Target.CharacterName && savedCopy.Entries.SequenceEqual(palette.Entries) &&
+                savedCopy.Target.CharacterName == palette.Target.CharacterName &&
+                savedCopy.Target.MinimumCount == palette.Target.MinimumCount && savedCopy.Target.MaximumCount == palette.Target.MaximumCount &&
+                savedCopy.ExpressionCandidates == palette.ExpressionCandidates && savedCopy.Entries.SequenceEqual(palette.Entries) &&
                 Signature(timeline) == signature,
                 "H1 cross-Item copy creates a new destination-local Guid/name and preserves the complete source snapshot with zero Timeline write");
             session.MoveOwned(-1); await Idle();
             Assert(session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(new[] { copied.Id, textPalette.Id }) &&
                 session.Palettes.Single(x => x.Id == palette.Id).OwnerTypeKey == IntentSelectionContext.TypeKey(typeof(VoiceItem)),
                 "H1 Set move changes only the current Item owner's visible order and never moves through another owner's Set");
+            sourceDraft.Name = "元側だけ変更"; await Idle();
+            Assert(copied.Name == "表情セット 2" &&
+                new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().IntentPalettes.Single(x => x.Id == copied.Id).Name == "表情セット 2",
+                "H1 copied Set is independent; later source edits never propagate to the destination");
             copied.Name = "コピー側だけ変更"; await Idle();
-            Assert(session.Palettes.Single(x => x.Id == palette.Id).Name == "表情セット" &&
-                new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().IntentPalettes.Single(x => x.Id == palette.Id).Name == "表情セット",
-                "H1 copied Set is independent; destination edits never propagate back to the source");
+            Assert(session.Palettes.Single(x => x.Id == palette.Id).Name == "元側だけ変更" &&
+                new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().IntentPalettes.Single(x => x.Id == palette.Id).Name == "元側だけ変更",
+                "H1 copied Set is independent; later destination edits never propagate back to the source");
             await InvokeSelectionButton(panel.RollbackButton); await Idle();
             session = vm.IntentSettings!;
             Assert(session.Palettes.Count == 2 && session.Palettes.All(x => x.Name == "表情セット") && !session.HasChanges && Signature(timeline) == signature,
