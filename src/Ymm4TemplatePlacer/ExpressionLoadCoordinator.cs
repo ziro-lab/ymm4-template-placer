@@ -133,7 +133,9 @@ public sealed partial class PlacerViewModel
     {
         if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
             throw new InvalidOperationException("表情一覧のYMM4 Snapshot取得はUIスレッドで実行する必要があります。");
+        var captureWatch = System.Diagnostics.Stopwatch.StartNew();
         expressionPerformance.HostCaptures++;
+        expressionPerformance.LastCaptureThreadId = Environment.CurrentManagedThreadId;
         var items = new List<ExpressionCapturedItem>(current.Items.Count);
         var voices = new List<VoiceSnapshot>();
         foreach (var item in current.Items)
@@ -156,6 +158,8 @@ public sealed partial class PlacerViewModel
             expressionCandidateCache = CaptureExpressionCandidates();
             expressionCandidateDirty = false;
         }
+        captureWatch.Stop();
+        expressionPerformance.LastCaptureMilliseconds = captureWatch.ElapsedMilliseconds;
         return new(generation, current, voices, items, expressionCandidateCache ?? [], candidateChanged,
             ReferenceEquals(expressionCacheTimeline, current) ? expressionHostFingerprint : null,
             ReferenceEquals(expressionCacheTimeline, current) ? expressionPreparedVoices : [],
@@ -185,17 +189,21 @@ public sealed partial class PlacerViewModel
 
     private void PublishExpressionPrepared(ExpressionPreparedResult result)
     {
+        var publishWatch = System.Diagnostics.Stopwatch.StartNew();
+        expressionPerformance.LastPrepareMilliseconds = (long)result.PreparationElapsed.TotalMilliseconds;
+        expressionPerformance.LastPrepareThreadId = result.PreparationThreadId;
+        expressionPerformance.LastPublishThreadId = Environment.CurrentManagedThreadId;
         if (result.NoSemanticChange)
         {
             expressionHostFingerprint = result.Fingerprint; expressionCacheTimeline = result.Timeline;
             expressionPreparedVoices = Rows.Select(x => x.Target).ToArray(); expressionPreparedItems = result.Items; expressionCacheDirty = false; voiceFreshnessProblem = "";
-            SetVoiceFreshnessState(ExpressionRowsFreshness.Current); return;
+            SetVoiceFreshnessState(ExpressionRowsFreshness.Current);
+            publishWatch.Stop(); expressionPerformance.LastPublishMilliseconds = publishWatch.ElapsedMilliseconds; return;
         }
 
         expressionPerformance.AssociationIndexBuilds++;
         expressionPerformance.AssociationItemsParsed += result.AssociationItemsParsed;
         expressionPerformance.CandidateKeyBuilds += result.CandidateKeysBuilt;
-        expressionPerformance.LastPrepareMilliseconds = (long)result.PreparationElapsed.TotalMilliseconds;
         var old = Rows.ToDictionary(x => x.Target.Voice, (IEqualityComparer<VoiceItem>)ReferenceEqualityComparer.Instance);
         var next = new List<AssignmentRow>(result.Rows.Count);
         suppressExpressionApply = true; suppressExpressionRowEvents = true;
@@ -231,6 +239,7 @@ public sealed partial class PlacerViewModel
         expressionPreparedItems = result.Items; expressionCacheDirty = false; voiceFreshnessProblem = "";
         RebuildExpressionAggregates(); RememberVoiceRows(true);
         OnPropertyChanged(nameof(Summary)); OnPropertyChanged(nameof(ShowExpressionBatchPlace)); UpdateCommands();
+        publishWatch.Stop(); expressionPerformance.LastPublishMilliseconds = publishWatch.ElapsedMilliseconds;
     }
 
     internal void ApplyIncrementalVoiceChanges(IReadOnlyList<VoiceItem> voices, bool reorderRows)
