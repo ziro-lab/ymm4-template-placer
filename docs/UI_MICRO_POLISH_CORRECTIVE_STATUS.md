@@ -1,10 +1,10 @@
 # UI Micro Polish — corrective implementation status
 
-Status: **C0-C4 RELEASE GREEN / OWNER HANDS-ON ROUND 2 DESIGN FROZEN / IMPLEMENTATION READY**
+Status: **OWNER HANDS-ON ROUND 2 IMPLEMENTED / CHECKPOINT PENDING**
 
 ## Release-green baseline before owner Hands-on Round 2
 
-Exact candidate:
+Exact accepted automation baseline:
 
 - source `1b8a88255da2e28289996b4d99470a195d6ec6a4`
 - Release run #305 `35551459441`
@@ -15,51 +15,17 @@ Exact candidate:
 - verified stable-root `.ymme` / source / provenance package PASS
 - `LICENSE.md` included in distributable and source archive
 
-C0-C4 remain valid accepted implementation/evidence for:
-
-- rejected direct Generic digit route removed;
-- wheel success stays quiet;
-- Voice row-boundary common-height resize + numeric entry;
-- responsive Fixed grid;
-- owner-Window deactivation closing quick settings.
-
-PR #20 was intentionally not merged before owner Hands-on.
+C0-C4 from the first corrective pass remain preserved.
 
 ## Owner Hands-on Round 2 feedback
 
-Owner testing of the Release #305 candidate produced three additional findings:
+Release #305 owner testing produced:
 
-### F8 — quick settings light-dismiss
+- F8: quick settings did not close when clicking elsewhere inside YMM4;
+- F9: targeted Sets were too globally visible/shared across Item types;
+- F10: cross-Item reuse should be a one-time copy rather than shared ownership.
 
-The Popup closes on owner Window deactivation, but clicking another place inside YMM4 does not close it.
-
-Wanted:
-
-- internal quick-settings interaction keeps it open;
-- click elsewhere in the owning YMM4 Window closes it;
-- existing deactivation close remains.
-
-### F9 — targeted Sets should be Item-owned
-
-Current code has a global `ShowAllSets` management mode and permits one `IntentPalette` to target multiple Item types.
-
-Wanted normal model:
-
-```text
-Item type -> its own Sets -> entries
-```
-
-Set management should never turn into a global all-targeted-Set list.
-
-### F10 — cross-Item reuse by snapshot copy
-
-Reuse between Item types should be explicit copy, not one shared Set.
-
-A copied Set is a one-time snapshot and becomes fully independent.
-
-## Round 2 authority
-
-Frozen documents:
+Frozen authority:
 
 - `UI_MICRO_POLISH_HANDS_ON_ROUND2_FEEDBACK.md`
 - `UI_MICRO_POLISH_HANDS_ON_ROUND2_DESIGN.md`
@@ -67,79 +33,153 @@ Frozen documents:
 - `UI_MICRO_POLISH_HANDS_ON_ROUND2_WORKPLAN.md`
 - `UI_MICRO_POLISH_HANDS_ON_ROUND2_IMPLEMENTATION_PREP.md`
 
-## Frozen implementation direction
+## Implemented Round 2 scope
 
-### Quick settings
+### R2C0 — quick-settings light-dismiss
 
-Keep `Popup.StaysOpen=True` and existing owner `Deactivated` handling.
+Implemented in `IntentPalettePanel`:
 
-Add one Popup-lifetime-scoped owner `PreviewMouseDown` route:
+- keeps `Popup.StaysOpen=True`;
+- existing owner `Window.Deactivated` close remains;
+- one Popup-lifetime owner `PreviewMouseDown` route closes on clicks elsewhere in that owning YMM4 Window;
+- the outside click is never marked handled;
+- Popup-internal interaction remains outside the owner Window route;
+- subscription is detached on Popup close / unload / owner replacement;
+- no application-global InputManager hook, polling or Win32 global mouse hook.
 
-- internal Popup interaction stays open;
-- click elsewhere in owner Window closes;
-- outside click is not swallowed;
-- no application/global/OS mouse hook.
+Native Round4 proof now includes:
 
-### Item-owned normal Sets
+- real internal shape-button interaction staying open;
+- real internal ComboBox opening staying open;
+- real owner-window outside click closing the Popup;
+- delivery of that same click to the intended YMM4 control;
+- existing owner deactivation / no-reactivation reopen proof.
 
-Normal targeted Set:
+### R2C1/R2C2 — Item-owned normal targeted Sets
+
+Normal targeted Settings now use:
 
 ```text
-Target.ItemTypeKeys.Count == 1
-TypeMatch == UniformType
+Item type -> its Sets -> entries
 ```
 
-Do not add a second serialized owner field.
+Normal creation:
 
-Remove normal `ShowAllSets` behavior and normal multi-type target creation/editing.
+- exactly one `ItemTypeKey`;
+- `UniformType`;
+- same-runtime-type multi-selection still carries count/Character conditions;
+- mixed runtime selection cannot create a new shared multi-type Set.
 
-Keep:
+Removed from the normal Settings surface:
 
-- same-type multi-selection count rules;
-- optional CharacterName restriction;
-- current relation/entry semantics.
+- global `ShowAllSets` behavior;
+- runtime Item-type checkbox matrix;
+- normal `ExactMixedTypes` choice.
 
-### Existing multi-type Sets
+Expanding `セットの管理` no longer broadens the visible Set list.
 
-Preserve existing serialized multi-type Sets losslessly.
+No new serialized owner field or settings revision was introduced.
 
-If any exist, expose them only through a bounded `複数種類` compatibility context.
+### R2C3 — owner-local naming and ordering
 
-Do not silently split, broaden or assign them to an arbitrary Item parent.
+Implemented:
 
-### Cross-Item copy
+- Set names are disambiguated only inside one Item owner;
+- two Item types may use the same Set display name;
+- duplicate uses the same owner;
+- move up/down reorders among owner siblings and preserves other owners' relative order.
 
-Inside Set management:
+### R2C4 — cross-Item snapshot copy
 
-- same-owner `複製` remains;
-- add explicit copy-to-another-Item operation;
-- new Guid;
-- destination gets exactly one Item type / `UniformType`;
-- all other Set state is copied as the current snapshot;
-- no live link;
-- destination-local name collision handling;
-- protected Settings persistence only;
-- zero Timeline writes.
+Added to `セットの管理`:
 
-## Current branch state
+```text
+他のアイテムへコピー
+[コピー先] [コピー]
+```
 
-Everything after Release baseline `1b8a8825...` in this preparation is documentation-only.
+Copy behavior:
 
-No Round 2 product code has been changed yet.
+- validates the current Set draft;
+- creates a new Guid;
+- assigns exactly the destination Item type + `UniformType`;
+- copies relation, count/Character conditions, expression-candidate flag, entries/order/appearance/entry overrides;
+- destination-local name collision uses the numbered suffix convention;
+- source and destination are independent after copying;
+- navigates directly to the new destination Set;
+- uses the existing protected Settings auto-commit path;
+- writes zero Timeline items.
+
+### R2C5 — bounded existing multi-type compatibility
+
+Existing multi-type Sets remain stored and executable under their existing semantics.
+
+Settings:
+
+- adds `複数種類` only when such data exists;
+- never assigns old multi-type data to an arbitrary Item owner;
+- does not allow normal creation in that context;
+- allows snapshot-copying the old Set into one normal Item owner;
+- leaves the legacy source target unchanged.
+
+No destructive migration or revision bump.
+
+### Settings navigation cleanup
+
+Tile -> `Setの設定を開く` now resolves:
+
+- normal Set -> exact owning Item parent;
+- legacy multi-type Set -> bounded `複数種類` context.
+
+It no longer falls back to a global all-Set mode.
+
+Session rollback no longer stores/restores global Set visibility state.
+
+## Proof/docs/package updates
+
+Updated/extended proof covers:
+
+- Item parent filtering;
+- Set-management expansion staying scoped;
+- same Set name under different owners;
+- cross-Item copy persistence;
+- owner-local reorder;
+- copied Set independence;
+- mixed-selection creation rejection;
+- legacy multi-type roundtrip + bounded compatibility parent;
+- quick-settings light-dismiss.
+
+Updated:
+
+- `docs/USAGE.md`;
+- `docs/CURRENT_ARCHITECTURE.md`;
+- `docs/GLOSSARY.md`;
+- `tests/PackageVerified.ps1`.
+
+Package gate now requires the Round 2 usage wording and `ItemOwnedSetSettings.cs` in the source archive.
+
+## Validation status
+
+Intermediate run #327 reached:
+
+- checkout: PASS;
+- .NET/YMM4 setup: PASS;
+- Distribution/Proof build: PASS;
+
+but the Native job was cancelled by later commits under the PR concurrency policy. It is **not** acceptance evidence.
+
+A fresh uninterrupted Checkpoint from the final Round 2 proof HEAD is required next.
 
 ## Next action
 
-Implement the frozen workplan in PR #20:
-
-1. R2C0 quick-settings light-dismiss;
-2. R2C1 remove global targeted-Set management;
-3. R2C2 single-owner normal creation/editor;
-4. R2C3 owner-local naming/order;
-5. R2C4 cross-Item snapshot copy;
-6. R2C5 bounded legacy multi-type compatibility;
-7. update native proof/docs;
-8. full Checkpoint;
-9. exact Release;
-10. new owner Hands-on;
-11. merge PR #20 only after acceptance;
-12. then refresh paused Tachie Preset PR #19 from accepted main.
+1. complete the last Round 2 proof assertions;
+2. run one uninterrupted full Checkpoint;
+3. fix only evidence-backed failures;
+4. update this status with exact green HEAD/run;
+5. fast-forward `work/v0.4-native-validation` to that exact candidate;
+6. run Release;
+7. require exact distribution-DLL smoke + verified `.ymme` / source / provenance package;
+8. produce a new owner Hands-on `.ymme`;
+9. owner Hands-on;
+10. merge PR #20 only after acceptance;
+11. then refresh paused Tachie Preset PR #19 from accepted main.
