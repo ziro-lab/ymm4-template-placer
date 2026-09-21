@@ -16,13 +16,13 @@ public sealed partial class PlacerViewModel
             OnPropertyChanged(nameof(AddExpressionTemplateCommand));
             PropertyChanged += RelativeExpressionSettingsChanged;
         }
-        RefreshExpressionVocabulary();
+        MarkExpressionVocabularyDirty();
     }
     private void RelativeExpressionSettingsChanged(object? sender, PropertyChangedEventArgs e)
     {
         // A fresh settings session is published after Save/Discard, not on each keystroke.
         if (e.PropertyName == nameof(IntentSettings) && UsesRelativeExpressions && IntentSettings?.HasChanges == false)
-            RefreshExpressionVocabulary();
+            MarkExpressionVocabularyDirty();
     }
     private void OpenRelativeExpressionSettings(AssignmentRow row)
     {
