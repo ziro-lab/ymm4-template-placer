@@ -323,44 +323,10 @@ public sealed partial class IntentSettingsSession : IntentEditable
         ApplyGenericSets(next); next.Presentation = Presentation.Build();
         next.LegacyWorkspace = false; IntentPaletteSettings.Upgrade(next); PlacerSettingsStore.Validate(next); return next;
     }
-    public void Create(IReadOnlyList<IItem> selection)
-    {
-        if (selection.Count == 0) throw new InvalidOperationException("タイムラインで、このセットを使う対象アイテムを選択してから作成してください。");
-        var types = selection.Select(x => IntentSelectionContext.TypeKey(x.GetType())).Distinct(StringComparer.Ordinal).ToList();
-        var names = selection.Select(x => ItemCharacters.Get(x)?.Name).Distinct(StringComparer.Ordinal).ToArray();
-        var context = new IntentTargetContext { ItemTypeKeys = types, TypeMatch = types.Count > 1 ? IntentTypeMatch.ExactMixedTypes : IntentTypeMatch.UniformType,
-            MinimumCount = selection.Count, MaximumCount = selection.Count, CharacterName = names.Length == 1 ? names[0] : null };
-        var defaultName = names.Length == 1 && !string.IsNullOrWhiteSpace(names[0]) ? names[0]! : "新しいセット";
-        var relation = new IntentRelation();
-        if (types.Count == 1 && types[0] == IntentSelectionContext.TypeKey(typeof(VoiceItem)) && names.Length == 1 && !string.IsNullOrWhiteSpace(names[0]))
-            relation = relation with { Duration = IntentDuration.UntilRelated, Neighbor = IntentNeighbor.NextSameTypeAndCharacter, Fallback = IntentFallback.CurrentTargetEnd };
-        SelectedPalette = AddDraft(new(Guid.NewGuid(), UniqueName(defaultName), types.Count == 1 && types[0] == IntentSelectionContext.TypeKey(typeof(VoiceItem)) ? "表情" : "演出", context, relation, [])); MarkDirty();
-    }
-    private string UniqueName(string stem)
-    {
-        if (!Palettes.Any(x => x.Name == stem)) return stem;
-        for (var i = 2; ; i++) { var candidate = $"{stem} {i}"; if (!Palettes.Any(x => x.Name == candidate)) return candidate; }
-    }
-    public void Duplicate()
-    {
-        if (IsGenericContext) { DuplicateGenericSet(); return; }
-        var source = SelectedPalette?.Build() ?? throw new InvalidOperationException("複製するセットを選んでください。");
-        SelectedPalette = AddDraft(IntentPaletteSettings.Copy(source) with { Id = Guid.NewGuid(), Name = UniqueName(source.Name) }); MarkDirty();
-    }
-    public void RemoveSelected()
-    {
-        if (IsGenericContext) { RemoveGenericSet(); return; }
-        if (SelectedPalette == null) return;
-        Palettes.Remove(SelectedPalette);
-        RefreshPaletteFilter(); MarkDirty();
-    }
-    public void MovePalette(int delta)
-    {
-        if (IsGenericContext) { MoveGenericSet(delta); return; }
-        if (SelectedPalette == null) return;
-        var index = Palettes.IndexOf(SelectedPalette); var target = index + delta;
-        if (target >= 0 && target < Palettes.Count) Palettes.Move(index, target);
-    }
+    // Retained compatibility entry points now obey the Item-owned normal Set model.
+    public void Create(IReadOnlyList<IItem> selection) => CreateSingleOwner(selection);
+    public void Duplicate() => DuplicateOwned();
+    public void MovePalette(int delta) => MoveOwned(delta);
     public void MoveEntry(int delta)
     {
         if (IsGenericContext) { SelectedGenericSet?.MoveEntry(delta); return; }
