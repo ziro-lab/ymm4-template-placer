@@ -27,6 +27,23 @@ internal sealed class TachiePresetEditorSession : IDisposable
     private TachiePresetEditorSession(object attribute, TachiePresetCapabilityDiagnostics diagnostics)
     { this.attribute = attribute; this.diagnostics = diagnostics; }
 
+    // Canonical Lab #62 proves these public methods on local preset attributes.
+    // A concrete built-in attribute need not inherit the obsolete tachie-aware base.
+    private static MethodInfo? PublicMethod(Type type, string name, params Type[] parameters) =>
+        type.GetMethod(name, BindingFlags.Instance | BindingFlags.Public, null, parameters, null);
+    private static bool HasLegacyContract(Type type)
+    {
+        var config = type.GetProperty("CharacterParameter", BindingFlags.Instance | BindingFlags.Public);
+        var create = PublicMethod(type, "Create");
+        return config?.SetMethod?.IsPublic == true && config.PropertyType == typeof(object) &&
+            config.GetIndexParameters().Length == 0 && create != null &&
+            typeof(FrameworkElement).IsAssignableFrom(create.ReturnType) &&
+            PublicMethod(type, "SetBindings", typeof(FrameworkElement), typeof(object), typeof(object), typeof(PropertyInfo))?.ReturnType == typeof(void) &&
+            PublicMethod(type, "ClearBindings", typeof(FrameworkElement))?.ReturnType == typeof(void);
+    }
+    private static void AssignLegacyContext(object editor, object? configuration) =>
+        editor.GetType().GetProperty("CharacterParameter", BindingFlags.Instance | BindingFlags.Public)!.SetValue(editor, configuration);
+
     public static IReadOnlyList<TachiePresetEditorRoute> FindRoutes(object face)
     {
         TachiePresetPublicState.RequireUiThread();
@@ -46,10 +63,10 @@ internal sealed class TachiePresetEditorSession : IDisposable
             foreach (var data in metadata)
             {
                 var type = data.AttributeType;
-                var legacy = typeof(PropertyEditorForTachieParameterAttribute).IsAssignableFrom(type);
+                if (!(HasPresetContext(property.Name) || HasPresetContext(display) || HasPresetContext(type.Name))) continue;
                 var modern = typeof(PropertyEditorAttribute2).IsAssignableFrom(type) &&
                              typeof(IPropertyEditorForTachieParameterAttribute).IsAssignableFrom(type);
-                if ((!legacy && !modern) || !(HasPresetContext(property.Name) || HasPresetContext(display) || HasPresetContext(type.Name))) continue;
+                if (!modern && !HasLegacyContract(type)) continue;
                 var descriptor = new TachiePresetRouteDescriptor(
                     modern ? TachiePresetRouteKind.PropertyEditorModern : TachiePresetRouteKind.PropertyEditorLegacy,
                     property.DeclaringType?.FullName + "." + property.Name,
@@ -84,6 +101,14 @@ internal sealed class TachiePresetEditorSession : IDisposable
                 legacy.CharacterParameter = configuration;
                 session.Attach(legacy.Create());
                 legacy.SetBindings(session.Control, freshFace, freshFace, route.Property);
+            }
+            else if (HasLegacyContract(session.attribute.GetType()))
+            {
+                var type = session.attribute.GetType();
+                AssignLegacyContext(session.attribute, configuration);
+                session.Attach((FrameworkElement)PublicMethod(type, "Create")!.Invoke(session.attribute, null)!);
+                PublicMethod(type, "SetBindings", typeof(FrameworkElement), typeof(object), typeof(object), typeof(PropertyInfo))!
+                    .Invoke(session.attribute, [session.Control, freshFace, freshFace, route.Property]);
             }
             else throw new InvalidOperationException("対応する公開PropertyEditor契約がありません。");
             return session;
@@ -213,8 +238,9 @@ internal sealed class TachiePresetEditorSession : IDisposable
         {
             if (control != null)
             {
-                if (attribute is PropertyEditorAttribute2 modern) modern.ClearBindings(control);
-                else ((PropertyEditorForTachieParameterAttribute)attribute).ClearBindings(control);
+                if (attribute is PropertyEditorAttribute2 modern && attribute is IPropertyEditorForTachieParameterAttribute) modern.ClearBindings(control);
+                else if (attribute is PropertyEditorForTachieParameterAttribute legacy) legacy.ClearBindings(control);
+                else PublicMethod(attribute.GetType(), "ClearBindings", typeof(FrameworkElement))!.Invoke(attribute, [control]);
                 diagnostics.EditorsCleared++;
             }
         }
@@ -237,6 +263,7 @@ internal sealed class TachiePresetEditorSession : IDisposable
             {
                 if (attribute is IPropertyEditorForTachieParameterAttribute aware) aware.CharacterParameter = null;
                 else if (attribute is PropertyEditorForTachieParameterAttribute legacy) legacy.CharacterParameter = null!;
+                else AssignLegacyContext(attribute, null);
             }
             catch (Exception ex) { failure ??= ex; }
         }
