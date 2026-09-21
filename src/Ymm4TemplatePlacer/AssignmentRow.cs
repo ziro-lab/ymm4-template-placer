@@ -63,6 +63,11 @@ public sealed class AssignmentRow : INotifyPropertyChanged
         if (AssociationMatchesSelection == value) return;
         AssociationMatchesSelection = value; Changed(nameof(AssociationMatchesSelection));
     }
+    internal void SetNumber(int value)
+    {
+        if (No == value) return;
+        No = value; Changed(nameof(No));
+    }
     internal void RestoreSelectedChoice(TemplateChoice? choice, string? unavailableLabel = null)
     {
         var next = choice;
