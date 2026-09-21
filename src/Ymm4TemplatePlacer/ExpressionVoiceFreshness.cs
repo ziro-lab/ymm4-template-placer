@@ -15,6 +15,7 @@ public sealed partial class PlacerViewModel
     private Timeline? watchedVoiceTimeline, voiceRowsTimeline;
     private readonly HashSet<VoiceItem> watchedVoices = new(ReferenceEqualityComparer.Instance);
     private readonly HashSet<VoiceItem> dirtyVoices = new(ReferenceEqualityComparer.Instance);
+    private readonly HashSet<VoiceItem> dirtyVoiceOrder = new(ReferenceEqualityComparer.Instance);
     private DispatcherOperation? queuedVoiceFreshness;
     private bool voiceFreshnessActive, voiceFreshnessDisposed, fullVoiceReconcilePending;
     private ExpressionRowsFreshness voiceRowsFreshness;
@@ -58,16 +59,22 @@ public sealed partial class PlacerViewModel
     private void SetVoiceFreshnessActive(bool active)
     {
         active &= UsesRelativeExpressions && !voiceFreshnessDisposed;
-        if (voiceFreshnessActive == active && ReferenceEquals(watchedVoiceTimeline, active ? timeline : null)) return;
+        if (voiceFreshnessActive == active) return;
         voiceFreshnessActive = active;
-        RebindVoiceFreshness();
+        if (active) RebindVoiceFreshness();
+        else
+        {
+            queuedVoiceFreshness?.Abort(); queuedVoiceFreshness = null;
+            dirtyVoices.Clear(); dirtyVoiceOrder.Clear(); fullVoiceReconcilePending = false;
+        }
     }
     internal void RebindVoiceFreshness()
     {
         queuedVoiceFreshness?.Abort(); queuedVoiceFreshness = null;
+        if (voiceFreshnessActive && !voiceFreshnessDisposed && timeline != null && ReferenceEquals(watchedVoiceTimeline, timeline)) return;
         if (watchedVoiceTimeline != null) watchedVoiceTimeline.PropertyChanged -= VoiceTimelineChanged;
         foreach (var voice in watchedVoices) voice.PropertyChanged -= VoiceItemChanged;
-        watchedVoices.Clear(); dirtyVoices.Clear(); watchedVoiceTimeline = null; fullVoiceReconcilePending = false;
+        watchedVoices.Clear(); dirtyVoices.Clear(); dirtyVoiceOrder.Clear(); watchedVoiceTimeline = null; fullVoiceReconcilePending = false;
         if (!voiceFreshnessActive || voiceFreshnessDisposed || timeline == null) return;
         watchedVoiceTimeline = timeline;
         watchedVoiceTimeline.PropertyChanged += VoiceTimelineChanged;
@@ -80,14 +87,14 @@ public sealed partial class PlacerViewModel
         var current = voices.Select(x => x.Voice).ToHashSet((IEqualityComparer<VoiceItem>)ReferenceEqualityComparer.Instance);
         foreach (var removed in watchedVoices.Where(x => !current.Contains(x)).ToArray())
         {
-            removed.PropertyChanged -= VoiceItemChanged; watchedVoices.Remove(removed); dirtyVoices.Remove(removed);
+            removed.PropertyChanged -= VoiceItemChanged; watchedVoices.Remove(removed); dirtyVoices.Remove(removed); dirtyVoiceOrder.Remove(removed);
         }
         foreach (var added in current)
             if (watchedVoices.Add(added)) added.PropertyChanged += VoiceItemChanged;
     }
     private void VoiceTimelineChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (!ReferenceEquals(sender, watchedVoiceTimeline)) return;
+        if (!voiceFreshnessActive || !ReferenceEquals(sender, watchedVoiceTimeline)) return;
         if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(Timeline.Items))
         {
             fullVoiceReconcilePending = true; RequestVoiceFreshnessCheck();
@@ -95,7 +102,7 @@ public sealed partial class PlacerViewModel
     }
     private void VoiceItemChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (sender is not VoiceItem voice || !watchedVoices.Contains(voice)) return;
+        if (!voiceFreshnessActive || sender is not VoiceItem voice || !watchedVoices.Contains(voice)) return;
         // Remark deliberately does not participate. Managed expression association writes
         // and non-Voice item insertions must not tear down the user's current Rows.
         if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName is nameof(VoiceItem.Character) or nameof(VoiceItem.CharacterName))
@@ -104,7 +111,9 @@ public sealed partial class PlacerViewModel
         }
         if (e.PropertyName is nameof(VoiceItem.Frame) or nameof(VoiceItem.Length) or nameof(VoiceItem.Layer) or nameof(VoiceItem.Serif))
         {
-            dirtyVoices.Add(voice); RequestVoiceFreshnessCheck();
+            dirtyVoices.Add(voice);
+            if (e.PropertyName is nameof(VoiceItem.Frame) or nameof(VoiceItem.Layer)) dirtyVoiceOrder.Add(voice);
+            RequestVoiceFreshnessCheck();
         }
     }
     internal void RequestVoiceFreshnessCheck()
@@ -121,15 +130,16 @@ public sealed partial class PlacerViewModel
         VoiceFreshnessCheckCount++;
         if (HasProtectedPendingVoiceWork())
         {
-            dirtyVoices.Clear(); fullVoiceReconcilePending = false; SetVoiceFreshnessState(ExpressionRowsFreshness.StalePending); return;
+            dirtyVoices.Clear(); dirtyVoiceOrder.Clear(); fullVoiceReconcilePending = false; SetVoiceFreshnessState(ExpressionRowsFreshness.StalePending); return;
         }
         if (fullVoiceReconcilePending)
         {
-            dirtyVoices.Clear(); fullVoiceReconcilePending = false; expressionCacheDirty = true; RequestExpressionLoad(true); return;
+            dirtyVoices.Clear(); dirtyVoiceOrder.Clear(); fullVoiceReconcilePending = false; expressionCacheDirty = true; RequestExpressionLoad(true); return;
         }
         if (dirtyVoices.Count == 0) return;
-        var changed = dirtyVoices.ToArray(); dirtyVoices.Clear();
-        try { ApplyIncrementalVoiceChanges(changed); }
+        var changed = dirtyVoices.ToArray(); var reorder = changed.Any(dirtyVoiceOrder.Contains);
+        dirtyVoices.Clear(); dirtyVoiceOrder.Clear();
+        try { ApplyIncrementalVoiceChanges(changed, reorder); }
         catch (Exception ex)
         {
             voiceFreshnessProblem = "音声一覧を更新できませんでした。現在の割り当ては保持しています: " + ex.GetBaseException().Message;
