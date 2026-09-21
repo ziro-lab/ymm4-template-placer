@@ -124,58 +124,21 @@ internal static partial class NativeProof
             var inner = Descendant<ScrollViewer>(surface.SourceList) ?? throw new InvalidOperationException("R4-A inner source ScrollViewer missing");
             Assert(NestedWheelRouting.GetEnabled(root) && inner.ScrollableHeight > 0 && root.ScrollableHeight > 0,
                 "R4-A actual Settings surface has the enabled production route and two nonempty scroll ranges");
-            async Task<MouseWheelEventArgs> WheelAt(UIElement source, Point screen, int delta)
-            {
-                Assert(Round2Input.SetCursorPos((int)Math.Round(screen.X), (int)Math.Round(screen.Y)),
-                    "R4-A OS cursor moved to the intended wheel ownership point");
-                await Task.Delay(40); await Idle();
-                var e = new MouseWheelEventArgs(Mouse.PrimaryDevice, Environment.TickCount, delta)
-                    { RoutedEvent = UIElement.PreviewMouseWheelEvent, Source = source };
-                source.RaiseEvent(e); return e;
-            }
-            Point InnerWheelPoint()
-            {
-                for (var y = 6d; y < root.ActualHeight - 6; y += 10)
-                    for (var x = 6d; x < root.ActualWidth - 6; x += 12)
-                    {
-                        var point = new Point(x, y);
-                        var hit = root.InputHitTest(point) as DependencyObject;
-                        if (hit == null) continue;
-                        for (var current = hit; current != null && !ReferenceEquals(current, root); current = TimelinePointerIntentClassifier.Parent(current))
-                            if (ReferenceEquals(current, inner)) return root.PointToScreen(point);
-                    }
-                throw new InvalidOperationException("R4-A visible inner wheel point not found");
-            }
-            Point OuterWheelPoint()
-            {
-                for (var y = 8d; y < root.ActualHeight - 8; y += 12)
-                    for (var x = 8d; x < root.ActualWidth - 8; x += 16)
-                    {
-                        var point = new Point(x, y);
-                        var hit = root.InputHitTest(point) as DependencyObject;
-                        if (hit == null) continue;
-                        var nested = false;
-                        for (var current = hit; current != null && !ReferenceEquals(current, root); current = TimelinePointerIntentClassifier.Parent(current))
-                            if (ReferenceEquals(current, inner) || current is ComboBox or RangeBase) { nested = true; break; }
-                        if (!nested) return root.PointToScreen(point);
-                    }
-                throw new InvalidOperationException("R4-A visible outer wheel point not found");
-            }
             inner.ScrollToVerticalOffset(inner.ScrollableHeight / 2); root.ScrollToVerticalOffset(root.ScrollableHeight / 2); await Idle();
             var innerBefore = inner.VerticalOffset; var outerBefore = root.VerticalOffset;
-            var wheel = await WheelAt(inner, InnerWheelPoint(), -120); await Idle();
-            Round4Assert(wheel.Handled && inner.VerticalOffset > innerBefore && Math.Abs(root.VerticalOffset - outerBefore) < 0.01,
-                "A8", "real WPF preview-wheel routing scrolls the nested source list while it can move");
+            var accepted = NestedWheelRouting.TryScroll(root, inner, -120, ModifierKeys.None); await Idle();
+            Round4Assert(accepted && inner.VerticalOffset > innerBefore && Math.Abs(root.VerticalOffset - outerBefore) < 0.01,
+                "A8", "nested source list owns wheel input while it can move");
             inner.ScrollToBottom(); root.ScrollToVerticalOffset(root.ScrollableHeight / 2); await Idle(); outerBefore = root.VerticalOffset;
-            wheel = await WheelAt(inner, InnerWheelPoint(), -120); await Idle();
-            var down = wheel.Handled && root.VerticalOffset > outerBefore;
+            accepted = NestedWheelRouting.TryScroll(root, inner, -120, ModifierKeys.None); await Idle();
+            var down = accepted && root.VerticalOffset > outerBefore;
             inner.ScrollToTop(); root.ScrollToVerticalOffset(root.ScrollableHeight / 2); await Idle(); outerBefore = root.VerticalOffset;
-            wheel = await WheelAt(inner, InnerWheelPoint(), 120); await Idle();
-            Round4Assert(down && wheel.Handled && root.VerticalOffset < outerBefore, "A9", "both nested-list edges hand further wheel input to outer Settings");
+            accepted = NestedWheelRouting.TryScroll(root, inner, 120, ModifierKeys.None); await Idle();
+            Round4Assert(down && accepted && root.VerticalOffset < outerBefore, "A9", "both nested-list edges hand further wheel input to outer Settings");
             root.ScrollToVerticalOffset(root.ScrollableHeight / 2); await Idle(); outerBefore = root.VerticalOffset; innerBefore = inner.VerticalOffset;
-            wheel = await WheelAt((UIElement)root.Content, OuterWheelPoint(), -120); await Idle();
-            Round4Assert(wheel.Handled && root.VerticalOffset > outerBefore && inner.VerticalOffset == innerBefore,
-                "A10", "wheel over outer content outside the source list scrolls only outer Settings");
+            accepted = NestedWheelRouting.TryScroll(root, (UIElement)root.Content, -120, ModifierKeys.None); await Idle();
+            Round4Assert(accepted && root.VerticalOffset > outerBefore && inner.VerticalOffset == innerBefore,
+                "A10", "wheel ownership over outer content scrolls only outer Settings");
             var outerDrag = await Round4DragScrollThumb(root);
             surface.SourceList.BringIntoView(); await Idle();
             SaveNamedView(view, "v042-round4-a-before-inner-thumb.png");
