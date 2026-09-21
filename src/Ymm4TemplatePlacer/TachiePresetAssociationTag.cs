@@ -8,14 +8,15 @@ namespace Ymm4TemplatePlacer;
 
 // A compact Timeline descriptor. Long plugin/candidate identities stay in the
 // immutable capability model; the Timeline stores only deterministic digests.
-internal sealed record TachiePresetAssociationTag(
-    Guid Group,
-    int Index,
-    int Count,
-    string CapabilityHash,
-    string CandidateHash,
-    string StateHash)
+internal sealed record TachiePresetAssociationTag
 {
+    public Guid Group { get; }
+    public int Index { get; }
+    public int Count { get; }
+    public string CapabilityHash { get; }
+    public string CandidateHash { get; }
+    public string StateHash { get; }
+
     public const string Prefix = "CWT_TPL:T=";
     private const int HashLength = 64;
     private const int MaxLineLength = 256;
@@ -29,14 +30,26 @@ internal sealed record TachiePresetAssociationTag(
         CandidateHash,
         StateHash);
 
-    public TachiePresetAssociationTag
+    public TachiePresetAssociationTag(
+        Guid group,
+        int index,
+        int count,
+        string capabilityHash,
+        string candidateHash,
+        string stateHash)
     {
-        if (Group == Guid.Empty) throw new InvalidDataException("立ち絵プリセット関連付けのBundle IDがありません。");
-        if (Count is < 1 or > 2048 || Index < 0 || Index >= Count)
+        if (group == Guid.Empty) throw new InvalidDataException("立ち絵プリセット関連付けのBundle IDがありません。");
+        if (count is < 1 or > 2048 || index < 0 || index >= count)
             throw new InvalidDataException("立ち絵プリセット関連付けのBundle位置が不正です。");
-        RequireHash(CapabilityHash, nameof(CapabilityHash));
-        RequireHash(CandidateHash, nameof(CandidateHash));
-        RequireHash(StateHash, nameof(StateHash));
+        RequireHash(capabilityHash, nameof(capabilityHash));
+        RequireHash(candidateHash, nameof(candidateHash));
+        RequireHash(stateHash, nameof(stateHash));
+        Group = group;
+        Index = index;
+        Count = count;
+        CapabilityHash = capabilityHash;
+        CandidateHash = candidateHash;
+        StateHash = stateHash;
         if (Line.Length > MaxLineLength)
             throw new InvalidDataException("立ち絵プリセット関連付けタグが上限を超えています。");
     }
