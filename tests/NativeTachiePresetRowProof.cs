@@ -22,7 +22,9 @@ internal static partial class NativeProof
         using var scope = new Round3Fixture(timeline, undo);
         var vm = ViewModel!; var view = View!;
         var checks = new List<string>();
+        var p5Checks = new List<string>();
         void Check(bool ok, string name) { Assert(ok, "TP-P4 " + name); checks.Add(name); }
+        void CheckP5(bool ok, string name) { Assert(ok, "TP-P5 " + name); p5Checks.Add(name); }
         var oldResolver = vm.PresetTargetResolver;
         var config = new P4Config();
         var character = new Character { Name = "P4 rows", TachieCharacterParameter = config };
@@ -36,6 +38,7 @@ internal static partial class NativeProof
         settings.IntentPaletteRevision = 1; settings.LegacyWorkspace = false;
         var voices = Enumerable.Range(0, 1000).Select(i => new VoiceItem(character)
             { Frame = 100 + i * 20, Length = 10, Layer = 20, Serif = "P4 " + i }).ToArray();
+        voices[2].Remark = PluginRemarks.Append(voices[2].Remark, "CWT_TPL:V=broken");
         var tag = new IntentAssociationTag(Guid.NewGuid(), set.Id, source.Id, 0, 1, IntentAssociationTag.Hash(TemplateResolver.RequireBundle(source)));
         voices[0].Remark = PluginRemarks.Append(voices[0].Remark, AssociationTag.TargetLine(700000));
         var managed = new TachieFaceItem(character) { Frame = voices[0].Frame, Length = 8, Layer = 4, Remark = ManagedPerfRemark(700000, tag) };
@@ -69,6 +72,15 @@ internal static partial class NativeProof
             Check(vm.Rows[0].SelectedChoice.IsCurrentOtherSource && vm.Rows[0].SelectedChoice.IsAvailable &&
                 vm.Rows[0].SourceNotice.Contains("テンプレート", StringComparison.Ordinal),
                 "valid Template association is explicitly other-source, not corrupt or unselected");
+            var noneState = vm.Rows.Single(r => ReferenceEquals(r.Target.Voice, voices[3]));
+            var invalidState = vm.Rows.Single(r => ReferenceEquals(r.Target.Voice, voices[2]));
+            CheckP5(!noneState.SelectedChoice.HasCandidate && noneState.SelectedChoice.IsAvailable &&
+                !noneState.SelectedChoice.IsCurrentOtherSource && !noneState.SelectedChoice.IsInvalidAssociation &&
+                noneState.State == "未選択", "none is an explicit source-aware row state");
+            CheckP5(invalidState.SelectedChoice.IsInvalidAssociation && !invalidState.SelectedChoice.IsAvailable &&
+                invalidState.State == "関連付けを確認", "invalid managed association is explicit and never guessed");
+            CheckP5(vm.Rows[0].SelectedChoice.IsCurrentOtherSource && vm.Rows[0].State == "別の元から配置済み",
+                "valid current Template association is explicit other-source state in TachiePreset mode");
             Check(view.PresetSurface.IsVisible && view.TachiePresetPlacementRuleLabel.IsVisible && !view.ExcelEditor.IsVisible &&
                 vm.ExpressionSourceNotice.Contains("配置しません", StringComparison.Ordinal),
                 "placement-rule UI is real and candidate-only/Excel limitations are explicit");
@@ -77,6 +89,8 @@ internal static partial class NativeProof
             row.SelectedChoice = row.Choices.Single(c => c.TachiePreset?.CandidateIdentity == "Smile");
             Check(row.SelectedChoice.TachiePreset != null && Signature(timeline) == signature && JsonSerializer.Serialize(scope.Current) == saved && DiskSame(),
                 "candidate inspection changes neither Timeline nor settings bytes");
+            CheckP5(row.SelectedChoice.TachiePreset?.CandidateIdentity == "Smile" && row.SelectedChoice.IsAvailable &&
+                row.State == "選択済み", "TachiePreset is an explicit candidate state without a fake Template");
             RejectWithoutMutation(timeline, () => vm.Place(), "TP-P4 direct Place cannot bypass source admission");
             RejectWithoutMutation(timeline, () => vm.ExportTo(Path.Combine(output, "p4-forbidden.xlsx")), "TP-P4 root Excel export rejects preset source");
             RejectWithoutMutation(timeline, () => IntentExpressionMutation.Create(timeline, row, row.SelectedChoice, scope.Current,
@@ -109,6 +123,8 @@ internal static partial class NativeProof
             Check(vm.PresetCapabilityDiagnostics.CharacterScans == configBefore + 1 && !row.SelectedChoice.IsAvailable &&
                 row.SelectedChoice.TachiePreset?.CandidateIdentity == "Smile",
                 "configuration notification invalidates candidates and preserves an explicit unavailable selection");
+            CheckP5(!row.SelectedChoice.IsAvailable && row.SelectedChoice.TachiePreset?.CandidateIdentity == "Smile" &&
+                row.State == "選択元を確認", "disappeared same-source preset remains explicit unavailable state");
             config.PresetDefinitions = "//Neutral\nmood=new\n//Smile\nmood=new-smile\n"; await Idle(); await vm.ExpressionLoadCompletion; await Idle();
             Check(!row.SelectedChoice.IsAvailable && row.Choices.Any(c => c.IsAvailable && c.TachiePreset?.CandidateIdentity == "Smile"),
                 "same label under changed configuration never silently heals an old descriptor");
@@ -145,6 +161,10 @@ internal static partial class NativeProof
             Check(vm.Rows.Single(r => ReferenceEquals(r.Target.Voice, voices[0])).SelectedChoice.Template != null &&
                 Signature(timeline) == signature && JsonSerializer.Serialize(scope.Current) == saved && DiskSame(),
                 "returning Template restores the exact managed source and all integration actions are zero-write");
+            var templateState = vm.Rows.Single(r => ReferenceEquals(r.Target.Voice, voices[0]));
+            CheckP5(templateState.SelectedChoice.Template != null && templateState.SelectedChoice.TachiePreset == null &&
+                !templateState.SelectedChoice.IsCurrentOtherSource && templateState.State == "選択済み",
+                "Template remains the existing explicit candidate state after returning source");
             SaveNamedView(view, "tachie-preset-p4-template-return.png");
         }
         finally
@@ -163,6 +183,14 @@ internal static partial class NativeProof
             checkoutTree = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_CHECKOUT_TREE"),
             runId = Environment.GetEnvironmentVariable("GITHUB_RUN_ID"), checks
         }, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(Path.Combine(output, "tachie-preset-choice-model.json"), JsonSerializer.Serialize(new
+        {
+            schema = "YMM4-Template-Placer-Tachie-Preset-Choice-Model/1", host = "YMM4 4.55.1.1 Lite", result = "PASS",
+            sourceHead = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_SOURCE_HEAD"),
+            checkoutTree = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_CHECKOUT_TREE"),
+            runId = Environment.GetEnvironmentVariable("GITHUB_RUN_ID"), checks = p5Checks
+        }, new JsonSerializerOptions { WriteIndented = true }));
         Log("TACHIE_PRESET_ROWS_P4=PASS");
+        Log("TACHIE_PRESET_CHOICE_MODEL_P5=PASS");
     }
 }
