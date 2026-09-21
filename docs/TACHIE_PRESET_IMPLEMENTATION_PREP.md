@@ -1,6 +1,6 @@
 # Tachie Preset source — implementation prep
 
-Status: P0 GREEN / READY FOR P1
+Status: P0 + P1 GREEN / READY FOR P2
 
 Base before this refresh:
 
@@ -121,3 +121,22 @@ State fingerprint is approved for proved bounded candidate routes.
 Pinned proof: Lab PR #62, source `bfe13c6eb304e70401f5d6ba6d467a1ea4d8e1ca`, run `35619789546`, marker `PASS_TACHIE_PRESET_PRODUCT_BRIDGE_P0`.
 
 No architecture question blocks P1.
+
+
+## P1 implementation result
+
+Source-mode foundation is green on exact YMM4 4.55.1.1 Lite.
+
+Pinned proof:
+
+- source `676491583c54e91e8278d69e1c0b31984feaf7d1`;
+- run `35621563372`;
+- job `106405620298`;
+- artifact `10650011921`;
+- artifact SHA256 `c06d6cbc3288dbda10acd02abf92482cc5c66e893bc989a360eac35e95817ca2`;
+- marker `TACHIE_PRESET_SOURCE_MODE_P1=PASS`;
+- full Checkpoint semantic regression/evidence guards: PASS.
+
+The source mode remains session-local, Template-default and zero-write. Tachie Preset gates Template-only Excel/placement/resync/navigation and cancels stale Template work. Protected imported Template/Excel work blocks source entry without data loss.
+
+P2 should add only immutable capability/fingerprint/route/candidate/result types. Do not move YMM4/plugin/WPF probing into P2.

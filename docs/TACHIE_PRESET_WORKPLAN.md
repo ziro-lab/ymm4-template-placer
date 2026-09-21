@@ -32,7 +32,20 @@ Add:
 
 No detector yet.
 
-Validation: Focused.
+Validation: **DONE.** The proof-file addition escalated this slice to Checkpoint rather than Focused.
+
+Pinned proof:
+
+- source `676491583c54e91e8278d69e1c0b31984feaf7d1`;
+- run `35621563372`;
+- job `106405620298`;
+- artifact `10650011921`;
+- artifact SHA256 `c06d6cbc3288dbda10acd02abf92482cc5c66e893bc989a360eac35e95817ca2`;
+- marker `TACHIE_PRESET_SOURCE_MODE_P1=PASS`;
+- existing Round 4 + Expression Performance: PASS;
+- full Checkpoint semantic regression/evidence guards: PASS.
+
+Exit: **DONE.** Source switching is session-local, Template-default, zero-write, cancellation-safe and pending-work-safe. Excel remains Template-only. No detector was added.
 
 ## P2 — immutable capability model
 

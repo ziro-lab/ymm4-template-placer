@@ -1,6 +1,6 @@
 # Experimental Tachie Preset source — refreshed feature handoff
 
-Status: **P0 GREEN ON ACCEPTED v0.4.2 / READY FOR P1 PRODUCT IMPLEMENTATION**
+Status: **P0 + P1 GREEN ON ACCEPTED v0.4.2 / READY FOR P2**
 
 This handoff replaces the pre-performance assumptions of the original PR #19 preparation while retaining the canonical Lab evidence.
 
@@ -67,6 +67,32 @@ P0 closed the remaining bridge questions on exact YMM4 4.55.1.1 Lite:
 Built-in Animation/PSD application used the public legacy `SetBindings(FrameworkElement, object, object, PropertyInfo)` route; the separate modern fixture proved the public `ItemProperty[]` route. No private editor state, UI Automation, arbitrary assembly scan or Timeline mutation was required.
 
 The bounded state fingerprint is approved for the first implementation when used only with a proved bounded candidate route. This is not a claim that every third-party Tachie plugin exposes complete semantic state through public properties.
+
+### P1 source-mode evidence
+
+Product branch source:
+
+- source `676491583c54e91e8278d69e1c0b31984feaf7d1`;
+- source tree `511926528df2766f2dd8a96a2b70ec1a1baa4c02`;
+- Checkpoint run `35621563372`;
+- native job `106405620298`;
+- artifact `10650011921`;
+- artifact SHA256 `c06d6cbc3288dbda10acd02abf92482cc5c66e893bc989a360eac35e95817ca2`;
+- marker `TACHIE_PRESET_SOURCE_MODE_P1=PASS`.
+
+The exact YMM4 4.55.1.1 Lite run proved:
+
+- every live Tool session starts in Template source mode;
+- switching into Tachie Preset cancels in-flight Template preparation and gates Template-only placement/refresh/Excel/resync/navigation paths;
+- cached Template choices and Excel are not presented as Tachie Preset content;
+- canceled/stale Template preparation cannot publish after the switch;
+- source switching and switching back are Timeline/settings zero-write;
+- a fresh ViewModel starts Template, so source mode remains session-local;
+- real imported Template/Excel pending work blocks entry into Tachie Preset without discarding work;
+- existing Round 4 and Expression Performance proofs remain green;
+- full Checkpoint semantic regression/evidence guards pass.
+
+P1 deliberately contains no Tachie Preset capability detector. Tachie Preset mode currently exposes only the source/placement-rule boundary and a truthful preparation state; P2/P3 add the immutable model and bounded detector.
 
 ## Product surface
 
