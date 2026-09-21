@@ -16,6 +16,7 @@ internal static partial class NativeProof
         settingsField.SetValue(ViewModel!, legacyFixture);
         ViewModel!.ActivateIntentWorkspace(); ViewModel.SetLegacyWorkspace(true); ViewModel.Refresh();
         await VerifyTachiePresetSourceModeFoundation(timeline, undo);
+        await VerifyTachiePresetCapability(timeline, undo);
 
         var profile = (Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_NATIVE_PROFILE") ?? "checkpoint").ToLowerInvariant();
         if (profile == "focused")
@@ -55,7 +56,7 @@ internal static partial class NativeProof
         await VerifySelectionProfiles(timeline, undo);
         await VerifySelectionRange(timeline, undo);
         await VerifyBoundary(timeline, undo);
-        await VerifySelectionTask(timeline, undo);
+        await VerifySelectionTask(timeline);
         await VerifyAutomaticPreview(timeline, undo);
         await VerifyFinalUi(timeline);
         await VerifyPresetSelectorRefresh(timeline);
