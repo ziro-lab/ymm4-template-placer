@@ -11,6 +11,7 @@ public partial class IntentPalettePanel : UserControl
     private ContextMenu? activeMenu;
     private PlacerViewModel? observedRoot;
     private Window? observedOwnerWindow;
+    private bool ownerQuickDismissAttached;
     private Guid? quickPopupSetId;
     private (Grid Cell, IntentTileChoice Tile, Point Point)? pendingDrag;
     public IntentPalettePanel()
@@ -33,15 +34,38 @@ public partial class IntentPalettePanel : UserControl
             CloseTileMenu();
         };
         DataContextChanged += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
-        PanelQuickSettingsPopup.Closed += (_, _) => { PanelQuickSettingsButton.IsChecked = false; quickPopupSetId = null; };
+        PanelQuickSettingsPopup.Closed += (_, _) => { DetachOwnerQuickDismiss(); PanelQuickSettingsButton.IsChecked = false; quickPopupSetId = null; };
         IsVisibleChanged += (_, _) => { if (!IsVisible) PanelQuickSettingsButton.IsChecked = false; };
     }
     private void ObserveOwnerWindow(Window? next)
     {
         if (ReferenceEquals(observedOwnerWindow, next)) return;
+        DetachOwnerQuickDismiss();
         if (observedOwnerWindow != null) observedOwnerWindow.Deactivated -= OwnerWindowDeactivated;
         observedOwnerWindow = next;
         if (observedOwnerWindow != null) observedOwnerWindow.Deactivated += OwnerWindowDeactivated;
+        if (PanelQuickSettingsPopup.IsOpen) AttachOwnerQuickDismiss();
+    }
+    private void AttachOwnerQuickDismiss()
+    {
+        if (ownerQuickDismissAttached || observedOwnerWindow == null) return;
+        observedOwnerWindow.AddHandler(Mouse.PreviewMouseDownEvent, new MouseButtonEventHandler(OwnerWindowPreviewMouseDown), true);
+        ownerQuickDismissAttached = true;
+    }
+    private void DetachOwnerQuickDismiss()
+    {
+        if (!ownerQuickDismissAttached || observedOwnerWindow == null) { ownerQuickDismissAttached = false; return; }
+        observedOwnerWindow.RemoveHandler(Mouse.PreviewMouseDownEvent, new MouseButtonEventHandler(OwnerWindowPreviewMouseDown));
+        ownerQuickDismissAttached = false;
+    }
+    private void OwnerWindowPreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!PanelQuickSettingsPopup.IsOpen) return;
+        if (e.OriginalSource is DependencyObject source &&
+            (ReferenceEquals(source, PanelQuickSettingsButton) || PanelQuickSettingsButton.IsAncestorOf(source))) return;
+        // Popup content has its own presentation source, so owner-window input here is
+        // an outside click. Close without consuming the user's intended YMM4 click.
+        PanelQuickSettingsButton.IsChecked = false;
     }
 
     private void OwnerWindowDeactivated(object? sender, EventArgs e)
@@ -72,6 +96,7 @@ public partial class IntentPalettePanel : UserControl
         if (DataContext is not PlacerViewModel vm) return;
         ObserveOwnerWindow(Window.GetWindow(this));
         quickPopupSetId = vm.SelectedIntentSet?.Id;
+        AttachOwnerQuickDismiss();
         vm.BeginPanelQuickSettings();
     }
     private void ThemeChanged(object? sender, PropertyChangedEventArgs e)
