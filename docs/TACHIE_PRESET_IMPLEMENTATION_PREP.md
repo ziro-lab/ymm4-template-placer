@@ -1,6 +1,6 @@
 # Tachie Preset source — implementation prep
 
-Status: P0 + P1 + P2 GREEN / READY FOR P3
+Status: P0-P5 GREEN / READY FOR P6
 
 Base before this refresh:
 
@@ -120,7 +120,7 @@ State fingerprint is approved for proved bounded candidate routes.
 
 Pinned proof: Lab PR #62, source `bfe13c6eb304e70401f5d6ba6d467a1ea4d8e1ca`, run `35619789546`, marker `PASS_TACHIE_PRESET_PRODUCT_BRIDGE_P0`.
 
-No architecture question blocks P1.
+No architecture question blocks P6 after the green P3-P5 integration checkpoints.
 
 
 ## P1 implementation result
@@ -156,3 +156,26 @@ Pinned proof:
 - marker `FOCUSED_NATIVE=PASS`.
 
 The P2 model is host-object-free. P3 may populate these descriptors on the UI thread, but must not add live plugin/editor/WPF objects to them or weaken duplicate-identity fail-closed behavior.
+
+
+## P3-P5 implementation result
+
+P3-P5 are native-green on exact YMM4 4.55.1.1 Lite.
+
+P3 checkpoint:
+
+- source `16608d6e2621b8bedea76d04e3498fa6dcc8c2c0`;
+- run `35630553092`;
+- markers `TACHIE_PRESET_CAPABILITY_P3=PASS`, `TACHIE_PRESET_GUARDS_P3=PASS`.
+
+P4/P5 checkpoint:
+
+- source `7cdc3355858851635a8dca85ba349326c3237427`;
+- run `35661119036`;
+- job `106536681752`;
+- artifact `10667463789`;
+- artifact SHA256 `c3c04b7768ffa5564fda2fccc2664b15e7e44cab08a39926f2f9b71d6780e311`;
+- markers `TACHIE_PRESET_ROWS_P4=PASS`, `TACHIE_PRESET_CHOICE_MODEL_P5=PASS`;
+- full Checkpoint semantic regression/evidence guards PASS.
+
+P6 should now change only the managed-association seam. Preserve existing `IntentAssociationTag` bytes and Template mutation semantics. Add the separate preset descriptor and a discriminated union reader/index, prove mixed/duplicate/missing tags fail closed, and do not enable preset Timeline mutation until P7.
