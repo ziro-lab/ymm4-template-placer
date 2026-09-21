@@ -20,6 +20,16 @@ The user-visible collection selected for one placement intent/context.
 
 A Set owns applicability and the saved placement relation used by its tiles.
 
+For normal targeted editing, **one Item type owns the Set**. Settings navigation is therefore:
+
+```text
+Item type -> its Sets -> tiles
+```
+
+A Set copied to another Item type is a one-time snapshot with a new identity, not a shared/live-linked Set. Existing historical multi-type Sets remain compatibility data and are not the normal creation model.
+
+Generic Sets use their existing separate model.
+
 Do not introduce a second user-visible “purpose” layer above Set unless a concrete workflow requires it.
 
 ### Tile
