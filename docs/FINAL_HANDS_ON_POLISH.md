@@ -66,6 +66,21 @@ Acceptance:
 - moving the pointer is not required to recover wheel routing;
 - unrelated tabs/input routes are unchanged.
 
+### H2 owner refinement after first Hands-on
+
+Observed after the first fix:
+
+- the stall is reduced but can still occur when the user keeps rotating the wheel while moving the pointer from an inner settings/list control to the outside area;
+- therefore WPF event-position / event-source state itself must not be the authority during boundary crossing.
+
+Additional requirement:
+
+- each wheel event reads the current physical OS cursor position at handling time;
+- convert that screen position to the root Settings ScrollViewer coordinate and hit-test the current visual tree there;
+- do not fall back to `MouseWheelEventArgs.OriginalSource` when the current pointer is outside the root or current hit-test is unavailable;
+- outside-root events remain unhandled so normal WPF routing is free to continue;
+- this is an event-time `GetCursorPos` read only: no global hook, timer or polling.
+
 ## Out of scope
 
 Do not change:
