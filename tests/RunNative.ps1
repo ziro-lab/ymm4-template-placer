@@ -37,7 +37,7 @@ else {
  Get-ChildItem $OutputDir -Filter 'hands-on-round4*.json' -File | Remove-Item
  Remove-Item (Join-Path $OutputDir 'round4-checkpoint-guard-tests.json') -ErrorAction SilentlyContinue
  Remove-Item (Join-Path $OutputDir 'round3-evidence-guard-tests.json') -ErrorAction SilentlyContinue
- foreach ($name in @('proof-result.txt','proof-log.txt','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json','hands-on-ux-polish.json','hands-on-round2-input.json','hands-on-round2-sets.json','hands-on-round2-tiles.json','hands-on-round2-settings.json','hands-on-round2-expression.json','hands-on-round2.json','evidence-guard-tests.json')) { Remove-Item (Join-Path $OutputDir $name) -ErrorAction SilentlyContinue }
+ foreach ($name in @('proof-result.txt','proof-log.txt','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json','hands-on-ux-polish.json','hands-on-round2-input.json','hands-on-round2-sets.json','hands-on-round2-tiles.json','hands-on-round2-settings.json','hands-on-round2-expression.json','hands-on-round2.json','evidence-guard-tests.json','expression-performance.json')) { Remove-Item (Join-Path $OutputDir $name) -ErrorAction SilentlyContinue }
 }
 $p=Start-Process (Join-Path $Ymm4Dir 'YukkuriMovieMaker.exe') -WorkingDirectory $Ymm4Dir -PassThru
 try {
@@ -93,7 +93,35 @@ if (-not (Select-String -Path $log -Pattern '^V04=PASS$')) { throw 'Integrated v
 if (-not (Select-String -Path $log -Pattern '^UX_ACCEPTANCE=PASS$')) { throw 'Task UX acceptance is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^UX_WORKFLOW_ACCEPTANCE=PASS$') -or -not (Select-String -Path $log -Pattern '^WUX13=PASS$')) { throw 'v0.4.2 UX workflow acceptance is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^HANDS_ON_UX_POLISH=PASS$')) { throw 'Hands-on UX polish native acceptance is incomplete' }
-if (-not (Select-String -Path $log -Pattern '^HANDS_ON_ROUND2=PASS$')) { throw 'Hands-on Round 2 native acceptance is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^HANDS_ON_ROUND2=PASS
+$null = & "$PSScriptRoot/ValidateRound3Evidence.ps1" -OutputDir $OutputDir
+$null = & "$PSScriptRoot/ValidateRound4Checkpoint.ps1" -OutputDir $OutputDir -Phases A,B,CT,CS,C
+$acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
+if ($acceptance.version -ne '0.4.2' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 core acceptance evidence' }
+$ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-Json
+if ($ux.version -ne '0.4.0' -or $ux.result -ne 'PASS' -or @($ux.checks).Count -ne 12 -or @($ux.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete retained Task UX acceptance evidence' }
+$workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
+if ($workflow.version -ne '0.4.2' -or $workflow.result -ne 'PASS' -or @($workflow.checks).Count -ne 10 -or @($workflow.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 UX workflow acceptance evidence' }
+Write-Host 'Checkpoint native validation: full semantic regression and evidence guards PASS'
+)) { throw 'Hands-on Round 2 native acceptance is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^EXPRESSION_PERFORMANCE=PASS
+$null = & "$PSScriptRoot/ValidateRound3Evidence.ps1" -OutputDir $OutputDir
+$null = & "$PSScriptRoot/ValidateRound4Checkpoint.ps1" -OutputDir $OutputDir -Phases A,B,CT,CS,C
+$acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
+if ($acceptance.version -ne '0.4.2' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 core acceptance evidence' }
+$ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-Json
+if ($ux.version -ne '0.4.0' -or $ux.result -ne 'PASS' -or @($ux.checks).Count -ne 12 -or @($ux.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete retained Task UX acceptance evidence' }
+$workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
+if ($workflow.version -ne '0.4.2' -or $workflow.result -ne 'PASS' -or @($workflow.checks).Count -ne 10 -or @($workflow.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 UX workflow acceptance evidence' }
+Write-Host 'Checkpoint native validation: full semantic regression and evidence guards PASS'
+)) { throw 'Expression performance proof is incomplete' }
+$perfPath=Join-Path $OutputDir 'expression-performance.json'
+if (-not (Test-Path $perfPath)) { throw 'Expression performance evidence is missing' }
+$perf=Get-Content -Raw $perfPath | ConvertFrom-Json
+if ($perf.version -ne '0.4.2' -or $perf.result -ne 'PASS' -or @($perf.sizes).Count -ne 3 -or
+    (@($perf.sizes | ForEach-Object { [int]$_.Voices }) -join ',') -ne '100,500,1000') {
+ throw 'Expression performance evidence is incomplete or stale'
+}
 $null = & "$PSScriptRoot/ValidateRelativeEvidence.ps1" -OutputDir $OutputDir
 $null = & "$PSScriptRoot/ValidateRound3Evidence.ps1" -OutputDir $OutputDir
 $null = & "$PSScriptRoot/ValidateRound4Checkpoint.ps1" -OutputDir $OutputDir -Phases A,B,CT,CS,C
