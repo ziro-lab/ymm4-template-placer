@@ -13,7 +13,8 @@ public sealed partial class PlacerViewModel
     private string? expressionHostFingerprint;
     private Timeline? expressionCacheTimeline;
     private IReadOnlyList<ExpressionCandidateDescriptor>? expressionCandidateCache;
-    private IReadOnlyList<VoiceSnapshot> expressionPreparedVoices = [];
+    private VoiceSnapshot[] expressionPreparedVoices = [];
+    private readonly Dictionary<VoiceItem, int> expressionPreparedVoiceIndex = new((IEqualityComparer<VoiceItem>)ReferenceEqualityComparer.Instance);
     private IReadOnlyList<ExpressionCapturedItem> expressionPreparedItems = [];
     private Dictionary<string, IReadOnlyList<TemplateChoice>> expressionChoicesByCharacter = new(StringComparer.Ordinal);
     private readonly Dictionary<AssignmentRow, ExpressionRowContribution> expressionRowContributions = new(ReferenceEqualityComparer.Instance);
@@ -211,21 +212,28 @@ public sealed partial class PlacerViewModel
             var keep = next.ToHashSet(ReferenceEqualityComparer.Instance);
             foreach (var row in Rows.Where(x => !keep.Contains(x))) row.PropertyChanged -= RowChanged;
             foreach (var row in next.Where(x => !Rows.Contains(x))) row.PropertyChanged += RowChanged;
-            Rows.ReplaceAll(next);
-            expressionPerformance.BatchCollectionPublishes++; expressionPerformance.FullRowPublishes++;
+            var sameRowOrder = Rows.Count == next.Count && Rows.Select((row, index) => ReferenceEquals(row, next[index])).All(x => x);
+            if (!sameRowOrder)
+            {
+                Rows.ReplaceAll(next);
+                expressionPerformance.BatchCollectionPublishes++; expressionPerformance.FullRowPublishes++;
+                AutomaticVoiceRebuildCount++;
+            }
+            else expressionPerformance.IncrementalRowUpdates += next.Count;
         }
         finally { suppressExpressionRowEvents = false; suppressExpressionApply = false; }
 
         expressionChoicesByCharacter = result.Rows.GroupBy(x => x.Target.Character, StringComparer.Ordinal)
             .ToDictionary(x => x.Key, x => x.First().Choices, StringComparer.Ordinal);
         expressionHostFingerprint = result.Fingerprint; expressionCacheTimeline = result.Timeline;
-        expressionPreparedVoices = result.Rows.Select(x => x.Target).ToArray(); expressionPreparedItems = result.Items; expressionCacheDirty = false; voiceFreshnessProblem = "";
-        AutomaticVoiceRebuildCount++;
+        expressionPreparedVoices = result.Rows.Select(x => x.Target).ToArray();
+        RebuildPreparedVoiceIndex();
+        expressionPreparedItems = result.Items; expressionCacheDirty = false; voiceFreshnessProblem = "";
         RebuildExpressionAggregates(); RememberVoiceRows(true);
         OnPropertyChanged(nameof(Summary)); OnPropertyChanged(nameof(ShowExpressionBatchPlace)); UpdateCommands();
     }
 
-    internal void ApplyIncrementalVoiceChanges(IReadOnlyList<VoiceItem> voices)
+    internal void ApplyIncrementalVoiceChanges(IReadOnlyList<VoiceItem> voices, bool reorderRows)
     {
         if (!UsesRelativeExpressions || timeline == null || voices.Count == 0 || IsExpressionLoading) return;
         if (HasProtectedPendingVoiceWork()) { SetVoiceFreshnessState(ExpressionRowsFreshness.StalePending); return; }
@@ -241,19 +249,38 @@ public sealed partial class PlacerViewModel
             suppressExpressionApply = true; suppressExpressionRowEvents = true;
             try { row.ApplyPrepared(row.No, nextTarget, choices, selected, selected == null && !row.SelectedChoice.IsAvailable ? row.SelectedChoice.Label : null, row.AssociationMatchesSelection); }
             finally { suppressExpressionRowEvents = false; suppressExpressionApply = false; }
+            if (expressionPreparedVoiceIndex.TryGetValue(voice, out var preparedIndex) && preparedIndex < expressionPreparedVoices.Length)
+                expressionPreparedVoices[preparedIndex] = nextTarget;
             expressionPerformance.IncrementalVoiceReconciles++; expressionPerformance.IncrementalRowUpdates++;
         }
-        var sorted = Rows.OrderBy(x => x.Target.Frame).ThenBy(x => x.Target.Layer).ToArray();
-        suppressExpressionRowEvents = true;
-        try
+        if (reorderRows)
         {
-            for (var i = 0; i < sorted.Length; i++) sorted[i].ApplyPrepared(i + 1, sorted[i].Target, sorted[i].Choices, sorted[i].SelectedChoice,
-                sorted[i].SelectedChoice.IsAvailable ? null : sorted[i].SelectedChoice.Label, sorted[i].AssociationMatchesSelection);
-            Rows.ReplaceAll(sorted); expressionPerformance.BatchCollectionPublishes++;
+            var desired = Rows.OrderBy(x => x.Target.Frame).ThenBy(x => x.Target.Layer).ToArray();
+            suppressExpressionRowEvents = true;
+            try
+            {
+                for (var i = 0; i < desired.Length; i++)
+                {
+                    if (!ReferenceEquals(Rows[i], desired[i]))
+                    {
+                        var currentIndex = Rows.IndexOf(desired[i]);
+                        Rows.Move(currentIndex, i);
+                    }
+                }
+                for (var i = 0; i < Rows.Count; i++) Rows[i].SetNumber(i + 1);
+            }
+            finally { suppressExpressionRowEvents = false; }
+            expressionPreparedVoices = Rows.Select(x => x.Target).ToArray();
+            RebuildPreparedVoiceIndex();
         }
-        finally { suppressExpressionRowEvents = false; }
-        expressionPreparedVoices = sorted.Select(x => x.Target).ToArray(); expressionHostFingerprint = null; expressionCacheDirty = true;
+        expressionHostFingerprint = null; expressionCacheDirty = true;
         RebuildExpressionAggregates(); RememberVoiceRows(true); OnPropertyChanged(nameof(Summary)); UpdateCommands();
+    }
+
+    private void RebuildPreparedVoiceIndex()
+    {
+        expressionPreparedVoiceIndex.Clear();
+        for (var i = 0; i < expressionPreparedVoices.Length; i++) expressionPreparedVoiceIndex[expressionPreparedVoices[i].Voice] = i;
     }
 
     private static bool SameChoiceIdentity(TemplateChoice left, TemplateChoice right)
