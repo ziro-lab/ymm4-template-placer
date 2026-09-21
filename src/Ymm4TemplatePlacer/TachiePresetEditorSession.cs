@@ -225,7 +225,7 @@ internal sealed class TachiePresetEditorSession : IDisposable
             foreach (var child in LogicalTreeHelper.GetChildren(node))
             {
                 if (++logicalCount > 256) throw new InvalidOperationException("一時エディタの子要素が多すぎます。");
-                if (child is DependencyObject dependency) stack.Push(child);
+                if (child is DependencyObject dependency) stack.Push(dependency);
             }
         }
     }
