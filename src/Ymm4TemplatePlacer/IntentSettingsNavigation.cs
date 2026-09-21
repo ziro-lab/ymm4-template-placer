@@ -206,14 +206,11 @@ public sealed partial class IntentSettingsSession
         var context = SelectedItemContext ?? throw new InvalidOperationException("Setを使うアイテムを先に選んでください。");
         if (context.IsGeneric) { CreateGenericSet(); return; }
         if (context.IsMultiTypeCompatibility) throw new InvalidOperationException("複数種類の共有Setは新しく作成できません。1つのアイテム種類を選んでください。");
-        if (context.Selection is { } selected) Create(selected);
+        if (context.Selection is { } selected) CreateSingleOwner(selected);
         else
         {
             if (!context.IsRealItemType) throw new InvalidOperationException("作成先のアイテム種類を選んでください。");
-            var owner = context.TypeKeys.Single();
-            var target = new IntentTargetContext { ItemTypeKeys = [owner], TypeMatch = IntentTypeMatch.UniformType };
-            var intent = owner == IntentSelectionContext.TypeKey(typeof(VoiceItem)) ? "表情" : "演出";
-            SelectedPalette = AddDraft(new(Guid.NewGuid(), UniqueName("新しいセット", owner), intent, target, new(), [])); MarkDirty();
+            CreateSingleOwnerForType(context.TypeKeys.Single());
         }
         RefreshNavigation();
     }
