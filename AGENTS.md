@@ -18,19 +18,24 @@ Accepted v0.4.2 includes:
 
 Known minor residual: continuous wheel rotation while crossing from an inner Settings/list area to outer content can still produce a short self-recovering pause for a few wheel notches. It is recorded as a deferred minor issue in PR #23. Do not broaden input interception merely to chase this edge unless it becomes persistent, requires explicit recovery, affects normal controls, or a bounded local fix is proved.
 
-The next prepared feature is Experimental Tachie Preset Draft PR #19. Its branch predates the current accepted main baseline; refresh/rebase its work onto current main and re-check the current architecture before implementation. Do not mix unrelated placement, Settings or input redesign into that feature.
+Active preparation is **Experimental Tachie Preset** Draft PR #19 on `feature/experimental-expression-presets`. The branch is refreshed from the current accepted main before product implementation. Preserve the accepted expression-performance architecture: Tachie-Preset discovery is lazy, source-mode scoped, cancelable, session-cached and never accesses mutable YMM4 host objects from a background worker. Do not mix unrelated placement, Settings or input redesign into this feature.
 
 Read in this order:
 
 1. `docs/CURRENT_ARCHITECTURE.md`
 2. `docs/GLOSSARY.md`
 3. `docs/VALIDATION_STRATEGY.md`
-4. `docs/FINAL_HANDS_ON_POLISH.md`
-5. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
-6. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
-7. `docs/BACKLOG.md` only for scope context
-8. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
-9. historical Round/W documents only when the current authority points to them or when reconstructing rationale
+4. `docs/TACHIE_PRESET_DESIGN.md`
+5. `docs/TACHIE_PRESET_ACCEPTANCE.md`
+6. `docs/TACHIE_PRESET_WORKPLAN.md`
+7. `docs/TACHIE_PRESET_IMPLEMENTATION_PREP.md`
+8. `docs/EXPERIMENTAL_PRESET_HANDOFF.md`
+9. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
+10. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
+11. `docs/FINAL_HANDS_ON_POLISH.md`
+12. `docs/BACKLOG.md` only for scope context
+13. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
+14. historical Round/W documents only when the current authority points to them or when reconstructing rationale
 
 Do not reimplement completed v0.4.2 work. Preserve its Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary and validation tiers.
 
