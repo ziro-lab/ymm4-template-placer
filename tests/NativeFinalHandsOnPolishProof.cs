@@ -98,11 +98,14 @@ internal static partial class NativeProof
         Assert(parentAccepted && root.VerticalOffset > beforeOffset,
             "FINAL H2: stale historical inner-control ownership cannot block current parent scrolling");
 
-        root.ScrollToTop();
+        panel.AnchorBox.BringIntoView();
+        await Idle();
         root.UpdateLayout();
         var comboPoint = panel.AnchorBox.TranslatePoint(new Point(
             Math.Max(1, panel.AnchorBox.ActualWidth / 2),
             Math.Max(1, panel.AnchorBox.ActualHeight / 2)), root);
+        Assert(comboPoint.X >= 0 && comboPoint.Y >= 0 && comboPoint.X <= root.ActualWidth && comboPoint.Y <= root.ActualHeight,
+            "FINAL H2 fixture brings the inner ComboBox into the current Settings viewport");
         var comboHit = NestedWheelRouting.ResolveCurrentSource(root, comboPoint, panel.RelationSummaryText);
         Assert(comboHit != null && IsDescendantOf(comboHit, panel.AnchorBox) &&
             !NestedWheelRouting.TryScroll(root, comboHit, -120, ModifierKeys.None),
