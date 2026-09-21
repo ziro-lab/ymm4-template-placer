@@ -77,10 +77,12 @@ internal static partial class NativeProof
             JsonSerializer.Serialize(new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load()) == JsonSerializer.Serialize(scope.Current),
             "C11", "corrected input commits through the existing protected store and roundtrips exactly");
         session.Palettes.Single().ExpressionCandidates = false; await Idle();
+        for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
         var missing = !vm.Rows.Single().HasCandidates;
         session.Palettes.Single().ExpressionCandidates = true; await Idle();
+        for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
         Round4Assert(missing && vm.Rows.Single().HasCandidates && vm.Rows.SequenceEqual(rows),
-            "C14", "automatic Settings commits refresh expression candidates without rebuilding unchanged Voice rows");
+            "C14", "automatic Settings commits asynchronously refresh expression candidates while reusing unchanged Voice rows");
         var added = scope.AddTemplate("R4C/new-expression", new TachieFaceItem(character) { Length = 13 });
         await Idle();
         Round4Assert(!scope.Current.Library.Any(x => x.Source == added.Source) && vm.RescanIntentExpressionsCommand.CanExecute(null),
