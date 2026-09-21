@@ -93,6 +93,8 @@ internal static partial class NativeProof
                 "R2-E G3/G4/G8 exact dirty Set blocks before mutation with affected Set name and zero writes");
 
             vm.ResetIntentSettings(); session = vm.IntentSettings!; session.Palettes.Single(x => x.Id == unrelated.Id).Name = "別Setだけ編集中";
+            Assert(vm.IsTemplateExpressionSource && vm.ExpressionRowsMatchSource,
+                "R2-E G2 removal starts from authoritative Template rows even if candidate refresh is still in flight");
             row.SelectedChoice = row.Choices[0]; await Idle();
             var removed = ManagedIntentExpressionReader.Read(timeline, voice);
             Assert(!vm.HasError && removed.Serial.HasValue && removed.Bundle == null && timeline.Items.Contains(manual) && manual.Remark == "r2e-manual" &&
