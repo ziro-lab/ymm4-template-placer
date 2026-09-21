@@ -326,6 +326,14 @@ public sealed partial class IntentSettingsSession : IntentEditable
     // Retained compatibility entry points now obey the Item-owned normal Set model.
     public void Create(IReadOnlyList<IItem> selection) => CreateSingleOwner(selection);
     public void Duplicate() => DuplicateOwned();
+    public void RemoveSelected()
+    {
+        if (IsGenericContext) { RemoveGenericSet(); return; }
+        if (SelectedPalette == null) return;
+        Palettes.Remove(SelectedPalette);
+        RefreshPaletteFilter();
+        MarkDirty();
+    }
     public void MovePalette(int delta) => MoveOwned(delta);
     public void MoveEntry(int delta)
     {
