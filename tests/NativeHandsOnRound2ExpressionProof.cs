@@ -83,8 +83,10 @@ internal static partial class NativeProof
             vm.ResetIntentSettings(); session = vm.IntentSettings!; var exact = session.Palettes.Single(x => x.Id == expression.Id); exact.Name = "表情（未保存）";
             var beforeBlocked = Signature(timeline);
             combo.SelectedItem = row.Choices.Single(x => x.Template?.Name == sourceA.Name); await Idle();
+            var blockedAssociation = ManagedIntentExpressionReader.Read(timeline, voice);
+            Log($"R2-E dirty admission trace: hasChanges={session.HasChanges}; hasError={vm.HasError}; selected={row.SelectedChoice.Template?.Name}; status={vm.Status}; timelineEntry={blockedAssociation.Bundle?.Descriptor.Entry}; expectedEntry={lb.Id}; timelineSame={Signature(timeline) == beforeBlocked}");
             Assert(vm.HasError && row.SelectedChoice.Template?.Name == sourceB.Name && vm.Status.Contains("この表情Set", StringComparison.Ordinal) && vm.Status.Contains("表情（未保存）", StringComparison.Ordinal) &&
-                Signature(timeline) == beforeBlocked && ManagedIntentExpressionReader.Read(timeline, voice).Bundle?.Descriptor.Entry == lb.Id,
+                Signature(timeline) == beforeBlocked && blockedAssociation.Bundle?.Descriptor.Entry == lb.Id,
                 "R2-E G3/G4/G8 exact dirty Set blocks before mutation with affected Set name and zero writes");
 
             vm.ResetIntentSettings(); session = vm.IntentSettings!; session.Palettes.Single(x => x.Id == unrelated.Id).Name = "別Setだけ編集中";
