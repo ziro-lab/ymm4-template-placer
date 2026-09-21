@@ -93,5 +93,6 @@ internal static partial class NativeProof
         VerifyHandsOnRound4SettingsTransaction(timeline);
         VerifyHandsOnRound4SettingsSession(timeline, undo);
         await VerifyHandsOnRound4Settings(timeline, undo);
+        await VerifyExpressionPerformance(timeline, undo);
     }
 }
