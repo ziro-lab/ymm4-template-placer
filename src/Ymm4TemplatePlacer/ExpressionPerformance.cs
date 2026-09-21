@@ -191,11 +191,13 @@ internal static class ExpressionPreparation
         token.ThrowIfCancellationRequested();
         var sorted = snapshot.Voices.OrderBy(x => x.Frame).ThenBy(x => x.Layer).ToArray();
         var fingerprint = Fingerprint(snapshot.Items, sorted);
-        var previousSame = snapshot.PreviousFingerprint == fingerprint &&
-            snapshot.PreviousVoices.Count == sorted.Length &&
-            snapshot.PreviousVoices.Select((x, i) => SameVoice(x, sorted[i])).All(x => x) &&
-            SameItems(snapshot.PreviousItems, snapshot.Items);
-        if (previousSame && !snapshot.CandidateGenerationChanged)
+        // Voice Rows are a Voice-list/candidate projection. Non-Voice Timeline item
+        // insertions/removals (including our managed expression bundle) must not tear
+        // down the row model by themselves. Exact live association validation remains
+        // on mutation paths, and the newest captured item snapshot is still retained.
+        var voicesSame = snapshot.PreviousVoices.Count == sorted.Length &&
+            snapshot.PreviousVoices.Select((x, i) => SameVoice(x, sorted[i])).All(x => x);
+        if (voicesSame && !snapshot.CandidateGenerationChanged)
             return new(snapshot.Generation, snapshot.Timeline, fingerprint, snapshot.Items, [], true, 0, 0, sw.Elapsed);
 
         var associations = ExpressionAssociationIndex.Build(snapshot.Items, token);
