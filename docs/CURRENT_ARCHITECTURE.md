@@ -234,7 +234,44 @@ Known deferred minor issue:
 - no data loss, persistent input lock or explicit recovery requirement is known;
 - do not broaden to global/window-level input interception unless the symptom materially worsens or a bounded local fix is proved.
 
-The next prepared feature is **Experimental Tachie Preset** Draft PR #19. It remains separate from the accepted baseline. Before resuming implementation, refresh/rebase its branch onto current main and review its assumptions against this document, the current validation strategy and the accepted expression-performance boundary.
+## Active experimental feature — Tachie Preset source
+
+Draft PR #19 is the active feature-preparation branch.
+
+Its purpose is to add a second **expression content source** to `表情をまとめて`:
+
+```text
+Template source        -> existing Set-owned placement relation
+Tachie Preset source   -> Tachie-plugin expression content + existing ExpressionPreset placement geometry
+```
+
+The source switch is session-local and starts in Template mode. Switching source alone writes nothing to Timeline or settings.
+
+Tachie Preset mode intentionally reuses the existing persisted `ExpressionPreset` / `CharacterExpressionProfile` / `LayerPlanner` geometry as its **placement rule** rather than inventing an Intent Palette/Library entry or a second placement engine. In new UI text call this a placement rule / 配置ルール so it is not confused with the Tachie Preset content choice.
+
+The accepted expression-performance boundary remains authoritative:
+
+- no preset capability work on plugin open, placement tab or Settings tab;
+- no eager all-plugin scan;
+- scan only distinct current Voice Characters while the expression task and Tachie Preset mode are active;
+- WPF/property-editor work stays UI-thread-affine and yields/cancels between bounded operations;
+- immutable candidate descriptors may feed the existing background row-preparation pipeline;
+- stale/cancelled results never publish;
+- leaving the task or returning to Template mode cancels nonessential preset work;
+- one incompatible plugin/Character is local failure, not a Tool-wide failure.
+
+Excel remains Template-only in the first Tachie Preset implementation.
+
+Authority for this feature:
+
+- `docs/TACHIE_PRESET_DESIGN.md`;
+- `docs/TACHIE_PRESET_ACCEPTANCE.md`;
+- `docs/TACHIE_PRESET_WORKPLAN.md`;
+- `docs/TACHIE_PRESET_IMPLEMENTATION_PREP.md`;
+- `docs/EXPERIMENTAL_PRESET_HANDOFF.md`;
+- canonical Lab PR #58 referenced there.
+
+Product code must not start until the bounded P0 product-bridge questions in the workplan are resolved.
 
 ## Validation
 
@@ -254,7 +291,7 @@ For current work, prefer documents in this order:
 2. `docs/GLOSSARY.md`;
 3. `docs/VALIDATION_STRATEGY.md`;
 4. current accepted feature authorities such as `docs/FINAL_HANDS_ON_POLISH.md` and the expression-performance design/acceptance documents;
-5. the active feature's own handoff/spec after it has been refreshed onto current main;
+5. the active feature's frozen Tachie Preset design/acceptance/workplan/implementation-prep documents;
 6. `docs/BACKLOG.md`;
 7. historical Round/W documents when reconstructing rationale.
 
