@@ -53,7 +53,11 @@ internal sealed record ExpressionPreparedResult(
     public ExpressionSourceMode SourceMode { get; init; }
 }
 
-internal sealed record CapturedManagedExpressionAssociation(long? Serial, IntentAssociationTag? Descriptor, IReadOnlyList<IItem>? Members, string? Error)
+internal sealed record CapturedManagedExpressionAssociation(
+    long? Serial,
+    ManagedExpressionSourceDescriptor? Descriptor,
+    IReadOnlyList<IItem>? Members,
+    string? Error)
 {
     public bool IsError => Error != null;
 }
@@ -72,8 +76,8 @@ internal sealed class ExpressionAssociationIndex
         var voiceTag = new Dictionary<IItem, (AssociationTagState State, long Serial)>(ReferenceEqualityComparer.Instance);
         var voiceGroups = new Dictionary<(long Serial, string Character), List<IItem>>();
         var sourceBySerial = new Dictionary<long, List<ExpressionCapturedItem>>();
-        var intentTags = new Dictionary<IItem, (AssociationTagState State, IntentAssociationTag? Tag)>(ReferenceEqualityComparer.Instance);
-        var intentGroups = new Dictionary<Guid, List<IItem>>();
+        var managedTags = new Dictionary<IItem, (AssociationTagState State, ManagedExpressionSourceDescriptor? Descriptor)>(ReferenceEqualityComparer.Instance);
+        var managedGroups = new Dictionary<Guid, List<IItem>>();
 
         foreach (var item in items)
         {
@@ -97,11 +101,11 @@ internal sealed class ExpressionAssociationIndex
                 related.Add(item);
             }
 
-            var intentState = IntentAssociationTag.Read(item.Remark, out var intent);
-            intentTags[item.Item] = (intentState, intent);
-            if (intentState == AssociationTagState.Valid)
+            var managedState = ManagedExpressionSourceDescriptor.Read(item.Remark, out var descriptor);
+            managedTags[item.Item] = (managedState, descriptor);
+            if (managedState == AssociationTagState.Valid)
             {
-                if (!intentGroups.TryGetValue(intent!.Group, out var group)) intentGroups[intent.Group] = group = [];
+                if (!managedGroups.TryGetValue(descriptor!.Group, out var group)) managedGroups[descriptor.Group] = group = [];
                 group.Add(item.Item);
             }
         }
@@ -132,24 +136,25 @@ internal sealed class ExpressionAssociationIndex
                 continue;
             }
 
-            var tagged = new List<(ExpressionCapturedItem Item, IntentAssociationTag Tag)>();
+            var tagged = new List<(ExpressionCapturedItem Item, ManagedExpressionSourceDescriptor Descriptor)>();
             var bad = false;
             foreach (var relatedItem in related)
             {
-                var state = intentTags[relatedItem.Item];
-                if (state.State != AssociationTagState.Valid || state.Tag == null) { bad = true; break; }
-                tagged.Add((relatedItem, state.Tag));
+                var state = managedTags[relatedItem.Item];
+                if (state.State != AssociationTagState.Valid || state.Descriptor == null) { bad = true; break; }
+                tagged.Add((relatedItem, state.Descriptor));
             }
             if (bad)
             {
-                index.byVoice[voice.Item] = new(tag.Serial, null, null, "対象音声のPlugin-managed Bundleに欠落した関連付け情報があります。");
+                index.byVoice[voice.Item] = new(tag.Serial, null, null, "対象音声のPlugin-managed Bundleに欠落または混在した関連付け情報があります。");
                 continue;
             }
 
-            var ordered = tagged.OrderBy(x => x.Tag.Index).ToArray();
-            var descriptor = ordered[0].Tag;
-            if (ordered.Length != descriptor.Count || ordered.Any(x => !descriptor.SameGroup(x.Tag)) ||
-                !ordered.Select(x => x.Tag.Index).SequenceEqual(Enumerable.Range(0, descriptor.Count)))
+            var ordered = tagged.OrderBy(x => x.Descriptor.Index).ToArray();
+            var descriptor = ordered[0].Descriptor;
+            if (ordered.Length != descriptor.Count ||
+                ordered.Any(x => !descriptor.SameGroup(x.Descriptor)) ||
+                !ordered.Select(x => x.Descriptor.Index).SequenceEqual(Enumerable.Range(0, descriptor.Count)))
             {
                 index.byVoice[voice.Item] = new(tag.Serial, null, null, "対象音声のPlugin-managed Bundleに欠落・重複・コピーまたは設定不一致があります。");
                 continue;
@@ -164,7 +169,7 @@ internal sealed class ExpressionAssociationIndex
                 index.byVoice[voice.Item] = new(tag.Serial, null, null, "対象音声の関連アイテムをTemplate Placer生成物として確認できません。");
                 continue;
             }
-            var sameGroup = intentGroups.GetValueOrDefault(descriptor.Group) ?? [];
+            var sameGroup = managedGroups.GetValueOrDefault(descriptor.Group) ?? [];
             var orderedRefs = ordered.Select(x => x.Item.Item).ToHashSet(ReferenceEqualityComparer.Instance);
             if (sameGroup.Count != ordered.Length || sameGroup.Any(x => !orderedRefs.Contains(x)))
             {
@@ -176,7 +181,8 @@ internal sealed class ExpressionAssociationIndex
         return index;
     }
 
-    private static bool HasPlacementMarker(string remark) => remark.Split('\n').Any(line => line.TrimEnd('\r') == PlacementEngine.Marker);
+    private static bool HasPlacementMarker(string remark) =>
+        remark.Split('\n').Any(line => line.TrimEnd('\r') == PlacementEngine.Marker);
 
     public CapturedManagedExpressionAssociation Read(VoiceItem voice) => byVoice.TryGetValue(voice, out var value)
         ? value : new(null, null, null, "対象音声が現在の式一覧Snapshotにありません。");
@@ -232,11 +238,12 @@ internal static partial class ExpressionPreparation
             var association = associations.Read(voice.Voice);
             TemplateChoice? selected = choices.FirstOrDefault(x => x.Template == null);
             string? unavailable = null;
+            string? sourceNotice = null;
             if (association.IsError)
             {
-                selected = null; unavailable = "⚠ 関連付けを確認";
+                selected = new(null, "⚠ 関連付けを確認", null, false) { IsInvalidAssociation = true };
             }
-            else if (association.Descriptor is { } descriptor)
+            else if (association.Descriptor is { Kind: ManagedExpressionSourceKind.Template, Template: { } descriptor })
             {
                 selected = choices.FirstOrDefault(x => x.Template != null &&
                     candidateMetadata.TryGetValue(x.Template, out var metadata) &&
@@ -244,7 +251,12 @@ internal static partial class ExpressionPreparation
                     metadata.GeometryHash == descriptor.GeometryHash);
                 if (selected == null) unavailable = "⚠ 現在の関連表情（選択元を確認）";
             }
-            prepared.Add(new(voice, choices, selected, unavailable, true));
+            else if (association.Descriptor is { Kind: ManagedExpressionSourceKind.TachiePreset })
+            {
+                selected = new(null, "現在：立ち絵プリセット由来の表情") { IsCurrentOtherSource = true };
+                sourceNotice = "現在の表情は立ち絵プリセットから配置されています。表示切替では変更しません。";
+            }
+            prepared.Add(new(voice, choices, selected, unavailable, true, sourceNotice));
         }
         sw.Stop();
         return new(snapshot.Generation, snapshot.Timeline, fingerprint, snapshot.Items, prepared, false,

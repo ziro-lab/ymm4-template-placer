@@ -35,10 +35,20 @@ internal static partial class ExpressionPreparation
             }
             else
             {
-                if (association.Descriptor != null)
+                if (association.Descriptor is { Kind: ManagedExpressionSourceKind.Template })
                 {
                     selected = new(null, "現在：テンプレート由来の表情") { IsCurrentOtherSource = true };
                     notice = "現在の表情はテンプレートから配置されています。表示切替では変更しません。" + (notice.Length == 0 ? "" : " " + notice);
+                }
+                else if (association.Descriptor is { Kind: ManagedExpressionSourceKind.TachiePreset, TachiePreset: { } currentPreset })
+                {
+                    selected = choices.SingleOrDefault(x => x.TachiePreset is { } candidate &&
+                        TachiePresetAssociationTag.CapabilityIdentity(candidate.Fingerprint) == currentPreset.CapabilityHash &&
+                        TachiePresetAssociationTag.CandidateIdentity(candidate) == currentPreset.CandidateHash)
+                        ?? new TemplateChoice(null, "⚠ 現在：立ち絵プリセット（候補・立ち絵設定を確認）", null, false);
+                    notice = selected.IsAvailable
+                        ? "現在の表情は立ち絵プリセットから配置されています。"
+                        : "現在の立ち絵プリセットを候補から一意に再確認できません。表示切替では変更しません。";
                 }
                 if (snapshot.PreviousPresetChoices.TryGetValue(voice.Voice, out var previous))
                     selected = choices.SingleOrDefault(x => x.TachiePreset == previous) ??
