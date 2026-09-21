@@ -83,6 +83,9 @@ public sealed partial class PlacerViewModel
         }
         catch (Exception ex)
         {
+#if YMM4_PROOF
+            Console.WriteLine("PERF_SETTINGS_COMMIT_EXCEPTION: " + ex);
+#endif
             SetSettingsCommitState(SettingsCommitPhase.Conflict, "反映できません: " + ex.GetBaseException().Message);
             HasError = true; Status = settingsCommitNotice;
             return false;
