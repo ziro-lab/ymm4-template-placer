@@ -81,6 +81,7 @@ internal static partial class NativeProof
         var missing = !vm.Rows.Single().HasCandidates;
         session.Palettes.Single().ExpressionCandidates = true; await Idle();
         for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
+        Log($"R4 C14 perf trace: missing={missing}; restored={vm.Rows.Single().HasCandidates}; sameRows={vm.Rows.SequenceEqual(rows)}; loading={vm.IsExpressionLoading}; fullPublishes={vm.ExpressionPerformance.FullRowPublishes}; candidateBuilds={vm.ExpressionPerformance.CandidateCatalogBuilds}; keyBuilds={vm.ExpressionPerformance.CandidateKeyBuilds}");
         Round4Assert(missing && vm.Rows.Single().HasCandidates && vm.Rows.SequenceEqual(rows),
             "C14", "automatic Settings commits asynchronously refresh expression candidates while reusing unchanged Voice rows");
         var added = scope.AddTemplate("R4C/new-expression", new TachieFaceItem(character) { Length = 13 });
