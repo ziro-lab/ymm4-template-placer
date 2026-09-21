@@ -126,6 +126,10 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
             ObserveExpressionSerial(staged.NextSerial);
             if (staged.NextSerial != settings.NextAssociationId) EditSettings(next => next.NextAssociationId = staged.NextSerial);
             var added = staged.Commit(current, undo, settings);
+            suppressExpressionRowEvents = true;
+            try { foreach (var row in staged.SuccessfulRows) row.SetAssociationMatch(true); }
+            finally { suppressExpressionRowEvents = false; }
+            RebuildExpressionAggregates();
             HasError = false; Status = $"保存済みのパレット設定で{added}アイテムを関連付けて配置しました。設定による配置なし: {staged.Skipped}行。元に戻す1回で戻せます。";
             CompletePendingVoiceWork(); UpdateCommands(); return added;
         }
