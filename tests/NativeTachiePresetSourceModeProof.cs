@@ -29,7 +29,7 @@ internal static partial class NativeProof
         settings.Library = [source];
         settings.IntentPalettes = [set];
         settings.ExpressionBootstrapComplete = true;
-        settings.IntentPaletteRevision = Math.Max(1, settings.IntentPaletteRevision + 1);
+        settings.IntentPaletteRevision = 1;
         settings.LegacyWorkspace = false;
 
         var voice = new VoiceItem(character) { Frame = 120, Length = 40, Layer = 20, Serif = "source mode" };
