@@ -219,11 +219,19 @@ public partial class PlacerView : UserControl
         PaletteTab.Header = legacy ? "パレット" : "配置";
         ExpressionTab.Header = legacy ? "表情一覧" : "表情をまとめて";
         SelectionTab.Header = legacy ? "選択配置" : "設定";
-        PresetSurface.Visibility = legacy ? Visibility.Visible : Visibility.Collapsed;
+        RefreshExpressionSourceSurface();
         SynchronizeTask();
+    }
+    private void RefreshExpressionSourceSurface()
+    {
+        var vm = observedViewModel;
+        PresetSurface.Visibility = vm?.UseLegacyWorkspace == true || vm?.IsTachiePresetExpressionSource == true ? Visibility.Visible : Visibility.Collapsed;
+        VoiceGrid.Columns[3].Header = vm?.ExpressionChoiceColumnTitle ?? "テンプレート";
+        RefreshExpressionDetail();
     }
     private void ViewModelChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(PlacerViewModel.IsTachiePresetExpressionSource) or nameof(PlacerViewModel.ExpressionRowsMatchSource)) RefreshExpressionSourceSurface();
         if (e.PropertyName == nameof(PlacerViewModel.SceneName)) SynchronizeTask();
         if (e.PropertyName == nameof(PlacerViewModel.UseLegacyWorkspace)) RefreshWorkspaceSurface();
         if (e.PropertyName is nameof(PlacerViewModel.IsAddingTemplate) or nameof(PlacerViewModel.IsManagingTemplates)) SynchronizeTask();
@@ -240,7 +248,7 @@ public partial class PlacerView : UserControl
     }
     private void RefreshExpressionDetail()
     {
-        ExpressionRowDetail.Visibility = ActualWidth < 520 && VoiceGrid.SelectedItem is AssignmentRow ? Visibility.Visible : Visibility.Collapsed;
+        ExpressionRowDetail.Visibility = ActualWidth < 520 && observedViewModel?.ExpressionRowsMatchSource == true && VoiceGrid.SelectedItem is AssignmentRow ? Visibility.Visible : Visibility.Collapsed;
         var editorHeight = Math.Clamp(ActualHeight - 360, 90, 280);
         foreach (var content in new[] { PresetSurface.PresetEditor.Content, PaletteSurface.PaletteEditor.Content, PaletteSurface.DropSurface.LayerEditor.Content })
             if (content is ScrollViewer scroll) scroll.MaxHeight = editorHeight;

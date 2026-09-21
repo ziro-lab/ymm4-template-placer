@@ -11,7 +11,7 @@ public sealed partial class PlacerViewModel
         {
             relativeExpressionBindingsInstalled = true;
             var legacy = AddExpressionTemplateCommand;
-            AddExpressionTemplateCommand = new ActionCommand(x => settingsAvailable && x is AssignmentRow,
+            AddExpressionTemplateCommand = new ActionCommand(x => IsTemplateExpressionSource && settingsAvailable && x is AssignmentRow,
                 x => { if (UsesRelativeExpressions) Guard(() => OpenRelativeExpressionSettings((AssignmentRow)x!)); else legacy.Execute(x); });
             OnPropertyChanged(nameof(AddExpressionTemplateCommand));
             PropertyChanged += RelativeExpressionSettingsChanged;

@@ -5,7 +5,14 @@ namespace Ymm4TemplatePlacer;
 
 public sealed record TemplateChoice(FaceTemplate? Template, string Label, string? ShortName = null, bool IsAvailable = true)
 {
+    internal TachiePresetCandidateDescriptor? TachiePreset { get; init; }
+    public bool IsCurrentOtherSource { get; init; }
+    internal bool IsInvalidAssociation { get; init; }
+    public bool HasCandidate => Template != null || TachiePreset != null;
     public string DisplayName => ShortName ?? Label;
+    internal static TemplateChoice Preset(TachiePresetCandidateDescriptor value) => new(null,
+        value.Confidence == TachiePresetCapabilityLevel.Experimental ? value.Label + "（実験・状態未確認）" : value.Label)
+        { TachiePreset = value };
 }
 
 public sealed class AssignmentRow : INotifyPropertyChanged
@@ -17,9 +24,18 @@ public sealed class AssignmentRow : INotifyPropertyChanged
     public int Frame => Target.Frame;
     public int Length => Target.Length;
     public IReadOnlyList<TemplateChoice> Choices { get; private set; }
-    public bool HasCandidates => Choices.Any(x => x.Template != null && x.IsAvailable);
+    public bool HasCandidates => Choices.Any(x => x.HasCandidate && x.IsAvailable);
     public bool UsesIntentSources { get; private set; }
-    public string State => !SelectedChoice.IsAvailable ? "選択元を確認" : !HasCandidates ? "候補なし" : SelectedChoice.Template == null ? "未選択" : "選択済み";
+    public string State => SelectedChoice.IsInvalidAssociation ? "関連付けを確認" :
+        SelectedChoice.IsCurrentOtherSource ? "別の元から配置済み" : !SelectedChoice.IsAvailable ? "選択元を確認" :
+        !HasCandidates ? "候補なし" : !SelectedChoice.HasCandidate ? "未選択" : "選択済み";
+    public string SourceNotice { get; private set; } = "";
+    internal void SetSourceNotice(string? value)
+    {
+        value ??= "";
+        if (SourceNotice == value) return;
+        SourceNotice = value; Changed(nameof(SourceNotice));
+    }
     private TemplateChoice selectedChoice;
     internal bool AssociationMatchesSelection { get; private set; } = true;
     internal bool AssignmentLocked { get; set; }
@@ -80,6 +96,11 @@ public sealed class AssignmentRow : INotifyPropertyChanged
                 Choices = Choices.Concat([next]).ToArray();
                 Changed(nameof(Choices)); Changed(nameof(HasCandidates));
             }
+        }
+        if (next != null && !Choices.Contains(next))
+        {
+            Choices = Choices.Concat([next]).ToArray();
+            Changed(nameof(Choices)); Changed(nameof(HasCandidates));
         }
         next ??= Choices.First();
         if (ReferenceEquals(next, selectedChoice)) return;

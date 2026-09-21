@@ -25,13 +25,19 @@ internal sealed record ExpressionHostSnapshot(
     bool CandidateGenerationChanged,
     string? PreviousFingerprint,
     IReadOnlyList<VoiceSnapshot> PreviousVoices,
-    IReadOnlyList<ExpressionCapturedItem> PreviousItems);
+    IReadOnlyList<ExpressionCapturedItem> PreviousItems)
+{
+    public ExpressionSourceMode SourceMode { get; init; }
+    public IReadOnlyList<TachiePresetCharacterCapability> PresetCapabilities { get; init; } = [];
+    public IReadOnlyDictionary<VoiceItem, TachiePresetCandidateDescriptor> PreviousPresetChoices { get; init; } =
+        new Dictionary<VoiceItem, TachiePresetCandidateDescriptor>(ReferenceEqualityComparer.Instance);
+}
 internal sealed record ExpressionPreparedRow(
     VoiceSnapshot Target,
     IReadOnlyList<TemplateChoice> Choices,
     TemplateChoice? Selected,
     string? UnavailableLabel,
-    bool AssociationMatchesSelection);
+    bool AssociationMatchesSelection, string? SourceNotice = null);
 internal sealed record ExpressionPreparedResult(
     long Generation,
     Timeline Timeline,
@@ -42,7 +48,10 @@ internal sealed record ExpressionPreparedResult(
     int AssociationItemsParsed,
     int CandidateKeysBuilt,
     TimeSpan PreparationElapsed,
-    int PreparationThreadId);
+    int PreparationThreadId)
+{
+    public ExpressionSourceMode SourceMode { get; init; }
+}
 
 internal sealed record CapturedManagedExpressionAssociation(long? Serial, IntentAssociationTag? Descriptor, IReadOnlyList<IItem>? Members, string? Error)
 {
@@ -173,7 +182,7 @@ internal sealed class ExpressionAssociationIndex
         ? value : new(null, null, null, "対象音声が現在の式一覧Snapshotにありません。");
 }
 
-internal static class ExpressionPreparation
+internal static partial class ExpressionPreparation
 {
 #if YMM4_PROOF
     internal static ManualResetEventSlim? ProofPrepareEntered;
@@ -208,9 +217,11 @@ internal static class ExpressionPreparation
         var voicesSame = snapshot.PreviousVoices.Count == sorted.Length &&
             snapshot.PreviousVoices.Select((x, i) => SameVoice(x, sorted[i])).All(x => x);
         if (voicesSame && !snapshot.CandidateGenerationChanged)
-            return new(snapshot.Generation, snapshot.Timeline, fingerprint, snapshot.Items, [], true, 0, 0, sw.Elapsed, preparationThreadId);
+            return new(snapshot.Generation, snapshot.Timeline, fingerprint, snapshot.Items, [], true, 0, 0, sw.Elapsed, preparationThreadId) { SourceMode = snapshot.SourceMode };
 
         var associations = ExpressionAssociationIndex.Build(snapshot.Items, token);
+        if (snapshot.SourceMode == ExpressionSourceMode.TachiePreset)
+            return PreparePresetChoices(snapshot, sorted, fingerprint, associations, sw, preparationThreadId, token);
         var candidates = BuildCandidateIndex(snapshot.Candidates, sorted, token, out var candidateKeys);
         var candidateMetadata = snapshot.Candidates.ToDictionary(x => x.Template, (IEqualityComparer<FaceTemplate>)ReferenceEqualityComparer.Instance);
         var prepared = new List<ExpressionPreparedRow>(sorted.Length);

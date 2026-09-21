@@ -87,6 +87,8 @@ internal sealed class IntentExpressionMutation
         IntentAssociationSerialAllocator allocator, bool allowSkip)
     {
         ValidateRow(timeline, row);
+        if (choice.TachiePreset != null || choice.IsCurrentOtherSource)
+            throw new InvalidOperationException("立ち絵プリセットの候補をテンプレート配置として実行できません。");
         var association = ManagedIntentExpressionReader.Read(timeline, row.Target.Voice);
         var removals = association.Bundle?.Members.ToArray() ?? [];
         if (choice.Template == null) return new(row, PlacementPlan.Create(timeline, [], removals: removals), false, []);
@@ -207,7 +209,7 @@ public sealed partial class PlacerViewModel
     public ActionCommand NavigateExpressionRowCommand { get; private set; } = null!;
     private void InitializeExpressionImmediate()
     {
-        NavigateExpressionRowCommand = new ActionCommand(x => IsTemplateExpressionSource && x is AssignmentRow row && Rows.Contains(row) && timeline != null &&
+        NavigateExpressionRowCommand = new ActionCommand(x => ExpressionRowsMatchSource && x is AssignmentRow row && Rows.Contains(row) && timeline != null &&
             timeline.Items.Contains(row.Target.Voice), x => Guard(() => NavigateExpressionRow((AssignmentRow)x!)));
         OnPropertyChanged(nameof(NavigateExpressionRowCommand));
     }
@@ -250,7 +252,7 @@ public sealed partial class PlacerViewModel
     }
     private void ApplyImmediateExpressionChoice(AssignmentRow row)
     {
-        if (suppressExpressionApply || !UsesRelativeExpressions) return;
+        if (suppressExpressionApply || !IsTemplateExpressionSource || !ExpressionRowsMatchSource || IsExpressionLoading || !UsesRelativeExpressions || row.SelectedChoice.TachiePreset != null || row.SelectedChoice.IsCurrentOtherSource) return;
         try
         {
             var current = RequireTimeline();

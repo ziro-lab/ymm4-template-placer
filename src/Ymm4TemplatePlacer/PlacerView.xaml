@@ -17,17 +17,12 @@
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
      <StackPanel Grid.Row="0" Margin="0,0,0,6">
       <WrapPanel x:Name="ExpressionSourceSwitch" Margin="0,0,0,5">
-       <TextBlock Text="表情の元" VerticalAlignment="Center" Margin="0,0,8,0"/>
-       <RadioButton x:Name="TemplateExpressionSource" GroupName="ExpressionSource" Content="テンプレート"
-        IsChecked="{Binding IsTemplateExpressionSource,Mode=TwoWay}" Margin="0,0,12,0" VerticalAlignment="Center"/>
-       <RadioButton x:Name="TachiePresetExpressionSource" GroupName="ExpressionSource" Content="立ち絵プリセット（実験）"
-        IsChecked="{Binding IsTachiePresetExpressionSource,Mode=TwoWay}" VerticalAlignment="Center"/>
+       <WrapPanel.Style><Style TargetType="WrapPanel"><Style.Triggers><DataTrigger Binding="{Binding UseLegacyWorkspace}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></WrapPanel.Style>
+       <RadioButton x:Name="TemplateExpressionSource" GroupName="ExpressionSource" Content="テンプレート" IsChecked="{Binding IsTemplateExpressionSource,Mode=TwoWay}" Margin="0,0,12,0"/>
+       <RadioButton x:Name="TachiePresetExpressionSource" GroupName="ExpressionSource" Content="立ち絵プリセット（実験）" IsChecked="{Binding IsTachiePresetExpressionSource,Mode=TwoWay}"/>
       </WrapPanel>
-      <TextBlock Text="{Binding Summary}" Opacity="0.75" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}">
-       <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding IsTachiePresetExpressionSource}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
-      </TextBlock>
+      <TextBlock Text="{Binding Summary}" Opacity="0.75" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/>
       <WrapPanel HorizontalAlignment="Right">
-       <WrapPanel.Style><Style TargetType="WrapPanel"><Style.Triggers><DataTrigger Binding="{Binding IsTachiePresetExpressionSource}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></WrapPanel.Style>
        <TextBlock Text="行の高さ" VerticalAlignment="Center" Margin="0,0,5,0"/>
        <TextBox x:Name="ExpressionRowHeightBox" Text="{Binding ExpressionRowHeight,Mode=OneWay}" IsEnabled="{Binding CanEditExpressionRowHeight}"
         Width="44" MaxLength="2" Padding="4,2" TextAlignment="Right"
@@ -52,7 +47,7 @@
       <TextBlock Text="{Binding ExpressionLoadingNotice}" TextWrapping="Wrap"/>
      </Border>
      <DataGrid x:Name="VoiceGrid" IsEnabled="{Binding CanEditExpressionRows}" Grid.Row="1" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="True" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" SelectionUnit="FullRow" SelectionMode="Single" RowHeight="{Binding ExpressionRowHeight}" HeadersVisibility="Column" GridLinesVisibility="Horizontal">
-      <DataGrid.Style><Style TargetType="DataGrid"><Style.Triggers><DataTrigger Binding="{Binding IsTachiePresetExpressionSource}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></DataGrid.Style>
+      <DataGrid.Style><Style TargetType="DataGrid"><Style.Triggers><DataTrigger Binding="{Binding ExpressionRowsMatchSource}" Value="False"><Setter Property="Visibility" Value="Hidden"/></DataTrigger></Style.Triggers></Style></DataGrid.Style>
       <DataGrid.RowStyle><Style TargetType="DataGridRow">
        <EventSetter Event="PreviewMouseMove" Handler="VoiceGridRow_PreviewMouseMove"/>
        <EventSetter Event="PreviewMouseLeftButtonDown" Handler="VoiceGridRow_PreviewMouseLeftButtonDown"/>
@@ -60,27 +55,30 @@
        <EventSetter Event="LostMouseCapture" Handler="VoiceGridRow_LostMouseCapture"/>
        <EventSetter Event="MouseLeave" Handler="VoiceGridRow_MouseLeave"/>
        <EventSetter Event="MouseLeftButtonUp" Handler="VoiceGridRow_Click"/>
-       <Setter Property="ToolTip"><Setter.Value><ToolTip><StackPanel MaxWidth="420"><TextBlock Text="{Binding Character}" FontWeight="SemiBold"/><TextBlock Text="{Binding Serif}" TextWrapping="Wrap"/><TextBlock Text="{Binding Frame,StringFormat=開始: {0} フレーム}"/><TextBlock Text="{Binding Length,StringFormat=長さ: {0} フレーム}"/></StackPanel></ToolTip></Setter.Value></Setter>
+       <Setter Property="ToolTip"><Setter.Value><ToolTip><StackPanel MaxWidth="420"><TextBlock Text="{Binding Character}" FontWeight="SemiBold"/><TextBlock Text="{Binding SourceNotice}" TextWrapping="Wrap"/><TextBlock Text="{Binding Serif}" TextWrapping="Wrap"/><TextBlock Text="{Binding Frame,StringFormat=開始: {0} フレーム}"/><TextBlock Text="{Binding Length,StringFormat=長さ: {0} フレーム}"/></StackPanel></ToolTip></Setter.Value></Setter>
       </Style></DataGrid.RowStyle>
       <DataGrid.Columns>
        <DataGridTextColumn Header="No" Binding="{Binding No}" IsReadOnly="True" Width="28"/>
        <DataGridTextColumn Header="キャラ" Binding="{Binding Character}" IsReadOnly="True" Width="64"/>
        <DataGridTemplateColumn Header="セリフ" Width="*" MinWidth="86" SortMemberPath="Serif"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Serif}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" ClipToBounds="True" VerticalAlignment="Center" Margin="5,0" ToolTip="{Binding Serif}" ToolTipService.ShowDuration="60000"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-       <DataGridTemplateColumn Header="テンプレート" Width="1.2*" MinWidth="112"><DataGridTemplateColumn.CellTemplate><DataTemplate><Grid>
+       <DataGridTemplateColumn Header="テンプレート" Width="1.2*" MinWidth="112"><DataGridTemplateColumn.CellTemplate><DataTemplate><Grid ToolTip="{Binding SourceNotice}">
         <ComboBox DropDownOpened="ExpressionChoiceOpened" ItemsSource="{Binding Choices}" DisplayMemberPath="DisplayName" SelectedItem="{Binding SelectedChoice,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="2" VerticalContentAlignment="Center" ToolTip="{Binding SelectedChoice.Label}">
-         <ComboBox.Style><Style TargetType="ComboBox"><Style.Triggers><DataTrigger Binding="{Binding HasCandidates}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></ComboBox.Style>
+         <ComboBox.Style><Style TargetType="ComboBox"><Style.Triggers><DataTrigger Binding="{Binding HasCandidates}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding SelectedChoice.IsCurrentOtherSource}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding SelectedChoice.IsAvailable}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></ComboBox.Style>
         </ComboBox>
         <Button Content="＋ 表情を追加" Command="{Binding DataContext.AddExpressionTemplateCommand,RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Margin="2" ToolTip="このキャラクターの表情テンプレートがありません。ここから追加できます。">
-         <Button.Style><Style TargetType="Button"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasCandidates}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Button.Style>
+         <Button.Style><Style TargetType="Button"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasCandidates}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding SelectedChoice.IsAvailable}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding SelectedChoice.IsCurrentOtherSource}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding DataContext.IsTachiePresetExpressionSource,RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Button.Style>
         </Button>
+        <TextBlock Text="{Binding SourceNotice}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Margin="4,1" VerticalAlignment="Center" FontSize="11">
+         <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding HasCandidates}" Value="False"/><Condition Binding="{Binding SelectedChoice.IsCurrentOtherSource}" Value="False"/><Condition Binding="{Binding SelectedChoice.IsAvailable}" Value="True"/><Condition Binding="{Binding DataContext.IsTachiePresetExpressionSource,RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="True"/></MultiDataTrigger.Conditions><Setter Property="Visibility" Value="Visible"/></MultiDataTrigger></Style.Triggers></Style></TextBlock.Style>
+        </TextBlock>
        </Grid></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
       </DataGrid.Columns>
      </DataGrid>
      <TextBlock x:Name="ExpressionEmptyNotice" Grid.Row="1" Text="このシーンには音声がありません。YMM4で音声を追加すると、自動的に一覧へ表示されます。" TextWrapping="Wrap" Margin="8,28,8,8" IsHitTestVisible="False">
-      <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Rows.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding IsTachiePresetExpressionSource}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+      <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Rows.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding ExpressionRowsMatchSource}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding IsExpressionLoading}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
      </TextBlock>
-     <TextBlock x:Name="TachiePresetRowsPlaceholder" Grid.Row="1" Text="使用中の立ち絵から候補を確認する準備ができています。" TextWrapping="Wrap" Margin="8,28,8,8" IsHitTestVisible="False">
-      <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsTachiePresetExpressionSource}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+     <TextBlock x:Name="TachiePresetRowsPlaceholder" Grid.Row="1" Text="立ち絵プリセットの候補を準備しています。表示されない場合は［一覧を読み直す］で再確認してください。" Margin="8,30,8,8" TextWrapping="Wrap" IsHitTestVisible="False">
+      <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding IsTachiePresetExpressionSource}" Value="True"/><Condition Binding="{Binding ExpressionRowsMatchSource}" Value="False"/></MultiDataTrigger.Conditions><Setter Property="Visibility" Value="Visible"/></MultiDataTrigger></Style.Triggers></Style></TextBlock.Style>
      </TextBlock>
      <ScrollViewer x:Name="ExpressionRowDetail" Grid.Row="2" DataContext="{Binding SelectedItem,ElementName=VoiceGrid}" Visibility="Collapsed" MaxHeight="58" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="2,4,2,0">
       <TextBlock x:Name="ExpressionSelectedSerif" Text="{Binding Serif}" TextWrapping="Wrap"><TextBlock.ToolTip><ToolTip><StackPanel><TextBlock Text="{Binding Frame,StringFormat=開始: {0} フレーム}"/><TextBlock Text="{Binding Length,StringFormat=長さ: {0} フレーム}"/></StackPanel></ToolTip></TextBlock.ToolTip></TextBlock>

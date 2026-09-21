@@ -1,15 +1,10 @@
 namespace Ymm4TemplatePlacer;
 
-internal enum ExpressionSourceMode
-{
-    Template,
-    TachiePreset
-}
+internal enum ExpressionSourceMode { Template, TachiePreset }
 
 public sealed partial class PlacerViewModel
 {
     private ExpressionSourceMode expressionSourceMode = ExpressionSourceMode.Template;
-
     internal ExpressionSourceMode CurrentExpressionSourceMode => expressionSourceMode;
     public bool IsTemplateExpressionSource
     {
@@ -21,17 +16,18 @@ public sealed partial class PlacerViewModel
         get => expressionSourceMode == ExpressionSourceMode.TachiePreset;
         set { if (value) TrySetExpressionSourceMode(ExpressionSourceMode.TachiePreset); }
     }
+    public bool ExpressionRowsMatchSource => expressionRowsSource == expressionSourceMode;
+    public string ExpressionChoiceColumnTitle => IsTemplateExpressionSource ? "テンプレート" : "立ち絵プリセット";
     public string ExpressionSourceNotice => IsTachiePresetExpressionSource
-        ? "立ち絵プリセットの候補表示は準備中です。切り替えだけではタイムラインや設定を変更しません。"
+        ? "候補の確認モードです。選択しても表情は配置しません。配置・置換はまだ未接続です。Excelはテンプレート表示で利用できます。"
         : "";
 
-    private bool HasProtectedExpressionSourceWork() =>
-        HasProtectedPendingVoiceWork() || (!UsesRelativeExpressions && SelectedExpressionCount > 0);
+    private bool HasProtectedExpressionSourceWork() => HasProtectedPendingVoiceWork() ||
+        (IsTemplateExpressionSource && (!UsesRelativeExpressions ? SelectedExpressionCount > 0 : PendingRelativeExpressionCount > 0));
 
     private bool TrySetExpressionSourceMode(ExpressionSourceMode next)
     {
         if (expressionSourceMode == next) return true;
-
         if (next == ExpressionSourceMode.TachiePreset && HasProtectedExpressionSourceWork())
         {
             HasError = false;
@@ -39,25 +35,21 @@ public sealed partial class PlacerViewModel
             PublishExpressionSourceProperties();
             return false;
         }
-
         CancelExpressionNavigation();
         CloseExpressionTrialSession();
         CancelExpressionLoad();
         SetVoiceFreshnessActive(false);
-
+        ClearPresetContextWatchers();
         expressionSourceMode = next;
         expressionCacheDirty = true;
-        HasError = false;
-        Status = "";
+        HasError = false; Status = "";
         PublishExpressionSourceProperties();
-
-        if (activeTask == "expression" && IsTemplateExpressionSource)
+        if (activeTask == "expression")
         {
             SetVoiceFreshnessActive(true);
-            if (UsesRelativeExpressions) RequestExpressionLoad(false, false);
+            if (UsesRelativeExpressions || IsTachiePresetExpressionSource) RequestExpressionLoad(true);
             else RefreshExpressionSynchronously(false);
         }
-
         UpdateCommands();
         return true;
     }
@@ -66,12 +58,15 @@ public sealed partial class PlacerViewModel
     {
         OnPropertyChanged(nameof(IsTemplateExpressionSource));
         OnPropertyChanged(nameof(IsTachiePresetExpressionSource));
+        OnPropertyChanged(nameof(ExpressionRowsMatchSource));
+        OnPropertyChanged(nameof(ExpressionChoiceColumnTitle));
         OnPropertyChanged(nameof(ExpressionSourceNotice));
         OnPropertyChanged(nameof(CanEditExpressionRows));
         OnPropertyChanged(nameof(ShowExpressionBatchPlace));
         OnPropertyChanged(nameof(ResyncHint));
+        NavigateExpressionRowCommand?.RaiseCanExecuteChanged();
+        AddExpressionTemplateCommand?.RaiseCanExecuteChanged();
     }
-
     private void RequireTemplateExpressionSource()
     {
         if (!IsTemplateExpressionSource)
