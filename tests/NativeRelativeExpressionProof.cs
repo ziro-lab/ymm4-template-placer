@@ -54,6 +54,7 @@ internal static partial class NativeProof
             vm.ImportFrom(excel); row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
             Assert(row.SelectedChoice.Template?.IntentSource?.Entry.LibraryEntryId == bundleEntry.Id && Signature(timeline) == baseline && vm.PlaceCommand.CanExecute(null),
                 "R10 Excel Bridge import restores a pending Palette-backed assignment without Timeline mutation");
+            await Idle();
             await ClickPlace(view); Assert(!vm.HasError, "R10 Excel pending assignment commits through the retained batch bridge: " + vm.Status);
             var members = timeline.Items.Where(x => x != voice && x != nextVoice).OrderBy(x => { IntentAssociationTag.Read(x.Remark, out var tag); return tag?.Index ?? int.MaxValue; }).ToArray();
             Assert(members.Length == 2 && members[0].Frame == 100 && members[1].Frame == 110 && members[0].Length == 20 && members[1].Length == 12 && members[1].Layer - members[0].Layer == 1,
