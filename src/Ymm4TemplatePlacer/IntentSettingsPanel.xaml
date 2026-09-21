@@ -31,7 +31,10 @@
    <Grid>
     <Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <TextBlock Text="セット" Grid.Column="0" VerticalAlignment="Center"/>
-    <Button x:Name="NewPaletteButton" Content="＋" Command="{Binding CreateIntentPaletteCommand}" Grid.Column="2" ToolTip="このアイテムで使うセットを作る" AutomationProperties.Name="このアイテムのセットを作成"/>
+    <WrapPanel Grid.Column="2">
+     <Button x:Name="NewPaletteButton" Content="＋" Command="{Binding CreateIntentPaletteCommand}" ToolTip="このアイテムで使うセットを作る" AutomationProperties.Name="このアイテムのセットを作成"/>
+     <Button x:Name="DirectDeletePaletteButton" Content="削除" Command="{Binding DeleteIntentPaletteCommand}" ToolTip="現在選択しているセットを削除" AutomationProperties.Name="現在のセットを削除"/>
+    </WrapPanel>
     <ComboBox Grid.Column="1" x:Name="PalettePicker" ItemsSource="{Binding IntentSettings.VisiblePalettes}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedPalette,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集するセット"/>
     <ComboBox Grid.Column="1" x:Name="GenericPalettePicker" ItemsSource="{Binding IntentSettings.GenericSets}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedGenericSet,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集する汎用セット"/>
    </Grid>

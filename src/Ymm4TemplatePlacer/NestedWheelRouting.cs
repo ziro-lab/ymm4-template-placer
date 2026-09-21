@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -8,6 +9,12 @@ namespace Ymm4TemplatePlacer;
 /// <summary>Local, direction-aware wheel ownership within one Settings scroller.</summary>
 public static class NestedWheelRouting
 {
+    [StructLayout(LayoutKind.Sequential)]
+    private struct CursorPoint { public int X; public int Y; }
+
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out CursorPoint point);
+
     public static readonly DependencyProperty EnabledProperty = DependencyProperty.RegisterAttached(
         "Enabled", typeof(bool), typeof(NestedWheelRouting), new PropertyMetadata(false, EnabledChanged));
     public static bool GetEnabled(DependencyObject value) => (bool)value.GetValue(EnabledProperty);
@@ -21,9 +28,26 @@ public static class NestedWheelRouting
     }
     private static void Wheel(object sender, MouseWheelEventArgs e)
     {
-        if (!e.Handled && sender is ScrollViewer root &&
-            TryScroll(root, e.OriginalSource as DependencyObject, e.Delta, Keyboard.Modifiers))
-            e.Handled = true;
+        if (e.Handled || sender is not ScrollViewer root) return;
+
+        // Wheel input can outpace WPF mouse-over/event-source refresh while the user
+        // crosses an inner-control boundary. Read the physical cursor at handling time
+        // and hit-test the live visual tree there. Never revive a stale OriginalSource.
+        var source = ResolveCurrentSource(root);
+        if (source != null && TryScroll(root, source, e.Delta, Keyboard.Modifiers)) e.Handled = true;
+    }
+
+    internal static DependencyObject? ResolveCurrentSource(ScrollViewer root)
+    {
+        if (!GetCursorPos(out var cursor) || !root.IsVisible || root.ActualWidth <= 0 || root.ActualHeight <= 0) return null;
+        try { return ResolveCurrentSource(root, root.PointFromScreen(new Point(cursor.X, cursor.Y))); }
+        catch (InvalidOperationException) { return null; }
+    }
+
+    internal static DependencyObject? ResolveCurrentSource(ScrollViewer root, Point point)
+    {
+        if (point.X < 0 || point.Y < 0 || point.X > root.ActualWidth || point.Y > root.ActualHeight) return null;
+        return root.InputHitTest(point) as DependencyObject;
     }
     internal static bool TryScroll(ScrollViewer root, DependencyObject? source, int delta, ModifierKeys modifiers)
     {
