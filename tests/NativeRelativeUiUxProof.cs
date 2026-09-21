@@ -128,16 +128,16 @@ internal static partial class NativeProof
             draft.CharacterRestricted = true; await Idle();
             Assert(panel.CharacterNamePanel.IsVisible && panel.RelationSummaryText.Text.Contains(character.Name, StringComparison.Ordinal),
                 "UIUX enabling Character restriction reveals the one required Character input and updates the summary");
-            Assert(!panel.TargetAdvanced.IsExpanded && !panel.TargetTypeChoices.IsVisible,
-                "H1 normal Item-first Settings keep the complete runtime type matrix under explicit Advanced");
+            Assert(!panel.TargetAdvanced.IsExpanded && panel.FindName("TargetTypeChoices") == null && panel.FindName("TypeMatchPanel") == null,
+                "H1 normal Item-first Settings never expose the old runtime type matrix or multi-type matching decision");
             panel.TargetAdvanced.IsExpanded = true; await Idle();
-            var typeChecks = RelativeVisuals(panel.TargetTypeChoices).OfType<CheckBox>().ToArray();
-            Assert(typeChecks.Length >= 2 && typeChecks.All(x => x.ToolTip == null), "UIUX normal Settings never expose raw runtime type keys as implementation metadata");
-            var textType = draft.TypeChoices.Single(x => x.Key == IntentSelectionContext.TypeKey(typeof(TextItem))); textType.Selected = true; await Idle();
-            Assert(panel.TypeMatchPanel.IsVisible, "UIUX the multiple-type matching decision appears only after multiple Item types are actually selected");
+            Assert(panel.FindName("TargetTypeChoices") == null && panel.FindName("TypeMatchPanel") == null &&
+                panel.OwnerItemTypeText.Text.Contains("ボイス", StringComparison.Ordinal),
+                "UIUX expanded target details keep one readable Item owner and hide raw runtime type keys");
 
             var emptySession = new IntentSettingsSession(fixture, new[] { typeof(VoiceItem), typeof(TextItem) });
             RejectWithoutMutation(timeline, () => emptySession.Create([]), "UIUX creating a set with no Timeline context never silently defaults to Voice");
+            RejectWithoutMutation(timeline, () => emptySession.Create([voice, text]), "UIUX mixed-runtime selection cannot create a new shared multi-type Set");
             view.Width = 360; view.Height = 360; panel.RelationAdvanced.IsExpanded = false; panel.TargetAdvanced.IsExpanded = false; await Idle();
             Assert(panel.RollbackButton.IsVisible && panel.RollbackButton.ActualHeight > 0 && panel.RelationSummaryText.IsVisible && panel.ActualWidth <= 360 &&
                 panel.RollbackButton.TranslatePoint(new Point(panel.RollbackButton.ActualWidth, panel.RollbackButton.ActualHeight), panel).Y <= panel.ActualHeight + 1,
