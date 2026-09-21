@@ -10,8 +10,8 @@ public sealed record TemplateChoice(FaceTemplate? Template, string Label, string
 
 public sealed class AssignmentRow : INotifyPropertyChanged
 {
-    public int No { get; }
-    public VoiceSnapshot Target { get; }
+    public int No { get; private set; }
+    public VoiceSnapshot Target { get; private set; }
     public string Character => Target.Character;
     public string Serif => Target.Serif;
     public int Frame => Target.Frame;
@@ -21,6 +21,7 @@ public sealed class AssignmentRow : INotifyPropertyChanged
     public bool UsesIntentSources { get; private set; }
     public string State => !SelectedChoice.IsAvailable ? "選択元を確認" : !HasCandidates ? "候補なし" : SelectedChoice.Template == null ? "未選択" : "選択済み";
     private TemplateChoice selectedChoice;
+    internal bool AssociationMatchesSelection { get; private set; } = true;
     internal bool AssignmentLocked { get; set; }
     public TemplateChoice SelectedChoice
     {
@@ -28,13 +29,39 @@ public sealed class AssignmentRow : INotifyPropertyChanged
         set
         {
             if (AssignmentLocked || value == null || !Choices.Contains(value) || ReferenceEquals(value, selectedChoice)) return;
-            selectedChoice = value; Changed(); Changed(nameof(State));
+            selectedChoice = value; AssociationMatchesSelection = false; Changed(); Changed(nameof(State));
         }
     }
     public AssignmentRow(int no, VoiceSnapshot target, IReadOnlyList<FaceTemplate> catalog, bool? intentSources = null)
     {
         No = no; Target = target; UsesIntentSources = intentSources ?? catalog.Any(x => x.IntentSource != null);
         Choices = IntentExpressionCatalog.Choices(target, catalog); selectedChoice = Choices[0];
+    }
+    internal AssignmentRow(int no, VoiceSnapshot target, IReadOnlyList<TemplateChoice> choices, bool usesIntentSources)
+    {
+        No = no; Target = target; UsesIntentSources = usesIntentSources;
+        Choices = choices.Count == 0 ? [new TemplateChoice(null, "— 候補なし —")] : choices;
+        selectedChoice = Choices[0];
+    }
+    internal void ApplyPrepared(int no, VoiceSnapshot target, IReadOnlyList<TemplateChoice> choices, TemplateChoice? selected, string? unavailableLabel, bool associationMatchesSelection)
+    {
+        var noChanged = No != no; var targetChanged = Target != target;
+        No = no; Target = target;
+        Choices = choices.Count == 0 ? [new TemplateChoice(null, "— 候補なし —")] : choices;
+        selectedChoice = Choices[0];
+        RestoreSelectedChoice(selected, unavailableLabel);
+        AssociationMatchesSelection = associationMatchesSelection;
+        if (noChanged) Changed(nameof(No));
+        if (targetChanged)
+        {
+            Changed(nameof(Target)); Changed(nameof(Character)); Changed(nameof(Serif)); Changed(nameof(Frame)); Changed(nameof(Length));
+        }
+        Changed(nameof(Choices)); Changed(nameof(SelectedChoice)); Changed(nameof(State)); Changed(nameof(HasCandidates));
+    }
+    internal void SetAssociationMatch(bool value)
+    {
+        if (AssociationMatchesSelection == value) return;
+        AssociationMatchesSelection = value; Changed(nameof(AssociationMatchesSelection));
     }
     internal void RestoreSelectedChoice(TemplateChoice? choice, string? unavailableLabel = null)
     {
@@ -114,7 +141,7 @@ public sealed class AssignmentRow : INotifyPropertyChanged
         Changed(nameof(Choices)); Changed(nameof(SelectedChoice)); Changed(nameof(State));
     }
     internal AssignmentRow CopyPending() => new(No, Target, Array.Empty<FaceTemplate>(), UsesIntentSources)
-    { Choices = Choices.ToArray(), selectedChoice = this.selectedChoice };
+    { Choices = Choices.ToArray(), selectedChoice = this.selectedChoice, AssociationMatchesSelection = AssociationMatchesSelection };
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Changed([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
