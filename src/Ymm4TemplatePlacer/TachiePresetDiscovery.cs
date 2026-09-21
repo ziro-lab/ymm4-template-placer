@@ -89,27 +89,35 @@ internal static class TachiePresetDiscovery
     private static async Task<AppliedState> ApplyEditorAsync(TachiePresetEditorRoute route, object configuration,
         object face, string name, TachiePresetCapabilityDiagnostics diagnostics, Action ensureCurrent, CancellationToken token)
     {
-        using var editor = TachiePresetEditorSession.Open(route, configuration, face, diagnostics);
-        await editor.SettleAsync(ensureCurrent, token);
-        var choices = editor.Choices(token);
-        var selected = choices.SingleOrDefault(c => c.Label == name)
-            ?? throw new InvalidOperationException("確認中にプリセット候補が消えました。");
-        // A preset equal to the default is still testable: first select a different
-        // coherent named candidate on this fresh object, then apply the requested one.
-        var alternate = choices.FirstOrDefault(c => c.Label != name);
-        if (alternate != null)
+        AppliedState applied;
+        using (var editor = TachiePresetEditorSession.Open(route, configuration, face, diagnostics))
         {
-            alternate.Selector.SelectedItem = alternate.Item;
             await editor.SettleAsync(ensureCurrent, token);
-            selected = editor.Choices(token).SingleOrDefault(c => c.Label == name)
-                ?? throw new InvalidOperationException("切り替え後のプリセット候補を一意に解決できません。");
+            var choices = editor.Choices(token);
+            var selected = choices.SingleOrDefault(c => c.Label == name)
+                ?? throw new InvalidOperationException("確認中にプリセット候補が消えました。");
+            // A preset equal to the default is still testable: first select a different
+            // coherent named candidate on this fresh object, then apply the requested one.
+            var alternate = choices.FirstOrDefault(c => c.Label != name);
+            if (alternate != null)
+            {
+                alternate.Selector.SelectedItem = alternate.Item;
+                await editor.SettleAsync(ensureCurrent, token);
+                selected = editor.Choices(token).SingleOrDefault(c => c.Label == name)
+                    ?? throw new InvalidOperationException("切り替え後のプリセット候補を一意に解決できません。");
+            }
+            var before = TachiePresetPublicState.TryHash(face, token);
+            selected.Selector.SelectedItem = selected.Item;
+            await editor.SettleAsync(ensureCurrent, token);
+            if (!ReferenceEquals(selected.Selector.SelectedItem, selected.Item))
+                throw new InvalidOperationException("プリセットの選択が反映されませんでした。");
+            applied = new(before, TachiePresetPublicState.TryHash(face, token));
         }
-        var before = TachiePresetPublicState.TryHash(face, token);
-        selected.Selector.SelectedItem = selected.Item;
-        await editor.SettleAsync(ensureCurrent, token);
-        if (!ReferenceEquals(selected.Selector.SelectedItem, selected.Item))
-            throw new InvalidOperationException("プリセットの選択が反映されませんでした。");
-        return new(before, TachiePresetPublicState.TryHash(face, token));
+        ensureCurrent();
+        // ClearBindings/DataContext teardown may itself change a plugin's face state.
+        // Never promote a result measured only while the editor was alive to Strong.
+        var retained = TachiePresetPublicState.TryHash(face, token);
+        return applied with { After = applied.After != null && applied.After == retained ? retained : null };
     }
 
     private static IReadOnlyList<string> DirectNames(object configuration, CancellationToken token)

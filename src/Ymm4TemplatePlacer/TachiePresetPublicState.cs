@@ -22,6 +22,10 @@ internal static class TachiePresetPublicState
         RequireUiThread();
         var capture = new Capture(token);
         capture.Write(value, 0);
+        var repeat = new Capture(token);
+        repeat.Write(value, 0);
+        if (!string.Equals(capture.Text, repeat.Text, StringComparison.Ordinal))
+            throw new InvalidOperationException("立ち絵の公開状態が読み取りごとに変わるため、安全に識別できません。");
         return "public-v1:" + Convert.ToHexString(SHA256.HashData(
             Encoding.UTF8.GetBytes(capture.Text))).ToLowerInvariant();
     }

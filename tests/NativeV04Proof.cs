@@ -17,6 +17,7 @@ internal static partial class NativeProof
         ViewModel!.ActivateIntentWorkspace(); ViewModel.SetLegacyWorkspace(true); ViewModel.Refresh();
         await VerifyTachiePresetSourceModeFoundation(timeline, undo);
         await VerifyTachiePresetCapability(timeline, undo);
+        await VerifyTachiePresetGuards(timeline);
 
         var profile = (Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_NATIVE_PROFILE") ?? "checkpoint").ToLowerInvariant();
         if (profile == "focused")

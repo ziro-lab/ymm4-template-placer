@@ -174,13 +174,15 @@ internal sealed class TachiePresetEditorSession : IDisposable
         if (value == null) return null;
         if (value is string text) return ValidateLabel(text);
         var type = value.GetType();
-        var presetProperty = type.GetProperty("Preset", BindingFlags.Instance | BindingFlags.Public);
         object? nested = null;
-        if (presetProperty?.GetMethod?.IsPublic == true && presetProperty.GetIndexParameters().Length == 0)
+        foreach (var member in new[] { "Preset", "Favorite" })
         {
-            nested = presetProperty.GetValue(value);
-            // A null preset behind a Custom/placeholder item is not a named preset.
+            var preset = type.GetProperty(member, BindingFlags.Instance | BindingFlags.Public);
+            if (preset?.GetMethod?.IsPublic != true || preset.GetIndexParameters().Length != 0) continue;
+            nested = preset.GetValue(value);
+            // The public item descriptor, not localized text, identifies a Custom placeholder.
             if (nested == null) return null;
+            break;
         }
         foreach (var name in new[] { "Display", "Name", "Label", "Text", "Content" })
         {
@@ -223,7 +225,7 @@ internal sealed class TachiePresetEditorSession : IDisposable
             foreach (var child in LogicalTreeHelper.GetChildren(node))
             {
                 if (++logicalCount > 256) throw new InvalidOperationException("一時エディタの子要素が多すぎます。");
-                if (child is DependencyObject dependency) stack.Push(dependency);
+                if (child is DependencyObject dependency) stack.Push(child);
             }
         }
     }
@@ -244,7 +246,7 @@ internal sealed class TachiePresetEditorSession : IDisposable
                 diagnostics.EditorsCleared++;
             }
         }
-        catch (Exception ex) { diagnostics.CleanupFailures++; failure = ex; }
+        catch (Exception ex) { failure = ex; }
         finally
         {
             if (control != null)
@@ -268,6 +270,9 @@ internal sealed class TachiePresetEditorSession : IDisposable
             catch (Exception ex) { failure ??= ex; }
         }
         if (failure != null)
+        {
+            diagnostics.CleanupFailures++;
             throw new InvalidOperationException("一時プリセットエディタの後始末を完了できませんでした。この候補は利用しません。", failure);
+        }
     }
 }
