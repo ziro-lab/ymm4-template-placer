@@ -252,7 +252,7 @@ public sealed partial class PlacerViewModel
     }
     private void ApplyImmediateExpressionChoice(AssignmentRow row)
     {
-        if (suppressExpressionApply || !IsTemplateExpressionSource || !ExpressionRowsMatchSource || IsExpressionLoading || !UsesRelativeExpressions || row.SelectedChoice.TachiePreset != null || row.SelectedChoice.IsCurrentOtherSource) return;
+        if (suppressExpressionApply || !IsTemplateExpressionSource || !ExpressionRowsMatchSource || !UsesRelativeExpressions || row.SelectedChoice.TachiePreset != null || row.SelectedChoice.IsCurrentOtherSource) return;
         try
         {
             var current = RequireTimeline();
