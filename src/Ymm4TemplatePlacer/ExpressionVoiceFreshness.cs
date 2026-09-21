@@ -77,7 +77,7 @@ public sealed partial class PlacerViewModel
     internal void ReconcileVoiceWatchers(IReadOnlyList<VoiceSnapshot> voices)
     {
         if (!voiceFreshnessActive || voiceFreshnessDisposed || timeline == null || !ReferenceEquals(timeline, watchedVoiceTimeline)) return;
-        var current = voices.Select(x => x.Voice).ToHashSet(ReferenceEqualityComparer.Instance);
+        var current = voices.Select(x => x.Voice).ToHashSet((IEqualityComparer<VoiceItem>)ReferenceEqualityComparer.Instance);
         foreach (var removed in watchedVoices.Where(x => !current.Contains(x)).ToArray())
         {
             removed.PropertyChanged -= VoiceItemChanged; watchedVoices.Remove(removed); dirtyVoices.Remove(removed);
