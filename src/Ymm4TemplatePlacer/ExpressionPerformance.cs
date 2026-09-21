@@ -41,7 +41,8 @@ internal sealed record ExpressionPreparedResult(
     bool NoSemanticChange,
     int AssociationItemsParsed,
     int CandidateKeysBuilt,
-    TimeSpan PreparationElapsed);
+    TimeSpan PreparationElapsed,
+    int PreparationThreadId);
 
 internal sealed record CapturedManagedExpressionAssociation(long? Serial, IntentAssociationTag? Descriptor, IReadOnlyList<IItem>? Members, string? Error)
 {
@@ -174,6 +175,10 @@ internal sealed class ExpressionAssociationIndex
 
 internal static class ExpressionPreparation
 {
+#if YMM4_PROOF
+    internal static ManualResetEventSlim? ProofPrepareEntered;
+    internal static ManualResetEventSlim? ProofPrepareGate;
+#endif
     public static string Fingerprint(IReadOnlyList<ExpressionCapturedItem> items, IReadOnlyList<VoiceSnapshot> voices)
     {
         using var hash = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);
@@ -189,6 +194,11 @@ internal static class ExpressionPreparation
     {
         var sw = Stopwatch.StartNew();
         token.ThrowIfCancellationRequested();
+#if YMM4_PROOF
+        ProofPrepareEntered?.Set();
+        ProofPrepareGate?.Wait(token);
+#endif
+        var preparationThreadId = Environment.CurrentManagedThreadId;
         var sorted = snapshot.Voices.OrderBy(x => x.Frame).ThenBy(x => x.Layer).ToArray();
         var fingerprint = Fingerprint(snapshot.Items, sorted);
         // Voice Rows are a Voice-list/candidate projection. Non-Voice Timeline item
@@ -198,7 +208,7 @@ internal static class ExpressionPreparation
         var voicesSame = snapshot.PreviousVoices.Count == sorted.Length &&
             snapshot.PreviousVoices.Select((x, i) => SameVoice(x, sorted[i])).All(x => x);
         if (voicesSame && !snapshot.CandidateGenerationChanged)
-            return new(snapshot.Generation, snapshot.Timeline, fingerprint, snapshot.Items, [], true, 0, 0, sw.Elapsed);
+            return new(snapshot.Generation, snapshot.Timeline, fingerprint, snapshot.Items, [], true, 0, 0, sw.Elapsed, preparationThreadId);
 
         var associations = ExpressionAssociationIndex.Build(snapshot.Items, token);
         var candidates = BuildCandidateIndex(snapshot.Candidates, sorted, token, out var candidateKeys);
@@ -217,16 +227,17 @@ internal static class ExpressionPreparation
             }
             else if (association.Descriptor is { } descriptor)
             {
-                selected = choices.FirstOrDefault(x => x.Template?.IntentSource is { } source &&
-                    source.Palette.Id == descriptor.Palette && source.Entry.LibraryEntryId == descriptor.Entry &&
-                    candidateMetadata.TryGetValue(x.Template, out var metadata) && metadata.GeometryHash == descriptor.GeometryHash);
+                selected = choices.FirstOrDefault(x => x.Template != null &&
+                    candidateMetadata.TryGetValue(x.Template, out var metadata) &&
+                    metadata.PaletteId == descriptor.Palette && metadata.EntryId == descriptor.Entry &&
+                    metadata.GeometryHash == descriptor.GeometryHash);
                 if (selected == null) unavailable = "⚠ 現在の関連表情（選択元を確認）";
             }
             prepared.Add(new(voice, choices, selected, unavailable, true));
         }
         sw.Stop();
         return new(snapshot.Generation, snapshot.Timeline, fingerprint, snapshot.Items, prepared, false,
-            associations.ParsedItemCount, candidateKeys, sw.Elapsed);
+            associations.ParsedItemCount, candidateKeys, sw.Elapsed, preparationThreadId);
     }
 
     private static Dictionary<string, IReadOnlyList<TemplateChoice>> BuildCandidateIndex(
@@ -287,7 +298,12 @@ internal sealed class ExpressionPerformanceDiagnostics
     public int BatchCollectionPublishes;
     public int CancelledLoads;
     public int StaleResultsDiscarded;
+    public long LastCaptureMilliseconds;
     public long LastPrepareMilliseconds;
+    public long LastPublishMilliseconds;
+    public int LastCaptureThreadId;
+    public int LastPrepareThreadId;
+    public int LastPublishThreadId;
 
     public ExpressionPerformanceDiagnostics Snapshot() => (ExpressionPerformanceDiagnostics)MemberwiseClone();
 }
