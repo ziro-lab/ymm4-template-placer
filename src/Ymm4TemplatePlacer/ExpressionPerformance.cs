@@ -200,7 +200,7 @@ internal static class ExpressionPreparation
 
         var associations = ExpressionAssociationIndex.Build(snapshot.Items, token);
         var candidates = BuildCandidateIndex(snapshot.Candidates, sorted, token, out var candidateKeys);
-        var candidateMetadata = snapshot.Candidates.ToDictionary(x => x.Template, ReferenceEqualityComparer.Instance);
+        var candidateMetadata = snapshot.Candidates.ToDictionary(x => x.Template, (IEqualityComparer<FaceTemplate>)ReferenceEqualityComparer.Instance);
         var prepared = new List<ExpressionPreparedRow>(sorted.Length);
         foreach (var voice in sorted)
         {
