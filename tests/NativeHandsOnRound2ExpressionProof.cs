@@ -113,7 +113,10 @@ internal static partial class NativeProof
             Assert(Signature(timeline) == beforeImport && vm.ShowExpressionBatchPlace && view.PlaceButton.IsVisible && view.PlaceButton.IsEnabled,
                 "R2-E F10 imported pending batch is zero-write and reveals the batch Place action only while pending");
             await ClickPlace(view); await Idle();
-            Assert(!vm.HasError && ManagedIntentExpressionReader.Read(timeline, voice).Bundle?.Descriptor.Entry == lb.Id && !vm.ShowExpressionBatchPlace,
+            var postBatchRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
+            var postBatchAssociation = ManagedIntentExpressionReader.Read(timeline, voice);
+            Log($"R2-E F10 perf trace: error={vm.HasError}; pending={vm.PendingRelativeExpressionCount}; showPlace={vm.ShowExpressionBatchPlace}; match={postBatchRow.AssociationMatchesSelection}; selected={postBatchRow.SelectedChoice.Template?.IntentSource?.Entry.LibraryEntryId}; live={postBatchAssociation.Bundle?.Descriptor.Entry}; loading={vm.IsExpressionLoading}; status={vm.Status}");
+            Assert(!vm.HasError && postBatchAssociation.Bundle?.Descriptor.Entry == lb.Id && !vm.ShowExpressionBatchPlace,
                 "R2-E F10 pending batch commits through the retained exact backend then hides Place again");
 
             var ids = Enumerable.Range(1, 13).Select(x => $"F{x}").Concat(Enumerable.Range(1, 8).Select(x => $"G{x}")).ToArray();
