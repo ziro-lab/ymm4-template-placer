@@ -37,6 +37,7 @@ internal static partial class NativeProof
         fixture.IntentPalettes = [targeted];
         fixture.Palettes = [generic];
         fixture.ManualStylePaletteId = generic.Id;
+        fixture.ManualCharacterPaletteId = null;
         fixture.ExpressionBootstrapComplete = true;
         scope.Apply(fixture, [voice], [voice]);
         view.SelectionTab.IsSelected = true;
