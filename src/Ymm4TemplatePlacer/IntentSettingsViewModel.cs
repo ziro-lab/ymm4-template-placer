@@ -14,6 +14,7 @@ public sealed partial class PlacerViewModel
     public ActionCommand DiscardIntentSettingsCommand { get; private set; } = null!;
     public ActionCommand CreateIntentPaletteCommand { get; private set; } = null!;
     public ActionCommand DuplicateIntentPaletteCommand { get; private set; } = null!;
+    public ActionCommand CopyIntentPaletteToItemCommand { get; private set; } = null!;
     public ActionCommand DeleteIntentPaletteCommand { get; private set; } = null!;
     public ActionCommand MoveIntentPaletteCommand { get; private set; } = null!;
     public ActionCommand MoveIntentEntryCommand { get; private set; } = null!;
@@ -31,14 +32,20 @@ public sealed partial class PlacerViewModel
             SaveIntentSettingsCommand = new ActionCommand(_ => settingsAvailable && IntentSettings?.HasChanges == true, _ => Guard(SaveIntentSettings));
             DiscardIntentSettingsCommand = new ActionCommand(_ => IntentSettings != null, _ => ResetIntentSettings());
             CreateIntentPaletteCommand = new ActionCommand(_ => settingsAvailable && IntentSettings?.CanCreateForContext == true, _ => Guard(() => IntentSettings!.CreateForContext()));
-            DuplicateIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSet == true, _ => Guard(() => IntentSettings!.Duplicate()));
+            DuplicateIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSet == true, _ => Guard(() => IntentSettings!.DuplicateOwned()));
+            CopyIntentPaletteToItemCommand = new ActionCommand(_ => IntentSettings?.CanCopyToOtherItem == true, _ => Guard(() =>
+            {
+                var copy = IntentSettings!.CopySelectedToOtherItem();
+                HasError = false;
+                Status = $"Set「{copy.Name}」を{copy.OwnerTypeLabel}へコピーしました。元のSetとは別々に編集できます。";
+            }));
             DeleteIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSet == true, _ => Guard(() =>
             {
                 var session = IntentSettings!;
                 if (MessageBox.Show($"「{session.SelectedSetName}」と、そのセット内の演出{session.SelectedSetEntryCount}件を外します。\n元テンプレート・登録・タイムラインは削除しません。", Title, MessageBoxButton.OKCancel, MessageBoxImage.Question) == MessageBoxResult.OK)
                     session.RemoveSelected();
             }));
-            MoveIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSet == true, x => Guard(() => IntentSettings!.MovePalette(Convert.ToInt32(x, System.Globalization.CultureInfo.InvariantCulture))));
+            MoveIntentPaletteCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSet == true, x => Guard(() => IntentSettings!.MoveOwned(Convert.ToInt32(x, System.Globalization.CultureInfo.InvariantCulture))));
             MoveIntentEntryCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSetEntry == true, x => Guard(() => IntentSettings!.MoveEntry(Convert.ToInt32(x, System.Globalization.CultureInfo.InvariantCulture))));
             RemoveIntentEntryCommand = new ActionCommand(_ => IntentSettings?.HasSelectedSetEntry == true, _ => Guard(() =>
             {
@@ -53,7 +60,7 @@ public sealed partial class PlacerViewModel
                 var count = IntentSettings!.ImportNewExpressions(); HasError = false; Status = $"新しい表情{count}件を取り込みました。設定を確認し、自動で反映します。";
             }));
             foreach (var property in new[] { nameof(SaveIntentSettingsCommand), nameof(DiscardIntentSettingsCommand),
-                nameof(CreateIntentPaletteCommand), nameof(DuplicateIntentPaletteCommand), nameof(DeleteIntentPaletteCommand),
+                nameof(CreateIntentPaletteCommand), nameof(DuplicateIntentPaletteCommand), nameof(CopyIntentPaletteToItemCommand), nameof(DeleteIntentPaletteCommand),
                 nameof(MoveIntentPaletteCommand), nameof(MoveIntentEntryCommand), nameof(RemoveIntentEntryCommand),
                 nameof(AddIntentSourcesCommand), nameof(RescanIntentExpressionsCommand) }) OnPropertyChanged(property);
         }
@@ -90,7 +97,7 @@ public sealed partial class PlacerViewModel
         OnPropertyChanged(nameof(CanEditExpressionRowHeight)); OnPropertyChanged(nameof(ExpressionRowHeight));
         ReorderIntentTileCommand?.RaiseCanExecuteChanged(); UpdateIntentTileEditingCommands();
         SaveIntentSettingsCommand?.RaiseCanExecuteChanged(); DiscardIntentSettingsCommand?.RaiseCanExecuteChanged();
-        CreateIntentPaletteCommand?.RaiseCanExecuteChanged(); DuplicateIntentPaletteCommand?.RaiseCanExecuteChanged(); DeleteIntentPaletteCommand?.RaiseCanExecuteChanged();
+        CreateIntentPaletteCommand?.RaiseCanExecuteChanged(); DuplicateIntentPaletteCommand?.RaiseCanExecuteChanged(); CopyIntentPaletteToItemCommand?.RaiseCanExecuteChanged(); DeleteIntentPaletteCommand?.RaiseCanExecuteChanged();
         MoveIntentPaletteCommand?.RaiseCanExecuteChanged(); MoveIntentEntryCommand?.RaiseCanExecuteChanged(); RemoveIntentEntryCommand?.RaiseCanExecuteChanged();
         AddIntentSourcesCommand?.RaiseCanExecuteChanged(); RescanIntentExpressionsCommand?.RaiseCanExecuteChanged();
     }
