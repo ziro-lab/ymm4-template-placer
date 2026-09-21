@@ -1,6 +1,6 @@
 # Experimental Tachie Preset source — refreshed feature handoff
 
-Status: **P0 + P1 + P2 GREEN ON ACCEPTED v0.4.2 / READY FOR P3**
+Status: **P0-P5 GREEN ON ACCEPTED v0.4.2 / READY FOR P6**
 
 This handoff replaces the pre-performance assumptions of the original PR #19 preparation while retaining the canonical Lab evidence.
 
@@ -115,6 +115,34 @@ P2 adds one pure immutable model file only:
 The model stores only bounded strings, `Guid` and enums. It has no YMM4/plugin/WPF/Timeline object reference. Candidate identity duplicates fail closed to `None`; candidates with mixed confidence keep the overall result Experimental.
 
 P2 does not discover, cache or apply presets. Those UI-affine operations remain P3.
+
+### P3 capability-coordinator evidence
+
+P3 is pinned separately in `docs/TACHIE_PRESET_P3_CHECKPOINT.md`.
+
+- source `16608d6e2621b8bedea76d04e3498fa6dcc8c2c0`;
+- Checkpoint run `35630553092`;
+- job `106435424311`;
+- artifact `10654059148`;
+- artifact SHA256 `9d02df965807e407f8c17bc064113c4e8c4317f9dca5c51db666fdc6aff78f4c`;
+- markers `TACHIE_PRESET_CAPABILITY_P3=PASS` and `TACHIE_PRESET_GUARDS_P3=PASS`.
+
+The exact-host proof covers distinct-Character discovery, session caching/invalidation, direct/legacy/modern routes, built-in Animation/PSD named Strong candidates, cleanup, cancellation/latest-wins, bounded state capture and zero Timeline writes.
+
+### P4/P5 row integration and choice-model evidence
+
+P4/P5 are pinned in `docs/TACHIE_PRESET_P4_P5_CHECKPOINT.md`.
+
+- source `7cdc3355858851635a8dca85ba349326c3237427`;
+- checkout merge `793bf2d4effa8cff843469038f464582e240668e`;
+- Checkpoint run `35661119036`;
+- job `106536681752`;
+- artifact `10667463789`;
+- artifact SHA256 `c3c04b7768ffa5564fda2fccc2664b15e7e44cab08a39926f2f9b71d6780e311`;
+- markers `TACHIE_PRESET_ROWS_P4=PASS` and `TACHIE_PRESET_CHOICE_MODEL_P5=PASS`;
+- retained `HANDS_ON_ROUND2_E=PASS`, `EXPRESSION_PERFORMANCE=PASS`, full Checkpoint semantic regression/evidence guards PASS.
+
+P4 reuses the existing Rows/DataGrid and background preparation path. P5 explicitly proves none, Template, TachiePreset, valid current other-source, unavailable same-source and invalid-association states. Candidate inspection remains zero-write. No Tachie-Preset mutation is connected yet; P6 is the next boundary.
 
 ## Product surface
 
