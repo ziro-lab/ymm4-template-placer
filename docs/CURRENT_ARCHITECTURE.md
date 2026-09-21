@@ -68,6 +68,22 @@ Timeline context
 
 The Set owns applicability and placement relation. Tiles primarily identify a referenced Template plus small appearance/parameter overrides.
 
+For **normal targeted Sets**, the Item type is the ownership parent:
+
+```text
+one Item type
+-> its Sets
+-> each Set's tiles
+```
+
+A newly created normal targeted Set has exactly one `Target.ItemTypeKey` and `UniformType`. The existing serialized target shape is retained; no second owner field exists.
+
+Cross-Item reuse is explicit snapshot copy. Copying a Set creates a new Guid under the destination Item type and copies the current relation/conditions/entries/appearance. Source and destination are independent afterward.
+
+Existing settings that contain multi-type Sets are preserved losslessly and retain their existing runtime matching semantics. Settings surfaces them only through the bounded `複数種類` compatibility context; normal creation does not create new shared multi-type Sets.
+
+Generic Sets remain a separate existing model.
+
 Current global presentation state is shared across Sets:
 
 - Auto / Fixed layout;
@@ -191,21 +207,34 @@ This does **not** authorize:
 
 ## Current active feature
 
-UI Micro Polish corrective implementation is present on Draft PR #20 after owner Hands-on feedback F1-F7.
+Draft PR #20 is in the second owner Hands-on corrective pass.
 
-Current corrective direction:
+Release-green baseline before this pass:
 
-- keep always-visible Generic layer controls and field-local wheel;
-- remove application-level direct Generic digit interception;
-- keep wheel success quiet while preserving explicit/error feedback;
-- keep placement-panel quick settings, but close them when the owning YMM4 Window deactivates;
-- change common Voice row-height control to any-row bottom-boundary drag plus numeric entry;
-- make Fixed columns preserve slot count while square tiles grow to fill wider viewports;
-- limit public-readiness work to small cleanup, not legacy architecture deletion.
+- source `1b8a88255da2e28289996b4d99470a195d6ec6a4`;
+- Release run #305 `35551459441`;
+- 1,443 Native assertions PASS / 0 FAIL;
+- exact distribution DLL smoke and verified package PASS.
 
-The first candidate was Native/Release green, but the corrective HEAD is **not yet Native-accepted** because current GitHub Actions jobs are failing before any workflow step starts. See `docs/UI_MICRO_POLISH_CORRECTIVE_STATUS.md`.
+Owner Hands-on Round 2 added F8-F10:
 
-Experimental Tachie Preset support remains prepared separately on Draft PR #19 and resumes only after the corrected UI pass is accepted and merged.
+- quick settings must light-dismiss when clicking elsewhere inside the owning YMM4 Window, while internal Popup interaction remains open;
+- normal targeted Sets are owned by one Item type and Settings stays scoped to that parent;
+- reuse across Item types is an explicit one-time snapshot copy, not shared ownership.
+
+Implementation keeps the existing serialized `ItemTypeKeys` / `TypeMatch` model. Normal creation is single-owner; old multi-type Sets remain preserved under a bounded compatibility context.
+
+The frozen Round 2 authority is:
+
+- `UI_MICRO_POLISH_HANDS_ON_ROUND2_FEEDBACK.md`;
+- `UI_MICRO_POLISH_HANDS_ON_ROUND2_DESIGN.md`;
+- `UI_MICRO_POLISH_HANDS_ON_ROUND2_ACCEPTANCE.md`;
+- `UI_MICRO_POLISH_HANDS_ON_ROUND2_WORKPLAN.md`;
+- `UI_MICRO_POLISH_HANDS_ON_ROUND2_IMPLEMENTATION_PREP.md`.
+
+PR #20 must remain unmerged until the new implementation passes Checkpoint, exact Release and owner Hands-on.
+
+Experimental Tachie Preset support remains prepared separately on Draft PR #19 and resumes only after PR #20 is accepted and merged.
 
 ## Validation
 
@@ -224,7 +253,7 @@ For current work, prefer documents in this order:
 1. this file;
 2. `docs/GLOSSARY.md`;
 3. `docs/VALIDATION_STRATEGY.md`;
-4. feature-specific active handoff/spec (currently `UI_MICRO_POLISH_CORRECTIVE_DESIGN.md` / `UI_MICRO_POLISH_CORRECTIVE_WORKPLAN.md`);
+4. feature-specific active handoff/spec (currently `UI_MICRO_POLISH_HANDS_ON_ROUND2_DESIGN.md` / `UI_MICRO_POLISH_HANDS_ON_ROUND2_WORKPLAN.md`);
 5. `docs/BACKLOG.md`;
 6. historical Round/W documents as evidence.
 
