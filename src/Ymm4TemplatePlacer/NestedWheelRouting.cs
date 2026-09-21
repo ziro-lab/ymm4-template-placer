@@ -21,9 +21,20 @@ public static class NestedWheelRouting
     }
     private static void Wheel(object sender, MouseWheelEventArgs e)
     {
-        if (!e.Handled && sender is ScrollViewer root &&
-            TryScroll(root, e.OriginalSource as DependencyObject, e.Delta, Keyboard.Modifiers))
-            e.Handled = true;
+        if (e.Handled || sender is not ScrollViewer root) return;
+        // WPF can keep Mouse.DirectlyOver / OriginalSource on an element that moved
+        // away underneath a stationary pointer after scrolling. Resolve ownership
+        // from the actual current layout every wheel event so an old ComboBox/range
+        // hit cannot keep blocking the parent until the user jiggles the mouse.
+        var source = ResolveCurrentSource(root, e.GetPosition(root), e.OriginalSource as DependencyObject);
+        if (TryScroll(root, source, e.Delta, Keyboard.Modifiers)) e.Handled = true;
+    }
+    internal static DependencyObject? ResolveCurrentSource(ScrollViewer root, Point point, DependencyObject? fallback)
+    {
+        if (point.X >= 0 && point.Y >= 0 && point.X <= root.ActualWidth && point.Y <= root.ActualHeight &&
+            root.InputHitTest(point) is DependencyObject current)
+            return current;
+        return fallback;
     }
     internal static bool TryScroll(ScrollViewer root, DependencyObject? source, int delta, ModifierKeys modifiers)
     {
