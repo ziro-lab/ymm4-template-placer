@@ -112,13 +112,25 @@ internal static partial class NativeProof
             var ownerWindow = Window.GetWindow(view)!;
             var popupProbe = new Window { Width = 120, Height = 80, ShowInTaskbar = false, WindowStyle = WindowStyle.ToolWindow };
             var popupClosedOnDeactivate = false;
+            var ownerDeactivationCount = 0;
+            EventHandler ownerDeactivated = (_, _) => ownerDeactivationCount++;
+            ownerWindow.Deactivated += ownerDeactivated;
             try
             {
-                popupProbe.Show(); popupProbe.Activate(); await Task.Delay(80); await Idle();
+                var ownerActivated = ownerWindow.Activate();
+                await Task.Delay(80); await Idle();
+                var ownerWasActive = ownerWindow.IsActive;
+                popupProbe.Show();
+                var probeActivated = popupProbe.Activate();
+                await Task.Delay(120); await Idle();
+                Log($"UI corrective C4 activation trace: ownerActivate={ownerActivated}; ownerBefore={ownerWasActive}; probeActivate={probeActivated}; probeActive={popupProbe.IsActive}; ownerAfter={ownerWindow.IsActive}; ownerDeactivated={ownerDeactivationCount}; popup={palette.PanelQuickSettingsPopup.IsOpen}; checked={palette.PanelQuickSettingsButton.IsChecked}");
+                Assert(ownerActivated && ownerWasActive && probeActivated && popupProbe.IsActive && ownerDeactivationCount > 0,
+                    "UI corrective C4 proof actually transfers WPF activation away from the owner Window");
                 popupClosedOnDeactivate = !palette.PanelQuickSettingsPopup.IsOpen && palette.PanelQuickSettingsButton.IsChecked != true;
             }
             finally
             {
+                ownerWindow.Deactivated -= ownerDeactivated;
                 popupProbe.Close(); ownerWindow.Activate(); await Idle();
             }
             Assert(popupClosedOnDeactivate && !palette.PanelQuickSettingsPopup.IsOpen,
