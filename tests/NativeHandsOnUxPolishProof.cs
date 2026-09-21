@@ -36,7 +36,7 @@ internal static partial class NativeProof
             var library = sources.Select(x => TemplateResolver.Reference(x, x.Name, character.Name)).ToList();
             var target = new IntentTargetContext { ItemTypeKeys = [IntentSelectionContext.TypeKey(typeof(VoiceItem))], CharacterName = character.Name };
             var palette = new IntentPalette(Guid.NewGuid(), "表情セット", "表情", target, new(), library.Select(x => new IntentEntry(x.Id)).ToList()) { ExpressionCandidates = true };
-            var textPalette = palette with { Id = Guid.NewGuid(), Name = "文字用", Intent = "文字の演出", ExpressionCandidates = false,
+            var textPalette = palette with { Id = Guid.NewGuid(), Name = "表情セット", Intent = "文字の演出", ExpressionCandidates = false,
                 Target = new() { ItemTypeKeys = [IntentSelectionContext.TypeKey(typeof(TextItem))] }, Entries = [] };
             var fixture = PlacerSettingsStore.Copy(original); fixture.Library = library; fixture.IntentPalettes = [palette, textPalette];
             fixture.LegacyWorkspace = false; fixture.ExpressionBootstrapComplete = true; fixture.IntentPaletteRevision = 1;
@@ -47,15 +47,48 @@ internal static partial class NativeProof
             Assert(session.SelectedItemContext is IntentSettingsItemContext { IsCurrentSelection: true } context && context.Label.Contains("ボイス", StringComparison.Ordinal) &&
                 panel.SettingsTargetButtons.IsVisible && panel.FindName("SettingsIntentPicker") == null && session.VisiblePalettes.Cast<IntentPaletteDraft>().Single().Id == palette.Id,
                 "H1/R2-C direct target buttons start at the selected Voice and expose matching Sets without Intent navigation");
-            Assert(!panel.TargetAdvanced.IsExpanded && !panel.TargetTypeChoices.IsVisible && !session.HasChanges,
-                "H1 the runtime type checkbox matrix is hidden and opening Settings is not a draft edit");
-            session.SelectedItemContext = session.ItemContexts.Single(x => !x.IsCurrentSelection && x.TypeKeys.Contains(IntentSelectionContext.TypeKey(typeof(TextItem)))); await Idle();
-            Assert(session.Intents.SequenceEqual(new[] { "文字の演出" }) && session.SelectedPalette?.Id == textPalette.Id && !session.HasChanges,
-                "H1 Item navigation filters the Set without making a clean draft dirty");
-            session.ShowAllSets = true; await Idle();
-            Assert(session.VisiblePalettes.Cast<IntentPaletteDraft>().Count() == 2 && view.MainTabs.Items.Count == 3 && !session.HasChanges,
-                "H1 Set management stays inside Settings, retains all Sets and adds no fourth task");
-            session.ShowAllSets = false; session.SelectedItemContext = session.ItemContexts.Single(x => x.IsCurrentSelection); await Idle();
+            Assert(!panel.TargetAdvanced.IsExpanded && panel.FindName("TargetTypeChoices") == null && panel.FindName("TypeMatchPanel") == null && !session.HasChanges,
+                "H1 the normal Settings surface has one Item owner and no runtime type matrix");
+            var textContext = session.ItemContexts.Single(x => x.IsRealItemType && x.Key == IntentSelectionContext.TypeKey(typeof(TextItem)));
+            session.SelectedItemContext = textContext; await Idle();
+            Assert(session.Intents.SequenceEqual(new[] { "文字の演出" }) && session.SelectedPalette?.Id == textPalette.Id && !session.HasChanges &&
+                session.Palettes.Single(x => x.Id == palette.Id).Name == session.Palettes.Single(x => x.Id == textPalette.Id).Name,
+                "H1 Item navigation filters the Set, allows the same Set name under different Item owners and makes no clean-draft edit");
+            panel.SetManagement.IsExpanded = true; await Idle();
+            Assert(session.VisiblePalettes.Cast<IntentPaletteDraft>().Single().Id == textPalette.Id && view.MainTabs.Items.Count == 3 && !session.HasChanges,
+                "H1 expanding Set management stays scoped to the current Item owner and adds no fourth task");
+
+            session.SelectedItemContext = session.ItemContexts.Single(x => x.IsCurrentSelection); await Idle();
+            var sourceDraft = session.SelectedPalette!;
+            session.SelectedCopyDestination = textContext; await Idle();
+            Assert(panel.CopySetToItemPanel.IsVisible && ReferenceEquals(panel.CopyDestinationPicker.SelectedItem, textContext) &&
+                ReferenceEquals(panel.CopyToItemButton.Command, vm.CopyIntentPaletteToItemCommand),
+                "H1 owner-scoped Settings exposes an explicit cross-Item snapshot-copy route");
+            await InvokeSelectionButton(panel.CopyToItemButton); await Idle();
+            session = vm.IntentSettings!;
+            var copied = session.SelectedPalette!;
+            var savedAfterCopy = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
+            var savedCopy = savedAfterCopy.IntentPalettes.Single(x => x.Id == copied.Id);
+            Assert(session.SelectedItemContext?.Key == IntentSelectionContext.TypeKey(typeof(TextItem)) && copied.Id != sourceDraft.Id &&
+                copied.OwnerTypeKey == IntentSelectionContext.TypeKey(typeof(TextItem)) && copied.Name == "表情セット 2" &&
+                savedCopy.Target.ItemTypeKeys.SequenceEqual(new[] { IntentSelectionContext.TypeKey(typeof(TextItem)) }) &&
+                savedCopy.Target.TypeMatch == IntentTypeMatch.UniformType && savedCopy.Relation == palette.Relation &&
+                savedCopy.Target.CharacterName == palette.Target.CharacterName && savedCopy.Entries.SequenceEqual(palette.Entries) &&
+                Signature(timeline) == signature,
+                "H1 cross-Item copy creates a new destination-local Guid/name and preserves the complete source snapshot with zero Timeline write");
+            session.MoveOwned(-1); await Idle();
+            Assert(session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(new[] { copied.Id, textPalette.Id }) &&
+                session.Palettes.Single(x => x.Id == palette.Id).OwnerTypeKey == IntentSelectionContext.TypeKey(typeof(VoiceItem)),
+                "H1 Set move changes only the current Item owner's visible order and never moves through another owner's Set");
+            copied.Name = "コピー側だけ変更"; await Idle();
+            Assert(session.Palettes.Single(x => x.Id == palette.Id).Name == "表情セット" &&
+                new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().IntentPalettes.Single(x => x.Id == palette.Id).Name == "表情セット",
+                "H1 copied Set is independent; destination edits never propagate back to the source");
+            await InvokeSelectionButton(panel.RollbackButton); await Idle();
+            session = vm.IntentSettings!;
+            Assert(session.Palettes.Count == 2 && session.Palettes.All(x => x.Name == "表情セット") && !session.HasChanges && Signature(timeline) == signature,
+                "H1 session rollback removes the copied Set and restores both Item-owned Sets exactly");
+            session.SelectedItemContext = session.ItemContexts.Single(x => x.IsCurrentSelection); await Idle();
             var draft = session.SelectedPalette!; draft.SelectedEntry = draft.Entries[0]; await Idle();
             Assert(!session.HasChanges && panel.EntryAppearanceEditor.IsVisible && Signature(timeline) == signature,
                 "H1/H2 choosing an entry for alias/color editing is navigation only and writes zero Timeline items");
