@@ -46,13 +46,23 @@
     <Button Content="四角" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Square}"/>
     <Button Content="丸" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Circle}"/>
    </WrapPanel>
-   <Expander x:Name="SetManagement" Header="セットの管理" IsExpanded="{Binding IntentSettings.ShowAllSets,Mode=TwoWay}" Margin="0,0,0,4">
-    <WrapPanel>
-     <Button x:Name="DuplicateButton" Content="複製" Command="{Binding DuplicateIntentPaletteCommand}"/>
-     <Button Content="↑" ToolTip="セットを前へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="-1"/>
-     <Button Content="↓" ToolTip="セットを後へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="1"/>
-     <Button Content="削除" Command="{Binding DeleteIntentPaletteCommand}"/>
-    </WrapPanel>
+   <Expander x:Name="SetManagement" Header="セットの管理" IsExpanded="False" Margin="0,0,0,4">
+    <StackPanel>
+     <WrapPanel>
+      <Button x:Name="DuplicateButton" Content="複製" Command="{Binding DuplicateIntentPaletteCommand}"/>
+      <Button Content="↑" ToolTip="このアイテム内でSetを前へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="-1"/>
+      <Button Content="↓" ToolTip="このアイテム内でSetを後へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="1"/>
+      <Button Content="削除" Command="{Binding DeleteIntentPaletteCommand}"/>
+     </WrapPanel>
+     <StackPanel Margin="0,5,0,0" Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}">
+      <TextBlock Text="他のアイテムへコピー" FontWeight="SemiBold"/>
+      <TextBlock Text="現在のSetをその時点の設定で複製します。コピー後は元と別々に編集できます。" Opacity="0.72" Margin="0,1,0,3"/>
+      <WrapPanel>
+       <ComboBox x:Name="CopyDestinationPicker" ItemsSource="{Binding IntentSettings.CopyDestinations}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedCopyDestination,Mode=TwoWay}" MinWidth="150" AutomationProperties.Name="Setのコピー先アイテム"/>
+       <Button x:Name="CopyToItemButton" Content="コピー" Command="{Binding CopyIntentPaletteToItemCommand}"/>
+      </WrapPanel>
+     </StackPanel>
+    </StackPanel>
    </Expander>
     <local:GenericSetSettingsPanel x:Name="GenericSettingsSurface" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}"/>
     <StackPanel DataContext="{Binding IntentSettings.SelectedPalette}">
@@ -77,18 +87,8 @@
         <TextBox x:Name="CharacterNameBox" Text="{Binding CharacterName,UpdateSourceTrigger=PropertyChanged}"/>
        </StackPanel>
        <CheckBox Content="このセットの表情を、「表情をまとめて」の候補にも使う" IsChecked="{Binding ExpressionCandidates,Mode=TwoWay}" Margin="0,3"/>
-       <Expander x:Name="TargetAdvanced" Header="対象の詳細・複数種類" Margin="0,4">
+       <Expander x:Name="TargetAdvanced" Header="対象の詳細" Margin="0,4">
         <StackPanel Margin="8,5">
-       <ItemsControl x:Name="TargetTypeChoices" ItemsSource="{Binding TypeChoices}">
-        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate><DataTemplate><CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}" Margin="0,3,12,5"/></DataTemplate></ItemsControl.ItemTemplate>
-       </ItemsControl>
-       <StackPanel x:Name="TypeMatchPanel">
-        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowTypeMatch}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-        <TextBlock Text="複数種類を選んだとき"/>
-        <ComboBox ItemsSource="{Binding DataContext.IntentTypeModes,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding TypeMatch,Mode=TwoWay}"/>
-       </StackPanel>
-
          <WrapPanel><TextBlock Text="選択数" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding MinimumCount,UpdateSourceTrigger=PropertyChanged}" Width="54"/><TextBlock Text=" ～ " VerticalAlignment="Center"/><TextBox Text="{Binding MaximumCount,UpdateSourceTrigger=PropertyChanged}" Width="54"/></WrapPanel>
         </StackPanel>
        </Expander>
