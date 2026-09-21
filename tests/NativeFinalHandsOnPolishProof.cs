@@ -84,9 +84,9 @@ internal static partial class NativeProof
         var root = panel.SettingsScroll;
         Assert(root.ScrollableHeight > 1, "FINAL H2 fixture has a genuinely scrollable Settings surface");
 
-        var ordinaryPoint = panel.ContextNotice.TranslatePoint(new Point(
-            Math.Min(2, Math.Max(0, panel.ContextNotice.ActualWidth - 1)),
-            Math.Min(2, Math.Max(0, panel.ContextNotice.ActualHeight - 1))), root);
+        var ordinaryPoint = panel.NewPaletteButton.TranslatePoint(new Point(
+            Math.Min(2, Math.Max(0, panel.NewPaletteButton.ActualWidth - 1)),
+            Math.Min(2, Math.Max(0, panel.NewPaletteButton.ActualHeight - 1))), root);
         var live = NestedWheelRouting.ResolveCurrentSource(root, ordinaryPoint, panel.PalettePicker);
         Assert(live != null && !IsDescendantOf(live, panel.PalettePicker),
             "FINAL H2: current hit-test overrides a stale ComboBox event source without mouse movement");
@@ -102,7 +102,7 @@ internal static partial class NativeProof
         var comboPoint = panel.PalettePicker.TranslatePoint(new Point(
             Math.Max(1, panel.PalettePicker.ActualWidth / 2),
             Math.Max(1, panel.PalettePicker.ActualHeight / 2)), root);
-        var comboHit = NestedWheelRouting.ResolveCurrentSource(root, comboPoint, panel.ContextNotice);
+        var comboHit = NestedWheelRouting.ResolveCurrentSource(root, comboPoint, panel.NewPaletteButton);
         Assert(comboHit != null && IsDescendantOf(comboHit, panel.PalettePicker) &&
             !NestedWheelRouting.TryScroll(root, comboHit, -120, ModifierKeys.None),
             "FINAL H2: a ComboBox actually under the pointer still owns its wheel behavior");
