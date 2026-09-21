@@ -82,7 +82,13 @@ Requirements:
 - always clear bindings/remove staging visuals;
 - immutable output only.
 
-Validation: Focused + built-in/synthetic capability fixtures.
+Validation: **DONE.** See `docs/TACHIE_PRESET_P3_CHECKPOINT.md`.
+
+- source `16608d6e2621b8bedea76d04e3498fa6dcc8c2c0`;
+- Checkpoint run `35630553092`;
+- markers `TACHIE_PRESET_CAPABILITY_P3=PASS`, `TACHIE_PRESET_GUARDS_P3=PASS`.
+
+Exit: **DONE.** Exact Character/plugin resolution, fresh-parameter probing, bounded editor routes, session cache, cancellation/latest-wins and unconditional cleanup are native-green.
 
 ## P4 — expression-load integration
 
@@ -98,6 +104,14 @@ Keep:
 
 Add structural counters for preset scans/cache hits/stale discards.
 
+Validation: **DONE.** See `docs/TACHIE_PRESET_P4_P5_CHECKPOINT.md`.
+
+- source `7cdc3355858851635a8dca85ba349326c3237427`;
+- Checkpoint run `35661119036`;
+- marker `TACHIE_PRESET_ROWS_P4=PASS`.
+
+Exit: **DONE.** One Rows/DataGrid/load coordinator handles both sources; immutable preset descriptors stay inside the existing preparation/publication pipeline and candidate inspection remains zero-write.
+
 ## P5 — source-aware choice model
 
 Minimally extend the historical choice model without creating a second row model.
@@ -112,6 +126,15 @@ Required states:
 - invalid association.
 
 Workbook remains Template-only.
+
+Validation: **DONE.** See `docs/TACHIE_PRESET_P4_P5_CHECKPOINT.md`.
+
+- source `7cdc3355858851635a8dca85ba349326c3237427`;
+- Checkpoint run `35661119036`;
+- marker `TACHIE_PRESET_CHOICE_MODEL_P5=PASS`;
+- retained `HANDS_ON_ROUND2_E=PASS` and full Checkpoint regression PASS.
+
+Exit: **DONE.** All six required source-aware row states are explicit without a second row model or Workbook change.
 
 ## P6 — common managed-expression seam
 
