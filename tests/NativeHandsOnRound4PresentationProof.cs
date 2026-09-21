@@ -109,6 +109,32 @@ internal static partial class NativeProof
                 scope.Current.Palettes.Single(x => x.Id == left.Id).LibraryEntryIds.All(id =>
                     scope.Current.Palettes.Single(x => x.Id == left.Id).AppearanceFor(id).Shape == IntentTileShape.Circle),
                 "B8", "quick settings Set-wide shape writes current membership shapes through the protected store and stays open");
+
+            var layoutPicker = quick.QuickLayoutPicker;
+            await NativeRound2Click(layoutPicker.PointToScreen(new Point(layoutPicker.ActualWidth / 2, layoutPicker.ActualHeight / 2))); await Idle();
+            var nestedInteractionStayedOpen = palette.PanelQuickSettingsPopup.IsOpen && layoutPicker.IsDropDownOpen;
+            layoutPicker.IsDropDownOpen = false; await Idle();
+            Assert(nestedInteractionStayedOpen && palette.PanelQuickSettingsPopup.IsOpen,
+                "UI Round2 F8 internal quick-settings ComboBox interaction stays open");
+
+            var outsideDelivered = false;
+            var outsideHandledOnArrival = true;
+            MouseButtonEventHandler outsideProbe = (_, e) => { outsideDelivered = true; outsideHandledOnArrival = e.Handled; };
+            box.AddHandler(Mouse.PreviewMouseDownEvent, outsideProbe, true);
+            try
+            {
+                await NativeRound2Click(box.PointToScreen(new Point(box.ActualWidth / 2, box.ActualHeight / 2))); await Idle();
+            }
+            finally { box.RemoveHandler(Mouse.PreviewMouseDownEvent, outsideProbe); }
+            Assert(outsideDelivered && !outsideHandledOnArrival && !palette.PanelQuickSettingsPopup.IsOpen &&
+                palette.PanelQuickSettingsButton.IsChecked != true,
+                "UI Round2 F8 owner-window outside click closes quick settings without swallowing the YMM4 click");
+
+            await NativeRound2Click(palette.PanelQuickSettingsButton.PointToScreen(new Point(palette.PanelQuickSettingsButton.ActualWidth / 2,
+                palette.PanelQuickSettingsButton.ActualHeight / 2))); await Idle();
+            Assert(palette.PanelQuickSettingsPopup.IsOpen,
+                "UI Round2 F8 quick settings can reopen normally after light-dismiss");
+
             var ownerWindow = Window.GetWindow(view)!;
             var popupProbe = new Window { Width = 120, Height = 80, ShowInTaskbar = false, WindowStyle = WindowStyle.ToolWindow };
             var popupClosedOnDeactivate = false;
