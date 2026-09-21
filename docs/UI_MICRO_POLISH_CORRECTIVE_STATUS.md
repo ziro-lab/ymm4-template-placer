@@ -1,6 +1,6 @@
 # UI Micro Polish — corrective implementation status
 
-Status: **C0-C4 IMPLEMENTED / NATIVE REVALIDATION BLOCKED BY ACTIONS STARTUP**
+Status: **C0-C4 IMPLEMENTED / CHECKPOINT GREEN / RELEASE PENDING**
 
 ## Accepted evidence before corrective pass
 
@@ -76,43 +76,80 @@ Implemented:
 
 ## Updated proof/package expectations
 
-Native Round4 presentation proof has been revised to cover:
+Native Round4 presentation proof covers:
 
 - quiet wheel Status;
-- popup closing on owner deactivation;
+- popup closing on actual owner-window deactivation;
+- an explicit activation-transfer precondition so a CI desktop cannot falsely count a no-op `Activate()` as C4 evidence;
 - wide/narrow Fixed grid geometry;
 - real mouse Voice-row boundary drag;
 - numeric height Enter/Esc/invalid rejection.
 
-`USAGE.md` and `PackageVerified.ps1` now describe/require the corrective UI rather than rejected U4/top-grip behavior.
+`USAGE.md` and `PackageVerified.ps1` describe/require the corrective UI rather than rejected U4/top-grip behavior.
 
-## Current validation blocker
+Public-release preparation is also carried forward from main:
 
-Corrective branch current source is not yet Native-accepted.
+- the Japanese public README and `LICENSE.md` are present;
+- the verified `.ymme` package now includes `LICENSE.md` alongside `THIRD_PARTY_NOTICES.md`;
+- the source archive explicitly requires the license entry.
 
-Latest corrective product/source change before documentation-only authority updates:
+## Native revalidation
 
-- `1bbe5e5db17bdbbee8cd4fd36b71bd183ea4f76e`
+The earlier Actions startup blocker was not a product/test failure. Before the repository became public, hosted jobs were being created and failing before any workflow step. After public visibility removed the private-repository usage limit, hosted runners resumed normally.
 
-Current branch/documentation HEAD continues beyond that without changing product semantics.
+### First resumed Release attempt
 
-Attempted Actions validation:
+Release run #299 `35524227916`, attempt 3:
 
-- PR run #291 `35523841897`
-- dedicated Release run #292 `35523849044`, including rerun attempt #2
-- dedicated Release run #299 `35524227916`
+- checkout / .NET / YMM4 download: PASS;
+- Distribution build: PASS;
+- Proof build: PASS;
+- Native proof reached Round4 B;
+- C0-C3 passed;
+- C4 owner-deactivation assertion failed once.
 
-These jobs failed before executing **any workflow step**; job step lists are empty. This is an Actions/runner-start condition, not product/test failure evidence.
+The failure was isolated to the activation proof: the old test did not establish whether its probe Window had actually taken activation from the owner before judging product behavior.
 
-Earlier Release #290 did start normally and exposed only a missing proof-source `VisualTreeHelper` import; that proof compile issue was corrected before the later corrective commits.
+### Strengthened C4 proof
 
-Do not label the corrective candidate Native-green until a real Windows/YMM4 run executes.
+Test change:
 
-## Next action when Actions can start
+- `e44133da9e4b638de8ef59eb5d785d804305a42f`
 
-1. run Checkpoint/Release from current corrective HEAD;
-2. fix only evidence-backed product/test failures;
-3. when green, produce a new corrected Hands-on `.ymme`;
-4. owner Hands-on;
-5. only then merge PR #20;
-6. refresh paused Tachie Preset PR #19 from accepted main.
+Checkpoint run #302 `35550873470`:
+
+- level: Checkpoint;
+- full Native validation: PASS;
+- `HANDS_ON_ROUND4_A=PASS`;
+- `HANDS_ON_ROUND4_B=PASS`;
+- `HANDS_ON_ROUND4_C=PASS`;
+- C4 trace proved owner active -> probe active -> owner `Deactivated` once -> popup closed -> toggle false.
+
+The stronger assertion is retained because it prevents hosted-desktop activation flakiness from being mistaken for a product result.
+
+### License-in-package checkpoint
+
+Latest product/test/package change:
+
+- `7f89c9744d8f2ab8e54a277a5a305a891d6f443b`
+
+Checkpoint run #303 `35551157812`:
+
+- level: Checkpoint;
+- **1,443 assertions PASS / 0 FAIL**;
+- Release build: 0 warnings / 0 errors;
+- Proof build: 0 warnings / 0 errors;
+- `HANDS_ON_ROUND4_A/B/C=PASS`;
+- license packaging gate included in the tested source.
+
+This is the current corrective Native-green checkpoint.
+
+## Next action
+
+1. fast-forward `work/v0.4-native-validation` to the current corrective HEAD;
+2. run Release;
+3. require exact distribution-DLL native smoke + verified `.ymme` / source / provenance package;
+4. produce the corrected Hands-on `.ymme`;
+5. owner Hands-on;
+6. only then merge PR #20;
+7. refresh paused Tachie Preset PR #19 from accepted main.
