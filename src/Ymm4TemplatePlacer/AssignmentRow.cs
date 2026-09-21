@@ -133,11 +133,19 @@ public sealed class AssignmentRow : INotifyPropertyChanged
             var shortName = duplicateDisplayNames.Contains(pair.Entry.DisplayName) ? $"{pair.Entry.DisplayName} — {pair.Entry.Source.Name}" : pair.Entry.DisplayName;
             preferred.TryAdd(pair.Template, (preferred.Count, shortName + "（パレット）", shortName));
         }
-        var candidates = Choices.Skip(1).Select(x => x.Template!).ToArray();
-        Choices = new[] { Choices[0] }.Concat(candidates.OrderBy(x => preferred.TryGetValue(x, out var item) ? item.Order : int.MaxValue)
+        // An unavailable explicit selection is represented by Template=null after a
+        // source disappears. Preserve it, but never pass null through the FaceTemplate
+        // dictionary/sort path.
+        var unavailable = Choices.Skip(1).Where(x => x.Template == null).ToArray();
+        var candidates = Choices.Skip(1).Where(x => x.Template != null).Select(x => x.Template!).ToArray();
+        var reordered = candidates.OrderBy(x => preferred.TryGetValue(x, out var item) ? item.Order : int.MaxValue)
             .ThenBy(x => x.Name, StringComparer.Ordinal).Select(x => new TemplateChoice(x, preferred.TryGetValue(x, out var item) ? item.Label : x.Name,
-                preferred.TryGetValue(x, out item) ? item.ShortName : null))).ToArray();
-        selectedChoice = Choices.First(x => ReferenceEquals(x.Template, selected));
+                preferred.TryGetValue(x, out item) ? item.ShortName : null)).ToArray();
+        var previous = selectedChoice;
+        Choices = new[] { Choices[0] }.Concat(reordered).Concat(unavailable).ToArray();
+        selectedChoice = selected != null
+            ? Choices.First(x => ReferenceEquals(x.Template, selected))
+            : Choices.Contains(previous) ? previous : Choices[0];
         Changed(nameof(Choices)); Changed(nameof(SelectedChoice)); Changed(nameof(State));
     }
     internal AssignmentRow CopyPending() => new(No, Target, Array.Empty<FaceTemplate>(), UsesIntentSources)
