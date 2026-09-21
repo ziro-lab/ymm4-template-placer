@@ -195,10 +195,10 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         if (e.PropertyName == nameof(AssignmentRow.SelectedChoice))
         {
             OnPropertyChanged(nameof(Summary)); OnPropertyChanged(nameof(ShowExpressionBatchPlace)); UpdateCommands();
-            if (!suppressExpressionApply && ExpressionRowsMatchSource && !IsExpressionLoading && sender is AssignmentRow row)
+            if (!suppressExpressionApply && ExpressionRowsMatchSource && sender is AssignmentRow row)
             {
                 if (IsTemplateExpressionSource && UsesRelativeExpressions) ApplyImmediateExpressionChoice(row);
-                else if (IsTachiePresetExpressionSource)
+                else if (IsTachiePresetExpressionSource && !IsExpressionLoading)
                 {
                     HasError = false; Status = "候補の確認のみです。タイムラインの表情は変更していません。";
                 }
