@@ -18,8 +18,8 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public string Title => "YMM4 Template Placer";
     public bool CanSuspend => true;
     public string SceneName => timeline?.Name ?? "シーンなし";
-    public ObservableCollection<AssignmentRow> Rows { get; } = [];
-    public string Summary => $"{Rows.Count}件 / 選択 {Rows.Count(x => x.SelectedChoice.Template != null)}件 / 未選択 {Rows.Count(x => x.HasCandidates && x.SelectedChoice.Template == null)}件 / 候補なし {Rows.Count(x => !x.HasCandidates)}件";
+    public ExpressionRowCollection Rows { get; } = [];
+    public string Summary => CachedExpressionSummary;
     public string Status { get => status; private set { keepPartialStatus = false; Set(ref status, value); } }
     public bool HasError { get => hasError; private set => Set(ref hasError, value); }
     public ActionCommand RefreshCommand { get; }
@@ -27,18 +27,19 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public ActionCommand ExportCommand { get; }
     public ActionCommand ImportCommand { get; }
     public bool UsesRelativeExpressions => intentInitialized && !UseLegacyWorkspace;
-    public bool ShowExpressionBatchPlace => !UsesRelativeExpressions || HasPendingRelativeAssignments();
+    public bool ShowExpressionBatchPlace => !UsesRelativeExpressions || PendingRelativeExpressionCount > 0;
 
     public PlacerViewModel()
     {
-        RefreshCommand = new ActionCommand(_ => timeline != null, _ => Guard(() =>
+        RefreshCommand = new ActionCommand(_ => timeline != null && !IsExpressionLoading, _ => Guard(() =>
         {
-            if ((HasProtectedPendingVoiceWork() || Rows.Any(x => x.SelectedChoice.Template != null)) && MessageBox.Show("一覧を読み直すと未配置の割り当てを破棄します。続けますか？", Title, MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
-            Refresh();
+            if ((HasProtectedPendingVoiceWork() || SelectedExpressionCount > 0) && MessageBox.Show("一覧を読み直すと未配置の割り当てを破棄します。続けますか？", Title, MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
+            if (UsesRelativeExpressions) { expressionCandidateDirty = true; expressionCacheDirty = true; RequestExpressionLoad(true, true); }
+            else Refresh();
         }));
-        PlaceCommand = new ActionCommand(_ => timeline != null && undo != null && settingsAvailable && !ExpressionRowsStale &&
-            (UsesRelativeExpressions ? HasPendingRelativeAssignments() : !ExpressionPresetDirty && Rows.Any(x => x.SelectedChoice.Template != null)) &&
-            Rows.All(x => x.SelectedChoice.IsAvailable), _ => Guard(() => Place()));
+        PlaceCommand = new ActionCommand(_ => timeline != null && undo != null && settingsAvailable && !ExpressionRowsStale && !IsExpressionLoading &&
+            (UsesRelativeExpressions ? PendingRelativeExpressionCount > 0 : !ExpressionPresetDirty && SelectedExpressionCount > 0) &&
+            UnavailableExpressionCount == 0, _ => Guard(() => Place()));
         ExportCommand = new ActionCommand(_ => timeline != null && Rows.Count > 0 && !ExpressionRowsStale, _ => Guard(() =>
         {
             var dialog = new SaveFileDialog { Filter = "Excelブック (*.xlsx)|*.xlsx", DefaultExt = ".xlsx", AddExtension = true, FileName = "TemplateAssignments.xlsx", Title = "割り当てをExcelへ出力" };
@@ -70,13 +71,14 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         if (changed)
         {
             AttachTimelineV04();
+            expressionCacheTimeline = null; expressionHostFingerprint = null; expressionPreparedVoices = []; expressionPreparedItems = []; expressionCacheDirty = true;
             if (preservePending)
             {
                 SetVoiceFreshnessState(ExpressionRowsFreshness.StalePending);
                 if (intentInitialized) RefreshIntentWorkspace();
-                OnPropertyChanged(nameof(SceneName));
+                RefreshV04(); OnPropertyChanged(nameof(SceneName));
             }
-            else Guard(Refresh);
+            else Guard(RefreshNonExpressionState);
             RebindVoiceFreshness();
         }
         TryRestoreTransientWork(); UpdateCommands();
@@ -85,34 +87,30 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     private void ExpressionModeChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(UseLegacyWorkspace)) return;
-        SetVoiceFreshnessActive(activeTask.Length > 0);
-        RefreshExpressionVocabulary(); TryRestoreDeferredExpressionWork(); OnPropertyChanged(nameof(UsesRelativeExpressions)); UpdateCommands();
+        expressionCandidateDirty = true; expressionCacheDirty = true;
+        SetVoiceFreshnessActive(activeTask == "expression");
+        if (activeTask == "expression" && UsesRelativeExpressions) RequestExpressionLoad(true, true);
+        else if (activeTask == "expression") Refresh();
+        TryRestoreDeferredExpressionWork(); OnPropertyChanged(nameof(UsesRelativeExpressions)); UpdateCommands();
     }
     public void RefreshExpressionVocabulary()
     {
-        var catalog = ExpressionCatalog();
-        var keepPending = HasProtectedPendingVoiceWork();
-        if (keepPending) { OnPropertyChanged(nameof(Summary)); UpdateCommands(); return; }
-        var previous = suppressExpressionApply; suppressExpressionApply = true;
-        try
+        if (UsesRelativeExpressions)
         {
-            foreach (var row in Rows)
-            {
-                row.RefreshCandidates(catalog, settings, UsesRelativeExpressions);
-                if (UsesRelativeExpressions && !keepPending) RestoreExpressionChoiceFromTimeline(row);
-            }
+            MarkExpressionVocabularyDirty(); OnPropertyChanged(nameof(UsesRelativeExpressions)); UpdateCommands(); return;
         }
+        var catalog = ExpressionCatalog();
+        var previous = suppressExpressionApply; suppressExpressionApply = true;
+        try { foreach (var row in Rows) row.RefreshCandidates(catalog, settings, false); }
         finally { suppressExpressionApply = previous; }
-        OnPropertyChanged(nameof(Summary)); OnPropertyChanged(nameof(UsesRelativeExpressions)); UpdateCommands();
+        RebuildExpressionAggregates(); OnPropertyChanged(nameof(Summary)); OnPropertyChanged(nameof(UsesRelativeExpressions)); UpdateCommands();
     }
     public void Refresh()
     {
         CloseExpressionTrialSession();
-        var current = RequireTimeline();
-        if (intentInitialized) RefreshIntentWorkspace();
-        var catalog = ExpressionCatalog();
-        SetRows(VoiceSnapshot.Capture(current).Select((x, i) => new AssignmentRow(i + 1, x, catalog, UsesRelativeExpressions)).ToArray());
-        RefreshV04(); HasError = false; Status = ""; OnPropertyChanged(nameof(SceneName));
+        RequireTimeline();
+        RefreshNonExpressionState();
+        RefreshExpressionSynchronously(true);
     }
     public int Place()
     {
@@ -156,18 +154,25 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     private void SetRows(IReadOnlyList<AssignmentRow> rows, bool restoreAssociations = true)
     {
         foreach (var row in Rows) row.PropertyChanged -= RowChanged;
-        Rows.Clear();
-        foreach (var row in rows)
+        suppressExpressionApply = true; suppressExpressionRowEvents = true;
+        try
         {
-            row.SetCandidateMode(UsesRelativeExpressions); row.PreferPalette(settings);
-            if (UsesRelativeExpressions && restoreAssociations) RestoreExpressionChoiceFromTimeline(row);
-            row.PropertyChanged += RowChanged; Rows.Add(row);
+            foreach (var row in rows)
+            {
+                row.SetCandidateMode(UsesRelativeExpressions); row.PreferPalette(settings);
+                if (UsesRelativeExpressions && restoreAssociations) RestoreExpressionChoiceFromTimeline(row);
+                row.PropertyChanged += RowChanged;
+            }
+            Rows.ReplaceAll(rows); expressionPerformance.BatchCollectionPublishes++;
         }
-        RememberVoiceRows(restoreAssociations);
+        finally { suppressExpressionRowEvents = false; suppressExpressionApply = false; }
+        RebuildExpressionAggregates(); RememberVoiceRows(restoreAssociations);
         OnPropertyChanged(nameof(Summary)); UpdateCommands();
     }
     private void RowChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (suppressExpressionRowEvents) return;
+        if (sender is AssignmentRow changedRow) UpdateExpressionAggregate(changedRow);
         if (e.PropertyName == nameof(AssignmentRow.SelectedChoice))
         {
             OnPropertyChanged(nameof(Summary)); OnPropertyChanged(nameof(ShowExpressionBatchPlace)); UpdateCommands();
