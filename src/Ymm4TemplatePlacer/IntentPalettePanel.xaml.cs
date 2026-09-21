@@ -61,10 +61,14 @@ public partial class IntentPalettePanel : UserControl
     private void OwnerWindowPreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
         if (!PanelQuickSettingsPopup.IsOpen) return;
-        if (e.OriginalSource is DependencyObject source &&
-            (ReferenceEquals(source, PanelQuickSettingsButton) || PanelQuickSettingsButton.IsAncestorOf(source))) return;
-        // Popup content has its own presentation source, so owner-window input here is
-        // an outside click. Close without consuming the user's intended YMM4 click.
+        if (e.OriginalSource is DependencyObject source)
+        {
+            if (ReferenceEquals(source, PanelQuickSettingsButton) || PanelQuickSettingsButton.IsAncestorOf(source)) return;
+            if (PanelQuickSettingsPopup.Child is DependencyObject popupRoot &&
+                (ReferenceEquals(source, popupRoot) || popupRoot.IsAncestorOf(source))) return;
+        }
+        // Keep interaction inside the Popup open. Any remaining owner-window mouse
+        // input is outside quick settings, so close without consuming that YMM4 click.
         PanelQuickSettingsButton.IsChecked = false;
     }
 
