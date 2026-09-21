@@ -64,7 +64,7 @@ public partial class IntentPalettePanel : UserControl
         if (e.OriginalSource is DependencyObject source)
         {
             if (ReferenceEquals(source, PanelQuickSettingsButton) || PanelQuickSettingsButton.IsAncestorOf(source)) return;
-            if (PanelQuickSettingsPopup.Child is DependencyObject popupRoot &&
+            if (PanelQuickSettingsPopup.Child is FrameworkElement popupRoot &&
                 (ReferenceEquals(source, popupRoot) || popupRoot.IsAncestorOf(source))) return;
         }
         // Keep interaction inside the Popup open. Any remaining owner-window mouse
