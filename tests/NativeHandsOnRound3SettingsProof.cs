@@ -50,7 +50,7 @@ internal static partial class NativeProof
         var copiedSettings = compatibilityCopy.Build();
         var legacyRoundtrip = copiedSettings.IntentPalettes.Single(x => x.Id == multi.Id);
         var singleOwnerCopy = copiedSettings.IntentPalettes.Single(x => x.Id == compatibilityCopy.SelectedPalette!.Id);
-        Assert(legacyRoundtrip.Target == multi.Target && singleOwnerCopy.Target.TypeMatch == IntentTypeMatch.UniformType &&
+        Assert(JsonSerializer.Serialize(legacyRoundtrip.Target) == JsonSerializer.Serialize(multi.Target) && singleOwnerCopy.Target.TypeMatch == IntentTypeMatch.UniformType &&
             singleOwnerCopy.Target.ItemTypeKeys.SequenceEqual(new[] { IntentSelectionContext.TypeKey(typeof(TextItem)) }),
             "R3-C existing multi-type Set can be snapshot-copied into one Item owner without rewriting the legacy source");
         var legacyCommands = new[] { vm.OpenLegacyWorkspaceCommand, vm.CloseLegacyWorkspaceCommand };
@@ -68,7 +68,7 @@ internal static partial class NativeProof
         store.Save(loaded); var saved = new PlacerSettingsStore(path).Load();
         Round3Assert(sameData && JsonSerializer.Serialize(saved) == JsonSerializer.Serialize(fixture) &&
             saved.ExpressionPresets.Count > 0 && saved.SelectionPresets.Count > 0 && saved.IntentPalettes.Single(x => x.Id == set.Id).Intent == set.Intent &&
-            saved.IntentPalettes.Single(x => x.Id == multi.Id).Target == multi.Target && saved.Palettes.Single().Layer == palette.Layer,
+            JsonSerializer.Serialize(saved.IntentPalettes.Single(x => x.Id == multi.Id).Target) == JsonSerializer.Serialize(multi.Target) && saved.Palettes.Single().Layer == palette.Layer,
             "C6", "old Library/Palette/Preset/Intent/QuickDrop and multi-type target data retain exact meanings across real protected load/save");
         var currentSignature = Signature(timeline); var currentSettings = JsonSerializer.Serialize(scope.Current);
         PlacerViewModel? fresh = null; var startsCurrent = false;
