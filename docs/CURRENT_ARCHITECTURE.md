@@ -128,6 +128,8 @@ Settings persistence must keep:
 - cross-instance locking;
 - no silent rebase/retry over a conflict.
 
+`PlacerSettingsStore` is an intentional product boundary, not a temporary substitute for generic plugin-settings helpers. Do not replace it mechanically with host helpers such as `SettingsBase<T>`. The current product contract additionally requires complete-draft/schema validation, the 1 MiB guard, fail-closed handling for corrupt/future settings, digest-based external-change detection, cross-instance locking, atomic replacement and exact Settings-session rollback. Revisit this choice only if a host API is proved to preserve the same conflict-aware/fail-closed contract without weakening those guarantees.
+
 Settings operations do not mutate Timeline or original YMM4 Templates.
 
 ## Expression workspace
@@ -205,36 +207,34 @@ This does **not** authorize:
 - AI/fuzzy target choice;
 - existing-item transformation.
 
-## Current active feature
+## Accepted v0.4.2 baseline and next feature
 
-Draft PR #20 is in the second owner Hands-on corrective pass.
+The current accepted main baseline contains PR #20, PR #22 and PR #23.
 
-Release-green baseline before this pass:
+Accepted Git state:
 
-- source `1b8a88255da2e28289996b4d99470a195d6ec6a4`;
-- Release run #305 `35551459441`;
-- 1,443 Native assertions PASS / 0 FAIL;
-- exact distribution DLL smoke and verified package PASS.
+- main merge commit: `de85c312347ea35371d1c58a92992b50f64cdeb6`;
+- final pre-merge product candidate: `f626e7c71385998b22a6d29e43a3fa349cf03f18`;
+- Release run #399 `35608381259` / job `106361040827`;
+- **1,518 Native assertions PASS / 0 FAIL**;
+- exact distribution DLL smoke and verified stable-root package/provenance: PASS.
 
-Owner Hands-on Round 2 added F8-F10:
+The accepted baseline includes:
 
-- quick settings must light-dismiss when clicking elsewhere inside the owning YMM4 Window, while internal Popup interaction remains open;
-- normal targeted Sets are owned by one Item type and Settings stays scoped to that parent;
-- reuse across Item types is an explicit one-time snapshot copy, not shared ownership.
+- Item-owned targeted Sets with explicit snapshot copy across Item types and bounded legacy multi-type compatibility;
+- quick-settings light-dismiss, common Voice row-height controls and final Hands-on UI polish;
+- lazy expression loading, expression-task-only Voice monitoring, latest-wins/cancelable background preparation, linear association/candidate indexing, reusable rows and cached aggregates;
+- 100 / 500 / 1,000 Voice structural performance fixtures;
+- direct Set deletion beside the Set picker using the existing protected deletion route;
+- nested Settings wheel routing based on the current physical cursor position rather than stale event-source state.
 
-Implementation keeps the existing serialized `ItemTypeKeys` / `TypeMatch` model. Normal creation is single-owner; old multi-type Sets remain preserved under a bounded compatibility context.
+Known deferred minor issue:
 
-The frozen Round 2 authority is:
+- continuous wheel rotation while crossing from an inner Settings/list area to outer content can still pause for a few wheel notches before self-recovering;
+- no data loss, persistent input lock or explicit recovery requirement is known;
+- do not broaden to global/window-level input interception unless the symptom materially worsens or a bounded local fix is proved.
 
-- `UI_MICRO_POLISH_HANDS_ON_ROUND2_FEEDBACK.md`;
-- `UI_MICRO_POLISH_HANDS_ON_ROUND2_DESIGN.md`;
-- `UI_MICRO_POLISH_HANDS_ON_ROUND2_ACCEPTANCE.md`;
-- `UI_MICRO_POLISH_HANDS_ON_ROUND2_WORKPLAN.md`;
-- `UI_MICRO_POLISH_HANDS_ON_ROUND2_IMPLEMENTATION_PREP.md`.
-
-PR #20 must remain unmerged until the new implementation passes Checkpoint, exact Release and owner Hands-on.
-
-Experimental Tachie Preset support remains prepared separately on Draft PR #19 and resumes only after PR #20 is accepted and merged.
+The next prepared feature is **Experimental Tachie Preset** Draft PR #19. It remains separate from the accepted baseline. Before resuming implementation, refresh/rebase its branch onto current main and review its assumptions against this document, the current validation strategy and the accepted expression-performance boundary.
 
 ## Validation
 
@@ -253,8 +253,13 @@ For current work, prefer documents in this order:
 1. this file;
 2. `docs/GLOSSARY.md`;
 3. `docs/VALIDATION_STRATEGY.md`;
-4. feature-specific active handoff/spec (currently `UI_MICRO_POLISH_HANDS_ON_ROUND2_DESIGN.md` / `UI_MICRO_POLISH_HANDS_ON_ROUND2_WORKPLAN.md`);
-5. `docs/BACKLOG.md`;
-6. historical Round/W documents as evidence.
+4. current accepted feature authorities such as `docs/FINAL_HANDS_ON_POLISH.md` and the expression-performance design/acceptance documents;
+5. the active feature's own handoff/spec after it has been refreshed onto current main;
+6. `docs/BACKLOG.md`;
+7. historical Round/W documents when reconstructing rationale.
+
+Historical documents are evidence of how the product reached its current state, not automatic implementation instructions. They may contain superseded decisions; an explicit superseded note or this current architecture wins.
+
+External repositories, community plugins, official samples and API documentation are **references / precedents** unless a current Lab/native proof turns the relevant host claim into version-scoped evidence. See `docs/RESEARCH.md`.
 
 `docs/DESIGN.md`, older ROADMAP/checkpoint files and versioned Round documents are retained historical design/evidence unless a current document explicitly points to them.
