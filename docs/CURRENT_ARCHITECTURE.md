@@ -68,6 +68,22 @@ Timeline context
 
 The Set owns applicability and placement relation. Tiles primarily identify a referenced Template plus small appearance/parameter overrides.
 
+For **normal targeted Sets**, the Item type is the ownership parent:
+
+```text
+one Item type
+-> its Sets
+-> each Set's tiles
+```
+
+A newly created normal targeted Set has exactly one `Target.ItemTypeKey` and `UniformType`. The existing serialized target shape is retained; no second owner field exists.
+
+Cross-Item reuse is explicit snapshot copy. Copying a Set creates a new Guid under the destination Item type and copies the current relation/conditions/entries/appearance. Source and destination are independent afterward.
+
+Existing settings that contain multi-type Sets are preserved losslessly and retain their existing runtime matching semantics. Settings surfaces them only through the bounded `複数種類` compatibility context; normal creation does not create new shared multi-type Sets.
+
+Generic Sets remain a separate existing model.
+
 Current global presentation state is shared across Sets:
 
 - Auto / Fixed layout;
@@ -111,6 +127,8 @@ Settings persistence must keep:
 - disk digest/external-change protection;
 - cross-instance locking;
 - no silent rebase/retry over a conflict.
+
+`PlacerSettingsStore` is an intentional product boundary, not a temporary substitute for generic plugin-settings helpers. Do not replace it mechanically with host helpers such as `SettingsBase<T>`. The current product contract additionally requires complete-draft/schema validation, the 1 MiB guard, fail-closed handling for corrupt/future settings, digest-based external-change detection, cross-instance locking, atomic replacement and exact Settings-session rollback. Revisit this choice only if a host API is proved to preserve the same conflict-aware/fail-closed contract without weakening those guarantees.
 
 Settings operations do not mutate Timeline or original YMM4 Templates.
 
@@ -189,15 +207,34 @@ This does **not** authorize:
 - AI/fuzzy target choice;
 - existing-item transformation.
 
-## Current experimental feature
+## Accepted v0.4.2 baseline and next feature
 
-Experimental tachie-expression preset support is being developed separately on PR #19.
+The current accepted main baseline contains PR #20, PR #22 and PR #23.
 
-Its exact scope and Lab evidence live in:
+Accepted Git state:
 
-`docs/EXPERIMENTAL_PRESET_HANDOFF.md`
+- main merge commit: `de85c312347ea35371d1c58a92992b50f64cdeb6`;
+- final pre-merge product candidate: `f626e7c71385998b22a6d29e43a3fa349cf03f18`;
+- Release run #399 `35608381259` / job `106361040827`;
+- **1,518 Native assertions PASS / 0 FAIL**;
+- exact distribution DLL smoke and verified stable-root package/provenance: PASS.
 
-The experimental feature must preserve every boundary above.
+The accepted baseline includes:
+
+- Item-owned targeted Sets with explicit snapshot copy across Item types and bounded legacy multi-type compatibility;
+- quick-settings light-dismiss, common Voice row-height controls and final Hands-on UI polish;
+- lazy expression loading, expression-task-only Voice monitoring, latest-wins/cancelable background preparation, linear association/candidate indexing, reusable rows and cached aggregates;
+- 100 / 500 / 1,000 Voice structural performance fixtures;
+- direct Set deletion beside the Set picker using the existing protected deletion route;
+- nested Settings wheel routing based on the current physical cursor position rather than stale event-source state.
+
+Known deferred minor issue:
+
+- continuous wheel rotation while crossing from an inner Settings/list area to outer content can still pause for a few wheel notches before self-recovering;
+- no data loss, persistent input lock or explicit recovery requirement is known;
+- do not broaden to global/window-level input interception unless the symptom materially worsens or a bounded local fix is proved.
+
+The next prepared feature is **Experimental Tachie Preset** Draft PR #19. It remains separate from the accepted baseline. Before resuming implementation, refresh/rebase its branch onto current main and review its assumptions against this document, the current validation strategy and the accepted expression-performance boundary.
 
 ## Validation
 
@@ -216,8 +253,13 @@ For current work, prefer documents in this order:
 1. this file;
 2. `docs/GLOSSARY.md`;
 3. `docs/VALIDATION_STRATEGY.md`;
-4. feature-specific active handoff/spec (currently `EXPERIMENTAL_PRESET_HANDOFF.md`);
-5. `docs/BACKLOG.md`;
-6. historical Round/W documents as evidence.
+4. current accepted feature authorities such as `docs/FINAL_HANDS_ON_POLISH.md` and the expression-performance design/acceptance documents;
+5. the active feature's own handoff/spec after it has been refreshed onto current main;
+6. `docs/BACKLOG.md`;
+7. historical Round/W documents when reconstructing rationale.
+
+Historical documents are evidence of how the product reached its current state, not automatic implementation instructions. They may contain superseded decisions; an explicit superseded note or this current architecture wins.
+
+External repositories, community plugins, official samples and API documentation are **references / precedents** unless a current Lab/native proof turns the relevant host claim into version-scoped evidence. See `docs/RESEARCH.md`.
 
 `docs/DESIGN.md`, older ROADMAP/checkpoint files and versioned Round documents are retained historical design/evidence unless a current document explicitly points to them.

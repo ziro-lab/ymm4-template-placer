@@ -2,40 +2,37 @@
 
 ## Current revision and Git authority
 
-Main now contains the accepted Round 4 A/B/C candidate merged by PR #16.
+Main contains the accepted v0.4.2 Hands-on/performance baseline after PR #20, PR #22 and PR #23.
 
-Accepted main merge:
+Accepted baseline:
 
-- merge commit `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`
-- main Release validation run #227 `35508468265`: full native regression, exact distribution DLL smoke and verified package succeeded.
+- main merge commit `de85c312347ea35371d1c58a92992b50f64cdeb6`;
+- final pre-merge product candidate `f626e7c71385998b22a6d29e43a3fa349cf03f18`;
+- Release run #399 `35608381259` / job `106361040827`: **1,518 Native assertions PASS / 0 FAIL**, exact distribution-DLL smoke and verified package/provenance succeeded.
 
-Active next work is:
+Accepted v0.4.2 includes:
 
-- branch `feature/experimental-expression-presets`
-- feature: experimental structural expression-preset source
+- Round 2 Item-owned Set / quick-settings / row-height polish from PR #20;
+- lazy, cancelable expression-workspace performance architecture and large-Voice structural proof from PR #22;
+- direct Set-delete discoverability and bounded nested-wheel recovery from PR #23.
 
-Start from `docs/EXPERIMENTAL_PRESET_HANDOFF.md`. Do **not** repeat the generic preset research unless implementation reveals a concrete unsupported host behavior.
+Known minor residual: continuous wheel rotation while crossing from an inner Settings/list area to outer content can still produce a short self-recovering pause for a few wheel notches. It is recorded as a deferred minor issue in PR #23. Do not broaden input interception merely to chase this edge unless it becomes persistent, requires explicit recovery, affects normal controls, or a bounded local fix is proved.
 
-Canonical public Lab evidence remains `ziro-lab/chat-native-work-lab-001` PR #58:
-
-- source `621cff8199c6fe6daf54aa5ccd7c44e35e3c0ce7`
-- run `35488799463`
-- marker `PASS_GENERIC_EXPRESSION_PRESET_CAPABILITY_SURVEY`
+The next prepared feature is Experimental Tachie Preset Draft PR #19. Its branch predates the current accepted main baseline; refresh/rebase its work onto current main and re-check the current architecture before implementation. Do not mix unrelated placement, Settings or input redesign into that feature.
 
 Read in this order:
 
 1. `docs/CURRENT_ARCHITECTURE.md`
 2. `docs/GLOSSARY.md`
-3. `docs/DEVELOPMENT_WORKFLOW.md`
-4. `docs/VALIDATION_STRATEGY.md`
-5. `docs/EXPERIMENTAL_PRESET_HANDOFF.md`
-6. `docs/BACKLOG.md` only for scope context; backlog entries are not implicit implementation tasks
-7. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
-8. accepted Round/W documents only when historical evidence is needed
+3. `docs/VALIDATION_STRATEGY.md`
+4. `docs/FINAL_HANDS_ON_POLISH.md`
+5. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
+6. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
+7. `docs/BACKLOG.md` only for scope context
+8. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
+9. historical Round/W documents only when the current authority points to them or when reconstructing rationale
 
-Use Focused validation for ordinary implementation iterations, Checkpoint when a preset capability/placement checkpoint is complete, and Release only when the whole feature candidate is ready.
-
-Do not reopen or redesign the accepted A/B/C UX, Settings transaction model, PlacementPlan/native Undo architecture, or validation tiers as part of preset work.
+Do not reimplement completed v0.4.2 work. Preserve its Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary and validation tiers.
 
 ## Product boundary
 
@@ -94,4 +91,4 @@ Run heavy native/build/package work in the existing Windows Actions lane, not th
 - Release/Proof builds require zero compiler warnings/errors. Exact distribution-DLL smoke, final package/provenance and stable `Ymm4TemplatePlacer/` root are Release gates rather than a tax on every Focused edit. Record source/checkout/run/attempt/provenance and final hashes at Release.
 - Label DONE/PARTIAL/FUTURE/BLOCKED accurately. Native PASS is not human acceptance. Update usage documentation only after the new implemented UI is native-green, not speculatively during partial work.
 
-External research is evidence, not permission to copy assets/code without checking licenses. Prefer the smallest change against proved YMM4 APIs.
+External references guide discovery and design, but they are not YMM4 host-behavior evidence by themselves. Version-sensitive host claims belong in the canonical Lab/native proof chain before they become product authority. Reference material never grants permission to copy assets/code without checking licenses. Prefer the smallest change against proved YMM4 APIs.

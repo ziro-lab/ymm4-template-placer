@@ -19,15 +19,32 @@
       <TextBlock Text="{Binding Summary}" Opacity="0.75" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/>
       <WrapPanel HorizontalAlignment="Right">
        <TextBlock Text="行の高さ" VerticalAlignment="Center" Margin="0,0,5,0"/>
-       <ComboBox x:Name="ExpressionRowHeightPicker" ItemsSource="{Binding ExpressionRowHeights}" SelectedItem="{Binding ExpressionRowHeight,Mode=TwoWay}" IsEnabled="{Binding CanEditExpressionRowHeight}" Width="58" AutomationProperties.Name="セリフ一覧の行の高さ"/>
+       <TextBox x:Name="ExpressionRowHeightBox" Text="{Binding ExpressionRowHeight,Mode=OneWay}" IsEnabled="{Binding CanEditExpressionRowHeight}"
+        Width="44" MaxLength="2" Padding="4,2" TextAlignment="Right"
+        PreviewKeyDown="ExpressionRowHeightBoxKeyDown" LostKeyboardFocus="ExpressionRowHeightBoxLostFocus"
+        ToolTip="32～96。Enterで適用、Escで戻します。行の下端をドラッグしても変更できます。"
+        AutomationProperties.Name="セリフ一覧の共通行高さ"/>
+       <TextBlock Text="px" VerticalAlignment="Center" Margin="4,0,0,0"/>
       </WrapPanel>
       <local:ExpressionPresetPanel x:Name="PresetSurface"/>
       <TextBlock x:Name="ExpressionFreshnessWarning" Text="{Binding ExpressionFreshnessNotice}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,4,0,0">
        <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding ExpressionFreshnessNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
       </TextBlock>
      </StackPanel>
+     <Border Grid.Row="1" Panel.ZIndex="5" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="8" Padding="10,5" IsHitTestVisible="False" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1">
+      <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpressionLoading}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Border.Style>
+      <TextBlock Text="{Binding ExpressionLoadingNotice}" TextWrapping="Wrap"/>
+     </Border>
      <DataGrid x:Name="VoiceGrid" IsEnabled="{Binding CanEditExpressionRows}" Grid.Row="1" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="True" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Auto" SelectionUnit="FullRow" SelectionMode="Single" RowHeight="{Binding ExpressionRowHeight}" HeadersVisibility="Column" GridLinesVisibility="Horizontal">
-      <DataGrid.RowStyle><Style TargetType="DataGridRow"><EventSetter Event="MouseLeftButtonUp" Handler="VoiceGridRow_Click"/><Setter Property="ToolTip"><Setter.Value><ToolTip><StackPanel MaxWidth="420"><TextBlock Text="{Binding Character}" FontWeight="SemiBold"/><TextBlock Text="{Binding Serif}" TextWrapping="Wrap"/><TextBlock Text="{Binding Frame,StringFormat=開始: {0} フレーム}"/><TextBlock Text="{Binding Length,StringFormat=長さ: {0} フレーム}"/></StackPanel></ToolTip></Setter.Value></Setter></Style></DataGrid.RowStyle>
+      <DataGrid.RowStyle><Style TargetType="DataGridRow">
+       <EventSetter Event="PreviewMouseMove" Handler="VoiceGridRow_PreviewMouseMove"/>
+       <EventSetter Event="PreviewMouseLeftButtonDown" Handler="VoiceGridRow_PreviewMouseLeftButtonDown"/>
+       <EventSetter Event="PreviewMouseLeftButtonUp" Handler="VoiceGridRow_PreviewMouseLeftButtonUp"/>
+       <EventSetter Event="LostMouseCapture" Handler="VoiceGridRow_LostMouseCapture"/>
+       <EventSetter Event="MouseLeave" Handler="VoiceGridRow_MouseLeave"/>
+       <EventSetter Event="MouseLeftButtonUp" Handler="VoiceGridRow_Click"/>
+       <Setter Property="ToolTip"><Setter.Value><ToolTip><StackPanel MaxWidth="420"><TextBlock Text="{Binding Character}" FontWeight="SemiBold"/><TextBlock Text="{Binding Serif}" TextWrapping="Wrap"/><TextBlock Text="{Binding Frame,StringFormat=開始: {0} フレーム}"/><TextBlock Text="{Binding Length,StringFormat=長さ: {0} フレーム}"/></StackPanel></ToolTip></Setter.Value></Setter>
+      </Style></DataGrid.RowStyle>
       <DataGrid.Columns>
        <DataGridTextColumn Header="No" Binding="{Binding No}" IsReadOnly="True" Width="28"/>
        <DataGridTextColumn Header="キャラ" Binding="{Binding Character}" IsReadOnly="True" Width="64"/>

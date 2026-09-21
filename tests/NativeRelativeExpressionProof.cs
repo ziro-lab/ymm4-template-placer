@@ -54,6 +54,7 @@ internal static partial class NativeProof
             vm.ImportFrom(excel); row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
             Assert(row.SelectedChoice.Template?.IntentSource?.Entry.LibraryEntryId == bundleEntry.Id && Signature(timeline) == baseline && vm.PlaceCommand.CanExecute(null),
                 "R10 Excel Bridge import restores a pending Palette-backed assignment without Timeline mutation");
+            await Idle();
             await ClickPlace(view); Assert(!vm.HasError, "R10 Excel pending assignment commits through the retained batch bridge: " + vm.Status);
             var members = timeline.Items.Where(x => x != voice && x != nextVoice).OrderBy(x => { IntentAssociationTag.Read(x.Remark, out var tag); return tag?.Index ?? int.MaxValue; }).ToArray();
             Assert(members.Length == 2 && members[0].Frame == 100 && members[1].Frame == 110 && members[0].Length == 20 && members[1].Length == 12 && members[1].Layer - members[0].Layer == 1,
@@ -84,10 +85,13 @@ internal static partial class NativeProof
             row.SelectedChoice = row.Choices.Single(x => x.Template?.Name == single.Name); await Idle(); vm.CloseExpressionTrialSession();
             var active = (PlacerSettings)field.GetValue(vm)!; var secondIndex = active.IntentPalettes.FindIndex(x => x.Id == second.Id);
             active.IntentPalettes[secondIndex] = active.IntentPalettes[secondIndex] with { Entries = [bundleTile] }; vm.RefreshExpressionVocabulary();
-            Assert(!row.SelectedChoice.IsAvailable && !vm.PlaceCommand.CanExecute(null), "R10 removing a chosen membership reconstructs an unavailable association and disables batch placement");
+            for (var i = 0; i < 200 && vm.IsExpressionLoading; i++) { await Task.Delay(10); await Idle(); }
+            Assert(!vm.IsExpressionLoading && !row.SelectedChoice.IsAvailable && !vm.PlaceCommand.CanExecute(null),
+                "R10 removing a chosen membership asynchronously reconstructs an unavailable association and disables batch placement");
             var staleSignature = Signature(timeline);
             Assert(vm.Place() == 0 && Signature(timeline) == staleSignature, "R10 an unavailable association is never guessed or silently rebuilt by direct batch invocation");
             active.IntentPalettes[secondIndex] = second; vm.RefreshExpressionVocabulary();
+            for (var i = 0; i < 200 && vm.IsExpressionLoading; i++) { await Task.Delay(10); await Idle(); }
             CharacterSettings.Default.Characters.Add(character); CharacterSettings.Default.Characters.Add(detached);
             try { RejectWithoutMutation(timeline, () => IntentExecutionPlan.Create(timeline, first, bundleTile, active.Library), "R10 actual duplicate registered Character names fail closed"); }
             finally { CharacterSettings.Default.Characters.Remove(character); CharacterSettings.Default.Characters.Remove(detached); }

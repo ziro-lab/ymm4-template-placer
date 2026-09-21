@@ -14,6 +14,8 @@ public partial class PlacerView : UserControl
     internal TimelinePointerInputRouter PointerRouter { get; }
     internal PaletteShortcutInputRouter ShortcutRouter { get; }
     private TransientWorkSnapshot? suspendedWork;
+    private DataGridRow? expressionRowHeightResizeRow;
+    private double expressionRowHeightDragStart, expressionRowHeightPreview, expressionRowHeightPointerStart;
     public IntentPalettePanel RelativePaletteSurface { get; } = new();
     public IntentSettingsPanel RelativeSettingsSurface { get; } = new();
     public PlacerView()
@@ -50,6 +52,124 @@ public partial class PlacerView : UserControl
         NativeProof.View = this;
 #endif
     }
+    private const double ExpressionRowResizeBand = 4d;
+
+    private static bool IsExpressionRowResizeHit(DataGridRow row, MouseEventArgs e)
+    {
+        var point = e.GetPosition(row);
+        return row.ActualHeight > 0 && point.Y >= Math.Max(0, row.ActualHeight - ExpressionRowResizeBand) &&
+            point.Y <= row.ActualHeight + 1;
+    }
+
+    private void VoiceGridRow_PreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        if (sender is not DataGridRow row) return;
+        if (expressionRowHeightResizeRow is { } active)
+        {
+            if (!ReferenceEquals(active, row)) return;
+            if (e.LeftButton != MouseButtonState.Pressed)
+            {
+                CancelExpressionRowHeightResize();
+                return;
+            }
+            expressionRowHeightPreview = Math.Clamp(expressionRowHeightDragStart +
+                (e.GetPosition(VoiceGrid).Y - expressionRowHeightPointerStart), 32, 96);
+            PreviewExpressionRowHeight((int)Math.Round(expressionRowHeightPreview));
+            e.Handled = true;
+            return;
+        }
+        row.Cursor = IsExpressionRowResizeHit(row, e) ? Cursors.SizeNS : null;
+    }
+
+    private void VoiceGridRow_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not DataGridRow row || observedViewModel is not { CanEditExpressionRowHeight: true } vm ||
+            !IsExpressionRowResizeHit(row, e)) return;
+        if (!row.CaptureMouse()) return;
+        expressionRowHeightResizeRow = row;
+        expressionRowHeightDragStart = vm.ExpressionRowHeight;
+        expressionRowHeightPreview = expressionRowHeightDragStart;
+        expressionRowHeightPointerStart = e.GetPosition(VoiceGrid).Y;
+        row.Cursor = Cursors.SizeNS;
+        e.Handled = true;
+    }
+
+    private void VoiceGridRow_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not DataGridRow row || !ReferenceEquals(expressionRowHeightResizeRow, row)) return;
+        var value = (int)Math.Round(expressionRowHeightPreview);
+        expressionRowHeightResizeRow = null;
+        if (row.IsMouseCaptured) row.ReleaseMouseCapture();
+        if (observedViewModel is { CanEditExpressionRowHeight: true } vm) vm.ExpressionRowHeight = value;
+        RestoreExpressionRowHeightVisual();
+        row.Cursor = null;
+        e.Handled = true;
+    }
+
+    private void VoiceGridRow_LostMouseCapture(object sender, MouseEventArgs e)
+    {
+        if (sender is DataGridRow row && ReferenceEquals(expressionRowHeightResizeRow, row))
+            CancelExpressionRowHeightResize();
+    }
+
+    private void VoiceGridRow_MouseLeave(object sender, MouseEventArgs e)
+    {
+        if (sender is DataGridRow row && !ReferenceEquals(expressionRowHeightResizeRow, row)) row.Cursor = null;
+    }
+
+    private void PreviewExpressionRowHeight(int value)
+    {
+        value = Math.Clamp(value, 32, 96);
+        VoiceGrid.SetCurrentValue(DataGrid.RowHeightProperty, (double)value);
+        ExpressionRowHeightBox.SetCurrentValue(TextBox.TextProperty,
+            value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+    }
+
+    private void RestoreExpressionRowHeightVisual()
+    {
+        if (observedViewModel is not { } vm) return;
+        PreviewExpressionRowHeight(vm.ExpressionRowHeight);
+        ExpressionRowHeightBox.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget();
+    }
+
+    private void CancelExpressionRowHeightResize()
+    {
+        var row = expressionRowHeightResizeRow;
+        expressionRowHeightResizeRow = null;
+        if (row?.IsMouseCaptured == true) row.ReleaseMouseCapture();
+        if (row != null) row.Cursor = null;
+        RestoreExpressionRowHeightVisual();
+    }
+
+    private void ExpressionRowHeightBoxKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            RestoreExpressionRowHeightVisual();
+            e.Handled = true;
+            return;
+        }
+        if (e.Key != Key.Enter) return;
+        CommitExpressionRowHeightBox();
+        e.Handled = true;
+    }
+
+    private void ExpressionRowHeightBoxLostFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (expressionRowHeightResizeRow == null) CommitExpressionRowHeightBox();
+    }
+
+    private void CommitExpressionRowHeightBox()
+    {
+        if (observedViewModel is not { } vm) return;
+        if (!vm.TrySetExpressionRowHeight(ExpressionRowHeightBox.Text))
+        {
+            RestoreExpressionRowHeightVisual();
+            return;
+        }
+        RestoreExpressionRowHeightVisual();
+    }
+
     private void VoiceGridRow_Click(object sender, MouseButtonEventArgs e)
     {
         if (sender is not DataGridRow { DataContext: AssignmentRow row } || observedViewModel == null || IsInteractiveExpressionSource(e.OriginalSource as DependencyObject, sender as DataGridRow)) return;
@@ -104,7 +224,7 @@ public partial class PlacerView : UserControl
     }
     private void ViewModelChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PlacerViewModel.SceneName)) { SynchronizeTask(); observedViewModel?.RefreshExpressionVocabulary(); }
+        if (e.PropertyName == nameof(PlacerViewModel.SceneName)) SynchronizeTask();
         if (e.PropertyName == nameof(PlacerViewModel.UseLegacyWorkspace)) RefreshWorkspaceSurface();
         if (e.PropertyName is nameof(PlacerViewModel.IsAddingTemplate) or nameof(PlacerViewModel.IsManagingTemplates)) SynchronizeTask();
     }

@@ -18,7 +18,6 @@ public sealed partial class PlacerViewModel
             if (entries == null) return;
             foreach (var entry in entries) entry.Shape = (IntentTileShape)x!;
         }));
-    public IReadOnlyList<int> ExpressionRowHeights { get; } = [32, 36, 48, 64, 80, 96];
     public int ExpressionRowHeight
     {
         get => settings.Presentation.ExpressionRowHeight;
@@ -38,4 +37,22 @@ public sealed partial class PlacerViewModel
         }
     }
     public bool CanEditExpressionRowHeight => settingsAvailable && IntentSettings?.HasChanges != true;
+    internal bool TrySetExpressionRowHeight(string text)
+    {
+        if (!int.TryParse(text, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var value) ||
+            value is < 32 or > 96)
+        {
+            HasError = true;
+            Status = "行の高さは32～96の整数で指定してください。";
+            return false;
+        }
+        ExpressionRowHeight = value;
+        var accepted = ExpressionRowHeight == value;
+        if (accepted && HasError && Status == "行の高さは32～96の整数で指定してください。")
+        {
+            HasError = false;
+            Status = "";
+        }
+        return accepted;
+    }
 }

@@ -83,7 +83,12 @@ public sealed partial class PlacerViewModel
         }
         catch (Exception ex)
         {
+#if YMM4_PROOF
+            var diagnostic = ex.ToString().Replace("\r", " ").Replace("\n", " | ");
+            SetSettingsCommitState(SettingsCommitPhase.Conflict, "反映できません: " + diagnostic);
+#else
             SetSettingsCommitState(SettingsCommitPhase.Conflict, "反映できません: " + ex.GetBaseException().Message);
+#endif
             HasError = true; Status = settingsCommitNotice;
             return false;
         }

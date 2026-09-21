@@ -3,20 +3,16 @@
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:local="clr-namespace:Ymm4TemplatePlacer">
  <UserControl.Style><Style TargetType="UserControl"><Style.Triggers><DataTrigger Binding="{Binding GenericLayerTarget}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></UserControl.Style>
- <StackPanel DataContext="{Binding GenericLayerTarget}" Margin="2,0,2,5">
-  <WrapPanel>
-   <TextBlock Text="レイヤー" VerticalAlignment="Center" Margin="0,0,5,0"/>
-   <TextBox x:Name="GenericTargetBox" Text="{Binding Target,UpdateSourceTrigger=PropertyChanged}" Width="48" Padding="4,3" MaxLength="6" ToolTip="{Binding BoundsHint}" AutomationProperties.Name="汎用配置の指定レイヤー"/>
-   <ComboBox x:Name="GenericOccupiedPicker" ItemsSource="{x:Static local:GenericLayerTargetDraft.Behaviors}" DisplayMemberPath="Name" SelectedValuePath="Value"
-    SelectedValue="{Binding OccupiedBehavior,Mode=TwoWay}" Width="144" Margin="5,0" ToolTip="指定レイヤーが塞がっていた場合" AutomationProperties.Name="レイヤーが塞がった時の動作"/>
-   <Button x:Name="ApplyGenericLayerButton" Content="適用" Padding="7,3" Command="{Binding DataContext.ApplyGenericLayerTargetCommand,RelativeSource={RelativeSource AncestorType=local:GenericLayerTargetPanel}}" ToolTip="Enterでも適用できます。Escで入力を戻します。"/>
-  </WrapPanel>
-  <TextBlock Text="{Binding BoundsHint}" TextWrapping="Wrap" Opacity="0.72" Margin="0,4,0,2"/>
-  <TextBlock Text="{Binding LegacyNotice}" TextWrapping="Wrap" FontSize="11" Margin="0,2,0,0">
-   <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding LegacyNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
-  </TextBlock>
-  <TextBlock Text="{Binding Error}" TextWrapping="Wrap" FontWeight="SemiBold">
-   <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Error}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
-  </TextBlock>
- </StackPanel>
+ <Grid DataContext="{Binding GenericLayerTarget}">
+  <Grid.RowDefinitions><RowDefinition Height="24"/><RowDefinition Height="22"/></Grid.RowDefinitions>
+  <DockPanel LastChildFill="True" Margin="0,0,0,2">
+   <TextBlock Text="レイヤー" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="11"/>
+   <TextBox x:Name="GenericTargetBox" Text="{Binding Target,UpdateSourceTrigger=PropertyChanged}" Padding="4,0" MaxLength="6" VerticalContentAlignment="Center" AutomationProperties.Name="汎用配置の指定レイヤー">
+    <TextBox.Style><Style TargetType="TextBox"><Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/><Style.Triggers><DataTrigger Binding="{Binding Error}" Value=""><Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/></DataTrigger></Style.Triggers></Style></TextBox.Style>
+    <TextBox.ToolTip><StackPanel MaxWidth="300"><TextBlock Text="{Binding Error}" TextWrapping="Wrap" FontWeight="SemiBold"/><TextBlock Text="{Binding LegacyNotice}" TextWrapping="Wrap"/><TextBlock Text="{Binding BoundsHint}" TextWrapping="Wrap"/><TextBlock Text="ホイールで番号を増減。入力はEnterで適用、Escで戻します。" TextWrapping="Wrap"/></StackPanel></TextBox.ToolTip>
+   </TextBox>
+  </DockPanel>
+  <ComboBox x:Name="GenericOccupiedPicker" Grid.Row="1" ItemsSource="{x:Static local:GenericLayerTargetDraft.Behaviors}" DisplayMemberPath="Name" SelectedValuePath="Value"
+   SelectedValue="{Binding OccupiedBehavior,Mode=TwoWay}" Padding="3,0" VerticalContentAlignment="Center" ToolTip="指定レイヤーが塞がった時だけ使う動作。選択を閉じると有効な設定を反映します。" AutomationProperties.Name="レイヤーが塞がった時の動作"/>
+ </Grid>
 </UserControl>

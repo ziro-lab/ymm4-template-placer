@@ -45,6 +45,7 @@ if ([Reflection.AssemblyName]::GetAssemblyName((Resolve-Path $dll).Path).Version
 $smoke=Get-Content -Raw (Join-Path $OutputDir 'release-plugin-loaded.txt')
 if ($smoke -notmatch '(?m)^build=distribution\r?$' -or $smoke -notmatch "(?m)^sha256=$dllHash\r?`$") { throw 'Release smoke does not identify this exact distribution DLL' }
 Copy-Item docs/USAGE.md (Join-Path $package 'README.md')
+Copy-Item LICENSE.md $package
 Copy-Item THIRD_PARTY_NOTICES.md $package
 Copy-Item (Join-Path $OutputDir 'v04-acceptance.json') $package
 Copy-Item (Join-Path $OutputDir 'ux-acceptance.json') $package
@@ -57,8 +58,8 @@ $round3Payload=@('hands-on-round3.json','hands-on-round3-appearance.json','hands
 foreach($name in $round3Payload){Copy-Item (Join-Path $OutputDir $name) $package}
 $usage=Get-Content -Raw (Join-Path $package 'README.md')
 if ($usage -notmatch '^# YMM4 Template Placer v0\.4\.2') { throw 'Obsolete package usage documentation' }
-foreach($section in @('Hands-on Round 4 A/B/C Candidate','## 固定列と位置ショートカット','## 汎用配置のレイヤーをすばやく指定する','## 表情をまとめて：行クリックと即時反映','## Excelと未配置作業の保護','全体の表示・操作','今回の変更を戻す','レイヤー N ▾','一覧を読み直す')) {
- if (-not $usage.Contains($section,[StringComparison]::Ordinal)) {throw "Missing actual Round4 A/B/C usage section: $section"}
+foreach($section in @('UI Micro Polish Hands-on Candidate','## 配置パネルの簡易設定・固定列・位置ショートカット','## 汎用配置のレイヤーをすばやく指定する','## 表情をまとめて：行クリックと即時反映','## Excelと未配置作業の保護','⚙ 簡易設定','マウスホイールで±1','行の下端にマウスを合わせて上下ドラッグ','数値を直接入力してEnter','今回の変更を戻す','一覧を読み直す','YMM4側の別の場所をクリックすると閉じます','他のアイテムへコピー','「複数種類」')) {
+ if (-not $usage.Contains($section,[StringComparison]::Ordinal)) {throw "Missing actual UI Micro Polish usage section: $section"}
 }
 if ($usage.Contains('主画面は「編集」',[StringComparison]::Ordinal) -or $usage.Contains('「以前の設定・互換操作」から',[StringComparison]::Ordinal)) {throw 'Obsolete normal-workspace instructions remain in the package'}
 Remove-Item (Join-Path $package '*.pdb') -ErrorAction SilentlyContinue
@@ -85,7 +86,7 @@ if($LASTEXITCODE -ne 0 -or $sourceTree -cne (git rev-parse 'HEAD^{tree}')) {thro
  distribution_dll_sha256=$dllHash; ymme_install_folder=$installFolder
 } | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'provenance.json')
 Copy-Item (Join-Path $OutputDir 'provenance.json') $package
-$expected=@('Ymm4TemplatePlacer.dll','Ymm4TemplatePlacer.deps.json','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll','README.md','THIRD_PARTY_NOTICES.md','provenance.json','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json','hands-on-ux-polish.json','hands-on-round2.json') + $round3Payload
+$expected=@('Ymm4TemplatePlacer.dll','Ymm4TemplatePlacer.deps.json','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll','README.md','LICENSE.md','THIRD_PARTY_NOTICES.md','provenance.json','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json','hands-on-ux-polish.json','hands-on-round2.json') + $round3Payload
 $files=@(Get-ChildItem $package -File -Recurse)
 if ($files.Count -ne $expected.Count -or @($files | Where-Object { $_.Name -notin $expected -or $_.Directory.FullName -ne (Resolve-Path $package).Path }).Count -ne 0) { throw 'Unexpected, nested or missing distributable content' }
 
@@ -122,7 +123,7 @@ git -c core.autocrlf=false archive --format=zip -o $sourceArchive HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Source archive failed' }
 $sourceZip=[IO.Compression.ZipFile]::OpenRead((Resolve-Path $sourceArchive).Path)
 try {
- foreach ($name in @('AGENTS.md','docs/DESIGN.md','docs/USAGE.md','docs/USAGE_V0.4.1.md','docs/V0.4.2_RELATIVE_PALETTE_DESIGN.md','docs/V0.4.2_UIUX_MENTAL_MODEL.md','docs/V0.4.2_ROADMAP.md','docs/V0.4.2_CANDIDATE.md','docs/V0.4.1_UX_WORKFLOW_DESIGN.md','src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj','tests/NativeV04Proof.cs','tests/NativeAcceptanceProof.cs','tests/NativeTaskUxFinalProof.cs','tests/NativeWorkflowAcceptanceProof.cs','docs/TASK_UX.md','tests/NativeRelativeFinalProof.cs','tests/NativeRelativeUiUxProof.cs','tests/NativeTemplateFidelityProof.cs','tests/NativeHandsOnUxPolishProof.cs','tests/NativeHandsOnWorkflowProof.cs','tests/NativeHandsOnRound2InputProof.cs','tests/NativeHandsOnRound2SetProof.cs','tests/NativeHandsOnRound2SettingsProof.cs','tests/NativeHandsOnRound2TileProof.cs','tests/NativeHandsOnRound2ExpressionProof.cs','tests/NativeHandsOnRound2Proof.cs','tests/ValidateRelativeEvidence.ps1','tests/PackageVerified.ps1','docs/V0.4.2_HANDS_ON_UX_POLISH_WORKPLAN.md','docs/V0.4.2_HANDS_ON_UX_POLISH_ACCEPTANCE.md','docs/V0.4.2_HANDS_ON_UX_POLISH_P0_HOST_SURFACE.md','docs/V0.4.2_HANDS_ON_ROUND2_DESIGN.md','docs/V0.4.2_HANDS_ON_ROUND2_HOST_EVIDENCE.md','docs/V0.4.2_HANDS_ON_ROUND2_WORKPLAN.md','docs/V0.4.2_HANDS_ON_ROUND2_ACCEPTANCE.md','docs/V0.4.2_HANDS_ON_ROUND2_IMPLEMENTATION_PREP.md','tests/ValidateRound3Evidence.ps1','tests/NativeHandsOnRound3FinalProof.cs','tests/NativeHandsOnRound3NavigationProof.cs','src/Ymm4TemplatePlacer/ExpressionRowNavigation.cs','src/Ymm4TemplatePlacer/ExpressionNavigationHost.cs','src/Ymm4TemplatePlacer/ExpressionVoiceFreshness.cs','docs/V0.4.2_HANDS_ON_ROUND3_DESIGN.md','docs/V0.4.2_HANDS_ON_ROUND3_ACCEPTANCE.md')) {
+ foreach ($name in @('AGENTS.md','LICENSE.md','docs/DESIGN.md','docs/USAGE.md','docs/USAGE_V0.4.1.md','docs/V0.4.2_RELATIVE_PALETTE_DESIGN.md','docs/V0.4.2_UIUX_MENTAL_MODEL.md','docs/V0.4.2_ROADMAP.md','docs/V0.4.2_CANDIDATE.md','docs/V0.4.1_UX_WORKFLOW_DESIGN.md','src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj','tests/NativeV04Proof.cs','tests/NativeAcceptanceProof.cs','tests/NativeTaskUxFinalProof.cs','tests/NativeWorkflowAcceptanceProof.cs','docs/TASK_UX.md','tests/NativeRelativeFinalProof.cs','tests/NativeRelativeUiUxProof.cs','tests/NativeTemplateFidelityProof.cs','tests/NativeHandsOnUxPolishProof.cs','tests/NativeHandsOnWorkflowProof.cs','tests/NativeHandsOnRound2InputProof.cs','tests/NativeHandsOnRound2SetProof.cs','tests/NativeHandsOnRound2SettingsProof.cs','tests/NativeHandsOnRound2TileProof.cs','tests/NativeHandsOnRound2ExpressionProof.cs','tests/NativeHandsOnRound2Proof.cs','tests/ValidateRelativeEvidence.ps1','tests/PackageVerified.ps1','docs/V0.4.2_HANDS_ON_UX_POLISH_WORKPLAN.md','docs/V0.4.2_HANDS_ON_UX_POLISH_ACCEPTANCE.md','docs/V0.4.2_HANDS_ON_UX_POLISH_P0_HOST_SURFACE.md','docs/V0.4.2_HANDS_ON_ROUND2_DESIGN.md','docs/V0.4.2_HANDS_ON_ROUND2_HOST_EVIDENCE.md','docs/V0.4.2_HANDS_ON_ROUND2_WORKPLAN.md','docs/V0.4.2_HANDS_ON_ROUND2_ACCEPTANCE.md','docs/V0.4.2_HANDS_ON_ROUND2_IMPLEMENTATION_PREP.md','tests/ValidateRound3Evidence.ps1','tests/NativeHandsOnRound3FinalProof.cs','tests/NativeHandsOnRound3NavigationProof.cs','src/Ymm4TemplatePlacer/ExpressionRowNavigation.cs','src/Ymm4TemplatePlacer/ExpressionNavigationHost.cs','src/Ymm4TemplatePlacer/ExpressionVoiceFreshness.cs','src/Ymm4TemplatePlacer/ItemOwnedSetSettings.cs','docs/V0.4.2_HANDS_ON_ROUND3_DESIGN.md','docs/V0.4.2_HANDS_ON_ROUND3_ACCEPTANCE.md')) {
   if ($null -eq $sourceZip.GetEntry($name)) { throw "Missing source archive entry: $name" }
  }
 } finally { $sourceZip.Dispose() }

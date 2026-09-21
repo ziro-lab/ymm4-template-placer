@@ -1,12 +1,10 @@
-# Experimental Tachie Preset source — feature handoff
+# Experimental expression preset — next PR handoff
 
-> Terminology: **Tachie Preset** means expression/content presets exposed by a YMM4 tachie plugin. It is distinct from the existing **Placement Preset** / `ExpressionPreset` placement-geometry type. See `docs/GLOSSARY.md`.
-
-This document carries the Tachie Preset work that was deliberately split out of PR #16 after Round 4 A/B/C and validation right-sizing were completed.
+This document carries the preset work that was deliberately split out of PR #16 after Round 4 A/B/C and validation right-sizing were completed.
 
 ## Start condition
 
-Do not re-research the generic Tachie Preset surface before implementation. Reuse the public Lab evidence below and the frozen product boundaries in this handoff.
+Do not re-research the generic preset surface before implementation. Reuse the public Lab evidence below and the frozen product boundaries in this handoff.
 
 Start from main after the completed A/B/C candidate is accepted and merged.
 
@@ -46,7 +44,7 @@ It does not prove every third-party tachie plugin or perceptual correctness for 
 - each Tool/session starts in Template mode;
 - switching mode alone mutates no Timeline content;
 - Template mode keeps the accepted A/B/C behavior unchanged;
-- protected pending Excel/import assignments block entering Tachie Preset mode;
+- protected pending Excel/import assignments block entering Preset mode;
 - Excel import/export remains Template-only.
 
 ## Capability detector
@@ -81,7 +79,7 @@ Do not scan loaded assemblies for arbitrary Preset types.
 
 - **Strong**: candidate enumeration plus dry-run selection causes a semantic fresh-FaceParameter mutation.
 - **Experimental**: coherent candidate/choices exist, but isolated dry-run cannot prove final mutation.
-- **None**: no coherent Tachie-Preset capability.
+- **None**: no coherent expression-preset capability.
 
 A substring such as `CompressionPreset` alone is insufficient.
 
@@ -89,7 +87,7 @@ One broken candidate must not disable Template mode or other Characters.
 
 ## Placement
 
-Tachie Preset mode creates a fresh bare `TachieFaceItem` for the row Character.
+Preset mode creates a fresh bare `TachieFaceItem` for the row Character.
 
 Reuse existing geometry:
 
@@ -106,9 +104,9 @@ No existing/manual item is used as a probe target.
 
 ## Managed association
 
-Do not fake an Intent palette/entry identity for Tachie-Preset-generated expressions.
+Do not fake an Intent palette/entry identity for preset-generated expressions.
 
-Add a small versioned Tachie-Preset-source descriptor/tag containing enough information to identify:
+Add a small versioned preset-source descriptor/tag containing enough information to identify:
 
 - the Plugin-managed group/source;
 - capability/plugin fingerprint;
@@ -119,8 +117,8 @@ Extract only the common exact managed-bundle discovery/removal seam needed for s
 
 Required behavior:
 
-- template-source -> Tachie-Preset-source replacement is atomic;
-- Tachie-Preset-source -> template-source replacement is atomic;
+- template-source -> preset-source replacement is atomic;
+- preset-source -> template-source replacement is atomic;
 - exact removal works;
 - copied/missing/ambiguous tags fail closed;
 - candidate disappearance becomes explicit unavailable state;
@@ -200,7 +198,7 @@ Placement/association acceptance:
 - manual expressions are untouched;
 - one logical native Undo/trial is preserved;
 - Preview confirmation uses the common navigation coordinator;
-- pending Excel blocks Tachie Preset mode;
+- pending Excel blocks Preset mode;
 - Excel remains Template-only;
 - Resync truthfully skips unsupported preset associations;
 - one incompatible plugin does not disable other modes;

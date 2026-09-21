@@ -17,35 +17,36 @@ Current architecture authority:
 - `VALIDATION_STRATEGY.md`
 - `LEGACY_COMPATIBILITY_MAP.md`
 
-## Active feature
+## Active priority — UI Micro Polish corrective pass
 
-Experimental Tachie Preset source — Draft PR #19.
+Owner Hands-on feedback is frozen in:
 
-Use:
+- `UI_MICRO_POLISH_HANDS_ON_FEEDBACK.md`
+- `UI_MICRO_POLISH_CORRECTIVE_DESIGN.md`
+- `UI_MICRO_POLISH_CORRECTIVE_ACCEPTANCE.md`
+- `UI_MICRO_POLISH_CORRECTIVE_WORKPLAN.md`
+- `UI_MICRO_POLISH_CORRECTIVE_STATUS.md`
 
-- `EXPERIMENTAL_PRESET_HANDOFF.md`
-- public Lab PR #58 evidence referenced there.
+Corrective implementation currently includes:
 
-Do not reopen the accepted A/B/C architecture as part of preset work.
+1. direct Generic digit interception removed;
+2. wheel success logging quieted;
+3. any-Voice-row bottom-boundary common-height drag + numeric height entry;
+4. Fixed square cells growing to fill wide viewport without changing slot mapping;
+5. quick settings closing when the owner YMM4 Window deactivates;
+6. small public-readiness cleanup only.
 
-## Collected future improvements
+The first candidate Release #262 remains historical green evidence. Corrective Native/Release validation is pending because recent Actions jobs are failing before executing any step.
 
-Unimplemented ideas live in `BACKLOG.md`.
+## Next
 
-Current groups:
+Experimental Tachie Preset — paused Draft PR #19.
 
-- UI polish: always-visible Generic layer controls; panel quick settings;
-- Placement Recipe extensions: Template Pivot, Absolute Layer, Composite Placement Steps;
-- later finite Context extensions: stronger Target conditions, Fan-out, Neighbor selectors;
-- explicit out-of-scope boundary: existing-item transformation, generic scripting/DSL/AI target guessing.
+Resume only after the UI pass is accepted/merged and PR #19 is refreshed from that main.
 
-Implementation priority is intentionally not frozen while ideas are still being collected.
+## Later
 
-## Validation growth control
-
-Use `VALIDATION_STRATEGY.md`.
-
-Round-specific tests may consolidate/retire when the current invariant proof is equal-or-stronger and the retirement gates pass. Do not make each new feature permanently additive to Checkpoint/Release by default.
+Placement Recipe extensions and other collected ideas remain in `BACKLOG.md`. Their implementation order is not frozen.
 
 ---
 

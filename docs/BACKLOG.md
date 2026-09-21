@@ -8,7 +8,7 @@ Being listed here is not implementation approval or priority commitment.
 
 ### Experimental Tachie Preset source
 
-Status: **ACTIVE — PR #19**
+Status: **PAUSED / NEXT — Draft PR #19**
 
 Use `docs/EXPERIMENTAL_PRESET_HANDOFF.md`.
 
@@ -21,9 +21,9 @@ Goal:
 
 Do not repeat completed generic-preset research.
 
-## UI polish — collect before implementation
+## UI polish — active preparation
 
-Status: **COLLECTING**
+Status: **ACTIVE — UI Micro Polish prep**
 
 ### Generic layer controls always visible
 
@@ -48,6 +48,31 @@ Desired interaction direction:
 - do not steal keys from normal text/ComboBox/DataGrid editing or position shortcuts.
 
 This is a UX idea only; exact focus/key admission should be designed later.
+
+
+### Voice row-height drag
+
+Replace the coarse preset-only row-height choice with a direct global resize gesture.
+
+Desired direction:
+
+- one common row height remains authoritative for every Voice row;
+- a compact drag grip adjusts the common height continuously on screen;
+- valid range remains 32-96;
+- dragging does not persist on every pixel movement;
+- release commits the final height once through the protected settings store;
+- failed persistence restores the saved height;
+- do not introduce per-row heights or break DataGrid virtualization.
+
+### Generic layer mouse-wheel adjustment
+
+When the pointer is directly over the Generic numeric layer field:
+
+- wheel up/down adjusts by one numeric layer step;
+- bounds are respected;
+- the changed complete number is applied immediately through the existing Generic target command/path;
+- wheel elsewhere keeps normal panel/outer scrolling;
+- no modified-wheel global interception.
 
 ### Bottom-right panel quick settings
 

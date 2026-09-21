@@ -79,6 +79,7 @@ internal sealed class IntentExpressionMutation
     private readonly List<(IntentGeometry Geometry, Guid PaletteId, string Palette, Guid LibraryId, TemplateLocator Source)> guarded;
     public PlacementPlan Plan { get; }
     public bool Skipped { get; }
+    internal AssignmentRow Row => row;
     private IntentExpressionMutation(AssignmentRow row, PlacementPlan plan, bool skipped,
         List<(IntentGeometry Geometry, Guid PaletteId, string Palette, Guid LibraryId, TemplateLocator Source)> guarded)
     { this.row = row; Plan = plan; Skipped = skipped; this.guarded = guarded; }
@@ -281,7 +282,7 @@ public sealed partial class PlacerViewModel
             try
             {
                 var association = ManagedIntentExpressionReader.Read(RequireTimeline(), row.Target.Voice);
-                if (association.Bundle == null) { row.RestoreSelectedChoice(row.Choices.FirstOrDefault(x => x.Template == null)); return; }
+                if (association.Bundle == null) { row.RestoreSelectedChoice(row.Choices.FirstOrDefault(x => x.Template == null)); row.SetAssociationMatch(true); return; }
                 var descriptor = association.Bundle.Descriptor; TemplateChoice? match = null;
                 foreach (var choice in row.Choices.Where(x => x.Template?.IntentSource != null && x.IsAvailable))
                 {
@@ -290,9 +291,9 @@ public sealed partial class PlacerViewModel
                     try { source.Bundle.ValidateCurrent(); if (IntentAssociationTag.Hash(source.Bundle) == descriptor.GeometryHash) { match = choice; break; } }
                     catch (InvalidOperationException) { }
                 }
-                row.RestoreSelectedChoice(match, match == null ? "⚠ 現在の関連表情（選択元を確認）" : null);
+                row.RestoreSelectedChoice(match, match == null ? "⚠ 現在の関連表情（選択元を確認）" : null); row.SetAssociationMatch(true);
             }
-            catch (InvalidOperationException) { row.RestoreSelectedChoice(null, "⚠ 関連付けを確認"); }
+            catch (InvalidOperationException) { row.RestoreSelectedChoice(null, "⚠ 関連付けを確認"); row.SetAssociationMatch(true); }
         }
         finally { suppressExpressionApply = previous; }
     }
@@ -308,6 +309,5 @@ public sealed partial class PlacerViewModel
         }
         catch (InvalidOperationException) { return false; }
     }
-    private bool HasPendingRelativeAssignments() => UsesRelativeExpressions && Rows.Any(row =>
-        row.SelectedChoice.Template != null && row.SelectedChoice.IsAvailable && !ExpressionChoiceMatchesTimeline(row));
+    private bool HasPendingRelativeAssignments() => UsesRelativeExpressions && PendingRelativeExpressionCount > 0;
 }

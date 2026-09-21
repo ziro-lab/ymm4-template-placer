@@ -36,6 +36,7 @@ internal static partial class NativeProof
             VerifyHandsOnRound4SettingsTransaction(timeline);
             VerifyHandsOnRound4SettingsSession(timeline, undo);
             await VerifyHandsOnRound4Settings(timeline, undo);
+            await VerifyFinalHandsOnPolish(timeline, undo);
             Log("FOCUSED_NATIVE=PASS");
             return;
         }
@@ -93,5 +94,7 @@ internal static partial class NativeProof
         VerifyHandsOnRound4SettingsTransaction(timeline);
         VerifyHandsOnRound4SettingsSession(timeline, undo);
         await VerifyHandsOnRound4Settings(timeline, undo);
+        await VerifyFinalHandsOnPolish(timeline, undo);
+        await VerifyExpressionPerformance(timeline, undo);
     }
 }

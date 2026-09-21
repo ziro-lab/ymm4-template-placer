@@ -9,6 +9,7 @@ public sealed class IntentExpressionPlacement
     public PlacementPlan Plan { get; }
     public long NextSerial { get; }
     public int Skipped { get; }
+    internal IReadOnlyList<AssignmentRow> SuccessfulRows => mutations.Where(x => !x.Skipped).Select(x => x.Row).ToArray();
     private IntentExpressionPlacement(PlacementPlan plan, long nextSerial, int skipped, IReadOnlyList<IntentExpressionMutation> mutations)
     { Plan = plan; NextSerial = nextSerial; Skipped = skipped; this.mutations = mutations; }
     public static IntentExpressionPlacement Create(Timeline timeline, IReadOnlyList<AssignmentRow> rows, PlacerSettings settings, long minimumSerial = 1)
