@@ -27,25 +27,25 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public ActionCommand ExportCommand { get; }
     public ActionCommand ImportCommand { get; }
     public bool UsesRelativeExpressions => intentInitialized && !UseLegacyWorkspace;
-    public bool ShowExpressionBatchPlace => !UsesRelativeExpressions || PendingRelativeExpressionCount > 0;
+    public bool ShowExpressionBatchPlace => IsTemplateExpressionSource && (!UsesRelativeExpressions || PendingRelativeExpressionCount > 0);
 
     public PlacerViewModel()
     {
-        RefreshCommand = new ActionCommand(_ => timeline != null && !IsExpressionLoading, _ => Guard(() =>
+        RefreshCommand = new ActionCommand(_ => timeline != null && !IsExpressionLoading && IsTemplateExpressionSource, _ => Guard(() =>
         {
             if ((HasProtectedPendingVoiceWork() || SelectedExpressionCount > 0) && MessageBox.Show("一覧を読み直すと未配置の割り当てを破棄します。続けますか？", Title, MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
             if (UsesRelativeExpressions) { expressionCandidateDirty = true; expressionCacheDirty = true; RequestExpressionLoad(true, true); }
             else Refresh();
         }));
-        PlaceCommand = new ActionCommand(_ => timeline != null && undo != null && settingsAvailable && !ExpressionRowsStale && !IsExpressionLoading &&
+        PlaceCommand = new ActionCommand(_ => IsTemplateExpressionSource && timeline != null && undo != null && settingsAvailable && !ExpressionRowsStale && !IsExpressionLoading &&
             (UsesRelativeExpressions ? PendingRelativeExpressionCount > 0 : !ExpressionPresetDirty && SelectedExpressionCount > 0) &&
             UnavailableExpressionCount == 0, _ => Guard(() => Place()));
-        ExportCommand = new ActionCommand(_ => timeline != null && Rows.Count > 0 && !ExpressionRowsStale, _ => Guard(() =>
+        ExportCommand = new ActionCommand(_ => IsTemplateExpressionSource && timeline != null && Rows.Count > 0 && !ExpressionRowsStale, _ => Guard(() =>
         {
             var dialog = new SaveFileDialog { Filter = "Excelブック (*.xlsx)|*.xlsx", DefaultExt = ".xlsx", AddExtension = true, FileName = "TemplateAssignments.xlsx", Title = "割り当てをExcelへ出力" };
             if (dialog.ShowDialog() == true) ExportTo(dialog.FileName);
         }));
-        ImportCommand = new ActionCommand(_ => timeline != null, _ => Guard(() =>
+        ImportCommand = new ActionCommand(_ => IsTemplateExpressionSource && timeline != null, _ => Guard(() =>
         {
             var dialog = new OpenFileDialog { Filter = "Excelブック (*.xlsx)|*.xlsx", CheckFileExists = true, Title = "割り当てをExcelから読み込み" };
             if (dialog.ShowDialog() == true) ImportFrom(dialog.FileName);
@@ -88,13 +88,18 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     {
         if (e.PropertyName != nameof(UseLegacyWorkspace)) return;
         expressionCandidateDirty = true; expressionCacheDirty = true;
-        SetVoiceFreshnessActive(activeTask == "expression");
-        if (activeTask == "expression" && UsesRelativeExpressions) RequestExpressionLoad(true, true);
-        else if (activeTask == "expression") Refresh();
+        SetVoiceFreshnessActive(activeTask == "expression" && IsTemplateExpressionSource);
+        if (activeTask == "expression" && IsTemplateExpressionSource && UsesRelativeExpressions) RequestExpressionLoad(true, true);
+        else if (activeTask == "expression" && IsTemplateExpressionSource) Refresh();
         TryRestoreDeferredExpressionWork(); OnPropertyChanged(nameof(UsesRelativeExpressions)); UpdateCommands();
     }
     public void RefreshExpressionVocabulary()
     {
+        if (!IsTemplateExpressionSource)
+        {
+            expressionCandidateDirty = true; expressionCacheDirty = true;
+            OnPropertyChanged(nameof(UsesRelativeExpressions)); UpdateCommands(); return;
+        }
         if (UsesRelativeExpressions)
         {
             MarkExpressionVocabularyDirty(); OnPropertyChanged(nameof(UsesRelativeExpressions)); UpdateCommands(); return;
@@ -114,6 +119,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     }
     public int Place()
     {
+        RequireTemplateExpressionSource();
         RequireFreshExpressionRows();
         CloseExpressionTrialSession();
         var current = RequireTimeline();
@@ -139,6 +145,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     }
     public void ExportTo(string path)
     {
+        RequireTemplateExpressionSource();
         RequireFreshExpressionRows();
         CloseExpressionTrialSession();
         var current = RequireTimeline(); PlacementEngine.ValidateSnapshot(current, Rows.Select(x => x.Target).ToArray());
@@ -148,6 +155,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     }
     public void ImportFrom(string path)
     {
+        RequireTemplateExpressionSource();
         CloseExpressionTrialSession();
         var current = RequireTimeline(); var next = WorkbookBridge.Import(path, current.Name, VoiceSnapshot.Capture(current), ExpressionCatalog());
         SetRows(next, false); HasError = false; OnPropertyChanged(nameof(ShowExpressionBatchPlace));
@@ -180,7 +188,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         if (e.PropertyName == nameof(AssignmentRow.SelectedChoice))
         {
             OnPropertyChanged(nameof(Summary)); OnPropertyChanged(nameof(ShowExpressionBatchPlace)); UpdateCommands();
-            if (!suppressExpressionApply && UsesRelativeExpressions && sender is AssignmentRow row) ApplyImmediateExpressionChoice(row);
+            if (!suppressExpressionApply && IsTemplateExpressionSource && UsesRelativeExpressions && sender is AssignmentRow row) ApplyImmediateExpressionChoice(row);
         }
     }
     private void UpdateCommands()

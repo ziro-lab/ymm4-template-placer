@@ -20,7 +20,7 @@ public sealed partial class PlacerViewModel
     private bool voiceFreshnessActive, voiceFreshnessDisposed, fullVoiceReconcilePending;
     private ExpressionRowsFreshness voiceRowsFreshness;
     private string voiceFreshnessProblem = "";
-    public bool CanEditExpressionRows => voiceRowsFreshness != ExpressionRowsFreshness.StalePending && !IsExpressionLoading;
+    public bool CanEditExpressionRows => IsTemplateExpressionSource && voiceRowsFreshness != ExpressionRowsFreshness.StalePending && !IsExpressionLoading;
     public bool ExpressionRowsStale => voiceRowsFreshness == ExpressionRowsFreshness.StalePending;
     public string ExpressionFreshnessNotice => ExpressionRowsStale
         ? "音声やシーンが変わりました。未配置の割り当ては保持しています。Excelを読み込み直すか、内容を確認して［一覧を読み直す］を選んでください。"
@@ -50,7 +50,7 @@ public sealed partial class PlacerViewModel
     {
         SetVoiceFreshnessState(ExpressionRowsFreshness.Current);
         expressionCacheDirty = true;
-        if (activeTask == "expression" && UsesRelativeExpressions) RequestExpressionLoad(true);
+        if (activeTask == "expression" && IsTemplateExpressionSource && UsesRelativeExpressions) RequestExpressionLoad(true);
     }
     private void RequireFreshExpressionRows()
     {
@@ -58,7 +58,7 @@ public sealed partial class PlacerViewModel
     }
     private void SetVoiceFreshnessActive(bool active)
     {
-        active &= UsesRelativeExpressions && !voiceFreshnessDisposed;
+        active &= IsTemplateExpressionSource && UsesRelativeExpressions && !voiceFreshnessDisposed;
         if (voiceFreshnessActive == active) return;
         voiceFreshnessActive = active;
         if (active) RebindVoiceFreshness();

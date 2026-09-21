@@ -207,7 +207,7 @@ public sealed partial class PlacerViewModel
     public ActionCommand NavigateExpressionRowCommand { get; private set; } = null!;
     private void InitializeExpressionImmediate()
     {
-        NavigateExpressionRowCommand = new ActionCommand(x => x is AssignmentRow row && Rows.Contains(row) && timeline != null &&
+        NavigateExpressionRowCommand = new ActionCommand(x => IsTemplateExpressionSource && x is AssignmentRow row && Rows.Contains(row) && timeline != null &&
             timeline.Items.Contains(row.Target.Voice), x => Guard(() => NavigateExpressionRow((AssignmentRow)x!)));
         OnPropertyChanged(nameof(NavigateExpressionRowCommand));
     }

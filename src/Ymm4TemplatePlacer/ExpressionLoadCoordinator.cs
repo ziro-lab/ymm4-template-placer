@@ -41,11 +41,16 @@ public sealed partial class PlacerViewModel
     internal void MarkExpressionVocabularyDirty()
     {
         expressionCandidateDirty = true; expressionCacheDirty = true;
-        if (activeTask == "expression" && UsesRelativeExpressions) RequestExpressionLoad(true, true);
+        if (activeTask == "expression" && IsTemplateExpressionSource && UsesRelativeExpressions) RequestExpressionLoad(true, true);
     }
 
     internal void EnterExpressionTask()
     {
+        if (!IsTemplateExpressionSource)
+        {
+            SetVoiceFreshnessActive(false);
+            return;
+        }
         if (!UsesRelativeExpressions) return;
         SetVoiceFreshnessActive(true);
         RequestExpressionLoad(false, false);
@@ -71,7 +76,7 @@ public sealed partial class PlacerViewModel
 
     internal void RequestExpressionLoad(bool force, bool forceCandidates = false)
     {
-        if (!UsesRelativeExpressions || timeline == null || voiceFreshnessDisposed) return;
+        if (!IsTemplateExpressionSource || !UsesRelativeExpressions || timeline == null || voiceFreshnessDisposed) return;
         if (HasProtectedPendingVoiceWork() && expressionCacheTimeline != null && ReferenceEquals(expressionCacheTimeline, timeline))
         {
             SetVoiceFreshnessState(ExpressionRowsFreshness.StalePending); return;
@@ -85,7 +90,7 @@ public sealed partial class PlacerViewModel
 
     private async Task LoadExpressionAsync(bool forceCandidates)
     {
-        if (timeline == null || !UsesRelativeExpressions) return;
+        if (timeline == null || !IsTemplateExpressionSource || !UsesRelativeExpressions) return;
         var current = timeline;
         expressionLoadCancellation?.Cancel(); expressionLoadCancellation?.Dispose();
         var cancellation = new CancellationTokenSource(); expressionLoadCancellation = cancellation;
@@ -104,7 +109,7 @@ public sealed partial class PlacerViewModel
         try
         {
             var result = await Task.Run(() => ExpressionPreparation.Prepare(snapshot, cancellation.Token), cancellation.Token);
-            if (cancellation.IsCancellationRequested || generation != expressionLoadGeneration || !ReferenceEquals(timeline, current) || activeTask != "expression")
+            if (cancellation.IsCancellationRequested || generation != expressionLoadGeneration || !ReferenceEquals(timeline, current) || activeTask != "expression" || !IsTemplateExpressionSource)
             {
                 expressionPerformance.StaleResultsDiscarded++; return;
             }
@@ -301,7 +306,7 @@ public sealed partial class PlacerViewModel
 
     internal void RefreshExpressionSynchronously(bool forceCandidates)
     {
-        if (timeline == null) return;
+        if (timeline == null || !IsTemplateExpressionSource) return;
         if (!UsesRelativeExpressions)
         {
             var catalog = TemplateCatalog.Read();
