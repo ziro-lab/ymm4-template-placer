@@ -85,11 +85,11 @@ internal static partial class NativeProof
         var root = panel.SettingsScroll;
         Assert(root.ScrollableHeight > 1, "FINAL H2 fixture has a genuinely scrollable Settings surface");
 
-        var ordinaryPoint = panel.NewPaletteButton.TranslatePoint(new Point(
-            Math.Min(2, Math.Max(0, panel.NewPaletteButton.ActualWidth - 1)),
-            Math.Min(2, Math.Max(0, panel.NewPaletteButton.ActualHeight - 1))), root);
-        var live = NestedWheelRouting.ResolveCurrentSource(root, ordinaryPoint, panel.PalettePicker);
-        Assert(live != null && !IsDescendantOf(live, panel.PalettePicker),
+        var ordinaryPoint = panel.RelationSummaryText.TranslatePoint(new Point(
+            Math.Min(2, Math.Max(0, panel.RelationSummaryText.ActualWidth - 1)),
+            Math.Min(2, Math.Max(0, panel.RelationSummaryText.ActualHeight - 1))), root);
+        var live = NestedWheelRouting.ResolveCurrentSource(root, ordinaryPoint, panel.AnchorBox);
+        Assert(live != null && !IsDescendantOf(live, panel.AnchorBox),
             "FINAL H2: current hit-test overrides a stale ComboBox event source without mouse movement");
 
         var beforeOffset = root.VerticalOffset;
@@ -100,11 +100,11 @@ internal static partial class NativeProof
 
         root.ScrollToTop();
         root.UpdateLayout();
-        var comboPoint = panel.PalettePicker.TranslatePoint(new Point(
-            Math.Max(1, panel.PalettePicker.ActualWidth / 2),
-            Math.Max(1, panel.PalettePicker.ActualHeight / 2)), root);
-        var comboHit = NestedWheelRouting.ResolveCurrentSource(root, comboPoint, panel.NewPaletteButton);
-        Assert(comboHit != null && IsDescendantOf(comboHit, panel.PalettePicker) &&
+        var comboPoint = panel.AnchorBox.TranslatePoint(new Point(
+            Math.Max(1, panel.AnchorBox.ActualWidth / 2),
+            Math.Max(1, panel.AnchorBox.ActualHeight / 2)), root);
+        var comboHit = NestedWheelRouting.ResolveCurrentSource(root, comboPoint, panel.RelationSummaryText);
+        Assert(comboHit != null && IsDescendantOf(comboHit, panel.AnchorBox) &&
             !NestedWheelRouting.TryScroll(root, comboHit, -120, ModifierKeys.None),
             "FINAL H2: a ComboBox actually under the pointer still owns its wheel behavior");
 
