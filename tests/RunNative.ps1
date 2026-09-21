@@ -94,6 +94,7 @@ if (-not (Select-String -Path $log -Pattern '^UX_ACCEPTANCE=PASS$')) { throw 'Ta
 if (-not (Select-String -Path $log -Pattern '^UX_WORKFLOW_ACCEPTANCE=PASS$') -or -not (Select-String -Path $log -Pattern '^WUX13=PASS$')) { throw 'v0.4.2 UX workflow acceptance is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^HANDS_ON_UX_POLISH=PASS$')) { throw 'Hands-on UX polish native acceptance is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^HANDS_ON_ROUND2=PASS
+$null = & "$PSScriptRoot/ValidateRelativeEvidence.ps1" -OutputDir $OutputDir
 $null = & "$PSScriptRoot/ValidateRound3Evidence.ps1" -OutputDir $OutputDir
 $null = & "$PSScriptRoot/ValidateRound4Checkpoint.ps1" -OutputDir $OutputDir -Phases A,B,CT,CS,C
 $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
@@ -105,6 +106,7 @@ if ($workflow.version -ne '0.4.2' -or $workflow.result -ne 'PASS' -or @($workflo
 Write-Host 'Checkpoint native validation: full semantic regression and evidence guards PASS'
 )) { throw 'Hands-on Round 2 native acceptance is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^EXPRESSION_PERFORMANCE=PASS
+$null = & "$PSScriptRoot/ValidateRelativeEvidence.ps1" -OutputDir $OutputDir
 $null = & "$PSScriptRoot/ValidateRound3Evidence.ps1" -OutputDir $OutputDir
 $null = & "$PSScriptRoot/ValidateRound4Checkpoint.ps1" -OutputDir $OutputDir -Phases A,B,CT,CS,C
 $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
@@ -118,8 +120,8 @@ Write-Host 'Checkpoint native validation: full semantic regression and evidence 
 $perfPath=Join-Path $OutputDir 'expression-performance.json'
 if (-not (Test-Path $perfPath)) { throw 'Expression performance evidence is missing' }
 $perf=Get-Content -Raw $perfPath | ConvertFrom-Json
-if ($perf.version -ne '0.4.2' -or $perf.result -ne 'PASS' -or @($perf.sizes).Count -ne 3 -or
-    (@($perf.sizes | ForEach-Object { [int]$_.Voices }) -join ',') -ne '100,500,1000') {
+$perfVoices=@($perf.sizes | ForEach-Object { [int]$_.Voices })
+if ($perf.version -ne '0.4.2' -or $perf.result -ne 'PASS' -or @($perf.sizes).Count -ne 3 -or ($perfVoices -join ',') -ne '100,500,1000') {
  throw 'Expression performance evidence is incomplete or stale'
 }
 $null = & "$PSScriptRoot/ValidateRelativeEvidence.ps1" -OutputDir $OutputDir
