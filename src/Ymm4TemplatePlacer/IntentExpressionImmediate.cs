@@ -79,6 +79,7 @@ internal sealed class IntentExpressionMutation
     private readonly List<(IntentGeometry Geometry, Guid PaletteId, string Palette, Guid LibraryId, TemplateLocator Source)> guarded;
     public PlacementPlan Plan { get; }
     public bool Skipped { get; }
+    internal AssignmentRow Row => row;
     private IntentExpressionMutation(AssignmentRow row, PlacementPlan plan, bool skipped,
         List<(IntentGeometry Geometry, Guid PaletteId, string Palette, Guid LibraryId, TemplateLocator Source)> guarded)
     { this.row = row; Plan = plan; Skipped = skipped; this.guarded = guarded; }
