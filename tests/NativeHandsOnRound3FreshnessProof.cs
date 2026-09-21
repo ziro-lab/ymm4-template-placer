@@ -89,9 +89,11 @@ internal static partial class NativeProof
         var rebound = false;
         try
         {
-            timelineField.SetValue(vm, alternate); vm.RebindVoiceFreshness(); await Idle();
+            timelineField.SetValue(vm, alternate); vm.RebindVoiceFreshness(); vm.RequestExpressionLoad(true); await Idle();
+            for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
             checks = vm.VoiceFreshnessCheckCount; voice.Serif = "detached old Voice"; await Idle();
-            rebound = ReferenceEquals(vm.WatchedVoiceTimeline, alternate) && vm.WatchedVoiceCount == 1 && vm.VoiceFreshnessCheckCount == checks;
+            rebound = !vm.IsExpressionLoading && ReferenceEquals(vm.WatchedVoiceTimeline, alternate) &&
+                vm.WatchedVoiceCount == 1 && vm.VoiceFreshnessCheckCount == checks && vm.Rows.Count == 1;
             alternateVoice.Frame++; await Idle(); rebound &= vm.Rows.Single().Frame == alternateVoice.Frame;
         }
         finally { timelineField.SetValue(vm, timeline); vm.RebindVoiceFreshness(); vm.Refresh(); }
@@ -100,8 +102,11 @@ internal static partial class NativeProof
         Round3Assert(rebound && ReferenceEquals(vm.WatchedVoiceTimeline, timeline) && vm.WatchedVoiceCount == 2,
             "E7", "Timeline replacement detaches old Voice events; repeated visible lifecycle retains exactly the current subscriptions");
         view.PaletteTab.IsSelected = true; await Idle(); checks = vm.VoiceFreshnessCheckCount;
+        var capturesBeforeReentry = vm.ExpressionPerformance.HostCaptures;
         view.ExpressionTab.IsSelected = true; await Idle();
-        Round3Assert(vm.VoiceFreshnessCheckCount == checks + 1, "E8", "entering the expression task explicitly checks freshness even without a property notification");
+        for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
+        Round3Assert(vm.ExpressionPerformance.HostCaptures == capturesBeforeReentry + 1 && vm.VoiceFreshnessCheckCount == checks,
+            "E8", "entering the expression task performs one current host snapshot without reviving the old global freshness scan");
         var workbook = Path.Combine(output, "round3-pending.xlsx");
         vm.ExportTo(workbook); EditCell(workbook, "F2", "R3E/expression");
         var before = Signature(timeline); vm.ImportFrom(workbook); await Idle();
