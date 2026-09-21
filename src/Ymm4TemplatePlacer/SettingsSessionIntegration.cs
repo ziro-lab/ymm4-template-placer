@@ -37,7 +37,7 @@ public sealed partial class PlacerViewModel
         var genericId = session.SelectedGenericSet?.Id;
         var targetedEntry = session.SelectedPalette?.SelectedEntry?.LibraryEntryId;
         var genericEntry = session.SelectedGenericSet?.SelectedEntry?.LibraryEntryId;
-        var search = session.SourceSearch; var showAll = session.ShowAllSets;
+        var search = session.SourceSearch;
         // Rebuild the rollback draft before any write. A bad source/constructor
         // cannot leave the UI claiming failure after partially committing.
         var transaction = RequireSettingsTransaction();
@@ -45,8 +45,7 @@ public sealed partial class PlacerViewModel
         var types = (timeline?.Items.Select(x => x.GetType()) ?? [])
             .Concat(ItemSettings.Default.Templates.SelectMany(x => x.Items).Select(x => x.GetType()));
         var restored = new IntentSettingsSession(candidate, types, timeline?.SelectedItems.ToArray() ?? []);
-        restored.ShowAllSets = showAll;
-        restored.SelectedItemContext = restored.ItemContexts.FirstOrDefault(x => x.Key == contextKey);
+         restored.SelectedItemContext = restored.ItemContexts.FirstOrDefault(x => x.Key == contextKey);
         if (targetedId.HasValue) restored.SelectedPalette = restored.Palettes.FirstOrDefault(x => x.Id == targetedId) ?? restored.SelectedPalette;
         if (genericId.HasValue) restored.SelectedGenericSet = restored.GenericSets.FirstOrDefault(x => x.Id == genericId) ?? restored.SelectedGenericSet;
         if (restored.SelectedPalette is { } p) p.SelectedEntry = p.Entries.FirstOrDefault(x => x.LibraryEntryId == targetedEntry);
