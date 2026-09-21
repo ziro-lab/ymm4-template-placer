@@ -4,45 +4,35 @@ This file is now a navigation roadmap. The older W1-W12 implementation ladder is
 
 ## Current accepted baseline
 
-Round 4 A/B/C is merged to main through PR #16.
+v0.4.2 Hands-on/performance polish is merged to main through PR #20, PR #22 and PR #23. Documentation authority cleanup followed in PR #24.
 
-- main merge: `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`
-- main Release run #227: `35508468265`
-- full native regression / exact distribution DLL smoke / verified package: PASS
+- accepted product merge: `de85c312347ea35371d1c58a92992b50f64cdeb6`;
+- current docs main: `817fdfd86539a28b7e8df5ce87eb54333550f259`;
+- final product Release run #399: `35608381259`;
+- **1,518 Native assertions PASS / 0 FAIL**;
+- exact distribution DLL smoke / verified package/provenance: PASS.
 
 Current architecture authority:
 
-- `CURRENT_ARCHITECTURE.md`
-- `GLOSSARY.md`
-- `VALIDATION_STRATEGY.md`
-- `LEGACY_COMPATIBILITY_MAP.md`
+- `CURRENT_ARCHITECTURE.md`;
+- `GLOSSARY.md`;
+- `VALIDATION_STRATEGY.md`;
+- `LEGACY_COMPATIBILITY_MAP.md`.
 
-## Active priority — UI Micro Polish corrective pass
+## Active feature
 
-Owner Hands-on feedback is frozen in:
+Experimental Tachie Preset source — Draft PR #19.
 
-- `UI_MICRO_POLISH_HANDS_ON_FEEDBACK.md`
-- `UI_MICRO_POLISH_CORRECTIVE_DESIGN.md`
-- `UI_MICRO_POLISH_CORRECTIVE_ACCEPTANCE.md`
-- `UI_MICRO_POLISH_CORRECTIVE_WORKPLAN.md`
-- `UI_MICRO_POLISH_CORRECTIVE_STATUS.md`
+Preparation authority:
 
-Corrective implementation currently includes:
+- `TACHIE_PRESET_DESIGN.md`;
+- `TACHIE_PRESET_ACCEPTANCE.md`;
+- `TACHIE_PRESET_WORKPLAN.md`;
+- `TACHIE_PRESET_IMPLEMENTATION_PREP.md`;
+- `EXPERIMENTAL_PRESET_HANDOFF.md`;
+- canonical public Lab PR #58.
 
-1. direct Generic digit interception removed;
-2. wheel success logging quieted;
-3. any-Voice-row bottom-boundary common-height drag + numeric height entry;
-4. Fixed square cells growing to fill wide viewport without changing slot mapping;
-5. quick settings closing when the owner YMM4 Window deactivates;
-6. small public-readiness cleanup only.
-
-The first candidate Release #262 remains historical green evidence. Corrective Native/Release validation is pending because recent Actions jobs are failing before executing any step.
-
-## Next
-
-Experimental Tachie Preset — paused Draft PR #19.
-
-Resume only after the UI pass is accepted/merged and PR #19 is refreshed from that main.
+The first product implementation starts only after the bounded P0 product-bridge checks are closed.
 
 ## Later
 
