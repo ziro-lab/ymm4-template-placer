@@ -82,6 +82,9 @@ internal static partial class NativeProof
 
             vm.ResetIntentSettings(); session = vm.IntentSettings!; var exact = session.Palettes.Single(x => x.Id == expression.Id); exact.Name = "表情（未保存）";
             var beforeBlocked = Signature(timeline);
+            view.VoiceGrid.ScrollIntoView(row); view.VoiceGrid.UpdateLayout(); await Idle();
+            container = (DataGridRow)view.VoiceGrid.ItemContainerGenerator.ContainerFromItem(row);
+            combo = Descendant<ComboBox>(container)!;
             combo.SelectedItem = row.Choices.Single(x => x.Template?.Name == sourceA.Name); await Idle();
             var blockedAssociation = ManagedIntentExpressionReader.Read(timeline, voice);
             Log($"R2-E dirty admission trace: hasChanges={session.HasChanges}; hasError={vm.HasError}; selected={row.SelectedChoice.Template?.Name}; status={vm.Status}; timelineEntry={blockedAssociation.Bundle?.Descriptor.Entry}; expectedEntry={lb.Id}; timelineSame={Signature(timeline) == beforeBlocked}");
