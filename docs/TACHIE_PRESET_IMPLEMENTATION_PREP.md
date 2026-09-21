@@ -1,6 +1,6 @@
 # Tachie Preset source — implementation prep
 
-Status: READY AFTER P0
+Status: P0 GREEN / READY FOR P1
 
 Base before this refresh:
 
@@ -110,11 +110,14 @@ Permanent coverage should retain:
 
 Use temporary diagnostics for additional editor shapes and retire them after the invariant is captured.
 
-## Open implementation decision after P0
+## P0 implementation decision
 
-State fingerprint:
+State fingerprint is approved for proved bounded candidate routes.
 
-- if a stable bounded fingerprint is proved, use it in TachiePresetAssociationTag and manual-edit detection;
-- otherwise explicitly omit it rather than serializing unstable ToString/object identities.
+- use the canonical bounded public-state fingerprint in `TachiePresetAssociationTag` and manual-edit detection;
+- never substitute unstable `ToString()`, object identity or private state;
+- unsupported/untrustworthy third-party state remains local Experimental/None capability rather than weakening the association check.
 
-No other architecture question is expected to block P1.
+Pinned proof: Lab PR #62, source `bfe13c6eb304e70401f5d6ba6d467a1ea4d8e1ca`, run `35619789546`, marker `PASS_TACHIE_PRESET_PRODUCT_BRIDGE_P0`.
+
+No architecture question blocks P1.

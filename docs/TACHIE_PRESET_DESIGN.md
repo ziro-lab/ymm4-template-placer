@@ -1,6 +1,6 @@
 # Tachie Preset source — design
 
-Status: FROZEN FOR P0 / IMPLEMENTATION PREP
+Status: FROZEN / P0 GREEN / IMPLEMENTATION READY
 
 This feature adds Tachie Preset content as an experimental second source in the existing high-throughput expression workspace.
 
@@ -145,11 +145,15 @@ Rules:
 
 ## D10 — state fingerprint
 
-P0 must decide whether a deterministic bounded FaceParameter state fingerprint is stable enough for built-in Animation/PSD and synthetic expanded-state fixtures.
+P0 approved a deterministic bounded public-state FaceParameter fingerprint on exact YMM4 4.55.1.1 Lite for:
 
-If proved, store it in the Tachie Preset association and validate it before destructive replacement/removal.
+- built-in Animation;
+- built-in PSD;
+- the synthetic expanded-state modern `ItemProperty[]` editor fixture.
 
-If not proved, do not invent a fragile hash. Freeze a weaker explicit descriptor contract before product implementation.
+For proved bounded candidate routes, store the applied state fingerprint in the Tachie Preset association and validate it before destructive replacement/removal.
+
+The hash must be derived from a canonical bounded public-state projection, never `ToString()`, object identity or private editor state. Treat this as a first-implementation safety check, not proof that arbitrary third-party plugins expose every semantically relevant value through public properties. If a plugin cannot produce a trustworthy bounded state projection, do not promote that route to Strong/manual-edit-safe behavior.
 
 ## D11 — source switching and current state
 

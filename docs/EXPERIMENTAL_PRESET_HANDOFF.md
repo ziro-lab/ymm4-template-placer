@@ -1,6 +1,6 @@
 # Experimental Tachie Preset source — refreshed feature handoff
 
-Status: **REFRESHED ON ACCEPTED v0.4.2 / PRODUCT IMPLEMENTATION NOT STARTED**
+Status: **P0 GREEN ON ACCEPTED v0.4.2 / READY FOR P1 PRODUCT IMPLEMENTATION**
 
 This handoff replaces the pre-performance assumptions of the original PR #19 preparation while retaining the canonical Lab evidence.
 
@@ -40,6 +40,33 @@ The Lab proved useful structural routes for:
 - local containment of a throwing editor.
 
 It does **not** prove every third-party tachie plugin, perceptual correctness, or every product-lifecycle detail.
+
+### P0 product-bridge evidence
+
+Public Lab: `ziro-lab/chat-native-work-lab-001`, Draft PR #62.
+
+Pinned final result:
+
+- source `bfe13c6eb304e70401f5d6ba6d467a1ea4d8e1ca`;
+- run `35619789546`;
+- job `106399676909`;
+- checkout `320ee6f5597925431949de5970d3ec1054717ee6`;
+- tree `080d731d469b5bef3f0ca267503e715e4ddc8bb9`;
+- artifact `10647189723`;
+- artifact SHA256 `b45d7a3fb03d1c9e2b69c23ad284a9c6ee21a6b243f53e1e9d2b7ea32296e208`;
+- marker `PASS_TACHIE_PRESET_PRODUCT_BRIDGE_P0`.
+
+P0 closed the remaining bridge questions on exact YMM4 4.55.1.1 Lite:
+
+- exact current Character -> active Animation/PSD tachie plugin + current CharacterParameter resolution;
+- real public modern `ItemProperty[]` binding using public `ItemProperty(object, object, PropertyInfo, PropertiesCache)` plus public `PropertiesCache()`;
+- deterministic bounded FaceParameter state fingerprints for built-in Animation, built-in PSD and the synthetic expanded-state modern-editor fixture;
+- fresh `TachieFaceItem` retaining the applied fresh FaceParameter state for Animation/PSD;
+- staging PropertyEditor cleanup after success, intentional post-bind failure and cancellation.
+
+Built-in Animation/PSD application used the public legacy `SetBindings(FrameworkElement, object, object, PropertyInfo)` route; the separate modern fixture proved the public `ItemProperty[]` route. No private editor state, UI Automation, arbitrary assembly scan or Timeline mutation was required.
+
+The bounded state fingerprint is approved for the first implementation when used only with a proved bounded candidate route. This is not a claim that every third-party Tachie plugin exposes complete semantic state through public properties.
 
 ## Product surface
 
@@ -186,7 +213,7 @@ A Tachie Preset descriptor should contain:
 - managed group/source version;
 - capability/plugin fingerprint;
 - bounded candidate identity;
-- applied FaceParameter state fingerprint **only if P0 proves a stable bounded fingerprint**.
+- applied bounded FaceParameter state fingerprint for proved candidate routes.
 
 ## Compatibility cache
 
@@ -202,17 +229,17 @@ Fingerprint includes at least:
 
 No persistent learned compatibility database in the first implementation.
 
-## P0 product-bridge questions
+## P0 product-bridge result
 
-Before product implementation, close only these remaining bridge questions against YMM4 4.55.1.1:
+P0 is green and pinned above. Product implementation may proceed without reopening the broad generic capability survey.
 
-1. exact current Character -> active tachie plugin / CharacterParameter resolution route;
-2. public modern `ItemProperty[]` binding construction without assembly-wide scanning/private access;
-3. stable bounded FaceParameter state fingerprint suitable for detecting post-apply/manual changes, or an explicit decision to omit the state hash if stability cannot be proved;
-4. fresh `TachieFaceItem` + applied FaceParameter roundtrip for built-in Animation and PSD;
-5. cancellation/cleanup of staging property-editor controls without lingering bindings.
+The approved product boundary is:
 
-Do not repeat the broad generic capability survey.
+1. exact current Character -> active tachie plugin / current CharacterParameter;
+2. public modern `ItemProperty[]` construction where required, with the public legacy route retained for built-ins that expose it;
+3. bounded deterministic public-state fingerprint for proved candidate routes;
+4. fresh `TachieFaceItem` + fresh applied FaceParameter;
+5. unconditional staging-editor cleanup on success, failure and cancellation.
 
 ## Safety boundary
 

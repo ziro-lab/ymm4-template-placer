@@ -14,7 +14,9 @@ Add one small exact-host bridge experiment proving only:
 4. editor cleanup/cancellation;
 5. bounded deterministic state-fingerprint feasibility.
 
-Exit: P0 markers/artifact recorded in the handoff. If state fingerprint is unstable, update Design D10 before product code.
+Exit: **DONE.** P0 markers/artifact are recorded in the handoff. Design D10 approves the bounded public-state fingerprint for proved candidate routes.
+
+Pinned proof: Lab PR #62 / source `bfe13c6eb304e70401f5d6ba6d467a1ea4d8e1ca` / run `35619789546` / marker `PASS_TACHIE_PRESET_PRODUCT_BRIDGE_P0`.
 
 ## P1 — source-mode foundation
 
