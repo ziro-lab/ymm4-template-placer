@@ -195,7 +195,7 @@ public sealed partial class PlacerViewModel
         expressionPerformance.AssociationItemsParsed += result.AssociationItemsParsed;
         expressionPerformance.CandidateKeyBuilds += result.CandidateKeysBuilt;
         expressionPerformance.LastPrepareMilliseconds = (long)result.PreparationElapsed.TotalMilliseconds;
-        var old = Rows.ToDictionary(x => x.Target.Voice, ReferenceEqualityComparer.Instance);
+        var old = Rows.ToDictionary(x => x.Target.Voice, (IEqualityComparer<VoiceItem>)ReferenceEqualityComparer.Instance);
         var next = new List<AssignmentRow>(result.Rows.Count);
         suppressExpressionApply = true; suppressExpressionRowEvents = true;
         try
@@ -229,7 +229,7 @@ public sealed partial class PlacerViewModel
     {
         if (!UsesRelativeExpressions || timeline == null || voices.Count == 0 || IsExpressionLoading) return;
         if (HasProtectedPendingVoiceWork()) { SetVoiceFreshnessState(ExpressionRowsFreshness.StalePending); return; }
-        var byVoice = Rows.ToDictionary(x => x.Target.Voice, ReferenceEqualityComparer.Instance);
+        var byVoice = Rows.ToDictionary(x => x.Target.Voice, (IEqualityComparer<VoiceItem>)ReferenceEqualityComparer.Instance);
         foreach (var voice in voices)
         {
             if (!byVoice.TryGetValue(voice, out var row)) { RequestExpressionLoad(true); return; }
