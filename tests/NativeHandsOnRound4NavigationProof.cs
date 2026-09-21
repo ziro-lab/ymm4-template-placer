@@ -133,8 +133,19 @@ internal static partial class NativeProof
                     { RoutedEvent = UIElement.PreviewMouseWheelEvent, Source = source };
                 source.RaiseEvent(e); return e;
             }
-            Point InnerWheelPoint() => inner.PointToScreen(new Point(
-                Math.Max(1, inner.ActualWidth / 2), Math.Max(1, inner.ActualHeight / 2)));
+            Point InnerWheelPoint()
+            {
+                for (var y = 6d; y < root.ActualHeight - 6; y += 10)
+                    for (var x = 6d; x < root.ActualWidth - 6; x += 12)
+                    {
+                        var point = new Point(x, y);
+                        var hit = root.InputHitTest(point) as DependencyObject;
+                        if (hit == null) continue;
+                        for (var current = hit; current != null && !ReferenceEquals(current, root); current = TimelinePointerIntentClassifier.Parent(current))
+                            if (ReferenceEquals(current, inner)) return root.PointToScreen(point);
+                    }
+                throw new InvalidOperationException("R4-A visible inner wheel point not found");
+            }
             Point OuterWheelPoint()
             {
                 for (var y = 8d; y < root.ActualHeight - 8; y += 12)
