@@ -103,10 +103,10 @@ public sealed partial class PlacerViewModel
         }
         else
         {
-            session.SelectedItemContext = session.ItemContexts.FirstOrDefault(x => x.IsCurrentSelection);
             var set = session.Palettes.SingleOrDefault(x => x.Id == selected.Id) ?? throw new InvalidOperationException("下書きではこのSetを削除済みです。");
-            if (!session.VisiblePalettes.Cast<IntentPaletteDraft>().Contains(set)) session.ShowAllSets = true;
-            session.SelectedPalette = set; set.SelectedEntry = set.Entries.SingleOrDefault(x => x.LibraryEntryId == entryId);
+            session.SelectedItemContext = session.ContextForPalette(set);
+            session.SelectedPalette = set;
+            set.SelectedEntry = set.Entries.SingleOrDefault(x => x.LibraryEntryId == entryId);
         }
         IntentSettingsRequested?.Invoke(this, EventArgs.Empty);
     }
