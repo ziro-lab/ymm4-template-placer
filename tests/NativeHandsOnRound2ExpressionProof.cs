@@ -82,9 +82,14 @@ internal static partial class NativeProof
 
             vm.ResetIntentSettings(); session = vm.IntentSettings!; var exact = session.Palettes.Single(x => x.Id == expression.Id); exact.Name = "表情（未保存）";
             var beforeBlocked = Signature(timeline);
+            view.VoiceGrid.ScrollIntoView(row); view.VoiceGrid.UpdateLayout(); await Idle();
+            container = (DataGridRow)view.VoiceGrid.ItemContainerGenerator.ContainerFromItem(row);
+            combo = Descendant<ComboBox>(container)!;
             combo.SelectedItem = row.Choices.Single(x => x.Template?.Name == sourceA.Name); await Idle();
+            var blockedAssociation = ManagedIntentExpressionReader.Read(timeline, voice);
+            Log($"R2-E dirty admission trace: hasChanges={session.HasChanges}; hasError={vm.HasError}; selected={row.SelectedChoice.Template?.Name}; status={vm.Status}; timelineEntry={blockedAssociation.Bundle?.Descriptor.Entry}; expectedEntry={lb.Id}; timelineSame={Signature(timeline) == beforeBlocked}");
             Assert(vm.HasError && row.SelectedChoice.Template?.Name == sourceB.Name && vm.Status.Contains("この表情Set", StringComparison.Ordinal) && vm.Status.Contains("表情（未保存）", StringComparison.Ordinal) &&
-                Signature(timeline) == beforeBlocked && ManagedIntentExpressionReader.Read(timeline, voice).Bundle?.Descriptor.Entry == lb.Id,
+                Signature(timeline) == beforeBlocked && blockedAssociation.Bundle?.Descriptor.Entry == lb.Id,
                 "R2-E G3/G4/G8 exact dirty Set blocks before mutation with affected Set name and zero writes");
 
             vm.ResetIntentSettings(); session = vm.IntentSettings!; session.Palettes.Single(x => x.Id == unrelated.Id).Name = "別Setだけ編集中";
@@ -108,7 +113,10 @@ internal static partial class NativeProof
             Assert(Signature(timeline) == beforeImport && vm.ShowExpressionBatchPlace && view.PlaceButton.IsVisible && view.PlaceButton.IsEnabled,
                 "R2-E F10 imported pending batch is zero-write and reveals the batch Place action only while pending");
             await ClickPlace(view); await Idle();
-            Assert(!vm.HasError && ManagedIntentExpressionReader.Read(timeline, voice).Bundle?.Descriptor.Entry == lb.Id && !vm.ShowExpressionBatchPlace,
+            var postBatchRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
+            var postBatchAssociation = ManagedIntentExpressionReader.Read(timeline, voice);
+            Log($"R2-E F10 perf trace: error={vm.HasError}; pending={vm.PendingRelativeExpressionCount}; showPlace={vm.ShowExpressionBatchPlace}; match={postBatchRow.AssociationMatchesSelection}; selected={postBatchRow.SelectedChoice.Template?.IntentSource?.Entry.LibraryEntryId}; live={postBatchAssociation.Bundle?.Descriptor.Entry}; loading={vm.IsExpressionLoading}; status={vm.Status}");
+            Assert(!vm.HasError && postBatchAssociation.Bundle?.Descriptor.Entry == lb.Id && !vm.ShowExpressionBatchPlace,
                 "R2-E F10 pending batch commits through the retained exact backend then hides Place again");
 
             var ids = Enumerable.Range(1, 13).Select(x => $"F{x}").Concat(Enumerable.Range(1, 8).Select(x => $"G{x}")).ToArray();

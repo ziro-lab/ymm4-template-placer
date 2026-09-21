@@ -9,6 +9,22 @@ using YukkuriMovieMaker.UndoRedo;
 namespace Ymm4TemplatePlacer;
 internal static partial class NativeProof
 {
+    private static async Task EnsureResumeExpressionRows(PlacerViewModel vm, PlacerView view)
+    {
+        ShowTask(view, "expression"); await Idle();
+        if (!vm.UsesRelativeExpressions)
+        {
+            // The hidden compatibility workspace is intentionally outside the new async
+            // current-workspace path, but its historical resume proof still needs rows.
+            vm.RefreshExpressionSynchronously(false); await Idle(); return;
+        }
+        for (var i = 0; i < 200 && (vm.IsExpressionLoading || vm.Rows.Count == 0); i++)
+        {
+            await Task.Delay(10); await Idle();
+        }
+        Assert(!vm.IsExpressionLoading && vm.Rows.Count > 0,
+            "WUX8 expression rows are explicitly loaded before a resume assertion that requires them");
+    }
     private static async Task VerifyResumeContinuity(Timeline timeline, UndoRedoManager undo)
     {
         stage = "WUX8 resume continuity";
@@ -85,15 +101,20 @@ internal static partial class NativeProof
 
         // If a target changes while the Tool is suspended, do not guess or restore its old assignment.
         vm.CloseTemplateManagementCommand.Execute(null); vm.CancelAddTemplateCommand.Execute(null);
+        view = View ?? throw new InvalidOperationException("WUX8 second reopened View missing.");
+        await EnsureResumeExpressionRows(vm, view);
         var changedRow = vm.Rows.First(x => x.HasCandidates); var changedChoice = changedRow.Choices.First(x => x.Template != null);
         changedRow.SelectedChoice = changedChoice; var voice = changedRow.Target.Voice; var originalSerif = voice.Serif;
         settingsBytes = File.ReadAllBytes(PlacerSettingsStore.DefaultPath);
         await SetToolVisible(root, false); voice.Serif = (originalSerif ?? "") + " / changed while suspended"; var changedSignature = Signature(timeline);
         await SetToolVisible(root, true); await Idle();
         vm = ViewModel ?? throw new InvalidOperationException("WUX8 changed-target reopened ViewModel missing.");
+        view = View ?? throw new InvalidOperationException("WUX8 changed-target reopened View missing.");
+        var partialResumeStatus = vm.Status;
+        await EnsureResumeExpressionRows(vm, view);
         var currentRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
-        Assert(currentRow.SelectedChoice.Template == null && vm.Status.Contains("一部を復元できません", StringComparison.Ordinal) &&
-            vm.Status.Contains("推測せず", StringComparison.Ordinal),
+        Assert(currentRow.SelectedChoice.Template == null && partialResumeStatus.Contains("一部を復元できません", StringComparison.Ordinal) &&
+            partialResumeStatus.Contains("推測せず", StringComparison.Ordinal),
             "WUX8 changed Voice is not guessed back into an old assignment and the partial resume is truthful");
         Assert(Signature(timeline) == changedSignature && File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(settingsBytes),
             "WUX8 rejected stale resume does not mutate Timeline or settings");

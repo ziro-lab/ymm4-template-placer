@@ -56,8 +56,11 @@ internal static partial class NativeProof
             await InvokeSelectionButton(panel.AddSourcesButton);
             Assert(draft.Entries.Count == 2 && draft.Entries.Single(x => x.Name == "Bundle").UseTemplateDuration,
                 "R11 one bulk action includes singleton and multi-item templates with bundle duration preserved");
+            var r11Disk = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
+            var r11ActiveTask = typeof(PlacerViewModel).GetField("activeTask", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm);
+            Log($"R11 autosave trace: timelineSame={Signature(timeline) == signature}; baselineSame={JsonSerializer.Serialize(fixture) == baseline}; diskSets={r11Disk.IntentPalettes.Count}; diskEntries={(r11Disk.IntentPalettes.Count == 1 ? r11Disk.IntentPalettes[0].Entries.Count : -1)}; activeTask={r11ActiveTask}; commitNotice={vm.SettingsCommitNotice}");
             Assert(Signature(timeline) == signature && JsonSerializer.Serialize(fixture) == baseline &&
-                new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().IntentPalettes.Single().Entries.Count == 2,
+                r11Disk.IntentPalettes.Single().Entries.Count == 2,
                 "R11/R4 valid bulk edits persist automatically; the opening snapshot, Timeline and original templates are not mutated");
             var first = draft.Entries[0]; draft.SelectedEntry = first; session.MoveEntry(1);
             Assert(ReferenceEquals(draft.Entries[1], first), "R11 explicit user entry order is represented without automatic sorting");

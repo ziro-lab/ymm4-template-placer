@@ -30,20 +30,40 @@ internal static partial class NativeProof
         timeline.Items = timeline.Items.Remove(third); await Idle();
         Round3Assert(added && vm.Rows.Count == 2 && !vm.Rows.Any(x => ReferenceEquals(x.Target.Voice, third)), "E2", "native Voice collection add/remove automatically rebuilds the current Rows");
         var fieldChecks = true;
-        foreach (Action edit in new Action[] { () => voice.Frame++, () => voice.Length++, () => voice.Layer++,
-            () => voice.Serif = "edited", () => voice.Character = new Character { Name = "R3 Freshness other" } })
+        var trackedRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
+        foreach (Action edit in new Action[] { () => voice.Frame++, () => voice.Length++, () => voice.Layer++, () => voice.Serif = "edited" })
         {
-            var count = vm.AutomaticVoiceRebuildCount; edit(); await Idle();
-            var snapshot = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice)).Target;
-            fieldChecks &= vm.AutomaticVoiceRebuildCount == count + 1 && snapshot.Frame == voice.Frame && snapshot.Length == voice.Length &&
+            var beforePerf = vm.ExpressionPerformance; var rebuildsBefore = vm.AutomaticVoiceRebuildCount;
+            edit(); await Idle();
+            var currentRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
+            var snapshot = currentRow.Target; var afterPerf = vm.ExpressionPerformance;
+            fieldChecks &= ReferenceEquals(currentRow, trackedRow) &&
+                afterPerf.IncrementalVoiceReconciles == beforePerf.IncrementalVoiceReconciles + 1 &&
+                afterPerf.FullRowPublishes == beforePerf.FullRowPublishes &&
+                vm.AutomaticVoiceRebuildCount == rebuildsBefore &&
+                snapshot.Frame == voice.Frame && snapshot.Length == voice.Length &&
                 snapshot.Layer == voice.Layer && snapshot.Character == voice.CharacterName && snapshot.Serif == voice.Serif;
         }
+        var fullBefore = vm.ExpressionPerformance; voice.Character = new Character { Name = "R3 Freshness other" }; await Idle();
+        for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
+        var characterRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
+        var fullAfter = vm.ExpressionPerformance;
+        fieldChecks &= fullAfter.HostCaptures == fullBefore.HostCaptures + 1 &&
+            fullAfter.FullRowPublishes == fullBefore.FullRowPublishes &&
+            fullAfter.BatchCollectionPublishes == fullBefore.BatchCollectionPublishes &&
+            ReferenceEquals(characterRow, trackedRow) &&
+            characterRow.Target.Character == voice.CharacterName;
         voice.Character = character; await Idle();
+        for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
         // A different Voice with identical value fields must still replace its snapshot by reference identity.
+        fullBefore = vm.ExpressionPerformance;
         var replacement = new VoiceItem(character) { Frame = second.Frame, Length = second.Length, Layer = second.Layer, Serif = second.Serif };
         timeline.Items = timeline.Items.Replace(second, replacement); await Idle();
-        fieldChecks &= vm.Rows.Any(x => ReferenceEquals(x.Target.Voice, replacement)) && !vm.Rows.Any(x => ReferenceEquals(x.Target.Voice, second));
-        Round3Assert(fieldChecks, "E3", "Frame/Length/Layer/Serif/Character and reference-identity changes all refresh the exact current Voice snapshot");
+        for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
+        fullAfter = vm.ExpressionPerformance;
+        fieldChecks &= fullAfter.HostCaptures == fullBefore.HostCaptures + 1 &&
+            vm.Rows.Any(x => ReferenceEquals(x.Target.Voice, replacement)) && !vm.Rows.Any(x => ReferenceEquals(x.Target.Voice, second));
+        Round3Assert(fieldChecks, "E3", "Frame/Length/Layer/Serif update only the dirty Voice; Character changes reconcile in place and reference-identity changes use one exact full capture");
         var rows = vm.Rows.ToArray(); var rebuilds = vm.AutomaticVoiceRebuildCount;
         var row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
         await SelectInDropdown(view, row, "R3E/expression"); await Idle();
@@ -56,12 +76,15 @@ internal static partial class NativeProof
         for (var i = 0; i < 20; i++) vm.RequestVoiceFreshnessCheck();
         await Idle(); await Task.Delay(80); await Idle();
         Round3Assert(rows.SequenceEqual(vm.Rows) && vm.AutomaticVoiceRebuildCount == rebuilds, "E5", "unchanged signatures and idle time never rebuild Rows");
-        var checks = vm.VoiceFreshnessCheckCount;
+        var checks = vm.VoiceFreshnessCheckCount; var perfBeforeBurst = vm.ExpressionPerformance;
         voice.Frame++; voice.Length++; voice.Layer++; voice.Serif = "burst";
         for (var i = 0; i < 20; i++) vm.RequestVoiceFreshnessCheck();
         await Idle();
-        Round3Assert(vm.AutomaticVoiceRebuildCount == rebuilds + 1 && vm.VoiceFreshnessCheckCount == checks + 1,
-            "E6", "same-turn Voice notifications coalesce to exactly one signature check and rebuild");
+        var perfAfterBurst = vm.ExpressionPerformance;
+        Round3Assert(vm.AutomaticVoiceRebuildCount == rebuilds && vm.VoiceFreshnessCheckCount == checks + 1 &&
+            perfAfterBurst.IncrementalVoiceReconciles == perfBeforeBurst.IncrementalVoiceReconciles + 1 &&
+            perfAfterBurst.FullRowPublishes == perfBeforeBurst.FullRowPublishes,
+            "E6", "same-turn Voice notifications coalesce to one freshness check and one dirty-Voice update without a full Rows rebuild");
         // Bounded test fixture injection into our own coordinator, never product reflection or a private host field.
         var timelineField = typeof(PlacerViewModel).GetField("timeline", BindingFlags.Instance | BindingFlags.NonPublic)!;
         DumpType(typeof(Timeline));
@@ -71,9 +94,11 @@ internal static partial class NativeProof
         var rebound = false;
         try
         {
-            timelineField.SetValue(vm, alternate); vm.RebindVoiceFreshness(); await Idle();
+            timelineField.SetValue(vm, alternate); vm.RebindVoiceFreshness(); vm.RequestExpressionLoad(true); await Idle();
+            for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
             checks = vm.VoiceFreshnessCheckCount; voice.Serif = "detached old Voice"; await Idle();
-            rebound = ReferenceEquals(vm.WatchedVoiceTimeline, alternate) && vm.WatchedVoiceCount == 1 && vm.VoiceFreshnessCheckCount == checks;
+            rebound = !vm.IsExpressionLoading && ReferenceEquals(vm.WatchedVoiceTimeline, alternate) &&
+                vm.WatchedVoiceCount == 1 && vm.VoiceFreshnessCheckCount == checks && vm.Rows.Count == 1;
             alternateVoice.Frame++; await Idle(); rebound &= vm.Rows.Single().Frame == alternateVoice.Frame;
         }
         finally { timelineField.SetValue(vm, timeline); vm.RebindVoiceFreshness(); vm.Refresh(); }
@@ -82,8 +107,11 @@ internal static partial class NativeProof
         Round3Assert(rebound && ReferenceEquals(vm.WatchedVoiceTimeline, timeline) && vm.WatchedVoiceCount == 2,
             "E7", "Timeline replacement detaches old Voice events; repeated visible lifecycle retains exactly the current subscriptions");
         view.PaletteTab.IsSelected = true; await Idle(); checks = vm.VoiceFreshnessCheckCount;
+        var capturesBeforeReentry = vm.ExpressionPerformance.HostCaptures;
         view.ExpressionTab.IsSelected = true; await Idle();
-        Round3Assert(vm.VoiceFreshnessCheckCount == checks + 1, "E8", "entering the expression task explicitly checks freshness even without a property notification");
+        for (var wait = 0; wait < 200 && vm.IsExpressionLoading; wait++) { await Task.Delay(10); await Idle(); }
+        Round3Assert(vm.ExpressionPerformance.HostCaptures == capturesBeforeReentry + 1 && vm.VoiceFreshnessCheckCount == checks,
+            "E8", "entering the expression task performs one current host snapshot without reviving the old global freshness scan");
         var workbook = Path.Combine(output, "round3-pending.xlsx");
         vm.ExportTo(workbook); EditCell(workbook, "F2", "R3E/expression");
         var before = Signature(timeline); vm.ImportFrom(workbook); await Idle();

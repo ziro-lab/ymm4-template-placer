@@ -16,16 +16,18 @@ public sealed partial class PlacerViewModel
     public void SetActiveTask(string task)
     {
         var changed = activeTask != task;
+        var previous = activeTask;
         if (changed)
         {
-            if (activeTask == "intent-settings") FinishSettingsSession();
+            if (previous == "intent-settings") FinishSettingsSession();
+            if (previous == "expression" && task != "expression") LeaveExpressionTask();
             if (task != "expression") { CancelExpressionNavigation(); CloseExpressionTrialSession(); }
             activeTask = task;
             if (!HasError && !keepPartialStatus) Status = "";
         }
         if (changed && task == "intent-settings") { BeginIntentSettings(); RequestSettingsAutoCommit(); }
         SetSelectionPreviewActive(task == "selection");
-        SetVoiceFreshnessActive(task.Length > 0);
-        if (changed && task == "expression") RequestVoiceFreshnessCheck();
+        SetVoiceFreshnessActive(task == "expression");
+        if (changed && task == "expression") EnterExpressionTask();
     }
 }

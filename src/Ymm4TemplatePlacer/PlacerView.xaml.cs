@@ -224,7 +224,7 @@ public partial class PlacerView : UserControl
     }
     private void ViewModelChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PlacerViewModel.SceneName)) { SynchronizeTask(); observedViewModel?.RefreshExpressionVocabulary(); }
+        if (e.PropertyName == nameof(PlacerViewModel.SceneName)) SynchronizeTask();
         if (e.PropertyName == nameof(PlacerViewModel.UseLegacyWorkspace)) RefreshWorkspaceSurface();
         if (e.PropertyName is nameof(PlacerViewModel.IsAddingTemplate) or nameof(PlacerViewModel.IsManagingTemplates)) SynchronizeTask();
     }
