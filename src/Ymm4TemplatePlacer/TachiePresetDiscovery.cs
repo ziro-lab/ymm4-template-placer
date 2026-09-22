@@ -8,57 +8,100 @@ internal static class TachiePresetDiscovery
 {
     private sealed record AppliedState(string? Before, string? After);
 
-    public static async Task<TachiePresetCapabilityResult> DiscoverAsync(TachiePresetProbeTarget target,
-        TachiePresetCapabilityDiagnostics diagnostics, Action ensureCurrent, CancellationToken token)
+    public static async Task<TachiePresetCapabilityResult> DiscoverAsync(
+        TachiePresetProbeTarget target,
+        TachiePresetCapabilityDiagnostics diagnostics,
+        Action ensureCurrent,
+        CancellationToken token,
+        TachiePresetRouteDescriptor? learnedRoute = null)
     {
         TachiePresetPublicState.RequireUiThread();
         ensureCurrent();
         var sample = target.CreateFreshFace(token);
         var result = new List<TachiePresetCandidateDescriptor>();
-        var direct = sample.GetType().GetProperty("Preset", BindingFlags.Instance | BindingFlags.Public);
-        if (direct?.PropertyType == typeof(string) && direct.GetMethod?.IsPublic == true &&
-            direct.SetMethod?.IsPublic == true && direct.GetIndexParameters().Length == 0)
+
+        async Task<bool> AddEditorRouteAsync(TachiePresetEditorRoute route)
         {
-            var names = DirectNames(target.Configuration, token);
-            var route = new TachiePresetRouteDescriptor(TachiePresetRouteKind.DirectNamedProperty,
-                direct.DeclaringType?.FullName + "." + direct.Name);
+            string[] names;
+            try
+            {
+                using var editor = TachiePresetEditorSession.Open(
+                    route, target.Configuration, target.CreateFreshFace(token), diagnostics);
+                await editor.SettleAsync(ensureCurrent, token);
+                names = editor.Choices(token).Select(c => c.Label).Distinct(StringComparer.Ordinal).ToArray();
+            }
+            catch (OperationCanceledException) { throw; }
+            catch { return false; }
+            if (names.Length == 0) return false;
+
+            var added = 0;
             foreach (var name in names)
             {
                 ensureCurrent();
-                await Dispatcher.Yield(DispatcherPriority.Background);
-                ensureCurrent();
                 var (first, second) = FreshPair(target, token);
-                AppliedState Apply(object face)
-                {
-                    var before = TachiePresetPublicState.TryHash(face, token);
-                    direct.SetValue(face, name);
-                    token.ThrowIfCancellationRequested();
-                    if (!Equals(direct.GetValue(face), name))
-                        throw new InvalidOperationException("プリセット名の適用を確認できませんでした。");
-                    return new(before, TachiePresetPublicState.TryHash(face, token));
-                }
-                Add(result, target, route, name, Confidence(Apply(first), Apply(second)));
+                AppliedState? firstState = null;
+                AppliedState? secondState = null;
+                try { firstState = await ApplyEditorAsync(route, target.Configuration, first, name, diagnostics, ensureCurrent, token); }
+                catch (OperationCanceledException) { throw; }
+                catch { }
+                try { secondState = await ApplyEditorAsync(route, target.Configuration, second, name, diagnostics, ensureCurrent, token); }
+                catch (OperationCanceledException) { throw; }
+                catch { }
+                if (firstState == null && secondState == null) continue;
+                var level = firstState != null && secondState != null
+                    ? Confidence(firstState, secondState)
+                    : TachiePresetCapabilityLevel.Experimental;
+                Add(result, target, route.Descriptor, name, level);
+                added++;
             }
+            return added > 0;
+        }
+
+        if (learnedRoute != null)
+        {
+            var learnedMatches = TachiePresetEditorSession.FindCalibrationRoutes(sample)
+                .Where(x => x.Descriptor == learnedRoute).Take(2).ToArray();
+            if (learnedMatches.Length == 1 && await AddEditorRouteAsync(learnedMatches[0]))
+            {
+                ensureCurrent();
+                if (!target.IsCurrent(token)) throw new OperationCanceledException("立ち絵設定が変わりました。", token);
+                return TachiePresetCapabilityResult.Supported(target.Fingerprint, result);
+            }
+            result.Clear();
         }
 
         foreach (var route in TachiePresetEditorSession.FindRoutes(sample))
+            await AddEditorRouteAsync(route);
+
+        if (result.Count == 0)
         {
-            ensureCurrent();
-            string[] names;
-            using (var editor = TachiePresetEditorSession.Open(route, target.Configuration, target.CreateFreshFace(token), diagnostics))
+            var direct = sample.GetType().GetProperty("Preset", BindingFlags.Instance | BindingFlags.Public);
+            if (direct?.PropertyType == typeof(string) && direct.GetMethod?.IsPublic == true &&
+                direct.SetMethod?.IsPublic == true && direct.GetIndexParameters().Length == 0)
             {
-                await editor.SettleAsync(ensureCurrent, token);
-                names = editor.Choices(token).Select(c => c.Label).ToArray();
-            }
-            foreach (var name in names)
-            {
-                ensureCurrent();
-                var (first, second) = FreshPair(target, token);
-                var firstState = await ApplyEditorAsync(route, target.Configuration, first, name, diagnostics, ensureCurrent, token);
-                var secondState = await ApplyEditorAsync(route, target.Configuration, second, name, diagnostics, ensureCurrent, token);
-                Add(result, target, route.Descriptor, name, Confidence(firstState, secondState));
+                var names = DirectNames(target.Configuration, token);
+                var route = new TachiePresetRouteDescriptor(TachiePresetRouteKind.DirectNamedProperty,
+                    direct.DeclaringType?.FullName + "." + direct.Name);
+                foreach (var name in names)
+                {
+                    ensureCurrent();
+                    await Dispatcher.Yield(DispatcherPriority.Background);
+                    ensureCurrent();
+                    var (first, second) = FreshPair(target, token);
+                    AppliedState Apply(object face)
+                    {
+                        var before = TachiePresetPublicState.TryHash(face, token);
+                        direct.SetValue(face, name);
+                        token.ThrowIfCancellationRequested();
+                        if (!Equals(direct.GetValue(face), name))
+                            throw new InvalidOperationException("プリセット名の適用を確認できませんでした。");
+                        return new(before, TachiePresetPublicState.TryHash(face, token));
+                    }
+                    Add(result, target, route, name, Confidence(Apply(first), Apply(second)));
+                }
             }
         }
+
         ensureCurrent();
         if (!target.IsCurrent(token)) throw new OperationCanceledException("立ち絵設定が変わりました。", token);
         return TachiePresetCapabilityResult.Supported(target.Fingerprint, result);
@@ -149,7 +192,7 @@ internal static class TachiePresetDiscovery
                         header = next;
                         hasBody = false;
                     }
-                    else if (header != null && line.Contains('=')) hasBody = true;
+                    else if (header != null && line.Length != 0) hasBody = true;
                 }
                 if (header != null && hasBody) AddName(names, header);
             }
