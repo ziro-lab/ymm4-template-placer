@@ -21,6 +21,44 @@ Goal:
 
 Do not repeat completed generic-preset research.
 
+## Portable settings storage — high priority candidate
+
+Status: **HIGH PRIORITY / DESIGN NEXT**
+
+User problem:
+
+YMM4 can be kept as a lightweight portable folder, but Template Placer currently stores `settings-v04.json` under `%LOCALAPPDATA%/Ymm4TemplatePlacer/`. Copying the YMM4 folder therefore does not carry Template Placer Sets, tile presentation, position shortcuts and other plugin settings with it.
+
+Desired direction:
+
+- make Template Placer settings travel with the YMM4 folder;
+- preferred candidate: `<YMM4>/user/plugin/Ymm4TemplatePlacer/Data/settings-v04.json`;
+- keep the existing protected settings-store guarantees: schema validation, 1 MiB guard, digest/external-change protection, cross-instance lock and atomic replacement;
+- preserve the current stable plugin install root.
+
+Host evidence:
+
+- public Lab Draft PR #85, experiment `ymm4-ymme-update-preservation`;
+- native YMM4 4.55.1.1 Lite run #6 passed the real `.ymme` v1 -> v2 update path;
+- user-created files under the plugin folder, including nested `Data/` files, survived the update;
+- a sibling data file under `<YMM4>/user/` also survived;
+- package-owned files with matching paths were replaced by v2;
+- package files omitted from v2 were not automatically removed.
+
+Migration direction:
+
+1. if the new portable settings file exists, load it;
+2. otherwise, if the old `%LOCALAPPDATA%` settings file exists, validate/read it and migrate safely to the portable location;
+3. do not delete the old file automatically during the first migration;
+4. never choose between two divergent valid files silently — surface the conflict and preserve both;
+5. migration must not weaken the existing fail-closed settings behavior.
+
+Packaging caution:
+
+Because the observed `.ymme` updater preserves files that are omitted from a later package, future package-layout changes must explicitly account for stale plugin files. Do not rely on update installation to clean old files automatically.
+
+This portability work is independent from placement semantics and should not broaden the active placement feature PR.
+
 ## UI polish — active preparation
 
 Status: **ACTIVE — UI Micro Polish prep**
