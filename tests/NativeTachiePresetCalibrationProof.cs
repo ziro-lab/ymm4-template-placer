@@ -113,10 +113,12 @@ internal static partial class NativeProof
 
             var rowA = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voiceA));
             var rowB = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voiceB));
+            view.ExpressionMaintenance.IsExpanded = true;
+            await Idle();
             Check(!rowA.HasCandidates && !rowB.HasCandidates &&
                 vm.TachiePresetCalibrationCommand.CanExecute(rowA) &&
                 view.TachiePresetCalibrationButton.IsVisible,
-                "unknown non-semantic editor starts with no automatic candidates but exposes one assisted-recognition action");
+                "unknown non-semantic editor starts with no automatic candidates but exposes one assisted-recognition action in Maintenance");
 
             vm.TachiePresetCalibrationCommand.Execute(rowA);
             await Idle();
