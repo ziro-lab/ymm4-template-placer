@@ -8,7 +8,8 @@ public sealed partial class PlacerViewModel
     private TachiePresetCapabilityCoordinator? tachiePresetCoordinator;
     private readonly HashSet<INotifyPropertyChanged> presetContextWatchers = new(ReferenceEqualityComparer.Instance);
     internal Func<Character, TachiePresetProbeTarget> PresetTargetResolver { get; set; } = TachiePresetProbeTarget.Resolve;
-    private TachiePresetCapabilityCoordinator PresetCoordinator => tachiePresetCoordinator ??= new(c => PresetTargetResolver(c));
+    private TachiePresetCapabilityCoordinator PresetCoordinator => tachiePresetCoordinator ??=
+        new(c => PresetTargetResolver(c), target => TachiePresetLearnedAdapterSettings.Resolve(settings, target));
     internal TachiePresetCapabilityDiagnostics PresetCapabilityDiagnostics => tachiePresetCoordinator?.Diagnostics ?? new();
 
     internal void InvalidatePresetCapabilityCache()
