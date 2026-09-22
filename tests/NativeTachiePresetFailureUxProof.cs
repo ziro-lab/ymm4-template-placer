@@ -158,20 +158,24 @@ internal static partial class NativeProof
                 missingRow.SourceNotice.Contains("プラグイン構成が変わった可能性", StringComparison.Ordinal),
                 "managed same-source candidate disappearance is explicit and never healed by label");
 
+            Check(!experimentalRow.SelectedChoice.HasCandidate && experimentalRow.SelectedChoice.IsAvailable,
+                "failed Experimental trial restores the unmanaged row to live Timeline truth instead of retaining a failed candidate selection");
+            var previousExperimentalFingerprints = experimentalRow.Choices.Where(x => x.TachiePreset != null)
+                .Select(x => x.TachiePreset!.Fingerprint).ToHashSet();
             experimentalConfig.PresetDefinitions = "//Neutral\nmood=changed\n//Smile\nmood=changed-smile\n";
             for (var i = 0; i < 120; i++)
             {
                 await Idle();
                 await vm.ExpressionLoadCompletion;
                 experimentalRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, experimentalVoice));
-                if (!experimentalRow.SelectedChoice.IsAvailable) break;
+                if (experimentalRow.Choices.Any(x => x.TachiePreset != null &&
+                    !previousExperimentalFingerprints.Contains(x.TachiePreset.Fingerprint))) break;
                 await Task.Delay(10);
             }
-            Check(!experimentalRow.SelectedChoice.IsAvailable &&
-                experimentalRow.SelectedChoice.Label.Contains("立ち絵設定が変わった可能性", StringComparison.Ordinal) &&
-                experimentalRow.SourceNotice.Contains("同名候補へ自動で置き換えず", StringComparison.Ordinal) &&
-                experimentalRow.Choices.Any(x => x.IsAvailable && x.TachiePreset?.CandidateIdentity == "Smile"),
-                "stale fingerprint keeps the prior choice unavailable even when a same-label new candidate exists");
+            Check(!experimentalRow.SelectedChoice.HasCandidate && experimentalRow.SelectedChoice.IsAvailable &&
+                experimentalRow.Choices.Any(x => x.IsAvailable && x.TachiePreset?.CandidateIdentity == "Smile" &&
+                    !previousExperimentalFingerprints.Contains(x.TachiePreset.Fingerprint)),
+                "configuration change exposes a fresh same-label Experimental candidate without reviving the failed prior selection");
 
             otherRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, otherVoice));
             otherRow.SelectedChoice = otherRow.Choices.Single(x => x.TachiePreset?.CandidateIdentity == "Smile");
