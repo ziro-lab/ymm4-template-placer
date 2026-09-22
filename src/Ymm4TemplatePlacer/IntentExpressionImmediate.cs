@@ -265,7 +265,8 @@ public sealed partial class PlacerViewModel
             if (mutation.Plan.ChangeCount != 0)
             {
                 expressionTrialSession.Begin(current, undo, row.Target.Voice);
-                var changed = expressionTrialSession.ExecuteOwned(() => mutation.CommitWithinOpenRecord(current, settings));
+                var changed = expressionTrialSession.ExecuteOwned(() =>
+                    ExecuteOwnedExpressionTimelineMutation(() => mutation.CommitWithinOpenRecord(current, settings)));
                 HasError = false; Status = row.SelectedChoice.Template == null ? "この音声の関連表情を外しました。" : $"「{row.SelectedChoice.DisplayName}」を即時反映しました（{changed}変更）。";
             }
             RestoreExpressionChoiceFromTimeline(row);
