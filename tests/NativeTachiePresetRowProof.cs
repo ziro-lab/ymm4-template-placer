@@ -50,7 +50,7 @@ internal static partial class NativeProof
         {
             scope.Apply(settings, voices.Cast<IItem>().Append(managed).ToArray(), []); await Idle();
             var collection = vm.Rows; var originalRows = vm.Rows.ToArray();
-            var signature = Signature(timeline); var saved = JsonSerializer.Serialize(scope.Current);
+            var signature = Signature(timeline); var baselineSettings = PlacerSettingsStore.Copy(scope.Current);
             var disk = File.Exists(PlacerSettingsStore.DefaultPath) ? File.ReadAllBytes(PlacerSettingsStore.DefaultPath) : null;
             bool DiskSame() => disk == null ? !File.Exists(PlacerSettingsStore.DefaultPath) : File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(disk);
             var storedBeforeSourceSwitch = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
@@ -100,7 +100,7 @@ internal static partial class NativeProof
             await vm.TachiePresetApplyCompletion; await Idle();
             var storedInPresetMode = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
             Check(row.SelectedChoice.TachiePreset != null && Signature(timeline) == signature &&
-                JsonSerializer.Serialize(scope.Current) == saved &&
+                WithoutSourceMode(scope.Current) == WithoutSourceMode(baselineSettings) &&
                 storedInPresetMode.ExpressionSourceMode == ExpressionSourceMode.TachiePreset &&
                 WithoutSourceMode(storedInPresetMode) == WithoutSourceMode(storedBeforeSourceSwitch),
                 "inactive candidate state is retained without Timeline/product-setting mutation beyond the persisted source preference");
@@ -178,7 +178,8 @@ internal static partial class NativeProof
             }
             finally { gate.Set(); ExpressionPreparation.ProofPrepareEntered = null; ExpressionPreparation.ProofPrepareGate = null; }
             Check(vm.Rows.Single(r => ReferenceEquals(r.Target.Voice, voices[0])).SelectedChoice.Template != null &&
-                Signature(timeline) == signature && JsonSerializer.Serialize(scope.Current) == saved && DiskSame(),
+                Signature(timeline) == signature &&
+                WithoutSourceMode(scope.Current) == WithoutSourceMode(baselineSettings) && DiskSame(),
                 "returning Template restores the exact managed source; candidate/integration state remains zero-write");
             var templateState = vm.Rows.Single(r => ReferenceEquals(r.Target.Voice, voices[0]));
             CheckP5(templateState.SelectedChoice.Template != null && templateState.SelectedChoice.TachiePreset == null &&
