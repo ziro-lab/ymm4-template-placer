@@ -20,7 +20,7 @@ function Assert-RelativeEvidence {
  }
  if (@($Lines | Where-Object { $_ -cmatch '^ASSERT FAIL:|^FAIL(?:\s|$)' }).Count) { throw 'Native failure appears in the proof log' }
  if ($null -eq $Manifest -or $Manifest.schema -cne 'YMM4-Template-Placer-Relative-Acceptance/1' -or
-     $Manifest.version -cne '0.4.2' -or $Manifest.result -cne 'PASS' -or $Manifest.host -cne 'YMM4 4.55.1.1 Lite') {
+     $Manifest.version -cne '0.5.0' -or $Manifest.result -cne 'PASS' -or $Manifest.host -cne 'YMM4 4.55.1.1 Lite') {
   throw 'Relative acceptance identity/version/result/host mismatch'
  }
  if (@($Manifest.checks).Count -ne 21 -or @($Manifest.checks | Where-Object { $_.result -cne 'PASS' -or
@@ -31,14 +31,14 @@ function Assert-RelativeEvidence {
   throw 'Relative manifest stage contract is incomplete'
  }
  if ($null -eq $UiuxManifest -or $UiuxManifest.schema -cne 'YMM4-Template-Placer-Relative-UIUX/1' -or
-     $UiuxManifest.version -cne '0.4.2' -or $UiuxManifest.result -cne 'PASS' -or $UiuxManifest.host -cne 'YMM4 4.55.1.1 Lite') {
+     $UiuxManifest.version -cne '0.5.0' -or $UiuxManifest.result -cne 'PASS' -or $UiuxManifest.host -cne 'YMM4 4.55.1.1 Lite') {
   throw 'Relative UI/UX acceptance identity/version/result/host mismatch'
  }
  if (@($UiuxManifest.checks).Count -ne 10 -or @($UiuxManifest.checks | Where-Object { $_.result -cne 'PASS' -or
      [string]::IsNullOrWhiteSpace($_.requirement) -or [string]::IsNullOrWhiteSpace($_.evidence) }).Count) { throw 'Incomplete relative UI/UX acceptance checks' }
  if ((@($UiuxManifest.checks.id | Sort-Object) -join ',') -cne ((1..10) -join ',')) { throw 'Relative UI/UX acceptance IDs missing or duplicated' }
  if ($null -eq $HandsOnManifest -or $HandsOnManifest.schema -cne 'YMM4-Template-Placer-Hands-On-UX-Polish/1' -or
-     $HandsOnManifest.version -cne '0.4.2' -or $HandsOnManifest.result -cne 'PASS' -or $HandsOnManifest.host -cne 'YMM4 4.55.1.1 Lite') {
+     $HandsOnManifest.version -cne '0.5.0' -or $HandsOnManifest.result -cne 'PASS' -or $HandsOnManifest.host -cne 'YMM4 4.55.1.1 Lite') {
   throw 'Hands-on UX polish identity/version/result/host mismatch'
  }
  if (@($HandsOnManifest.checks).Count -ne $handsOnIds.Count -or @($HandsOnManifest.checks | Where-Object {
@@ -49,7 +49,7 @@ function Assert-RelativeEvidence {
   throw 'Hands-on UX polish IDs missing or duplicated'
  }
  if ($null -eq $Round2Manifest -or $Round2Manifest.schema -cne 'YMM4-Template-Placer-Hands-On-Round2/1' -or
-     $Round2Manifest.version -cne '0.4.2' -or $Round2Manifest.result -cne 'PASS' -or $Round2Manifest.host -cne 'YMM4 4.55.1.1 Lite') {
+     $Round2Manifest.version -cne '0.5.0' -or $Round2Manifest.result -cne 'PASS' -or $Round2Manifest.host -cne 'YMM4 4.55.1.1 Lite') {
   throw 'Hands-on Round 2 identity/version/result/host mismatch'
  }
  if (@($Round2Manifest.checks).Count -ne $round2Ids.Count -or @($Round2Manifest.checks | Where-Object {
