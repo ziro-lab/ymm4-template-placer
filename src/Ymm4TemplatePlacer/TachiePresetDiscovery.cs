@@ -120,7 +120,7 @@ internal static class TachiePresetDiscovery
         return applied with { After = applied.After != null && applied.After == retained ? retained : null };
     }
 
-    private static IReadOnlyList<string> DirectNames(object configuration, CancellationToken token)
+    internal static IReadOnlyList<string> DirectNames(object configuration, CancellationToken token)
     {
         var sources = new List<IReadOnlyList<string>>();
         foreach (var property in configuration.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))

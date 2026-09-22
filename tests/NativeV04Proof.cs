@@ -20,6 +20,7 @@ internal static partial class NativeProof
         await VerifyTachiePresetGuards(timeline);
         await VerifyTachiePresetRowIntegration(timeline, undo);
         await VerifyTachiePresetAssociationSeam(timeline, undo);
+        await VerifyTachiePresetMutationPlanning(timeline, undo);
 
         var profile = (Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_NATIVE_PROFILE") ?? "checkpoint").ToLowerInvariant();
         if (profile == "focused")
