@@ -27,6 +27,19 @@ public sealed class PresetDraft : Bindable
     public string AbsoluteLayer { get => absoluteLayer; set => Set(ref absoluteLayer, value); }
     public LayerSearchMode OccupiedBehavior { get => occupiedBehavior; set => Set(ref occupiedBehavior, value); }
 
+    // Compatibility aliases for the retained legacy expression batch path and its native proof.
+    // New UI uses LayerMode/AbsoluteLayer directly.
+    public bool UseTemplateLayer
+    {
+        get => LayerMode == ExpressionLayerMode.VoiceSet;
+        set
+        {
+            if (value) LayerMode = ExpressionLayerMode.VoiceSet;
+            else if (LayerMode == ExpressionLayerMode.VoiceSet) LayerMode = ExpressionLayerMode.Absolute;
+        }
+    }
+    public string Preferred { get => AbsoluteLayer; set => AbsoluteLayer = value; }
+
     private static int Number(string value, string label) =>
         int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result)
             ? result : throw new InvalidOperationException(label + "は整数で入力してください。");
@@ -60,8 +73,9 @@ public sealed class PresetDraft : Bindable
                 Preferred = 15,
                 SearchMode = LayerSearchMode.DoNotPlace
             };
+        var legacyForCompatibility = LayerMode == ExpressionLayerMode.Absolute ? absolute : legacyLayer;
         var preset = new ExpressionPreset(id, Name.Trim(), Duration, Number(MaxGap, "最大間隔"),
-            Number(StartOffset, "開始位置の調整"), Number(EndOffset, "終了位置の調整"), legacyLayer)
+            Number(StartOffset, "開始位置の調整"), Number(EndOffset, "終了位置の調整"), legacyForCompatibility)
         {
             LayerRule = new ExpressionLayerRule
             {
