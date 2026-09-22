@@ -90,7 +90,13 @@ public sealed class PresetDraft : Bindable
 
     public bool Matches(ExpressionPreset preset)
     {
-        try { return Read(preset.Id) == preset; }
+        try
+        {
+            var expected = preset.LayerRule == null
+                ? preset with { LayerRule = ExpressionLayerRule.FromLegacy(preset.Layer) }
+                : preset;
+            return Read(preset.Id) == expected;
+        }
         catch (InvalidOperationException) { return false; }
     }
 
