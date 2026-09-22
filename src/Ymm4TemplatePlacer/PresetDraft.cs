@@ -34,8 +34,19 @@ public sealed class PresetDraft : Bindable
         get => LayerMode == ExpressionLayerMode.VoiceSet;
         set
         {
-            if (value) LayerMode = ExpressionLayerMode.VoiceSet;
-            else if (LayerMode == ExpressionLayerMode.VoiceSet) LayerMode = ExpressionLayerMode.Absolute;
+            if (value)
+            {
+                LayerMode = ExpressionLayerMode.VoiceSet;
+                return;
+            }
+            if (LayerMode == ExpressionLayerMode.VoiceSet)
+            {
+                LayerMode = ExpressionLayerMode.Absolute;
+                // Historical callers used UseTemplateLayer=false to mean the old
+                // preferred/range search. Keep that behavior for compatibility;
+                // the new UI can explicitly choose DoNotPlace/SearchUp/SearchDown.
+                OccupiedBehavior = LayerSearchMode.Legacy;
+            }
         }
     }
     public string Preferred { get => AbsoluteLayer; set => AbsoluteLayer = value; }
