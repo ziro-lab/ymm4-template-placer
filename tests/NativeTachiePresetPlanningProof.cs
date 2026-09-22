@@ -55,10 +55,24 @@ internal static partial class NativeProof
                 PluginRemarks.Append(PlacementEngine.Marker, AssociationTag.SourceLine(serial)),
                 templateTag.Line)
         };
+        var generatedDefaultLayerBlocker = new TextItem
+        {
+            Frame = 100,
+            Length = 100,
+            Layer = 0,
+            Remark = "p7-generated-default-layer-blocker"
+        };
+        var preferredLayerBlocker = new TextItem
+        {
+            Frame = 100,
+            Length = 100,
+            Layer = ExpressionPreset.Default.Layer.Preferred,
+            Remark = "p7-preferred-layer-blocker"
+        };
         var settings = PlacerSettingsStore.Copy(scope.Original);
         settings.ExpressionBootstrapComplete = true;
         settings.LegacyWorkspace = false;
-        scope.Apply(settings, [voice, nextVoice, oldManaged], []);
+        scope.Apply(settings, [voice, nextVoice, oldManaged, generatedDefaultLayerBlocker, preferredLayerBlocker], []);
         await Idle();
 
         var choices = new TemplateChoice[] { new(null, "— 選択しない —"), TemplateChoice.Preset(candidate) };
@@ -105,6 +119,14 @@ internal static partial class NativeProof
         mutation.ValidateCurrent(timeline);
         Check(Signature(timeline) == signature && JsonSerializer.Serialize(scope.Current) == settingsJson && DiskSame(),
             "successful P7 planning and full multi-Voice revalidation are Timeline/settings zero-write");
+
+        var defaultLayerMutation = await TachiePresetExpressionMutation.CreateAsync(
+            timeline, rows, row, ExpressionPreset.Default, candidate, Resolve, 1);
+        Check(defaultLayerMutation.Addition.Layer == ExpressionPreset.Default.Layer.Preferred + 1 &&
+            timeline.Items.Contains(generatedDefaultLayerBlocker) &&
+            timeline.Items.Contains(preferredLayerBlocker) &&
+            Signature(timeline) == signature,
+            "generated preset has no Template layer: occupied constructor-default and preferred layers fall through the bounded ExpressionPreset search");
 
         var experimental = new TachiePresetCandidateDescriptor(
             candidate.Fingerprint, candidate.Route, candidate.CandidateIdentity, candidate.Label,
