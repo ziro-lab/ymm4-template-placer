@@ -1,31 +1,72 @@
 <UserControl x:Class="Ymm4TemplatePlacer.ExpressionPresetPanel"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Ymm4TemplatePlacer">
- <UserControl.Resources><local:ExpressionRangeConverter x:Key="ExpressionRange"/></UserControl.Resources>
+ <UserControl.Resources>
+  <local:ExpressionRangeConverter x:Key="ExpressionRange"/>
+  <local:ExpressionLayerModeVisibilityConverter x:Key="LayerModeVisibility"/>
+ </UserControl.Resources>
  <StackPanel Margin="0,4,0,0">
   <ComboBox x:Name="PresetSelector" ItemsSource="{Binding ExpressionPresets}" DisplayMemberPath="Name"
    SelectedItem="{Binding SelectedExpressionPreset,Mode=TwoWay}" ToolTip="保存した配置条件を切り替えます" Margin="0,0,0,3">
    <ComboBox.Style><Style TargetType="ComboBox"><Style.Triggers><DataTrigger Binding="{Binding ExpressionPresets.Count}" Value="1"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></ComboBox.Style>
   </ComboBox>
   <Expander x:Name="PresetEditor" Header="{Binding SelectedExpressionPreset,Converter={StaticResource ExpressionRange}}" ToolTip="{Binding ExpressionPresetSummary}">
-   <ScrollViewer MaxHeight="90" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+   <ScrollViewer MaxHeight="180" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="4">
-     <DockPanel Margin="0,2"><TextBlock Text="名前" Width="72" VerticalAlignment="Center"/><TextBox Text="{Binding ExpressionDraft.Name,UpdateSourceTrigger=PropertyChanged}"/></DockPanel>
-     <DockPanel Margin="0,2"><TextBlock Text="配置する長さ" Width="72" VerticalAlignment="Center"/>
+     <DockPanel Margin="0,2"><TextBlock Text="名前" Width="86" VerticalAlignment="Center"/><TextBox Text="{Binding ExpressionDraft.Name,UpdateSourceTrigger=PropertyChanged}"/></DockPanel>
+     <DockPanel Margin="0,2"><TextBlock Text="配置する長さ" Width="86" VerticalAlignment="Center"/>
       <ComboBox ItemsSource="{Binding ExpressionDurations}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding ExpressionDraft.Duration,Mode=TwoWay}"/>
      </DockPanel>
      <WrapPanel Margin="0,2">
-      <TextBlock Text="次の音声までの最大間隔（フレーム）" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.MaxGap,UpdateSourceTrigger=PropertyChanged}" Width="55" Margin="0,0,10,0" ToolTip="次の同じキャラクターの音声まで伸ばすときの最大空白フレーム。次の音声が重なっていても短縮しません。"/>
-      <TextBlock Text="開始位置の調整（フレーム）" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.StartOffset,UpdateSourceTrigger=PropertyChanged}" Width="55" Margin="0,0,10,0"/>
-      <TextBlock Text="終了位置の調整（フレーム）" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.EndOffset,UpdateSourceTrigger=PropertyChanged}" Width="55"/>
+      <TextBlock Text="次の音声までの最大間隔" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.MaxGap,UpdateSourceTrigger=PropertyChanged}" Width="55" Margin="0,0,10,0" ToolTip="次の同じキャラクターの音声まで伸ばすときの最大空白フレーム。"/>
+      <TextBlock Text="開始調整" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.StartOffset,UpdateSourceTrigger=PropertyChanged}" Width="55" Margin="0,0,10,0"/>
+      <TextBlock Text="終了調整" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.EndOffset,UpdateSourceTrigger=PropertyChanged}" Width="55"/>
      </WrapPanel>
-     <CheckBox Content="テンプレートのレイヤーをそのまま使う" IsChecked="{Binding ExpressionDraft.UseTemplateLayer}" Margin="0,4"/>
-     <TextBlock Text="オフの場合は、空いているレイヤーをこの範囲から探します。" TextWrapping="Wrap" Opacity="0.75" Margin="0,2,0,4"/>
-     <WrapPanel>
-      <TextBlock Text="最小レイヤー" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.Minimum,UpdateSourceTrigger=PropertyChanged}" Width="48" Margin="0,0,10,0"/>
-      <TextBlock Text="最大レイヤー" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.Maximum,UpdateSourceTrigger=PropertyChanged}" Width="48" Margin="0,0,10,0"/>
-      <TextBlock Text="優先レイヤー" VerticalAlignment="Center" Margin="0,0,4,0"/><TextBox Text="{Binding ExpressionDraft.Preferred,UpdateSourceTrigger=PropertyChanged}" Width="48"/>
-     </WrapPanel>
+
+     <DockPanel Margin="0,5,0,2">
+      <TextBlock Text="レイヤー配置" Width="86" VerticalAlignment="Center"/>
+      <ComboBox ItemsSource="{Binding ExpressionLayerModes}" DisplayMemberPath="Label" SelectedValuePath="Value"
+       SelectedValue="{Binding ExpressionDraft.LayerMode,Mode=TwoWay}"/>
+     </DockPanel>
+
+     <TextBlock Text="通常の表情テンプレートと同じく、そのVoiceで使う表情Setの上下配置を継承します。"
+      TextWrapping="Wrap" Opacity="0.75" Margin="0,2,0,4"
+      Visibility="{Binding ExpressionDraft.LayerMode,Converter={StaticResource LayerModeVisibility},ConverterParameter=VoiceSet}"/>
+
+     <StackPanel Visibility="{Binding ExpressionDraft.LayerMode,Converter={StaticResource LayerModeVisibility},ConverterParameter=Relative}">
+      <WrapPanel Margin="0,2">
+       <TextBlock Text="Voiceの" VerticalAlignment="Center" Margin="0,0,4,0"/>
+       <ComboBox ItemsSource="{Binding IntentDirections}" DisplayMemberPath="Name" SelectedValuePath="Value"
+        SelectedValue="{Binding ExpressionDraft.Direction,Mode=TwoWay}" Width="70" Margin="0,0,6,0"/>
+       <TextBlock Text="へ" VerticalAlignment="Center" Margin="0,0,4,0"/>
+       <TextBox Text="{Binding ExpressionDraft.RelativeOffset,UpdateSourceTrigger=PropertyChanged}" Width="45" Margin="0,0,4,0"/>
+       <TextBlock Text="レイヤー離して配置" VerticalAlignment="Center"/>
+      </WrapPanel>
+      <WrapPanel Margin="0,2">
+       <TextBlock Text="探索範囲" VerticalAlignment="Center" Margin="0,0,4,0"/>
+       <TextBox Text="{Binding ExpressionDraft.Minimum,UpdateSourceTrigger=PropertyChanged}" Width="48"/>
+       <TextBlock Text=" ～ " VerticalAlignment="Center"/>
+       <TextBox Text="{Binding ExpressionDraft.Maximum,UpdateSourceTrigger=PropertyChanged}" Width="48"/>
+       <TextBlock Text="（塞がっていれば同じ方向へ空きを探す）" VerticalAlignment="Center" Margin="6,0,0,0" Opacity="0.75"/>
+      </WrapPanel>
+     </StackPanel>
+
+     <StackPanel Visibility="{Binding ExpressionDraft.LayerMode,Converter={StaticResource LayerModeVisibility},ConverterParameter=Absolute}">
+      <WrapPanel Margin="0,2">
+       <TextBlock Text="レイヤー" VerticalAlignment="Center" Margin="0,0,4,0"/>
+       <TextBox Text="{Binding ExpressionDraft.AbsoluteLayer,UpdateSourceTrigger=PropertyChanged}" Width="50" Margin="0,0,8,0"/>
+       <TextBlock Text="塞がっていたら" VerticalAlignment="Center" Margin="0,0,4,0"/>
+       <ComboBox ItemsSource="{Binding ExpressionLayerBehaviors}" DisplayMemberPath="Name" SelectedValuePath="Value"
+        SelectedValue="{Binding ExpressionDraft.OccupiedBehavior,Mode=TwoWay}" MinWidth="150"/>
+      </WrapPanel>
+      <WrapPanel Margin="0,2">
+       <TextBlock Text="探索範囲" VerticalAlignment="Center" Margin="0,0,4,0"/>
+       <TextBox Text="{Binding ExpressionDraft.Minimum,UpdateSourceTrigger=PropertyChanged}" Width="48"/>
+       <TextBlock Text=" ～ " VerticalAlignment="Center"/>
+       <TextBox Text="{Binding ExpressionDraft.Maximum,UpdateSourceTrigger=PropertyChanged}" Width="48"/>
+      </WrapPanel>
+     </StackPanel>
+
      <WrapPanel Margin="0,6,0,0">
       <Button x:Name="SavePresetButton" Content="保存" Command="{Binding SaveExpressionPresetCommand}" Padding="10,3" Margin="0,0,6,0"/>
       <Button Content="複製" Command="{Binding CopyExpressionPresetCommand}" Padding="10,3" Margin="0,0,6,0"/>
