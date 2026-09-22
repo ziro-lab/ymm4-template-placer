@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using System.Windows;
+using YukkuriMovieMaker.Commons;
 using YukkuriMovieMaker.Plugin.Tachie;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
