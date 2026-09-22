@@ -204,6 +204,7 @@ public sealed partial class PlacerViewModel
         NavigateExpressionRowCommand = new ActionCommand(x => ExpressionRowsMatchSource && x is AssignmentRow row && Rows.Contains(row) && timeline != null &&
             timeline.Items.Contains(row.Target.Voice), x => Guard(() => NavigateExpressionRow((AssignmentRow)x!)));
         OnPropertyChanged(nameof(NavigateExpressionRowCommand));
+        InitializeTachiePresetCalibration();
     }
     private void NavigateExpressionRow(AssignmentRow row) => QueueExpressionNavigation(row);
     internal void SetExpressionRowContext(AssignmentRow? row)
