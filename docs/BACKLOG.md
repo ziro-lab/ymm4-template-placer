@@ -4,6 +4,8 @@ This is the single collection point for **unimplemented or deferred product idea
 
 Being listed here is not implementation approval or priority commitment.
 
+The current post-v0.5 implementation sequence lives in [PRODUCT_ROADMAP.md](PRODUCT_ROADMAP.md). This file provides scope/detail for candidate work; do not infer execution order from section order here.
+
 ## Active
 
 ## Portable settings storage — high priority candidate
