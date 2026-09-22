@@ -8,7 +8,7 @@ Being listed here is not implementation approval or priority commitment.
 
 ### Experimental Tachie Preset source
 
-Status: **ACTIVE PREPARATION — Draft PR #19**
+Status: **PAUSED / NEXT — Draft PR #19**
 
 Use `docs/EXPERIMENTAL_PRESET_HANDOFF.md`.
 
@@ -21,14 +21,189 @@ Goal:
 
 Do not repeat completed generic-preset research.
 
-## Accepted UI polish / known residual
+## Portable settings storage — high priority candidate
 
-The former UI Micro Polish items are implemented in the accepted v0.4.2 baseline (PR #20 / #23) and are no longer backlog implementation work.
+Status: **HIGH PRIORITY / DESIGN NEXT**
 
-Known deferred minor issue:
+User problem:
 
-- continuous wheel rotation while crossing from an inner Settings/list area to outer content can still pause for a few wheel notches before self-recovering;
-- revisit only if it becomes persistent, requires explicit recovery, affects normal controls, or a bounded local fix is proved.
+YMM4 can be kept as a lightweight portable folder, but Template Placer currently stores `settings-v04.json` under `%LOCALAPPDATA%/Ymm4TemplatePlacer/`. Copying the YMM4 folder therefore does not carry Template Placer Sets, tile presentation, position shortcuts and other plugin settings with it.
+
+Desired direction:
+
+- make Template Placer settings travel with the YMM4 folder;
+- preferred candidate: `<YMM4>/user/plugin/Ymm4TemplatePlacer/Data/settings-v04.json`;
+- keep the existing protected settings-store guarantees: schema validation, 1 MiB guard, digest/external-change protection, cross-instance lock and atomic replacement;
+- preserve the current stable plugin install root.
+
+Host evidence:
+
+- public Lab Draft PR #85, experiment `ymm4-ymme-update-preservation`;
+- native YMM4 4.55.1.1 Lite run #6 passed the real `.ymme` v1 -> v2 update path;
+- user-created files under the plugin folder, including nested `Data/` files, survived the update;
+- a sibling data file under `<YMM4>/user/` also survived;
+- package-owned files with matching paths were replaced by v2;
+- package files omitted from v2 were not automatically removed.
+
+Migration direction:
+
+1. if the new portable settings file exists, load it;
+2. otherwise, if the old `%LOCALAPPDATA%` settings file exists, validate/read it and migrate safely to the portable location;
+3. do not delete the old file automatically during the first migration;
+4. never choose between two divergent valid files silently — surface the conflict and preserve both;
+5. migration must not weaken the existing fail-closed settings behavior.
+
+Packaging caution:
+
+Because the observed `.ymme` updater preserves files that are omitted from a later package, future package-layout changes must explicitly account for stale plugin files. Do not rely on update installation to clean old files automatically.
+
+This portability work is independent from placement semantics and should not broaden the active placement feature PR.
+
+## Full Settings Workspace — planned UX direction
+
+Status: **PLANNED / DESIGN CANDIDATE**
+
+User problem:
+
+The current compact Settings surface works for small day-to-day edits, but becomes cramped when Sets and tiles grow. The product needs a larger settings-only workspace that is easy to understand on first use without requiring explanatory documentation.
+
+Core rule:
+
+- keep the current compact Settings UI as-is for ordinary quick edits;
+- the large workspace edits the **same settings model and same staged Settings Draft**;
+- do not create a second settings schema, separate feature set, or alternate persistence path;
+- the large mode changes presentation/navigation only, not what can ultimately be configured.
+
+Primary UX structure:
+
+```text
+left navigation        center structure         right inspector
+Item type          ->  Sets / tiles         ->  selected settings
+```
+
+Suggested roles:
+
+- **Left:** Generic / Voice / Text / Image / Shape / other Item contexts;
+- **Center:** all Sets for the selected context and their tiles, using the same recognizable tile names/colors/shapes as the normal placement surface;
+- **Right:** settings for the currently selected Set or tile.
+
+Discoverability goals:
+
+- the current location should be visually obvious without reading help text;
+- adding a Set should happen beside the Set collection;
+- adding a Template/tile should happen beside that Set's tile collection;
+- selecting an object should reveal its editable properties in the right inspector;
+- avoid a deep TreeView, tab maze, or management menu that hides basic actions.
+
+Search and filtering:
+
+- keep one always-visible search field near the top;
+- search may match Set name, tile alias, source Template name and Character where available;
+- search is supplemental — normal browsing must remain possible without it;
+- begin with a small number of visible filters only, such as Character, expression-candidate status and problem/broken-reference status;
+- active filters must remain visible and easy to clear;
+- filtering must only change what is shown, never mutate organization or settings data.
+
+Progressive disclosure:
+
+- show the frequently used settings directly;
+- keep the existing human-readable `このセットの動き` summary prominent;
+- a small schematic/diagram of target/placement relation may be used if it improves first-look comprehension;
+- advanced numeric/detail controls should be behind **one** bounded disclosure level such as `細かく調整`;
+- avoid nested expanders beyond that where practical.
+
+Management-assist fit:
+
+This workspace is the natural future home for read-only management aids such as:
+
+- broken-reference/problem filtering;
+- "where is this Template used?" usage information;
+- unused/unassigned visibility;
+- Set/tile organization assistance.
+
+These are not required for the first implementation. The first milestone should prove that the **existing settings become easier to find, compare and edit** in the large workspace before adding broader management features.
+
+Safety / architecture:
+
+- reuse the existing staged draft, validation, auto-commit, conflict detection and `今回の変更を戻す` semantics;
+- both compact Settings and the large workspace must converge on the same authoritative settings state;
+- no Timeline mutation belongs in this workspace;
+- no placement engine, Template body ownership or normal product boundary changes are implied.
+
+## UI polish — active preparation
+
+Status: **ACTIVE — UI Micro Polish prep**
+
+### Generic layer controls always visible
+
+Current popup adds one click before a high-frequency operation.
+
+Desired compact header concept:
+
+```text
+汎用・時間配置                         レイヤー操作
+再生位置にテンプレートの長さで配置
+```
+
+Within the existing header height, keep layer target and occupied-layer behavior directly operable.
+
+Desired interaction direction:
+
+- numeric layer target visible without opening a popup;
+- occupied-layer behavior reachable in the same compact region;
+- ideally, when Generic placement is active and no text editor owns input, direct number typing can enter the layer target;
+- Enter applies a valid numeric draft;
+- Esc restores the saved target;
+- do not steal keys from normal text/ComboBox/DataGrid editing or position shortcuts.
+
+This is a UX idea only; exact focus/key admission should be designed later.
+
+
+### Voice row-height drag
+
+Replace the coarse preset-only row-height choice with a direct global resize gesture.
+
+Desired direction:
+
+- one common row height remains authoritative for every Voice row;
+- a compact drag grip adjusts the common height continuously on screen;
+- valid range remains 32-96;
+- dragging does not persist on every pixel movement;
+- release commits the final height once through the protected settings store;
+- failed persistence restores the saved height;
+- do not introduce per-row heights or break DataGrid virtualization.
+
+### Generic layer mouse-wheel adjustment
+
+When the pointer is directly over the Generic numeric layer field:
+
+- wheel up/down adjusts by one numeric layer step;
+- bounds are respected;
+- the changed complete number is applied immediately through the existing Generic target command/path;
+- wheel elsewhere keeps normal panel/outer scrolling;
+- no modified-wheel global interception.
+
+### Bottom-right panel quick settings
+
+Current bottom-right Settings button only jumps to the Settings tab, which is already one direct tab click away.
+
+Replace that duplicate navigation role with a **panel quick-settings flyout**.
+
+Candidate quick settings:
+
+- Set-wide tile shape (rounded / square / circle);
+- global Auto / Fixed layout;
+- fixed column count;
+- position shortcuts on/off;
+- position shortcut assignments;
+- other small appearance/operation controls proven useful during placement.
+
+Boundary:
+
+- quick settings = how this placement panel looks/operates;
+- full Settings tab = what the Set means and how it places things.
+
+Do not duplicate structural Set creation/deletion/applicability/relation editing into the flyout.
 
 ## Placement Recipe extensions — collect before implementation
 
@@ -123,6 +298,46 @@ Finite additions may include:
 - next same-Character Voice.
 
 No fuzzy “nearest suitable thing” behavior.
+
+## Action Tile extensions — collect before implementation
+
+Status: **COLLECTING**
+
+### YMM4 standard command tiles
+
+User problem:
+
+Frequently used YMM4 editing operations still require remembering keyboard shortcuts or leaving the context-sensitive Template Placer action surface. Some of those operations could live beside placement tiles when they are directly useful in the same editing flow.
+
+Candidate operations:
+
+- split;
+- delete;
+- copy / paste;
+- undo / redo;
+- play / pause;
+- other high-frequency YMM4 standard commands proven useful during placement/editing.
+
+Product boundary:
+
+- keep this limited to operations closely tied to Template Placer's editing workflow;
+- do not turn Template Placer into a general-purpose launcher;
+- external tools, arbitrary macros, file/folder launchers and ToolBox-style addon hosting remain out of scope;
+- coexist with ToolBox rather than duplicating its general launcher responsibility.
+
+Architecture direction:
+
+- do not encode commands as fake or nullable Template/Library entries;
+- generalize the tile execution surface explicitly, e.g. an action kind such as `TemplatePlacement` / `YmmCommand`;
+- keep tile presentation (label, color, shape, ordering) independent from the action payload where practical;
+- position shortcuts should resolve the current slot and invoke the same tile execution path as a click;
+- use YMM4's standard command route where available rather than synthesizing key input.
+
+Safety / implementation gate:
+
+- this is a future extension candidate, not approval to broaden the current active PR;
+- first keep Preset/UI work and the existing placement architecture stable;
+- before implementation, define the finite supported command set and native-test command availability / focus behavior.
 
 ## Deferred / out of scope
 
