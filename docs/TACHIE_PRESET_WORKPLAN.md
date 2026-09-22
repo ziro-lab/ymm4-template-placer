@@ -154,6 +154,8 @@ Exit: **DONE.** Existing Template bytes/reader behavior are retained, preset tag
 
 ## P7 — TachiePreset mutation planning
 
+**DONE.** Pinned evidence: `docs/TACHIE_PRESET_P7_P8_CHECKPOINT.md` / source `8af10fe7c2043d3df590f27e0bb10c6e2bccf64e` / Checkpoint `35681188429` / marker `TACHIE_PRESET_PLANNING_P7=PASS`.
+
 Implement:
 
 - descriptor re-resolution;
@@ -166,7 +168,11 @@ Implement:
 
 No immediate UI replacement until planning is green.
 
+Exit: **DONE.** Fresh re-resolution/application, ExpressionPreset/LayerPlanner planning, StateHash protection and PlacementPlan preflight are native-green.
+
 ## P8 — immediate trial and cross-source replacement
+
+**DONE.** Pinned evidence: `docs/TACHIE_PRESET_P7_P8_CHECKPOINT.md` / source `8af10fe7c2043d3df590f27e0bb10c6e2bccf64e` / Checkpoint `35681188429` / marker `TACHIE_PRESET_IMMEDIATE_P8=PASS`.
 
 Wire source-aware selection into existing trial session.
 
@@ -178,6 +184,8 @@ Prove:
 - TachiePreset -> none/remove;
 - one logical Undo initial -> final;
 - unrelated mutation cannot be captured.
+
+Exit: **DONE.** All four cross-source replacement/removal paths, one logical trial Undo/Redo and unrelated-edit isolation are native-green.
 
 ## P9 — failure/unavailable UX
 
