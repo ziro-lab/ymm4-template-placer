@@ -20,48 +20,68 @@ internal static class TachiePresetDiscovery
         var sample = target.CreateFreshFace(token);
         var result = new List<TachiePresetCandidateDescriptor>();
 
-        async Task<bool> AddEditorRouteAsync(TachiePresetEditorRoute route)
+        async Task<bool> AddEditorRouteAsync(TachiePresetEditorRoute route, bool tolerateFailure)
         {
-            string[] names;
+            var initialCount = result.Count;
             try
             {
-                using var editor = TachiePresetEditorSession.Open(
-                    route, target.Configuration, target.CreateFreshFace(token), diagnostics);
-                await editor.SettleAsync(ensureCurrent, token);
-                names = editor.Choices(token).Select(c => c.Label).Distinct(StringComparer.Ordinal).ToArray();
+                string[] names;
+                using (var editor = TachiePresetEditorSession.Open(
+                    route, target.Configuration, target.CreateFreshFace(token), diagnostics))
+                {
+                    await editor.SettleAsync(ensureCurrent, token);
+                    names = editor.Choices(token).Select(c => c.Label).Distinct(StringComparer.Ordinal).ToArray();
+                }
+                if (names.Length == 0) return false;
+
+                var added = 0;
+                foreach (var name in names)
+                {
+                    ensureCurrent();
+                    var (first, second) = FreshPair(target, token);
+                    if (!tolerateFailure)
+                    {
+                        var firstState = await ApplyEditorAsync(
+                            route, target.Configuration, first, name, diagnostics, ensureCurrent, token);
+                        var secondState = await ApplyEditorAsync(
+                            route, target.Configuration, second, name, diagnostics, ensureCurrent, token);
+                        Add(result, target, route.Descriptor, name, Confidence(firstState, secondState));
+                        added++;
+                        continue;
+                    }
+
+                    AppliedState? tolerantFirst = null;
+                    AppliedState? tolerantSecond = null;
+                    try { tolerantFirst = await ApplyEditorAsync(route, target.Configuration, first, name, diagnostics, ensureCurrent, token); }
+                    catch (OperationCanceledException) { throw; }
+                    catch { }
+                    try { tolerantSecond = await ApplyEditorAsync(route, target.Configuration, second, name, diagnostics, ensureCurrent, token); }
+                    catch (OperationCanceledException) { throw; }
+                    catch { }
+                    if (tolerantFirst == null && tolerantSecond == null) continue;
+                    var level = tolerantFirst != null && tolerantSecond != null
+                        ? Confidence(tolerantFirst, tolerantSecond)
+                        : TachiePresetCapabilityLevel.Experimental;
+                    Add(result, target, route.Descriptor, name, level);
+                    added++;
+                }
+                return added > 0;
             }
             catch (OperationCanceledException) { throw; }
-            catch { return false; }
-            if (names.Length == 0) return false;
-
-            var added = 0;
-            foreach (var name in names)
+            catch
             {
-                ensureCurrent();
-                var (first, second) = FreshPair(target, token);
-                AppliedState? firstState = null;
-                AppliedState? secondState = null;
-                try { firstState = await ApplyEditorAsync(route, target.Configuration, first, name, diagnostics, ensureCurrent, token); }
-                catch (OperationCanceledException) { throw; }
-                catch { }
-                try { secondState = await ApplyEditorAsync(route, target.Configuration, second, name, diagnostics, ensureCurrent, token); }
-                catch (OperationCanceledException) { throw; }
-                catch { }
-                if (firstState == null && secondState == null) continue;
-                var level = firstState != null && secondState != null
-                    ? Confidence(firstState, secondState)
-                    : TachiePresetCapabilityLevel.Experimental;
-                Add(result, target, route.Descriptor, name, level);
-                added++;
+                if (!tolerateFailure) throw;
+                if (result.Count > initialCount)
+                    result.RemoveRange(initialCount, result.Count - initialCount);
+                return false;
             }
-            return added > 0;
         }
 
         if (learnedRoute != null)
         {
             var learnedMatches = TachiePresetEditorSession.FindCalibrationRoutes(sample)
                 .Where(x => x.Descriptor == learnedRoute).Take(2).ToArray();
-            if (learnedMatches.Length == 1 && await AddEditorRouteAsync(learnedMatches[0]))
+            if (learnedMatches.Length == 1 && await AddEditorRouteAsync(learnedMatches[0], tolerateFailure: true))
             {
                 ensureCurrent();
                 if (!target.IsCurrent(token)) throw new OperationCanceledException("立ち絵設定が変わりました。", token);
@@ -71,7 +91,7 @@ internal static class TachiePresetDiscovery
         }
 
         foreach (var route in TachiePresetEditorSession.FindRoutes(sample))
-            await AddEditorRouteAsync(route);
+            await AddEditorRouteAsync(route, tolerateFailure: false);
 
         if (result.Count == 0)
         {
