@@ -95,7 +95,7 @@ internal sealed class IntentExpressionMutation
             timeline.Items.Where(x => !own.Contains(x)));
         if (geometry.Skipped)
         {
-            if (allowSkip) return new(row, PlacementPlan.Create(timeline, []), true, []);
+            if (allowSkip) return new(row, association, PlacementPlan.Create(timeline, []), true, []);
             throw new InvalidOperationException("この表情の配置条件では配置先を決められません。現在の表情は変更していません。");
         }
         var serial = association.Serial ?? allocator.Allocate();
