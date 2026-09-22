@@ -44,7 +44,13 @@ internal sealed class TachiePresetEditorSession : IDisposable
     private static void AssignLegacyContext(object editor, object? configuration) =>
         editor.GetType().GetProperty("CharacterParameter", BindingFlags.Instance | BindingFlags.Public)!.SetValue(editor, configuration);
 
-    public static IReadOnlyList<TachiePresetEditorRoute> FindRoutes(object face)
+    public static IReadOnlyList<TachiePresetEditorRoute> FindRoutes(object face) =>
+        FindRoutesCore(face, requirePresetContext: true);
+
+    internal static IReadOnlyList<TachiePresetEditorRoute> FindCalibrationRoutes(object face) =>
+        FindRoutesCore(face, requirePresetContext: false);
+
+    private static IReadOnlyList<TachiePresetEditorRoute> FindRoutesCore(object face, bool requirePresetContext)
     {
         TachiePresetPublicState.RequireUiThread();
         var result = new List<TachiePresetEditorRoute>();
@@ -63,7 +69,8 @@ internal sealed class TachiePresetEditorSession : IDisposable
             foreach (var data in metadata)
             {
                 var type = data.AttributeType;
-                if (!(HasPresetContext(property.Name) || HasPresetContext(display) || HasPresetContext(type.Name))) continue;
+                if (requirePresetContext &&
+                    !(HasPresetContext(property.Name) || HasPresetContext(display) || HasPresetContext(type.Name))) continue;
                 var modern = typeof(PropertyEditorAttribute2).IsAssignableFrom(type) &&
                              typeof(IPropertyEditorForTachieParameterAttribute).IsAssignableFrom(type);
                 if (!modern && !HasLegacyContract(type)) continue;
@@ -72,7 +79,11 @@ internal sealed class TachiePresetEditorSession : IDisposable
                     property.DeclaringType?.FullName + "." + property.Name,
                     type.AssemblyQualifiedName ?? type.FullName ?? type.Name);
                 result.Add(new(property, type, descriptor));
-                if (result.Count > 8) throw new InvalidOperationException("プリセットエディタの候補経路が多すぎます。");
+                var limit = requirePresetContext ? 8 : 32;
+                if (result.Count > limit)
+                    throw new InvalidOperationException(requirePresetContext
+                        ? "表情プリセットエディタの候補経路が多すぎます。"
+                        : "表情アイテムの編集経路が多すぎるため、自動認識を停止しました。");
             }
         }
         return result;
