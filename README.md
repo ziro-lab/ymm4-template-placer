@@ -88,7 +88,7 @@ YMM4/user/plugin/Ymm4TemplatePlacer/
 YMM4/user/plugin/Ymm4TemplatePlacer/Data/settings-v04.json
 ```
 
-旧バージョンの `%LOCALAPPDATA%/Ymm4TemplatePlacer/settings-v04.json` だけが存在する場合は、内容を検証してから初回起動時にPortable側へ移行します。旧ファイルは自動削除せず、バックアップとして残します。Portable側と旧側に異なる有効設定がある場合は、どちらかを勝手に選ばず保存を停止して案内します。
+旧バージョンの `%LOCALAPPDATA%/Ymm4TemplatePlacer/settings-v04.json` だけが存在する場合は、内容を検証してから初回起動時にPortable側へ移行します。旧ファイルは自動削除せず、バックアップとして残します。Portable側が存在する場合はそちらを常に正として使い、旧LocalAppData側の内容が異なっていてもPortable側を優先します。
 
 更新前や大きな設定変更を行う前は、普段のYMM4プロジェクトと設定をバックアップしておくことをおすすめします。
 
