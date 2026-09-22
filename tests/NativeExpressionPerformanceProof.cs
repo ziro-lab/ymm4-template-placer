@@ -299,7 +299,7 @@ internal static partial class NativeProof
         var manifest = new
         {
             schema = "YMM4-Template-Placer-Expression-Performance/1",
-            version = "0.4.2",
+            version = "0.5.0",
             host = "YMM4 4.55.1.1 Lite",
             result = "PASS",
             sizes = sizeResults,
