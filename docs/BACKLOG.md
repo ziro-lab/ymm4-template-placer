@@ -35,7 +35,7 @@ Migration direction:
 1. if the new portable settings file exists, load it;
 2. otherwise, if the old `%LOCALAPPDATA%` settings file exists, validate/read it and migrate safely to the portable location;
 3. do not delete the old file automatically during the first migration;
-4. never choose between two divergent valid files silently — surface the conflict and preserve both;
+4. once the Portable file exists, it is authoritative even if the retained legacy file differs;
 5. migration must not weaken the existing fail-closed settings behavior.
 
 Packaging caution:
@@ -49,9 +49,9 @@ Implementation candidate:
 - authoritative path: `<YMM4>/user/plugin/Ymm4TemplatePlacer/Data/settings-v04.json`;
 - valid legacy-only LocalAppData settings migrate byte-for-byte after validation;
 - legacy file remains in place;
-- a small legacy digest baseline prevents the retained backup from becoming a false conflict after normal Portable edits;
-- divergent valid files or a legacy file changed after migration fail closed and preserve both;
+- once Portable exists, it is authoritative and retained LocalAppData differences do not block startup;
 - corrupt Portable never silently falls back to legacy;
+- corrupt legacy data is rejected only when it is still the sole first-migration source;
 - Release packaging rejects any packaged `Data/` payload.
 
 Release #525 (`35797613825`) at source `e0f8128f63a687f90e8491fa0340e724c0229cd5`: **1,702 Native assertions PASS**, exact distribution-DLL smoke PASS, verified `.ymme` / source / provenance packaging PASS. Public Lab PR #85 remains the real YMM4 `.ymme` update-preservation host evidence.
