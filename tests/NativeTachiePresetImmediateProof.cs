@@ -123,6 +123,9 @@ internal static partial class NativeProof
             Check(Signature(timeline) == finalNone &&
                 ManagedExpressionReader.Read(timeline, voice).Bundle == null,
                 "one Redo restores final none state");
+            await vm.ExpressionLoadCompletion; await Idle(); await WaitExpressionRows(vm, 2);
+            Check(!vm.IsExpressionLoading && vm.ExpressionRowsMatchSource,
+                "post-Redo preset rows are live before accepting the next user choice");
 
             vm.SetExpressionRowContext(row);
             row = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, voice));
