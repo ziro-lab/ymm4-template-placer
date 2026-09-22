@@ -53,7 +53,7 @@ internal static partial class NativeProof
         var secondVoice = new VoiceItem(character) { Frame = 240, Length = 40, Layer = 20, Serif = "P8 two" };
         var manual = new TextItem { Frame = 500, Length = 24, Layer = 70, Remark = "p8-manual" };
         scope.Apply(settings, [voice, secondVoice, manual], []);
-        var settingsJson = JsonSerializer.Serialize(scope.Current);
+        var baselineSettings = PlacerSettingsStore.Copy(scope.Current);
         var storedBeforeSourceSwitch = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
         static string WithoutSourceMode(PlacerSettings value)
         {
@@ -187,7 +187,7 @@ internal static partial class NativeProof
                 "second Undo restores pre-Preset state; unrelated edit was not captured");
 
             var storedAfterTrials = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
-            Check(JsonSerializer.Serialize(scope.Current) == settingsJson &&
+            Check(WithoutSourceMode(scope.Current) == WithoutSourceMode(baselineSettings) &&
                 storedAfterTrials.ExpressionSourceMode == ExpressionSourceMode.TachiePreset &&
                 WithoutSourceMode(storedAfterTrials) == WithoutSourceMode(storedBeforeSourceSwitch),
                 "immediate trials persist no candidate identity or product settings beyond the selected source preference");
