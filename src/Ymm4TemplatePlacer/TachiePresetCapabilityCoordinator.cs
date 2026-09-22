@@ -1,7 +1,9 @@
 using System.Reflection;
 using System.Windows.Threading;
 using YukkuriMovieMaker.Plugin;
+using YukkuriMovieMaker.Plugin.Tachie;
 using YukkuriMovieMaker.Project;
+using YukkuriMovieMaker.Project.Items;
 
 namespace Ymm4TemplatePlacer;
 
@@ -12,18 +14,22 @@ internal sealed class TachiePresetProbeTarget
     public object Configuration { get; }
     public TachiePresetCapabilityFingerprint Fingerprint { get; }
     private readonly Func<object> createFace;
+    private readonly Func<TachieFaceItem>? createItem;
     private readonly Func<bool> current;
     private readonly object seedFace;
+    internal string CharacterParameterRuntimeType =>
+        Configuration.GetType().AssemblyQualifiedName ?? Configuration.GetType().FullName ?? Configuration.GetType().Name;
 
     internal TachiePresetProbeTarget(Character character, object configuration, Type pluginType,
-        Func<object> createFace, Func<bool> current)
+        Func<object> createFace, Func<bool> current, Func<TachieFaceItem>? createItem = null)
     {
         TachiePresetPublicState.RequireUiThread();
         Character = character;
         Configuration = configuration;
         this.createFace = createFace;
+        this.createItem = createItem;
         this.current = current;
-        seedFace = createFace() ?? throw new InvalidOperationException("立ち絵の表情パラメータを作成できません。");
+        seedFace = CreateRawFace();
         Fingerprint = new(
             typeof(Character).Assembly.GetName().Version + ":" + typeof(Character).Module.ModuleVersionId,
             character.Name,
@@ -48,7 +54,8 @@ internal sealed class TachiePresetProbeTarget
         return new(character, configuration, plugin.GetType(), () => plugin.CreateFaceParameter(),
             () => character.TachieType == type && ReferenceEquals(character.TachieCharacterParameter, configuration) &&
                   PluginLoader.TachiePlugins.Count(p => p.GetType() == type) == 1 &&
-                  PluginLoader.TachiePlugins.Any(p => ReferenceEquals(p, plugin)));
+                  PluginLoader.TachiePlugins.Any(p => ReferenceEquals(p, plugin)),
+            () => new TachieFaceItem(character));
     }
 
     public bool IsCurrent(CancellationToken token)
@@ -59,15 +66,22 @@ internal sealed class TachiePresetProbeTarget
                TachiePresetPublicState.Hash(Configuration, token) == Fingerprint.CharacterConfigIdentity;
     }
 
-    public object CreateFreshFace(CancellationToken token)
+    private object CreateRawFace()
     {
-        TachiePresetPublicState.RequireUiThread();
+        if (createItem != null)
+        {
+            var item = createItem() ?? throw new InvalidOperationException("表情アイテムを作成できません。");
+            return item.TachieFaceParameter ?? throw new InvalidOperationException("表情アイテムの表情パラメータを作成できません。");
+        }
+        return createFace() ?? throw new InvalidOperationException("表情パラメータを作成できません。");
+    }
+
+    private object PrepareFreshFace(object face, CancellationToken token)
+    {
         token.ThrowIfCancellationRequested();
-        var face = createFace() ?? throw new InvalidOperationException("表情パラメータを作成できません。");
         if (face.GetType() != seedFace.GetType() || ReferenceEquals(face, seedFace) ||
             ReferenceEquals(face, Configuration) || ReferenceEquals(face, Character.TachieDefaultFaceParameter))
             throw new InvalidOperationException("立ち絵プラグインが独立した表情パラメータを返しませんでした。");
-        // The P0 route propagates only same-named public asset-path context to a fresh face.
         var properties = Configuration.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
         if (properties.Length > TachiePresetPublicState.MaxMembers)
             throw new InvalidOperationException("立ち絵設定のプロパティ数が確認上限を超えています。");
@@ -85,6 +99,29 @@ internal sealed class TachiePresetProbeTarget
                 destination.SetValue(face, source.GetValue(Configuration));
         }
         return face;
+    }
+
+    public object CreateFreshFace(CancellationToken token)
+    {
+        TachiePresetPublicState.RequireUiThread();
+        return PrepareFreshFace(CreateRawFace(), token);
+    }
+
+    public TachieFaceItem CreateFreshItem(CancellationToken token)
+    {
+        TachiePresetPublicState.RequireUiThread();
+        token.ThrowIfCancellationRequested();
+        if (createItem != null)
+        {
+            var item = createItem() ?? throw new InvalidOperationException("表情アイテムを作成できません。");
+            var face = item.TachieFaceParameter ?? throw new InvalidOperationException("表情アイテムの表情パラメータを作成できません。");
+            PrepareFreshFace(face, token);
+            return item;
+        }
+        var created = CreateFreshFace(token);
+        if (created is not ITachieFaceParameter parameter)
+            throw new InvalidOperationException("表情パラメータがYMM4の立ち絵表情契約と一致しません。");
+        return new TachieFaceItem(Character) { TachieFaceParameter = parameter };
     }
 }
 
@@ -105,6 +142,7 @@ internal sealed class TachiePresetCapabilityCoordinator : IDisposable
     internal const int MaxCharacters = 256;
     internal const int MaxCandidates = 128;
     private readonly Func<Character, TachiePresetProbeTarget> resolve;
+    private readonly Func<TachiePresetProbeTarget, TachiePresetRouteDescriptor?> learnedRoute;
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly Dictionary<TachiePresetCapabilityFingerprint, TachiePresetCapabilityResult> cache = new();
     private readonly TachiePresetCapabilityDiagnostics diagnostics = new();
@@ -114,8 +152,14 @@ internal sealed class TachiePresetCapabilityCoordinator : IDisposable
     private bool disposed;
     public TachiePresetCapabilityDiagnostics Diagnostics => diagnostics.Snapshot();
 
-    public TachiePresetCapabilityCoordinator() : this(TachiePresetProbeTarget.Resolve) { }
-    internal TachiePresetCapabilityCoordinator(Func<Character, TachiePresetProbeTarget> resolve) => this.resolve = resolve;
+    public TachiePresetCapabilityCoordinator() : this(TachiePresetProbeTarget.Resolve, null) { }
+    internal TachiePresetCapabilityCoordinator(
+        Func<Character, TachiePresetProbeTarget> resolve,
+        Func<TachiePresetProbeTarget, TachiePresetRouteDescriptor?>? learnedRoute = null)
+    {
+        this.resolve = resolve;
+        this.learnedRoute = learnedRoute ?? (_ => null);
+    }
 
     public void Cancel()
     {
@@ -192,7 +236,8 @@ internal sealed class TachiePresetCapabilityCoordinator : IDisposable
                     else
                     {
                         diagnostics.CharacterScans++;
-                        result = await TachiePresetDiscovery.DiscoverAsync(target, diagnostics, EnsureCurrent, own.Token);
+                        result = await TachiePresetDiscovery.DiscoverAsync(
+                            target, diagnostics, EnsureCurrent, own.Token, learnedRoute(target));
                         pending.Add((target.Fingerprint, result));
                     }
                     EnsureCurrent();
