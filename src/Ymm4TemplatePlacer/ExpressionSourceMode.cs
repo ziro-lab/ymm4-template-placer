@@ -1,6 +1,11 @@
 namespace Ymm4TemplatePlacer;
 
-internal enum ExpressionSourceMode { Template, TachiePreset }
+public enum ExpressionSourceMode { Template, TachiePreset }
+
+public sealed partial class PlacerSettings
+{
+    public ExpressionSourceMode ExpressionSourceMode { get; set; } = ExpressionSourceMode.Template;
+}
 
 public sealed partial class PlacerViewModel
 {
@@ -25,6 +30,32 @@ public sealed partial class PlacerViewModel
     private bool HasProtectedExpressionSourceWork() => HasProtectedPendingVoiceWork() ||
         (IsTemplateExpressionSource && (!UsesRelativeExpressions ? SelectedExpressionCount > 0 : PendingRelativeExpressionCount > 0));
 
+    private void RestoreExpressionSourceModePreference()
+    {
+        expressionSourceMode = settingsAvailable && Enum.IsDefined(settings.ExpressionSourceMode)
+            ? settings.ExpressionSourceMode
+            : ExpressionSourceMode.Template;
+    }
+
+    private bool PersistExpressionSourceModePreference(ExpressionSourceMode next)
+    {
+        if (!settingsAvailable) return true;
+        try
+        {
+            var saved = PlacerSettingsStore.Copy(settings);
+            saved.ExpressionSourceMode = next;
+            settingsStore.Save(saved);
+            settings.ExpressionSourceMode = next;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            HasError = true;
+            Status = "表情の表示モードを保存できませんでした: " + ex.GetBaseException().Message;
+            return false;
+        }
+    }
+
     private bool TrySetExpressionSourceMode(ExpressionSourceMode next)
     {
         if (expressionSourceMode == next) return true;
@@ -42,6 +73,12 @@ public sealed partial class PlacerViewModel
         CancelExpressionLoad();
         SetVoiceFreshnessActive(false);
         ClearPresetContextWatchers();
+        if (!PersistExpressionSourceModePreference(next))
+        {
+            PublishExpressionSourceProperties();
+            UpdateCommands();
+            return false;
+        }
         expressionSourceMode = next;
         expressionCacheDirty = true;
         HasError = false; Status = "";
