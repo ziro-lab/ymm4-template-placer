@@ -50,6 +50,7 @@ public sealed class PlacerSettingsStore
         settings.Presentation.Validate();
         PaletteSettings.Validate(settings);
         ExpressionPresetSettings.Validate(settings);
+        TachiePresetLearnedAdapterSettings.Validate(settings);
         SelectionPresetSettings.Validate(settings);
         IntentPaletteSettings.Validate(settings);
     }
