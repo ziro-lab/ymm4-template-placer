@@ -56,8 +56,6 @@ internal sealed class TachiePresetExpressionMutation
         ArgumentNullException.ThrowIfNull(preset);
         ArgumentNullException.ThrowIfNull(candidate);
         ArgumentNullException.ThrowIfNull(resolver);
-        if (candidate.Confidence != TachiePresetCapabilityLevel.Strong)
-            throw new InvalidOperationException("状態を安定して確認できない実験候補は、まだ配置できません。");
         if (row.SelectedChoice.TachiePreset != candidate || !row.SelectedChoice.IsAvailable)
             throw new InvalidOperationException("現在の行で選択されている立ち絵プリセット候補と一致しません。候補を選び直してください。");
 
