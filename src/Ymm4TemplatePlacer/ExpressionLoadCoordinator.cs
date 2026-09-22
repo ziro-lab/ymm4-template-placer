@@ -56,6 +56,7 @@ public sealed partial class PlacerViewModel
 
     internal void LeaveExpressionTask()
     {
+        CancelTachiePresetApply();
         CancelExpressionLoad();
         expressionCacheDirty = true;
         SetVoiceFreshnessActive(false);
