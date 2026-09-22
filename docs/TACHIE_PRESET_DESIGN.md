@@ -111,6 +111,13 @@ Tachie Preset mode uses the already-persisted ExpressionPreset model as its plac
 - LayerPlanner;
 - current validation and protected settings persistence.
 
+A generated TachieFaceItem has no source Template layer. Therefore the legacy
+UseTemplateLayer=true ExpressionPreset state must not turn the generated item's
+constructor-default Layer into a hard destination. For Tachie Preset placement only,
+that legacy state falls back to the same bounded Preferred/Minimum/Maximum free-layer
+search used by the existing ExpressionPreset planner. Explicit non-legacy search
+settings remain authoritative.
+
 In Tachie Preset UI this is called 配置ルール so it is not confused with the Tachie content preset.
 
 No new settings schema is required for this round.
