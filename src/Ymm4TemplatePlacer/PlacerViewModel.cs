@@ -70,7 +70,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     {
         var changed = !ReferenceEquals(timeline, info.Timeline);
         var preservePending = changed && HasProtectedPendingVoiceWork();
-        if (changed) { CancelTachiePresetApply(); CancelExpressionLoad(); ClearPresetContextWatchers(); CancelExpressionNavigation(); CloseExpressionTrialSession(); DetachTimelineV04(); DeactivateIntentWorkspace(); deferredExpressionResume = null; }
+        if (changed) { CancelTachiePresetApply(); CancelTachiePresetCalibration(); CancelExpressionLoad(); ClearPresetContextWatchers(); CancelExpressionNavigation(); CloseExpressionTrialSession(); DetachTimelineV04(); DeactivateIntentWorkspace(); deferredExpressionResume = null; }
         timeline = info.Timeline; undo = info.UndoRedoManager;
         if (changed)
         {
@@ -208,6 +208,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         OnPropertyChanged(nameof(ExpressionPlaceHint)); OnPropertyChanged(nameof(ShowExpressionBatchPlace)); RefreshCommand?.RaiseCanExecuteChanged(); PlaceCommand?.RaiseCanExecuteChanged();
         ExportCommand?.RaiseCanExecuteChanged(); ImportCommand?.RaiseCanExecuteChanged(); resyncCommand?.RaiseCanExecuteChanged();
         NavigateExpressionRowCommand?.RaiseCanExecuteChanged();
+        TachiePresetCalibrationCommand?.RaiseCanExecuteChanged();
     }
     private void Guard(Action action)
     {
@@ -221,7 +222,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     {
         DisposeAutomaticSettingsSession();
         disposedTransientWork ??= CaptureTransientWork(); PropertyChanged -= ExpressionModeChanged;
-        CancelExpressionNavigation(true); CancelTachiePresetApply(); DisposeVoiceFreshness(); DisposePresetDiscovery();
+        CancelExpressionNavigation(true); CancelTachiePresetApply(); CancelTachiePresetCalibration(); DisposeVoiceFreshness(); DisposePresetDiscovery();
         CloseExpressionTrialSession(); expressionTrialSession.Dispose();
         DeactivateIntentWorkspace(); DetachTimelineV04(); DisposeV04();
         if (intentSettings != null) intentSettings.Edited -= IntentSettingsEdited;
