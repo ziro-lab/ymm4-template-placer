@@ -105,22 +105,28 @@ Preset discovery itself is not moved to Task.Run and never dereferences mutable 
 
 Template mode keeps Set-owned placement relation semantics unchanged.
 
-Tachie Preset mode uses the already-persisted ExpressionPreset model as its placement rule, reusing:
+Tachie Preset mode uses the already-persisted ExpressionPreset model as its placement rule for time/span, while layer placement follows the same mental model as ordinary Voice-targeted Template placement.
 
-- CharacterExpressionProfile.Span;
-- LayerPlanner;
+Layer modes are finite:
+
+1. **Voice Setと同じ** — default. Resolve the first applicable expression Set for that Voice/Character in authoritative Set order and reuse its RelativeLayerPolicy (up/down, offset, bounded same-direction collision search).
+2. **Voiceの上／下を指定** — override with an explicit RelativeLayerPolicy owned by the ExpressionPreset.
+3. **レイヤー番号を指定** — override with an explicit absolute LayerPolicy and occupied-layer behavior: do not place, search up, search down, or retained legacy bounded search.
+
+If no applicable expression Set exists, the default mode uses the normal RelativeLayerPolicy default (Voiceの上へ1レイヤー, range 0-99). It does not fall back to a generated TachieFaceItem constructor Layer.
+
+This keeps:
+
+- CharacterExpressionProfile.Span for time geometry;
+- the existing Voice-targeted relative layer convention;
+- LayerPlanner for explicit absolute layer placement;
 - current validation and protected settings persistence.
 
-A generated TachieFaceItem has no source Template layer. Therefore the legacy
-UseTemplateLayer=true ExpressionPreset state must not turn the generated item's
-constructor-default Layer into a hard destination. For Tachie Preset placement only,
-that legacy state falls back to the same bounded Preferred/Minimum/Maximum free-layer
-search used by the existing ExpressionPreset planner. Explicit non-legacy search
-settings remain authoritative.
+Historical ExpressionPreset settings are migrated without schema broadening: the untouched historical default becomes Voice-Set inheritance; customized historical numeric layer settings are preserved as an absolute override.
 
 In Tachie Preset UI this is called 配置ルール so it is not confused with the Tachie content preset.
 
-No new settings schema is required for this round.
+No settings schema version bump is required for this round.
 
 ## D8 — application
 
