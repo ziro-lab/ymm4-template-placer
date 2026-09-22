@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## CWT common operation
+
+このRepoは Chat Work Tools の Default Work Policy を共通運用として使う。CWTは lifecycle / execution / validation routing のdefaultだけを担当する。
+
+このRepoのSafety / Acceptance / Release / Host固有ルールがより具体的な場合は、必ずそちらを優先する。Domain固有の判断はこのRepo/Capability/Playbookに残す。公開可能なCI/host probeは `ziro-lab/chat-native-work-lab-001` を優先し、private固有コード・秘密情報・非公開assetは持ち出さない。
+
 ## Current revision and Git authority
 
 Main contains the accepted v0.4.2 Hands-on/performance baseline after PR #20, PR #22 and PR #23.
