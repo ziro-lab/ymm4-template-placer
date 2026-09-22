@@ -25,16 +25,17 @@ Known deferred items include portable settings storage, compact/Full Settings UX
 Read in this order:
 
 1. `docs/CURRENT_ARCHITECTURE.md`
-2. `docs/GLOSSARY.md`
-3. `docs/VALIDATION_STRATEGY.md`
-4. `docs/TACHIE_PRESET_DESIGN.md`
-5. `docs/TACHIE_PRESET_ACCEPTANCE.md`
-6. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
-7. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
-8. `docs/FINAL_HANDS_ON_POLISH.md`
-9. `docs/BACKLOG.md` only for scope context
-10. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
-11. historical Round/W documents only when current authority points to them or when reconstructing rationale
+2. `docs/PRODUCT_ROADMAP.md` for post-v0.5 product sequencing
+3. `docs/GLOSSARY.md`
+4. `docs/VALIDATION_STRATEGY.md`
+5. `docs/TACHIE_PRESET_DESIGN.md`
+6. `docs/TACHIE_PRESET_ACCEPTANCE.md`
+7. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
+8. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
+9. `docs/FINAL_HANDS_ON_POLISH.md`
+10. `docs/BACKLOG.md` only for scope context
+11. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
+12. historical Round/W documents only when current authority points to them or when reconstructing rationale
 
 Do not reimplement completed v0.5.0 work. Preserve its Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary and validation tiers.
 
