@@ -65,7 +65,8 @@ public sealed partial class PlacerViewModel
                 changed = expressionTrialSession.ExecuteOwned(() =>
                 {
                     if (!IsCurrentRequest()) throw new OperationCanceledException(token);
-                    return mutation.CommitWithinOpenRecord(current, token);
+                    return ExecuteOwnedExpressionTimelineMutation(() =>
+                        mutation.CommitWithinOpenRecord(current, token));
                 });
             }
             else
@@ -88,7 +89,8 @@ public sealed partial class PlacerViewModel
                         if (!ManagedExpressionSafety.Same(existing, live))
                             throw new InvalidOperationException("確認後に現在の関連表情が変わりました。削除していません。");
                         ManagedExpressionSafety.ValidatePresetState(live.Bundle, token);
-                        return plan.CommitWithinOpenRecord(current);
+                        return ExecuteOwnedExpressionTimelineMutation(() =>
+                            plan.CommitWithinOpenRecord(current));
                     });
                 }
             }
