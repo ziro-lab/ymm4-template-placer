@@ -15,12 +15,12 @@ Before product source changes:
 
 ## Source-mode acceptance
 
-- A1: every new Tool/session starts Template.
-- A2: switching Template <-> TachiePreset alone performs zero Timeline and settings writes.
+- A1: settings without a saved source preference start Template; after a successful source switch, a new Tool instance restores that saved Template/TachiePreset mode.
+- A2: switching Template <-> TachiePreset alone performs zero Timeline-content writes and persists only the selected source-mode preference.
 - A3: Template mode retains accepted v0.4.2 behavior and performance invariants.
 - A4: protected pending Template/Excel work blocks entering TachiePreset without discarding it.
 - A5: returning Template cancels preset work safely.
-- A6: source mode is not persisted in this round.
+- A6: a blocked source switch does not update the persisted source-mode preference.
 
 ## Capability acceptance
 
