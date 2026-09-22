@@ -70,7 +70,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     {
         var changed = !ReferenceEquals(timeline, info.Timeline);
         var preservePending = changed && HasProtectedPendingVoiceWork();
-        if (changed) { CancelExpressionLoad(); ClearPresetContextWatchers(); CancelExpressionNavigation(); CloseExpressionTrialSession(); DetachTimelineV04(); DeactivateIntentWorkspace(); deferredExpressionResume = null; }
+        if (changed) { CancelTachiePresetApply(); CancelExpressionLoad(); ClearPresetContextWatchers(); CancelExpressionNavigation(); CloseExpressionTrialSession(); DetachTimelineV04(); DeactivateIntentWorkspace(); deferredExpressionResume = null; }
         timeline = info.Timeline; undo = info.UndoRedoManager;
         if (changed)
         {
@@ -199,9 +199,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
             {
                 if (IsTemplateExpressionSource && UsesRelativeExpressions) ApplyImmediateExpressionChoice(row);
                 else if (IsTachiePresetExpressionSource && !IsExpressionLoading)
-                {
-                    HasError = false; Status = "候補の確認のみです。タイムラインの表情は変更していません。";
-                }
+                    RequestImmediateTachiePresetChoice(row);
             }
         }
     }
@@ -223,7 +221,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     {
         DisposeAutomaticSettingsSession();
         disposedTransientWork ??= CaptureTransientWork(); PropertyChanged -= ExpressionModeChanged;
-        CancelExpressionNavigation(true); DisposeVoiceFreshness(); DisposePresetDiscovery();
+        CancelExpressionNavigation(true); CancelTachiePresetApply(); DisposeVoiceFreshness(); DisposePresetDiscovery();
         CloseExpressionTrialSession(); expressionTrialSession.Dispose();
         DeactivateIntentWorkspace(); DetachTimelineV04(); DisposeV04();
         if (intentSettings != null) intentSettings.Edited -= IntentSettingsEdited;
