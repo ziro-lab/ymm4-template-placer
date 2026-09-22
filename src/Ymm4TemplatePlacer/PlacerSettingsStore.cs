@@ -35,6 +35,7 @@ public sealed class PlacerSettingsStore
         var result = bytes == null ? new PlacerSettings() : JsonSerializer.Deserialize<PlacerSettings>(bytes, Options) ?? throw new InvalidDataException("設定ファイルが空です。");
         SelectionPresetSettings.Upgrade(result);
         IntentPaletteSettings.Upgrade(result);
+        ExpressionPresetSettings.Upgrade(result);
         Validate(result); expectedDigest = Digest(bytes); loaded = true; return result;
     }
     public static PlacerSettings Copy(PlacerSettings settings) =>
