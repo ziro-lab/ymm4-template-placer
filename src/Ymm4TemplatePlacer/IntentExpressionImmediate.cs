@@ -57,31 +57,38 @@ internal sealed class IntentAssociationSerialAllocator
 internal sealed class IntentExpressionMutation
 {
     private readonly AssignmentRow row;
+    private readonly ManagedExpressionAssociation existing;
     private readonly List<(IntentGeometry Geometry, Guid PaletteId, string Palette, Guid LibraryId, TemplateLocator Source)> guarded;
     public PlacementPlan Plan { get; }
     public bool Skipped { get; }
     internal AssignmentRow Row => row;
-    private IntentExpressionMutation(AssignmentRow row, PlacementPlan plan, bool skipped,
+    private IntentExpressionMutation(AssignmentRow row, ManagedExpressionAssociation existing,
+        PlacementPlan plan, bool skipped,
         List<(IntentGeometry Geometry, Guid PaletteId, string Palette, Guid LibraryId, TemplateLocator Source)> guarded)
-    { this.row = row; Plan = plan; Skipped = skipped; this.guarded = guarded; }
+    { this.row = row; this.existing = existing; Plan = plan; Skipped = skipped; this.guarded = guarded; }
     public static IntentExpressionMutation Create(Timeline timeline, AssignmentRow row, TemplateChoice choice, PlacerSettings settings,
         IntentAssociationSerialAllocator allocator, bool allowSkip)
     {
         ValidateRow(timeline, row);
         if (choice.TachiePreset != null || choice.IsCurrentOtherSource)
             throw new InvalidOperationException("立ち絵プリセットの候補をテンプレート配置として実行できません。");
-        var association = ManagedIntentExpressionReader.Read(timeline, row.Target.Voice);
+        var association = ManagedExpressionReader.Read(timeline, row.Target.Voice);
+        ManagedExpressionSafety.ValidatePresetState(association.Bundle);
         var removals = association.Bundle?.Members.ToArray() ?? [];
-        if (choice.Template == null) return new(row, PlacementPlan.Create(timeline, [], removals: removals), false, []);
+        if (choice.Template == null)
+            return new(row, association, PlacementPlan.Create(timeline, [], removals: removals), false, []);
         if (!choice.IsAvailable || choice.Template.IntentSource is not { } reference)
             throw new InvalidOperationException("表情の選択元が現在のパレットと一致しません。候補を更新して選び直してください。");
         var current = reference.ResolveCurrent(settings);
         var voice = row.Target.Voice;
         if (current.Bundle.CharacterName != voice.CharacterName) throw new InvalidOperationException("表情テンプレートと対象音声のキャラクター名が一致しません。");
         var currentHash = IntentAssociationTag.Hash(current.Bundle);
-        if (association.Bundle is { } existing && existing.Descriptor.Palette == current.Palette.Id &&
-            existing.Descriptor.Entry == current.Entry.LibraryEntryId && existing.Descriptor.GeometryHash == currentHash)
-            return new(row, PlacementPlan.Create(timeline, []), false, []);
+        if (association.Bundle?.Descriptor is
+            { Kind: ManagedExpressionSourceKind.Template, Template: { } existingTemplate } &&
+            existingTemplate.Palette == current.Palette.Id &&
+            existingTemplate.Entry == current.Entry.LibraryEntryId &&
+            existingTemplate.GeometryHash == currentHash)
+            return new(row, association, PlacementPlan.Create(timeline, []), false, []);
         var own = removals.ToHashSet();
         var context = IntentSelectionContext.ForItems(timeline, [voice]);
         var geometry = IntentPlacementGeometry.Prepare(timeline, context, current.Palette, current.Entry, settings.Library,
@@ -104,11 +111,15 @@ internal sealed class IntentExpressionMutation
         }
         var guards = new List<(IntentGeometry, Guid, string, Guid, TemplateLocator)>
         { (geometry, current.Palette.Id, JsonSerializer.Serialize(current.Palette), current.Entry.LibraryEntryId, geometry.Source.Entry.Source) };
-        return new(row, PlacementPlan.Create(timeline, geometry.Items, updates, removals), false, guards);
+        return new(row, association, PlacementPlan.Create(timeline, geometry.Items, updates, removals), false, guards);
     }
     public void ValidateCurrent(Timeline timeline, PlacerSettings settings)
     {
         ValidateRow(timeline, row);
+        var currentAssociation = ManagedExpressionReader.Read(timeline, row.Target.Voice);
+        if (!ManagedExpressionSafety.Same(existing, currentAssociation))
+            throw new InvalidOperationException("計画後に現在の関連表情が変わりました。配置していません。");
+        ManagedExpressionSafety.ValidatePresetState(currentAssociation.Bundle);
         foreach (var check in guarded)
         {
             check.Geometry.Context.ValidateCurrent(timeline, false); check.Geometry.Source.ValidateCurrent();
@@ -197,7 +208,11 @@ public sealed partial class PlacerViewModel
     private void NavigateExpressionRow(AssignmentRow row) => QueueExpressionNavigation(row);
     internal void SetExpressionRowContext(AssignmentRow? row)
     {
-        if (expressionTrialSession.IsOpen && !ReferenceEquals(expressionTrialSession.Voice, row?.Target.Voice)) CloseExpressionTrialSession();
+        if (!ReferenceEquals(expressionTrialSession.Voice, row?.Target.Voice))
+        {
+            CancelTachiePresetApply();
+            if (expressionTrialSession.IsOpen) CloseExpressionTrialSession();
+        }
     }
     internal void CloseExpressionTrialSession() => expressionTrialSession.Close();
     private IntentAssociationSerialAllocator CreateExpressionSerialAllocator(Timeline current)
@@ -220,17 +235,22 @@ public sealed partial class PlacerViewModel
         Guid paletteId, libraryId;
         if (choice.Template?.IntentSource is { } source)
         {
-            paletteId = source.Palette.Id; libraryId = source.Entry.LibraryEntryId;
+            paletteId = source.Palette.Id;
+            libraryId = source.Entry.LibraryEntryId;
         }
         else
         {
-            var association = ManagedIntentExpressionReader.Read(current, row.Target.Voice);
-            if (association.Bundle is not { } bundle) return;
-            paletteId = bundle.Descriptor.Palette; libraryId = bundle.Descriptor.Entry;
+            var association = ManagedExpressionReader.Read(current, row.Target.Voice);
+            if (association.Bundle?.Descriptor is not
+                { Kind: ManagedExpressionSourceKind.Template, Template: { } descriptor }) return;
+            paletteId = descriptor.Palette;
+            libraryId = descriptor.Entry;
         }
         if (draft.HasExpressionDependencyChanges(paletteId, libraryId, settings, out var setName))
-            throw new InvalidOperationException($"この表情Set「{setName}」に未保存の変更があります。保存または破棄してから表情を変更してください。");
+            throw new InvalidOperationException(
+                $"この表情Set「{setName}」に未保存の変更があります。保存または破棄してから表情を変更してください。");
     }
+
     private void ApplyImmediateExpressionChoice(AssignmentRow row)
     {
         if (suppressExpressionApply || !IsTemplateExpressionSource || !ExpressionRowsMatchSource || !UsesRelativeExpressions || row.SelectedChoice.TachiePreset != null || row.SelectedChoice.IsCurrentOtherSource) return;
@@ -259,24 +279,85 @@ public sealed partial class PlacerViewModel
     }
     private void RestoreExpressionChoiceFromTimeline(AssignmentRow row)
     {
-        var previous = suppressExpressionApply; suppressExpressionApply = true;
+        var previous = suppressExpressionApply;
+        suppressExpressionApply = true;
         try
         {
             try
             {
-                var association = ManagedIntentExpressionReader.Read(RequireTimeline(), row.Target.Voice);
-                if (association.Bundle == null) { row.RestoreSelectedChoice(row.Choices.FirstOrDefault(x => x.Template == null)); row.SetAssociationMatch(true); return; }
-                var descriptor = association.Bundle.Descriptor; TemplateChoice? match = null;
-                foreach (var choice in row.Choices.Where(x => x.Template?.IntentSource != null && x.IsAvailable))
+                var association = ManagedExpressionReader.Read(RequireTimeline(), row.Target.Voice);
+                ManagedExpressionSafety.ValidatePresetState(association.Bundle);
+                row.SetSourceNotice("");
+                if (association.Bundle == null)
                 {
-                    var source = choice.Template!.IntentSource!;
-                    if (source.Palette.Id != descriptor.Palette || source.Entry.LibraryEntryId != descriptor.Entry) continue;
-                    try { source.Bundle.ValidateCurrent(); if (IntentAssociationTag.Hash(source.Bundle) == descriptor.GeometryHash) { match = choice; break; } }
-                    catch (InvalidOperationException) { }
+                    row.RestoreSelectedChoice(row.Choices.FirstOrDefault(x =>
+                        !x.HasCandidate && x.IsAvailable &&
+                        !x.IsCurrentOtherSource && !x.IsInvalidAssociation));
+                    row.SetAssociationMatch(true);
+                    return;
                 }
-                row.RestoreSelectedChoice(match, match == null ? "⚠ 現在の関連表情（選択元を確認）" : null); row.SetAssociationMatch(true);
+                if (association.Bundle.Descriptor is
+                    { Kind: ManagedExpressionSourceKind.Template, Template: { } templateDescriptor })
+                {
+                    if (IsTachiePresetExpressionSource)
+                    {
+                        row.RestoreSelectedChoice(new TemplateChoice(null, "現在：テンプレート由来の表情")
+                            { IsCurrentOtherSource = true });
+                        row.SetSourceNotice("現在の表情はテンプレートから配置されています。表示切替だけでは変更しません。");
+                        row.SetAssociationMatch(true);
+                        return;
+                    }
+                    TemplateChoice? match = null;
+                    foreach (var choice in row.Choices.Where(x => x.Template?.IntentSource != null && x.IsAvailable))
+                    {
+                        var source = choice.Template!.IntentSource!;
+                        if (source.Palette.Id != templateDescriptor.Palette ||
+                            source.Entry.LibraryEntryId != templateDescriptor.Entry) continue;
+                        try
+                        {
+                            source.Bundle.ValidateCurrent();
+                            if (IntentAssociationTag.Hash(source.Bundle) == templateDescriptor.GeometryHash)
+                            { match = choice; break; }
+                        }
+                        catch (InvalidOperationException) { }
+                    }
+                    row.RestoreSelectedChoice(match,
+                        match == null ? "⚠ 現在の関連表情（選択元を確認）" : null);
+                    row.SetAssociationMatch(true);
+                    return;
+                }
+                var presetDescriptor = association.Bundle.Descriptor.TachiePreset!;
+                if (IsTemplateExpressionSource)
+                {
+                    row.RestoreSelectedChoice(new TemplateChoice(null, "現在：立ち絵プリセット由来の表情")
+                        { IsCurrentOtherSource = true });
+                    row.SetSourceNotice("現在の表情は立ち絵プリセットから配置されています。表示切替だけでは変更しません。");
+                    row.SetAssociationMatch(true);
+                    return;
+                }
+                var presetMatch = row.Choices.FirstOrDefault(x =>
+                    x.IsAvailable && x.TachiePreset is { } candidate &&
+                    TachiePresetAssociationTag.CapabilityIdentity(candidate.Fingerprint) == presetDescriptor.CapabilityHash &&
+                    TachiePresetAssociationTag.CandidateIdentity(candidate) == presetDescriptor.CandidateHash);
+                if (presetMatch != null)
+                {
+                    row.RestoreSelectedChoice(presetMatch);
+                    row.SetSourceNotice("現在の表情は立ち絵プリセットから配置されています。");
+                }
+                else
+                {
+                    row.RestoreSelectedChoice(null, "⚠ 現在の立ち絵プリセット（候補・立ち絵設定を確認）");
+                    row.SetSourceNotice("現在の立ち絵プリセットを候補から一意に再確認できません。");
+                }
+                row.SetAssociationMatch(true);
             }
-            catch (InvalidOperationException) { row.RestoreSelectedChoice(null, "⚠ 関連付けを確認"); row.SetAssociationMatch(true); }
+            catch (InvalidOperationException)
+            {
+                row.RestoreSelectedChoice(new TemplateChoice(null, "⚠ 関連付けを確認", null, false)
+                    { IsInvalidAssociation = true });
+                row.SetSourceNotice("現在の関連表情を安全に確認できません。推測して変更しません。");
+                row.SetAssociationMatch(true);
+            }
         }
         finally { suppressExpressionApply = previous; }
     }
@@ -286,9 +367,14 @@ public sealed partial class PlacerViewModel
         if (row.SelectedChoice.Template?.IntentSource is not { } source) return true;
         try
         {
-            var association = ManagedIntentExpressionReader.Read(RequireTimeline(), row.Target.Voice); var descriptor = association.Bundle?.Descriptor;
-            if (descriptor == null || descriptor.Palette != source.Palette.Id || descriptor.Entry != source.Entry.LibraryEntryId) return false;
-            source.Bundle.ValidateCurrent(); return descriptor.GeometryHash == IntentAssociationTag.Hash(source.Bundle);
+            var association = ManagedExpressionReader.Read(RequireTimeline(), row.Target.Voice);
+            ManagedExpressionSafety.ValidatePresetState(association.Bundle);
+            if (association.Bundle?.Descriptor is not
+                { Kind: ManagedExpressionSourceKind.Template, Template: { } descriptor } ||
+                descriptor.Palette != source.Palette.Id ||
+                descriptor.Entry != source.Entry.LibraryEntryId) return false;
+            source.Bundle.ValidateCurrent();
+            return descriptor.GeometryHash == IntentAssociationTag.Hash(source.Bundle);
         }
         catch (InvalidOperationException) { return false; }
     }
