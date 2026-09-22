@@ -97,11 +97,18 @@ internal sealed class TachiePresetExpressionMutation
 
         var removals = existing.Bundle?.Members.ToArray() ?? [];
         var removing = removals.ToHashSet(ReferenceEqualityComparer.Instance);
+        // A generated TachieFaceItem has no source Template layer. Treat the legacy
+        // "use template layer" expression setting as the existing bounded preferred/range
+        // search instead of turning TachieFaceItem.Layer's constructor default into a
+        // hard destination that fails as soon as that layer is occupied.
+        var layerPolicy = preset.Layer.UseTemplateLayer
+            ? preset.Layer with { UseTemplateLayer = false }
+            : preset.Layer;
         addition.Layer = LayerPlanner.Find(
             addition.Frame,
             addition.Length,
             addition.Layer,
-            preset.Layer,
+            layerPolicy,
             CharacterLayerMode.Base,
             character,
             timeline.Items.Where(x => !removing.Contains(x)));
