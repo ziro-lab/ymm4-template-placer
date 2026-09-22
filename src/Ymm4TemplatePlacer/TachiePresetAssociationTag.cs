@@ -19,6 +19,7 @@ internal sealed record TachiePresetAssociationTag
 
     public const string Prefix = "CWT_TPL:T=";
     private const int HashLength = 64;
+    private const string StateHashPrefix = "public-v1:";
     private const int MaxLineLength = 256;
 
     public string Line => Prefix + string.Join(";",
@@ -43,7 +44,7 @@ internal sealed record TachiePresetAssociationTag
             throw new InvalidDataException("立ち絵プリセット関連付けのBundle位置が不正です。");
         RequireHash(capabilityHash, nameof(capabilityHash));
         RequireHash(candidateHash, nameof(candidateHash));
-        RequireHash(stateHash, nameof(stateHash));
+        RequireStateHash(stateHash);
         Group = group;
         Index = index;
         Count = count;
@@ -82,7 +83,7 @@ internal sealed record TachiePresetAssociationTag
             !int.TryParse(parts[2], NumberStyles.None, CultureInfo.InvariantCulture, out var index) ||
             !int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture, out var count) ||
             count is < 1 or > 2048 || index < 0 || index >= count ||
-            !IsHash(parts[4]) || !IsHash(parts[5]) || !IsHash(parts[6]))
+            !IsHash(parts[4]) || !IsHash(parts[5]) || !IsStateHash(parts[6]))
             return AssociationTagState.Invalid;
         try
         {
@@ -141,6 +142,17 @@ internal sealed record TachiePresetAssociationTag
     {
         if (!IsHash(value)) throw new InvalidDataException(field + " はcanonical SHA-256ではありません。");
     }
+
+    private static void RequireStateHash(string value)
+    {
+        if (!IsStateHash(value))
+            throw new InvalidDataException("stateHash はcanonical public-state fingerprintではありません。");
+    }
+
+    private static bool IsStateHash(string? value) =>
+        value?.Length == StateHashPrefix.Length + HashLength &&
+        value.StartsWith(StateHashPrefix, StringComparison.Ordinal) &&
+        value[StateHashPrefix.Length..].All(char.IsAsciiHexDigitLower);
 
     private static bool IsHash(string? value) =>
         value?.Length == HashLength && value.All(char.IsAsciiHexDigitLower);

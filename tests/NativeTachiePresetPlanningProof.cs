@@ -129,7 +129,7 @@ internal static partial class NativeProof
         const long presetSerial = 820002;
         presetVoice.Remark = AssociationTag.TargetLine(presetSerial);
         var liveFaceParameter = new P3DirectFace { Preset = "Neutral" };
-        var wrongState = new string('f', 64);
+        var wrongState = "public-v1:" + new string('f', 64);
         var currentTag = TachiePresetAssociationTag.Create(Guid.NewGuid(), 0, 1, candidate, wrongState);
         var currentPreset = new TachieFaceItem(character)
         {

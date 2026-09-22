@@ -29,7 +29,7 @@ internal static partial class NativeProof
             "Smile",
             "Smile",
             TachiePresetCapabilityLevel.Strong);
-        var stateHash = new string('d', 64);
+        var stateHash = "public-v1:" + new string('d', 64);
         var presetGroup = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         var presetTag = TachiePresetAssociationTag.Create(presetGroup, 0, 1, candidate, stateHash);
 
