@@ -17,8 +17,6 @@ internal static class TachiePresetCandidateApplier
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(candidate);
         ArgumentNullException.ThrowIfNull(ensureCurrent);
-        if (candidate.Confidence != TachiePresetCapabilityLevel.Strong)
-            throw new InvalidOperationException("状態を安定して確認できない実験候補は、まだタイムラインへ配置できません。");
         ensureCurrent();
         token.ThrowIfCancellationRequested();
         if (target.Fingerprint != candidate.Fingerprint)
@@ -82,7 +80,7 @@ internal static class TachiePresetCandidateApplier
         Action ensureCurrent,
         CancellationToken token)
     {
-        var routes = TachiePresetEditorSession.FindRoutes(face)
+        var routes = TachiePresetEditorSession.FindCalibrationRoutes(face)
             .Where(r => r.Descriptor == candidate.Route).ToArray();
         if (routes.Length != 1)
             throw new InvalidOperationException("選択したPropertyEditor経路を現在の表情パラメータから一意に再解決できません。");
