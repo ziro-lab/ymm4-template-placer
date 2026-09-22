@@ -52,11 +52,101 @@ Key boundaries:
 - preserve schema validation, atomic replacement, digest/external-change protection, cross-instance locking and fail-closed behavior;
 - migrate existing valid Settings safely;
 - never silently choose between divergent valid old/new Settings files;
-- do not mix placement or Settings-UX redesign into this work.
+- do not mix placement, source-model or Settings-UX redesign into this work.
 
-### 2. Compact Settings friction / discoverability pass
+Exit:
 
-Improve the existing Settings surface before introducing a separate large workspace.
+- portable load/save is authoritative;
+- valid legacy LocalAppData Settings migrate safely;
+- divergent valid old/new files fail closed instead of being chosen silently;
+- real `.ymme` update preserves user Settings;
+- Native migration/conflict/update evidence is GREEN.
+
+### 2. Expression Source / Placement Model review
+
+**Do this immediately after Portable Settings and before building Preview/Checklist.**
+
+v0.5.0 proved both Template expressions and Tachie Presets as usable content sources, but they still enter placement through different product paths.
+
+Explicitly review whether Tachie Presets can become reusable placement sources rather than remaining primarily an expression-list-only source.
+
+Question to answer:
+
+> Can Template and Tachie Preset be represented as different source kinds that both materialize fresh item(s) and then use the same Set-owned placement rule?
+
+Candidate model:
+
+```text
+Placement Source
+├─ YMM4 Template
+│    └─ strict TemplateLocator
+└─ Tachie Preset
+     └─ explicit plugin/surface/preset identity
+
+        ↓ materialize fresh item(s)
+
+common Placement Rule
+        ↓
+PlacementPlan / native Undo
+```
+
+Desired product result if the model proves sound:
+
+- Tachie Preset entries can be used from ordinary Sets/tile surfaces, not only from `表情をまとめて`;
+- one expression Set may contain both Template and Tachie Preset source entries;
+- source identity and placement behavior are separate concepts;
+- the expression list remains a high-throughput assignment UI rather than the only place where Tachie Presets can be used;
+- common placement behavior can move toward the Set instead of being split between `IntentRelation` and independent `ExpressionPreset` geometry.
+
+Safety boundaries:
+
+- **do not fake Tachie Presets as YMM4 ItemTemplates**;
+- do not serialize a generated `TachieFaceItem` / FaceParameter body as a second Template database merely to make the types look uniform;
+- persist a thin resolvable preset-source identity/recipe and materialize a fresh current item at execution time;
+- preserve strict source re-resolution, current Character/plugin/config validation and exact managed-association guarantees;
+- keep unsupported/ambiguous preset sources as local failures;
+- begin Character-bound if that is the safest stable identity; cross-Character source reuse requires separate evidence.
+
+This is a **design review gate**, not advance approval of a migration.
+
+Exit:
+
+- decide whether the current two-source paths stay separate or converge behind one explicit Placement Source abstraction;
+- if converging, freeze the persisted source identity and migration boundary before changing Settings UI;
+- decide whether `ExpressionPreset` placement geometry remains independent, becomes an override, or can be replaced by Set-owned placement rules;
+- Native compatibility requirements for existing Template and TachiePreset associations are written before implementation.
+
+### 3. Placement rule inventory / bounded model completion
+
+Before implementing a visual behavior preview, decide whether the near-term placement vocabulary is complete enough to explain.
+
+Review the current model and the Backlog together.
+
+Likely high-value candidates include:
+
+- Template Pivot / source-side alignment;
+- Absolute Layer;
+- finite stronger Target conditions;
+- finite stronger Neighbor selectors.
+
+Larger multiplicity changes such as Composite Placement Steps and Fan-out require a separate decision because they change what one tile/rule can produce and therefore materially change Preview structure.
+
+Rule:
+
+> Do not implement every collected Placement Recipe idea before Preview. Add only the placement axes that are likely to be part of the near-term normal product vocabulary.
+
+Also use this phase to finish the Expression Source decision from Phase 2. A Preview should not be built against a placement model that is already expected to be reorganized immediately afterward.
+
+Exit:
+
+- the near-term placement vocabulary is explicitly listed as implemented now / implement before Preview / defer;
+- source vs. placement responsibilities are frozen for the next UX phases;
+- any pre-Preview placement additions are Native GREEN;
+- the Preview/Checklist can consume one authoritative placement-description model without source-specific geometry forks.
+
+### 4. Compact Settings friction / discoverability pass
+
+Improve the existing Settings surface after the source/placement model is understood, but before introducing a separate large workspace.
 
 Primary goal:
 
@@ -77,9 +167,18 @@ Also review truly redundant workflows. Current candidate:
 
 Do not remove independent placement axes merely to shorten the screen.
 
-### 3. Behavior preview + “what I want” checklist
+Exit:
+
+- ordinary Set capabilities are discoverable without opening multiple first-level containers;
+- the common source/placement model from Phases 2-3 is understandable in Compact Settings;
+- bounded Hands-on at narrow and normal Tool widths identifies no major navigation ambiguity;
+- no second Settings model or persistence route is introduced.
+
+### 5. Behavior preview + “what I want” checklist
 
 Add a reusable Settings-assistance surface that can be opened from both Compact Settings and the later Full Settings Workspace.
+
+This phase starts only after the source/placement responsibilities and near-term placement vocabulary are frozen enough that the preview is not expected to be immediately rewritten.
 
 #### Behavior preview
 
@@ -90,24 +189,27 @@ Initial scope should be a **read-only projection**, not another placement engine
 Examples of useful visible meaning:
 
 - selected/Voice target and anchor;
+- source pivot/alignment when applicable;
 - start/end/center relationship;
 - duration relationship;
-- relative layer direction and distance;
+- relative or absolute layer behavior;
 - bounded collision-search direction;
-- next-related-Voice behavior when applicable.
+- next-related-Voice behavior when applicable;
+- source kind only where it materially affects availability, not placement geometry.
 
 The existing textual `このセットの動き` summary and the visual preview should describe the same Settings Draft.
 
-Do not duplicate placement semantics inside the preview. Derive a bounded Preview Model from the authoritative Settings/relation model.
+Do not duplicate placement semantics inside the preview. Derive a bounded Preview Model from the authoritative source/placement Settings model.
 
 #### “What I want” checklist
 
 Provide an alternate way to construct the same Settings by describing the intended outcome, for example:
 
 - what is the target/context;
+- what source/content should be placed;
 - where should placement start/end;
 - what duration should be used;
-- above/below and how far;
+- above/below/absolute layer and how far;
 - what should happen when the destination is occupied or a required neighbor is missing.
 
 The checklist is an **editing projection of the existing Settings Draft**, not a second configuration model.
@@ -130,7 +232,15 @@ Initial preview should remain read-only. Do not add preview drag/edit gestures i
 
 The exact layout (text above preview vs. beside it, vertical vs. horizontal composition) should be decided by Hands-on use rather than frozen prematurely.
 
-### 4. Full Settings Workspace (“Settings mode”)
+Exit:
+
+- textual summary and visual preview are projections of the same authoritative Draft;
+- Checklist Apply produces the same Draft shape as direct Settings editing;
+- Checklist Cancel is zero-change;
+- Template and TachiePreset sources use the same placement-description path where Phase 2 decided they should;
+- no placement semantics are reimplemented in the preview layer.
+
+### 6. Full Settings Workspace (“Settings mode”)
 
 After the compact surface and reusable assistance components are understood, create a larger settings-only workspace for managing growing Sets and tiles.
 
@@ -156,33 +266,16 @@ Reuse rather than recreate:
 - `このセットの動き` summary;
 - behavior preview;
 - “what I want” checklist;
-- existing Set/tile editors and validation semantics where practical.
+- existing Set/tile/source editors and validation semantics where practical.
 
 Compact Settings remains useful for ordinary quick edits. Both entry points must converge on the same authoritative Settings state.
 
-## Design review gate — expression placement Settings
+Exit:
 
-During the Settings-friction work, explicitly re-evaluate whether the current independent ExpressionPreset placement Settings still earn their complexity.
-
-Question to answer:
-
-> Can expression content source (Template / Tachie Preset) be separated from placement so that an expression Set owns the common placement rule?
-
-Potential direction:
-
-```text
-Expression Set
-├─ applicability / placement rule
-└─ expression source entries
-   ├─ Template
-   └─ Tachie Preset
-```
-
-This is **not yet an approved migration**.
-
-Do not fake Tachie Presets as YMM4 ItemTemplates. If this direction is pursued, keep source identity explicit and preserve exact managed-association / compatibility guarantees.
-
-Retain a separate per-session or per-operation override only if Hands-on use proves that users genuinely need to switch duration/placement behavior independently of the Set.
+- Compact and Full Settings edit the same authoritative Draft;
+- both surfaces observe the same validation/auto-commit/conflict/rollback semantics;
+- Preview/Checklist are reused rather than reimplemented;
+- no second schema, source model, placement engine or persistence route exists.
 
 ## Items that do not automatically interrupt this sequence
 
