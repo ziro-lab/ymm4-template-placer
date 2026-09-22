@@ -29,7 +29,7 @@ internal static partial class NativeProof
         };
         File.WriteAllText(Path.Combine(output, "ux-workflow-acceptance.json"), JsonSerializer.Serialize(new
         {
-            schema = "YMM4-Template-Placer-UX-Workflow/1", result = "PASS", version = "0.4.2",
+            schema = "YMM4-Template-Placer-UX-Workflow/1", result = "PASS", version = "0.5.0",
             base_candidate = "v0.4.0 Task UX", base_task_ux_requirements = 12,
             required_native_stages = requiredStages, checks = requirements.Select((requirement, i) => new { id = i + 1, requirement, result = "PASS" }),
             bulk_expression_assignment = "Deferred; Excel Bridge remains the low-risk bulk row-assignment path.",
