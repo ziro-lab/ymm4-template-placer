@@ -7,7 +7,7 @@ namespace Ymm4TemplatePlacer;
 
 public sealed partial class PlacerViewModel
 {
-    private readonly PlacerSettingsStore settingsStore = new(PlacerSettingsStore.DefaultPath);
+    private readonly PlacerSettingsStore settingsStore = PlacerSettingsStore.CreateDefault();
     private PlacerSettings settings = new();
     private bool settingsAvailable;
     private string libraryNotice = "", librarySearch = "", libraryDisplayName = "";
@@ -64,7 +64,13 @@ public sealed partial class PlacerViewModel
         SaveLibraryCommand = new ActionCommand(_ => settingsAvailable && SelectedLibraryEntry != null, _ => Guard(SaveLibrary));
         RelinkLibraryCommand = new ActionCommand(_ => settingsAvailable && SelectedLibraryEntry != null && SelectedSourceTemplate != null, _ => Guard(RelinkLibrary));
         UnregisterLibraryCommand = new ActionCommand(_ => settingsAvailable && SelectedLibraryEntry != null, _ => Guard(UnregisterLibraryFromUi));
-        try { settings = settingsStore.Load(); settingsAvailable = true; }
+        try
+        {
+            settings = settingsStore.Load();
+            settingsAvailable = true;
+            if (settingsStore.MigratedLegacyOnLastLoad)
+                LibraryNotice = "旧LocalAppData設定をYMM4フォルダ内へ移行しました。旧設定ファイルはバックアップとして残しています。";
+        }
         catch (Exception ex) { LibraryNotice = "設定を読み込めないため保存を停止しています。元ファイルは保持しています: " + ex.Message; }
         RefreshV04();
         InitializePalettes();
