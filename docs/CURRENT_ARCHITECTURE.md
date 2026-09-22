@@ -207,71 +207,36 @@ This does **not** authorize:
 - AI/fuzzy target choice;
 - existing-item transformation.
 
-## Accepted v0.4.2 baseline and next feature
+## v0.5.0 release baseline
 
-The current accepted main baseline contains PR #20, PR #22 and PR #23.
+v0.5.0 promotes the completed Tachie Preset expression source into the normal product baseline while preserving the accepted v0.4.2 placement, Settings, performance and safety architecture.
 
-Accepted Git state:
+The baseline includes:
 
-- main merge commit: `de85c312347ea35371d1c58a92992b50f64cdeb6`;
-- final pre-merge product candidate: `f626e7c71385998b22a6d29e43a3fa349cf03f18`;
-- Release run #399 `35608381259` / job `106361040827`;
-- **1,518 Native assertions PASS / 0 FAIL**;
-- exact distribution DLL smoke and verified stable-root package/provenance: PASS.
+- Item-owned targeted Sets, Generic placement, finite collision rules and shared PlacementPlan/native Undo;
+- staged protected Settings persistence and rollback;
+- lazy/cancelable expression loading with 100 / 500 / 1,000 Voice structural performance coverage;
+- the existing Template expression source;
+- a Tachie Preset expression source that resolves the current Character/plugin through bounded public surfaces, creates fresh FaceParameters/items, and fails locally when unsupported;
+- exact managed association and atomic Template <-> TachiePreset replacement for plugin-managed expressions only;
+- one assisted-calibration path that learns only a bounded plugin/surface adapter, not Character-specific preset state;
+- Voice-relative Tachie Preset placement by default, with explicit relative or absolute layer overrides available;
+- persisted Template/TachiePreset source selection, restored by a new Tool instance without flushing unrelated settings;
+- Template-only Excel behavior unchanged.
 
-The accepted baseline includes:
+The Tachie Preset source remains subject to the accepted expression-performance boundary:
 
-- Item-owned targeted Sets with explicit snapshot copy across Item types and bounded legacy multi-type compatibility;
-- quick-settings light-dismiss, common Voice row-height controls and final Hands-on UI polish;
-- lazy expression loading, expression-task-only Voice monitoring, latest-wins/cancelable background preparation, linear association/candidate indexing, reusable rows and cached aggregates;
-- 100 / 500 / 1,000 Voice structural performance fixtures;
-- direct Set deletion beside the Set picker using the existing protected deletion route;
-- nested Settings wheel routing based on the current physical cursor position rather than stale event-source state.
-
-Known deferred minor issue:
-
-- continuous wheel rotation while crossing from an inner Settings/list area to outer content can still pause for a few wheel notches before self-recovering;
-- no data loss, persistent input lock or explicit recovery requirement is known;
-- do not broaden to global/window-level input interception unless the symptom materially worsens or a bounded local fix is proved.
-
-## Active experimental feature — Tachie Preset source
-
-Draft PR #19 is the active feature-preparation branch.
-
-Its purpose is to add a second **expression content source** to `表情をまとめて`:
-
-```text
-Template source        -> existing Set-owned placement relation
-Tachie Preset source   -> Tachie-plugin expression content + existing ExpressionPreset placement geometry
-```
-
-The source switch is session-local and starts in Template mode. Switching source alone writes nothing to Timeline or settings.
-
-Tachie Preset mode intentionally reuses the existing persisted `ExpressionPreset` / `CharacterExpressionProfile` / `LayerPlanner` geometry as its **placement rule** rather than inventing an Intent Palette/Library entry or a second placement engine. In new UI text call this a placement rule / 配置ルール so it is not confused with the Tachie Preset content choice.
-
-The accepted expression-performance boundary remains authoritative:
-
-- no preset capability work on plugin open, placement tab or Settings tab;
+- no capability work on plugin open, placement tab or Settings tab;
 - no eager all-plugin scan;
-- scan only distinct current Voice Characters while the expression task and Tachie Preset mode are active;
-- WPF/property-editor work stays UI-thread-affine and yields/cancels between bounded operations;
-- immutable candidate descriptors may feed the existing background row-preparation pipeline;
+- scan only distinct current Voice Characters while the expression task and Tachie Preset source are active;
+- WPF/property-editor work remains UI-thread-affine and cancelable;
+- immutable descriptors feed the existing row/preparation pipeline;
 - stale/cancelled results never publish;
-- leaving the task or returning to Template mode cancels nonessential preset work;
-- one incompatible plugin/Character is local failure, not a Tool-wide failure.
+- one incompatible plugin/Character is a local failure.
 
-Excel remains Template-only in the first Tachie Preset implementation.
+Built-in preset discovery/loading is functionally accepted but has a deferred performance-polish item. Measure the real cost before changing the discovery/cache architecture.
 
-Authority for this feature:
-
-- `docs/TACHIE_PRESET_DESIGN.md`;
-- `docs/TACHIE_PRESET_ACCEPTANCE.md`;
-- `docs/TACHIE_PRESET_WORKPLAN.md`;
-- `docs/TACHIE_PRESET_IMPLEMENTATION_PREP.md`;
-- `docs/EXPERIMENTAL_PRESET_HANDOFF.md`;
-- canonical Lab PR #58 referenced there.
-
-Product code must not start until the bounded P0 product-bridge questions in the workplan are resolved.
+The detailed Tachie Preset design/acceptance documents are retained as implementation evidence and compatibility authority, not as an active feature-preparation gate.
 
 ## Validation
 
