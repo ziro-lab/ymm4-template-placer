@@ -7,7 +7,7 @@ internal static partial class NativeProof
 {
     private static void VerifyPortableSettingsStorage()
     {
-        stage = "Portable Settings migration and conflict safety";
+        stage = "Portable Settings migration and authority safety";
         var root = Path.Combine(output, "portable-settings-proof");
         if (Directory.Exists(root)) Directory.Delete(root, true);
         Directory.CreateDirectory(root);
@@ -50,58 +50,34 @@ internal static partial class NativeProof
             var loaded = store.Load();
             Assert(store.MigratedLegacyOnLastLoad && File.Exists(portable) &&
                 File.ReadAllBytes(portable).SequenceEqual(a) &&
-                File.ReadAllBytes(legacy).SequenceEqual(legacyBefore) &&
-                File.Exists(store.MigrationReceiptPathForProof),
-                "PORTABLE legacy-only load copies exact validated bytes into Data, records a baseline receipt and preserves the old file");
+                File.ReadAllBytes(legacy).SequenceEqual(legacyBefore),
+                "PORTABLE legacy-only load copies exact validated bytes into Data and preserves the old file");
 
             loaded.Presentation = loaded.Presentation with { FixedColumns = 6 };
             store.Save(loaded);
-            var portableAfter = File.ReadAllBytes(portable);
-            Assert(!portableAfter.SequenceEqual(a) && File.ReadAllBytes(legacy).SequenceEqual(legacyBefore) &&
-                new PlacerSettingsStore(portable, legacy).Load().Presentation.FixedColumns == 6,
-                "PORTABLE edits advance only the portable file; unchanged retained legacy data does not become a false conflict");
-
-            var samePortable = Path.Combine(root, "same", "Data", "settings-v04.json");
-            var sameLegacy = Path.Combine(root, "same", "LocalAppData", "settings-v04.json");
-            Directory.CreateDirectory(Path.GetDirectoryName(samePortable)!);
-            Directory.CreateDirectory(Path.GetDirectoryName(sameLegacy)!);
-            File.WriteAllBytes(samePortable, a); File.WriteAllBytes(sameLegacy, a);
-            var sameStore = new PlacerSettingsStore(samePortable, sameLegacy);
-            var sameLoaded = sameStore.Load();
-            Assert(File.Exists(sameStore.MigrationReceiptPathForProof) && sameLoaded.Presentation.FixedColumns == 4,
-                "PORTABLE identical pre-existing files establish a migration baseline without rewriting either settings file");
-            sameLoaded.Presentation = sameLoaded.Presentation with { FixedColumns = 5 };
-            sameStore.Save(sameLoaded);
-            Assert(new PlacerSettingsStore(samePortable, sameLegacy).Load().Presentation.FixedColumns == 5,
-                "PORTABLE an established identical baseline allows later portable-only edits while the retained legacy backup stays unchanged");
+            Assert(new PlacerSettingsStore(portable, legacy).Load().Presentation.FixedColumns == 6 &&
+                File.ReadAllBytes(legacy).SequenceEqual(legacyBefore),
+                "PORTABLE later edits advance only the portable file while the retained legacy backup stays untouched");
 
             var divergentPortable = Path.Combine(root, "divergent", "Data", "settings-v04.json");
             var divergentLegacy = Path.Combine(root, "divergent", "LocalAppData", "settings-v04.json");
             Directory.CreateDirectory(Path.GetDirectoryName(divergentPortable)!);
             Directory.CreateDirectory(Path.GetDirectoryName(divergentLegacy)!);
-            File.WriteAllBytes(divergentPortable, a); File.WriteAllBytes(divergentLegacy, b);
-            var divergentPortableBefore = File.ReadAllBytes(divergentPortable);
+            File.WriteAllBytes(divergentPortable, b); File.WriteAllBytes(divergentLegacy, a);
             var divergentLegacyBefore = File.ReadAllBytes(divergentLegacy);
             var divergentStore = new PlacerSettingsStore(divergentPortable, divergentLegacy);
-            Assert(Rejected(() => divergentStore.Load()) &&
-                File.ReadAllBytes(divergentPortable).SequenceEqual(divergentPortableBefore) &&
-                File.ReadAllBytes(divergentLegacy).SequenceEqual(divergentLegacyBefore) &&
-                !File.Exists(divergentStore.MigrationReceiptPathForProof),
-                "PORTABLE two different valid settings files fail closed and preserve both instead of choosing one");
+            Assert(divergentStore.Load().Presentation.FixedColumns == 7 &&
+                File.ReadAllBytes(divergentPortable).SequenceEqual(b) &&
+                File.ReadAllBytes(divergentLegacy).SequenceEqual(divergentLegacyBefore),
+                "PORTABLE when valid new and old settings differ, the portable settings are authoritative and legacy is left untouched");
 
-            var changedPortable = Path.Combine(root, "legacy-changed", "Data", "settings-v04.json");
-            var changedLegacy = Path.Combine(root, "legacy-changed", "LocalAppData", "settings-v04.json");
-            Directory.CreateDirectory(Path.GetDirectoryName(changedLegacy)!);
-            File.WriteAllBytes(changedLegacy, a);
-            var changedStore = new PlacerSettingsStore(changedPortable, changedLegacy);
-            changedStore.Load();
-            var portableStable = File.ReadAllBytes(changedPortable);
-            File.WriteAllBytes(changedLegacy, b);
-            var changedLegacyBytes = File.ReadAllBytes(changedLegacy);
-            Assert(Rejected(() => new PlacerSettingsStore(changedPortable, changedLegacy).Load()) &&
-                File.ReadAllBytes(changedPortable).SequenceEqual(portableStable) &&
-                File.ReadAllBytes(changedLegacy).SequenceEqual(changedLegacyBytes),
-                "PORTABLE a retained legacy file changed after migration is treated as a real divergence and neither side is overwritten");
+            File.WriteAllBytes(divergentLegacy, b);
+            Assert(new PlacerSettingsStore(divergentPortable, divergentLegacy).Load().Presentation.FixedColumns == 7,
+                "PORTABLE later legacy changes never override or block an existing portable settings file");
+
+            File.WriteAllText(divergentLegacy, "{not-json");
+            Assert(new PlacerSettingsStore(divergentPortable, divergentLegacy).Load().Presentation.FixedColumns == 7,
+                "PORTABLE corrupt legacy data is ignored when a valid portable settings file already exists");
 
             var corruptPortable = Path.Combine(root, "corrupt-portable", "Data", "settings-v04.json");
             var goodLegacy = Path.Combine(root, "corrupt-portable", "LocalAppData", "settings-v04.json");
@@ -122,7 +98,7 @@ internal static partial class NativeProof
             var corruptLegacyBytes = File.ReadAllBytes(corruptLegacy);
             Assert(Rejected(() => new PlacerSettingsStore(absentPortable, corruptLegacy).Load()) &&
                 !File.Exists(absentPortable) && File.ReadAllBytes(corruptLegacy).SequenceEqual(corruptLegacyBytes),
-                "PORTABLE corrupt legacy data is rejected before migration and no portable file is created");
+                "PORTABLE corrupt legacy data is rejected before first migration and no portable file is created");
 
             var lockedPortable = Path.Combine(root, "locked", "Data", "settings-v04.json");
             var lockedLegacy = Path.Combine(root, "locked", "LocalAppData", "settings-v04.json");
@@ -132,19 +108,39 @@ internal static partial class NativeProof
             var lockedStore = new PlacerSettingsStore(lockedPortable, lockedLegacy);
             using (var saveLock = new FileStream(lockedPortable + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
                 Assert(Rejected(() => lockedStore.Load()) && !File.Exists(lockedPortable) &&
-                    !File.Exists(lockedStore.MigrationReceiptPathForProof) && File.ReadAllBytes(lockedLegacy).SequenceEqual(a),
-                    "PORTABLE migration respects the real cross-instance lock and performs zero partial migration");
+                    File.ReadAllBytes(lockedLegacy).SequenceEqual(a),
+                    "PORTABLE first migration respects the real cross-instance lock and performs zero partial migration");
 
-            var receiptPortable = Path.Combine(root, "bad-receipt", "Data", "settings-v04.json");
-            var receiptLegacy = Path.Combine(root, "bad-receipt", "LocalAppData", "settings-v04.json");
-            Directory.CreateDirectory(Path.GetDirectoryName(receiptPortable)!);
-            Directory.CreateDirectory(Path.GetDirectoryName(receiptLegacy)!);
-            File.WriteAllBytes(receiptPortable, a); File.WriteAllBytes(receiptLegacy, a);
-            var receiptStore = new PlacerSettingsStore(receiptPortable, receiptLegacy);
-            File.WriteAllText(receiptStore.MigrationReceiptPathForProof, "not-a-valid-receipt");
-            Assert(Rejected(() => receiptStore.Load()) &&
-                File.ReadAllBytes(receiptPortable).SequenceEqual(a) && File.ReadAllBytes(receiptLegacy).SequenceEqual(a),
-                "PORTABLE corrupt migration metadata fails closed while preserving both settings files");
+            // Exercise the actual default paths inside the real native YMM4 proof host.
+            var actualPortable = PlacerSettingsStore.DefaultPath;
+            var actualLegacy = PlacerSettingsStore.LegacyPath;
+            var actualPortableBytes = File.Exists(actualPortable) ? File.ReadAllBytes(actualPortable) : null;
+            var actualLegacyBytes = File.Exists(actualLegacy) ? File.ReadAllBytes(actualLegacy) : null;
+            try
+            {
+                if (File.Exists(actualPortable)) File.Delete(actualPortable);
+                Directory.CreateDirectory(Path.GetDirectoryName(actualLegacy)!);
+                File.WriteAllBytes(actualLegacy, a);
+
+                var actualStore = PlacerSettingsStore.CreateDefault();
+                Assert(actualStore.Load().Presentation.FixedColumns == 4 &&
+                    actualStore.MigratedLegacyOnLastLoad &&
+                    File.Exists(actualPortable) && File.ReadAllBytes(actualPortable).SequenceEqual(a),
+                    "PORTABLE real YMM4 CreateDefault migrates the real LocalAppData path into the real plugin/Data path");
+
+                File.WriteAllBytes(actualPortable, b);
+                File.WriteAllBytes(actualLegacy, a);
+                Assert(PlacerSettingsStore.CreateDefault().Load().Presentation.FixedColumns == 7,
+                    "PORTABLE real YMM4 CreateDefault reopens from portable settings and prefers new data when old differs");
+            }
+            finally
+            {
+                if (actualPortableBytes == null) File.Delete(actualPortable);
+                else { Directory.CreateDirectory(Path.GetDirectoryName(actualPortable)!); File.WriteAllBytes(actualPortable, actualPortableBytes); }
+
+                if (actualLegacyBytes == null) File.Delete(actualLegacy);
+                else { Directory.CreateDirectory(Path.GetDirectoryName(actualLegacy)!); File.WriteAllBytes(actualLegacy, actualLegacyBytes); }
+            }
 
             Log("PORTABLE_SETTINGS=PASS");
         }
