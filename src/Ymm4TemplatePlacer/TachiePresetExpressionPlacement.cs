@@ -10,6 +10,7 @@ internal sealed class TachiePresetExpressionMutation
     private readonly TachiePresetProbeTarget target;
     private readonly TachiePresetCandidateDescriptor candidate;
     private readonly ManagedExpressionAssociation existing;
+    private readonly IReadOnlyList<VoiceSnapshot> voiceSnapshot;
 
     public PlacementPlan Plan { get; }
     public TachieFaceItem Addition { get; }
@@ -21,6 +22,7 @@ internal sealed class TachiePresetExpressionMutation
         TachiePresetProbeTarget target,
         TachiePresetCandidateDescriptor candidate,
         ManagedExpressionAssociation existing,
+        IReadOnlyList<VoiceSnapshot> voiceSnapshot,
         PlacementPlan plan,
         TachieFaceItem addition,
         string stateHash,
@@ -30,6 +32,7 @@ internal sealed class TachiePresetExpressionMutation
         this.target = target;
         this.candidate = candidate;
         this.existing = existing;
+        this.voiceSnapshot = voiceSnapshot;
         Plan = plan;
         Addition = addition;
         StateHash = stateHash;
@@ -120,13 +123,16 @@ internal sealed class TachiePresetExpressionMutation
 
         EnsureCurrent();
         var plan = PlacementPlan.Create(timeline, [addition], updates, removals);
-        return new(row, target, candidate, existing, plan, addition, applied.StateHash, allocator.NextSerial);
+        return new(row, target, candidate, existing, orderedVoices, plan, addition, applied.StateHash, allocator.NextSerial);
     }
 
     internal void ValidateCurrent(Timeline timeline, CancellationToken token = default)
     {
         TachiePresetPublicState.RequireUiThread();
-        ValidateRows(timeline, [row], row);
+        PlacementEngine.ValidateSnapshot(timeline, voiceSnapshot);
+        if (!voiceSnapshot.Any(x => ReferenceEquals(x.Voice, row.Target.Voice)) ||
+            row.SelectedChoice.TachiePreset != candidate || !row.SelectedChoice.IsAvailable)
+            throw new InvalidOperationException("計画後に表情行の選択状態が変わりました。配置していません。");
         if (target.Fingerprint != candidate.Fingerprint || !target.IsCurrent(token))
             throw new InvalidOperationException("計画後に立ち絵設定が変わりました。配置していません。");
         var current = ManagedExpressionReader.Read(timeline, row.Target.Voice);

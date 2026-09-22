@@ -104,7 +104,7 @@ internal static partial class NativeProof
             "planned item carries exact source serial, capability, candidate and applied-state identity");
         mutation.ValidateCurrent(timeline);
         Check(Signature(timeline) == signature && JsonSerializer.Serialize(scope.Current) == settingsJson && DiskSame(),
-            "successful P7 planning and revalidation are Timeline/settings zero-write");
+            "successful P7 planning and full multi-Voice revalidation are Timeline/settings zero-write");
 
         var experimental = new TachiePresetCandidateDescriptor(
             candidate.Fingerprint, candidate.Route, candidate.CandidateIdentity, candidate.Label,
