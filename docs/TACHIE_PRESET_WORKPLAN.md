@@ -138,6 +138,8 @@ Exit: **DONE.** All six required source-aware row states are explicit without a 
 
 ## P6 — common managed-expression seam
 
+**DONE.** Pinned evidence: `docs/TACHIE_PRESET_P6_CHECKPOINT.md` / source `0a2710457ff635038f7a6cd83cf36418bd649b35` / Checkpoint `35662905394` / marker `TACHIE_PRESET_ASSOCIATION_P6=PASS`.
+
 Keep existing IntentAssociationTag bytes unchanged.
 
 Add:
@@ -147,6 +149,8 @@ Add:
 - source-union association reader/index.
 
 Prove current Template association fixtures unchanged before preset mutation.
+
+Exit: **DONE.** Existing Template bytes/reader behavior are retained, preset tags use a separate versioned descriptor, live/background readers use one discriminated source union, and all mixed/missing/duplicate/copied cases fail closed before mutation.
 
 ## P7 — TachiePreset mutation planning
 
