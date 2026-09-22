@@ -1,6 +1,6 @@
 # Tachie Preset source — implementation prep
 
-Status: P0-P6 GREEN / READY FOR P7
+Status: P0-P8 GREEN / P9 ACTIVE
 
 Base before this refresh:
 
@@ -194,3 +194,18 @@ The common managed-expression seam is native-green.
 - full Checkpoint semantic regression/evidence guards PASS.
 
 P7 may add only planning/revalidation/application. Keep row-selection mutation disconnected until P8.
+
+
+## P7/P8 implementation result
+
+Mutation planning and immediate cross-source trial are native-green.
+
+- source `8af10fe7c2043d3df590f27e0bb10c6e2bccf64e`;
+- Checkpoint run `35681188429`;
+- job `106598311305`;
+- artifact `10674818960`;
+- artifact SHA256 `027f44694c8b089f769301be8a5152c88870471be8bb460ca5f8f542475d954f`;
+- markers `TACHIE_PRESET_PLANNING_P7=PASS`, `TACHIE_PRESET_IMMEDIATE_P8=PASS`;
+- full Checkpoint semantic regression/evidence guards PASS.
+
+P9 should now remain UX/failure-state only. Do not reopen the source-union or placement architecture unless a new blocker is proved.
