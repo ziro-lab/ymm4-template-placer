@@ -10,7 +10,7 @@ YMM4に `Ymm4TemplatePlacer-v0.5.0.ymme` をインストールし、再起動し
 
 インストール先の固定フォルダは `YMM4/user/plugin/Ymm4TemplatePlacer/` です。版が変わっても `.ymme` 内部のフォルダ名は変わりません。以前のCandidateで `Ymm4TemplatePlacer-v0.x.y/` のような版付きフォルダが残っている場合は、YMM4を閉じ、バックアップを取ってから旧Template Placerの該当フォルダだけを整理してください。他のプラグインや素材は削除しないでください。
 
-設定ファイルは `YMM4/user/plugin/Ymm4TemplatePlacer/Data/settings-v04.json` です。旧 `%LOCALAPPDATA%/Ymm4TemplatePlacer/settings-v04.json` だけがある場合は検証後にPortable側へ移行し、旧ファイルは自動削除しません。新旧に異なる有効設定がある場合は自動選択せず停止します。設定・プロジェクト・使用素材は別々にバックアップしてください。
+設定ファイルは `YMM4/user/plugin/Ymm4TemplatePlacer/Data/settings-v04.json` です。旧 `%LOCALAPPDATA%/Ymm4TemplatePlacer/settings-v04.json` だけがある場合は検証後にPortable側へ移行し、旧ファイルは自動削除しません。Portable側が存在する場合はそちらを正として読み込み、旧LocalAppData側と内容が異なっていてもPortable側を優先します。設定・プロジェクト・使用素材は別々にバックアップしてください。
 
 ## まず1つ配置する
 
