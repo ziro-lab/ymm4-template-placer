@@ -53,6 +53,13 @@ internal static partial class NativeProof
             var signature = Signature(timeline); var saved = JsonSerializer.Serialize(scope.Current);
             var disk = File.Exists(PlacerSettingsStore.DefaultPath) ? File.ReadAllBytes(PlacerSettingsStore.DefaultPath) : null;
             bool DiskSame() => disk == null ? !File.Exists(PlacerSettingsStore.DefaultPath) : File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(disk);
+            var storedBeforeSourceSwitch = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
+            static string WithoutSourceMode(PlacerSettings value)
+            {
+                var copy = PlacerSettingsStore.Copy(value);
+                copy.ExpressionSourceMode = ExpressionSourceMode.Template;
+                return JsonSerializer.Serialize(copy);
+            }
             var before = vm.ExpressionPerformance; var scanBefore = vm.PresetCapabilityDiagnostics.CharacterScans;
             vm.IsTachiePresetExpressionSource = true; await Idle();
             Check(vm.PresetCapabilityDiagnostics.CharacterScans == scanBefore && vm.ExpressionPerformance.HostCaptures == before.HostCaptures,
@@ -91,8 +98,12 @@ internal static partial class NativeProof
             view.PaletteTab.IsSelected = true; await Idle();
             row.SelectedChoice = row.Choices.Single(c => c.TachiePreset?.CandidateIdentity == "Smile");
             await vm.TachiePresetApplyCompletion; await Idle();
-            Check(row.SelectedChoice.TachiePreset != null && Signature(timeline) == signature && JsonSerializer.Serialize(scope.Current) == saved && DiskSame(),
-                "inactive candidate state can be retained for row-projection proof without mutating Timeline/settings");
+            var storedInPresetMode = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
+            Check(row.SelectedChoice.TachiePreset != null && Signature(timeline) == signature &&
+                JsonSerializer.Serialize(scope.Current) == saved &&
+                storedInPresetMode.ExpressionSourceMode == ExpressionSourceMode.TachiePreset &&
+                WithoutSourceMode(storedInPresetMode) == WithoutSourceMode(storedBeforeSourceSwitch),
+                "inactive candidate state is retained without Timeline/product-setting mutation beyond the persisted source preference");
             view.ExpressionTab.IsSelected = true; await vm.ExpressionLoadCompletion; await Idle();
             row = vm.Rows.Single(r => ReferenceEquals(r.Target.Voice, voices[1]));
             Check(row.SelectedChoice.TachiePreset?.CandidateIdentity == "Smile",
@@ -168,7 +179,7 @@ internal static partial class NativeProof
             finally { gate.Set(); ExpressionPreparation.ProofPrepareEntered = null; ExpressionPreparation.ProofPrepareGate = null; }
             Check(vm.Rows.Single(r => ReferenceEquals(r.Target.Voice, voices[0])).SelectedChoice.Template != null &&
                 Signature(timeline) == signature && JsonSerializer.Serialize(scope.Current) == saved && DiskSame(),
-                "returning Template restores the exact managed source and all integration actions are zero-write");
+                "returning Template restores the exact managed source; candidate/integration state remains zero-write");
             var templateState = vm.Rows.Single(r => ReferenceEquals(r.Target.Voice, voices[0]));
             CheckP5(templateState.SelectedChoice.Template != null && templateState.SelectedChoice.TachiePreset == null &&
                 !templateState.SelectedChoice.IsCurrentOtherSource && templateState.State == "選択済み",
