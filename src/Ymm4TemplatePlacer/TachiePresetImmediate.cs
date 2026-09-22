@@ -24,15 +24,6 @@ public sealed partial class PlacerViewModel
             activeTask != "expression" || !Rows.Contains(row)) return;
         var choice = row.SelectedChoice;
         if (choice.IsCurrentOtherSource || choice.IsInvalidAssociation || !choice.IsAvailable) return;
-        if (choice.TachiePreset is { Confidence: TachiePresetCapabilityLevel.Experimental })
-        {
-            CancelTachiePresetApply();
-            HasError = false;
-            Status = "この実験候補は状態を安定して確認できないため、候補確認のみです。タイムラインは変更していません。";
-            OnPropertyChanged(nameof(Summary));
-            UpdateCommands();
-            return;
-        }
         CancelTachiePresetApply();
         var request = tachiePresetApplyGeneration;
         var own = new CancellationTokenSource();
