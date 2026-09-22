@@ -103,9 +103,13 @@ internal static partial class NativeProof
             []);
         var baseline = Signature(timeline);
         var settingsJson = JsonSerializer.Serialize(scope.Current);
-        var disk = File.Exists(PlacerSettingsStore.DefaultPath) ? File.ReadAllBytes(PlacerSettingsStore.DefaultPath) : null;
-        bool DiskSame() => disk == null ? !File.Exists(PlacerSettingsStore.DefaultPath) :
-            File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(disk);
+        var storedBeforeSourceSwitch = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
+        static string WithoutSourceMode(PlacerSettings value)
+        {
+            var copy = PlacerSettingsStore.Copy(value);
+            copy.ExpressionSourceMode = ExpressionSourceMode.Template;
+            return JsonSerializer.Serialize(copy);
+        }
 
         try
         {
@@ -197,8 +201,11 @@ internal static partial class NativeProof
                 "reload restores live managed other-source truth instead of preserving an uncommitted inspection choice");
 
             SaveNamedView(view, "tachie-preset-p9-failure-ux.png");
-            Check(Signature(timeline) == baseline && JsonSerializer.Serialize(scope.Current) == settingsJson && DiskSame(),
-                "all P9 failure/unavailable UX inspection paths preserve Timeline and settings");
+            var storedAfterInspection = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
+            Check(Signature(timeline) == baseline && JsonSerializer.Serialize(scope.Current) == settingsJson &&
+                storedAfterInspection.ExpressionSourceMode == ExpressionSourceMode.TachiePreset &&
+                WithoutSourceMode(storedAfterInspection) == WithoutSourceMode(storedBeforeSourceSwitch),
+                "all P9 failure/unavailable UX paths preserve Timeline and product settings beyond the selected source preference");
         }
         finally
         {
