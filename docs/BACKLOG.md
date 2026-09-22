@@ -190,6 +190,46 @@ Finite additions may include:
 
 No fuzzy “nearest suitable thing” behavior.
 
+## Action Tile extensions — collect before implementation
+
+Status: **COLLECTING**
+
+### YMM4 standard command tiles
+
+User problem:
+
+Frequently used YMM4 editing operations still require remembering keyboard shortcuts or leaving the context-sensitive Template Placer action surface. Some of those operations could live beside placement tiles when they are directly useful in the same editing flow.
+
+Candidate operations:
+
+- split;
+- delete;
+- copy / paste;
+- undo / redo;
+- play / pause;
+- other high-frequency YMM4 standard commands proven useful during placement/editing.
+
+Product boundary:
+
+- keep this limited to operations closely tied to Template Placer's editing workflow;
+- do not turn Template Placer into a general-purpose launcher;
+- external tools, arbitrary macros, file/folder launchers and ToolBox-style addon hosting remain out of scope;
+- coexist with ToolBox rather than duplicating its general launcher responsibility.
+
+Architecture direction:
+
+- do not encode commands as fake or nullable Template/Library entries;
+- generalize the tile execution surface explicitly, e.g. an action kind such as `TemplatePlacement` / `YmmCommand`;
+- keep tile presentation (label, color, shape, ordering) independent from the action payload where practical;
+- position shortcuts should resolve the current slot and invoke the same tile execution path as a click;
+- use YMM4's standard command route where available rather than synthesizing key input.
+
+Safety / implementation gate:
+
+- this is a future extension candidate, not approval to broaden the current active PR;
+- first keep Preset/UI work and the existing placement architecture stable;
+- before implementation, define the finite supported command set and native-test command availability / focus behavior.
+
 ## Deferred / out of scope
 
 ### Existing-item transformation
