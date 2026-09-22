@@ -6,9 +6,9 @@ Being listed here is not implementation approval or priority commitment.
 
 ## Active
 
-## Portable settings storage — high priority candidate
+## Portable settings storage
 
-Status: **HIGH PRIORITY / DESIGN NEXT**
+Status: **IMPLEMENTED CANDIDATE / RELEASE GREEN — PR #27; OWNER HANDS-ON BEFORE MERGE**
 
 User problem:
 
@@ -43,6 +43,18 @@ Packaging caution:
 Because the observed `.ymme` updater preserves files that are omitted from a later package, future package-layout changes must explicitly account for stale plugin files. Do not rely on update installation to clean old files automatically.
 
 This portability work is independent from placement semantics and should not broaden the active placement feature PR.
+
+Implementation candidate:
+
+- authoritative path: `<YMM4>/user/plugin/Ymm4TemplatePlacer/Data/settings-v04.json`;
+- valid legacy-only LocalAppData settings migrate byte-for-byte after validation;
+- legacy file remains in place;
+- a small legacy digest baseline prevents the retained backup from becoming a false conflict after normal Portable edits;
+- divergent valid files or a legacy file changed after migration fail closed and preserve both;
+- corrupt Portable never silently falls back to legacy;
+- Release packaging rejects any packaged `Data/` payload.
+
+Release #525 (`35797613825`) at source `e0f8128f63a687f90e8491fa0340e724c0229cd5`: **1,702 Native assertions PASS**, exact distribution-DLL smoke PASS, verified `.ymme` / source / provenance packaging PASS. Public Lab PR #85 remains the real YMM4 `.ymme` update-preservation host evidence.
 
 
 ## Built-in Tachie Preset loading performance — deferred
