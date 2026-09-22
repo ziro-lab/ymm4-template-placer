@@ -59,6 +59,72 @@ Because the observed `.ymme` updater preserves files that are omitted from a lat
 
 This portability work is independent from placement semantics and should not broaden the active placement feature PR.
 
+## Compact Settings visibility polish — planned
+
+Status: **PLANNED / BOUNDED UI POLISH**
+
+User problem:
+
+The compact Settings surface is allowed to be vertically long. The more important problem is discoverability: first-time users should be able to see what can be configured without opening several first-level expanders. The compact surface should remain useful for quick edits even after the separate Full Settings Workspace exists.
+
+Primary rule:
+
+> Prefer visible first-level settings over hiding them to save vertical space. Keep only genuinely detailed or exceptional controls folded.
+
+First-level sections that should be visible by default and may stop being Expanders entirely:
+
+- `どのアイテムで使うか`;
+- `どう置く？`;
+- `演出と並び順`;
+- `セットの管理`;
+- `テンプレートをまとめて追加`.
+
+Reasons:
+
+- these sections define or manage the Set in ordinary use;
+- hiding them can make important capabilities undiscoverable;
+- `セットの管理` is small and contains important actions such as Set deletion/copy/reorder;
+- Template/tile addition is performed through `テンプレートをまとめて追加`, so its existence should be obvious;
+- vertical length itself is not considered a defect for the compact Settings surface.
+
+Controls that should remain folded because they are genuinely detailed/low-frequency:
+
+- `対象の詳細`;
+- `細かく調整`;
+- `選択した演出だけの微調整`;
+- `全体の表示・操作`.
+
+`全体の表示・操作` may move lower in the compact Settings flow because it is global presentation/operation state rather than the current Set's core definition.
+
+### Template bulk-add scrolling polish
+
+Keep `テンプレートをまとめて追加` visible, but reduce nested-scroll friction.
+
+Direction:
+
+- make the inner Template source list slightly narrower rather than changing wheel ownership first;
+- reserve usable outer-scroll escape space on **both** sides of the list;
+- prefer a somewhat wider escape margin on the **left**, because the right side already contains the inner list scrollbar and may naturally be used for direct inner scrolling;
+- do not shrink the list aggressively; the goal is only to make outer Settings scrolling easy across different YMM4 panel widths/layout arrangements;
+- keep the current nested-wheel routing unless hands-on testing shows width/spacing alone is insufficient.
+
+### Set picker row alignment
+
+The Set picker row should look like one coherent control group.
+
+Direction:
+
+- align the vertical size of the Set ComboBox, `＋` button and adjacent `削除` button;
+- prefer matching the buttons to the ComboBox height unless hands-on appearance shows the reverse is better;
+- keep this local to the Set picker row rather than changing the global Button/ComboBox styles.
+
+Scope boundary:
+
+- this is not a redesign of compact Settings;
+- do not add search/filter/diagnostic workspace features here — those belong to the Full Settings Workspace;
+- do not change what can be configured or the settings model;
+- validate the final spacing and first-level visibility in actual YMM4 at narrow and normal Tool widths.
+
 ## Full Settings Workspace — planned UX direction
 
 Status: **PLANNED / DESIGN CANDIDATE**
@@ -69,7 +135,7 @@ The current compact Settings surface works for small day-to-day edits, but becom
 
 Core rule:
 
-- keep the current compact Settings UI as-is for ordinary quick edits;
+- keep the current compact Settings UI as the ordinary quick-edit surface; bounded visibility/spacing polish may still improve it;
 - the large workspace edits the **same settings model and same staged Settings Draft**;
 - do not create a second settings schema, separate feature set, or alternate persistence path;
 - the large mode changes presentation/navigation only, not what can ultimately be configured.
