@@ -19,7 +19,7 @@
       <WrapPanel x:Name="ExpressionSourceSwitch" Margin="0,0,0,5">
        <WrapPanel.Style><Style TargetType="WrapPanel"><Style.Triggers><DataTrigger Binding="{Binding UseLegacyWorkspace}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></WrapPanel.Style>
        <RadioButton x:Name="TemplateExpressionSource" GroupName="ExpressionSource" Content="テンプレート" IsChecked="{Binding IsTemplateExpressionSource,Mode=TwoWay}" Margin="0,0,12,0"/>
-       <RadioButton x:Name="TachiePresetExpressionSource" GroupName="ExpressionSource" Content="立ち絵プリセット（実験）" IsChecked="{Binding IsTachiePresetExpressionSource,Mode=TwoWay}"/>
+       <RadioButton x:Name="TachiePresetExpressionSource" GroupName="ExpressionSource" Content="表情プリセット（実験）" IsChecked="{Binding IsTachiePresetExpressionSource,Mode=TwoWay}"/>
       </WrapPanel>
       <TextBlock Text="{Binding Summary}" Opacity="0.75" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/>
       <WrapPanel HorizontalAlignment="Right">
@@ -77,7 +77,7 @@
      <TextBlock x:Name="ExpressionEmptyNotice" Grid.Row="1" Text="このシーンには音声がありません。YMM4で音声を追加すると、自動的に一覧へ表示されます。" TextWrapping="Wrap" Margin="8,28,8,8" IsHitTestVisible="False">
       <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Rows.Count}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding ExpressionRowsMatchSource}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding IsExpressionLoading}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
      </TextBlock>
-     <TextBlock x:Name="TachiePresetRowsPlaceholder" Grid.Row="1" Text="立ち絵プリセットの候補を準備しています。表示されない場合は［一覧を読み直す］で再確認してください。" Margin="8,30,8,8" TextWrapping="Wrap" IsHitTestVisible="False">
+     <TextBlock x:Name="TachiePresetRowsPlaceholder" Grid.Row="1" Text="表情プリセットの候補を準備しています。表示されない場合は［一覧を読み直す］で再確認してください。" Margin="8,30,8,8" TextWrapping="Wrap" IsHitTestVisible="False">
       <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding IsTachiePresetExpressionSource}" Value="True"/><Condition Binding="{Binding ExpressionRowsMatchSource}" Value="False"/></MultiDataTrigger.Conditions><Setter Property="Visibility" Value="Visible"/></MultiDataTrigger></Style.Triggers></Style></TextBlock.Style>
      </TextBlock>
      <ScrollViewer x:Name="ExpressionRowDetail" Grid.Row="2" DataContext="{Binding SelectedItem,ElementName=VoiceGrid}" Visibility="Collapsed" MaxHeight="58" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="2,4,2,0">
@@ -96,6 +96,14 @@
         <StackPanel>
          <Button x:Name="ResyncButton" Content="選択した表情を再同期" Command="{Binding ResyncCommand}" Padding="8,3" Margin="0,3,0,0" ToolTip="{Binding ResyncHint}" ToolTipService.ShowOnDisabled="True"/>
          <Button x:Name="RefreshButton" Content="一覧を読み直す" Command="{Binding RefreshCommand}" Padding="8,3" Margin="0,3,0,0" ToolTip="未配置の割り当てを確認してから、現在の音声と候補を読み直します。"/>
+         <Button x:Name="TachiePresetCalibrationButton" Content="{Binding TachiePresetCalibrationActionText}" Command="{Binding TachiePresetCalibrationCommand}"
+          CommandParameter="{Binding SelectedItem,ElementName=VoiceGrid}" Padding="8,3" Margin="0,3,0,0"
+          ToolTip="自動で表情プリセットを見つけられない立ち絵Plugin向け。確認用アイテムを1個置き、1回のプリセット変更から読み取り経路を認識します。">
+          <Button.Style><Style TargetType="Button"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsTachiePresetExpressionSource}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Button.Style>
+         </Button>
+         <TextBlock x:Name="TachiePresetCalibrationNoticeText" Text="{Binding TachiePresetCalibrationNotice}" TextWrapping="Wrap" Margin="0,3,0,0" Opacity="0.75" FontSize="11">
+          <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsTachiePresetExpressionSource}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+         </TextBlock>
         </StackPanel>
        </Expander>
       </WrapPanel>
