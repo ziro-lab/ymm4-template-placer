@@ -61,8 +61,12 @@ Before product source changes:
 - E2: dry-run FaceParameter is never inserted into Timeline.
 - E3: stale plugin/fingerprint/candidate fails before mutation.
 - E4: a fresh TachieFaceItem is built for current Character and receives the newly applied FaceParameter.
-- E5: placement uses existing ExpressionPreset/CharacterExpressionProfile/LayerPlanner semantics.
-- E5a: because a generated TachieFaceItem has no source Template layer, legacy UseTemplateLayer state must use bounded Preferred/Minimum/Maximum free-layer search; an occupied generated default/preferred layer must not fail while a valid free layer remains.
+- E5: time placement uses existing ExpressionPreset/CharacterExpressionProfile semantics.
+- E5a: the default layer mode inherits the first applicable Voice expression Set's RelativeLayerPolicy; normal up/down offset and same-direction bounded collision search match ordinary Voice-targeted Template placement.
+- E5b: an explicit relative override may independently choose Voice-up/Voice-down, offset and bounded search range.
+- E5c: an explicit absolute override may target a numeric layer and choose occupied behavior: do not place, search up or search down; retained legacy bounded search remains readable for migrated settings.
+- E5d: generated TachieFaceItem constructor Layer is never treated as an implicit destination.
+- E5e: untouched historical default settings migrate to Voice-Set inheritance; customized historical numeric layer settings retain absolute-placement meaning.
 - E6: complete preflight precedes mutation.
 - E7: successful immediate choice participates in the existing one logical native trial Undo.
 - E8: Preview/viewport confirmation uses the existing root navigation coordinator.
