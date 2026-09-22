@@ -59,6 +59,77 @@ Because the observed `.ymme` updater preserves files that are omitted from a lat
 
 This portability work is independent from placement semantics and should not broaden the active placement feature PR.
 
+## Full Settings Workspace — planned UX direction
+
+Status: **PLANNED / DESIGN CANDIDATE**
+
+User problem:
+
+The current compact Settings surface works for small day-to-day edits, but becomes cramped when Sets and tiles grow. The product needs a larger settings-only workspace that is easy to understand on first use without requiring explanatory documentation.
+
+Core rule:
+
+- keep the current compact Settings UI as-is for ordinary quick edits;
+- the large workspace edits the **same settings model and same staged Settings Draft**;
+- do not create a second settings schema, separate feature set, or alternate persistence path;
+- the large mode changes presentation/navigation only, not what can ultimately be configured.
+
+Primary UX structure:
+
+```text
+left navigation        center structure         right inspector
+Item type          ->  Sets / tiles         ->  selected settings
+```
+
+Suggested roles:
+
+- **Left:** Generic / Voice / Text / Image / Shape / other Item contexts;
+- **Center:** all Sets for the selected context and their tiles, using the same recognizable tile names/colors/shapes as the normal placement surface;
+- **Right:** settings for the currently selected Set or tile.
+
+Discoverability goals:
+
+- the current location should be visually obvious without reading help text;
+- adding a Set should happen beside the Set collection;
+- adding a Template/tile should happen beside that Set's tile collection;
+- selecting an object should reveal its editable properties in the right inspector;
+- avoid a deep TreeView, tab maze, or management menu that hides basic actions.
+
+Search and filtering:
+
+- keep one always-visible search field near the top;
+- search may match Set name, tile alias, source Template name and Character where available;
+- search is supplemental — normal browsing must remain possible without it;
+- begin with a small number of visible filters only, such as Character, expression-candidate status and problem/broken-reference status;
+- active filters must remain visible and easy to clear;
+- filtering must only change what is shown, never mutate organization or settings data.
+
+Progressive disclosure:
+
+- show the frequently used settings directly;
+- keep the existing human-readable `このセットの動き` summary prominent;
+- a small schematic/diagram of target/placement relation may be used if it improves first-look comprehension;
+- advanced numeric/detail controls should be behind **one** bounded disclosure level such as `細かく調整`;
+- avoid nested expanders beyond that where practical.
+
+Management-assist fit:
+
+This workspace is the natural future home for read-only management aids such as:
+
+- broken-reference/problem filtering;
+- "where is this Template used?" usage information;
+- unused/unassigned visibility;
+- Set/tile organization assistance.
+
+These are not required for the first implementation. The first milestone should prove that the **existing settings become easier to find, compare and edit** in the large workspace before adding broader management features.
+
+Safety / architecture:
+
+- reuse the existing staged draft, validation, auto-commit, conflict detection and `今回の変更を戻す` semantics;
+- both compact Settings and the large workspace must converge on the same authoritative settings state;
+- no Timeline mutation belongs in this workspace;
+- no placement engine, Template body ownership or normal product boundary changes are implied.
+
 ## UI polish — active preparation
 
 Status: **ACTIVE — UI Micro Polish prep**
