@@ -127,3 +127,34 @@ internal static class ManagedExpressionReader
     private static bool HasPlacementMarker(string? remark) =>
         (remark ?? "").Split('\n').Any(line => line.TrimEnd('\r') == PlacementEngine.Marker);
 }
+
+
+internal static class ManagedExpressionSafety
+{
+    internal static bool Same(ManagedExpressionAssociation left, ManagedExpressionAssociation right)
+    {
+        if (left.Serial != right.Serial) return false;
+        if (left.Bundle == null || right.Bundle == null)
+            return left.Bundle == null && right.Bundle == null;
+        if (left.Bundle.Descriptor != right.Bundle.Descriptor ||
+            left.Bundle.Members.Count != right.Bundle.Members.Count)
+            return false;
+        return left.Bundle.Members.Select((item, i) =>
+            ReferenceEquals(item, right.Bundle.Members[i])).All(x => x);
+    }
+
+    internal static void ValidatePresetState(ManagedExpressionBundle? bundle, CancellationToken token = default)
+    {
+        if (bundle?.Descriptor is not
+            { Kind: ManagedExpressionSourceKind.TachiePreset, TachiePreset: { } descriptor }) return;
+        if (bundle.Members.Count != 1 ||
+            bundle.Members[0] is not TachieFaceItem face ||
+            face.TachieFaceParameter == null)
+            throw new InvalidOperationException(
+                "現在の立ち絵プリセット表情を安全に一意確認できません。変更していません。");
+        var current = TachiePresetPublicState.TryHash(face.TachieFaceParameter, token);
+        if (current == null || current != descriptor.StateHash)
+            throw new InvalidOperationException(
+                "現在の立ち絵プリセット表情は配置後に変更されています。自動置換せず停止しました。");
+    }
+}
