@@ -11,7 +11,11 @@ public sealed partial class PlacerViewModel
     private TachiePresetCapabilityCoordinator PresetCoordinator => tachiePresetCoordinator ??= new(c => PresetTargetResolver(c));
     internal TachiePresetCapabilityDiagnostics PresetCapabilityDiagnostics => tachiePresetCoordinator?.Diagnostics ?? new();
 
-    internal void InvalidatePresetCapabilityCache() => tachiePresetCoordinator?.Invalidate();
+    internal void InvalidatePresetCapabilityCache()
+    {
+        CancelTachiePresetApply();
+        tachiePresetCoordinator?.Invalidate();
+    }
 
     private bool PresetSnapshotStillCurrent(ExpressionHostSnapshot snapshot, IReadOnlyList<Character> characters, CancellationToken token)
     {
@@ -59,6 +63,7 @@ public sealed partial class PlacerViewModel
     private void PresetContextChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (!IsTachiePresetExpressionSource || !voiceFreshnessActive || voiceFreshnessDisposed) return;
+        CancelTachiePresetApply();
         expressionCacheDirty = true;
         fullVoiceReconcilePending = true;
         RequestVoiceFreshnessCheck();
