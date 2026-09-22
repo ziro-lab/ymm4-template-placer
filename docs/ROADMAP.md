@@ -4,13 +4,17 @@ This file is now a navigation roadmap. The older W1-W12 implementation ladder is
 
 ## Current accepted baseline
 
-v0.4.2 Hands-on/performance polish is merged to main through PR #20, PR #22 and PR #23. Documentation authority cleanup followed in PR #24.
+v0.5.0 is the integrated baseline.
 
-- accepted product merge: `de85c312347ea35371d1c58a92992b50f64cdeb6`;
-- current docs main: `817fdfd86539a28b7e8df5ce87eb54333550f259`;
-- final product Release run #399: `35608381259`;
-- **1,518 Native assertions PASS / 0 FAIL**;
-- exact distribution DLL smoke / verified package/provenance: PASS.
+It retains the accepted v0.4.2 Hands-on/performance architecture and adds the completed Tachie Preset expression-source work:
+
+- Template / TachiePreset source switching in `表情をまとめて`;
+- built-in and supported third-party preset discovery through bounded public surfaces;
+- exact managed cross-source replacement and native Undo;
+- assisted adapter calibration for otherwise undiscoverable public preset surfaces;
+- Voice-relative preset placement with finite overrides;
+- persisted source-mode selection across Tool reopen;
+- retained Template-mode performance and regression behavior.
 
 Current architecture authority:
 
@@ -19,24 +23,15 @@ Current architecture authority:
 - `VALIDATION_STRATEGY.md`;
 - `LEGACY_COMPATIBILITY_MAP.md`.
 
-## Active feature
+## Next improvements
 
-Experimental Tachie Preset source — Draft PR #19.
+No new large feature is required to make the core workflow usable. Continue from `BACKLOG.md` as independent bounded improvements.
 
-Preparation authority:
+Current high-priority candidate:
 
-- `TACHIE_PRESET_DESIGN.md`;
-- `TACHIE_PRESET_ACCEPTANCE.md`;
-- `TACHIE_PRESET_WORKPLAN.md`;
-- `TACHIE_PRESET_IMPLEMENTATION_PREP.md`;
-- `EXPERIMENTAL_PRESET_HANDOFF.md`;
-- canonical public Lab PR #58.
+- portable settings storage.
 
-The first product implementation starts only after the bounded P0 product-bridge checks are closed.
-
-## Later
-
-Placement Recipe extensions and other collected ideas remain in `BACKLOG.md`. Their implementation order is not frozen.
+Other planned/deferred work includes compact Settings visibility polish, the Full Settings Workspace, placement-recipe extensions and measured optimization of built-in Tachie Preset loading.
 
 ---
 
