@@ -1,7 +1,7 @@
 param([string]$OutputDir='out')
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
-$version='0.4.2'
+$version='0.5.0'
 $installFolder='Ymm4TemplatePlacer'
 $project=[xml](Get-Content -Raw 'src/Ymm4TemplatePlacer/Ymm4TemplatePlacer.csproj')
 if ($project.Project.PropertyGroup.Version -cne $version) { throw 'Project/package version mismatch' }
@@ -25,7 +25,7 @@ foreach ($stage in $stages) {
 }
 $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
 if ($acceptance.schema -ne 'YMM4-Template-Placer-Acceptance/1' -or $acceptance.version -ne $version -or $acceptance.result -ne 'PASS' -or
-    $acceptance.profile_families -ne 5 -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count -ne 0) { throw 'Incomplete v0.4.2 core acceptance manifest' }
+    $acceptance.profile_families -ne 5 -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count -ne 0) { throw 'Incomplete v0.5.0 core acceptance manifest' }
 if ((@($acceptance.checks.id | Sort-Object) -join ',') -ne ((1..18) -join ',')) { throw 'Acceptance IDs are missing or duplicated' }
 $ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-Json
 if ($ux.schema -ne 'YMM4-Template-Placer-Task-UX/1' -or $ux.version -ne '0.4.0' -or $ux.result -ne 'PASS' -or
@@ -34,14 +34,14 @@ if ($ux.schema -ne 'YMM4-Template-Placer-Task-UX/1' -or $ux.version -ne '0.4.0' 
 $workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
 if ($workflow.schema -ne 'YMM4-Template-Placer-UX-Workflow/1' -or $workflow.version -ne $version -or $workflow.result -ne 'PASS' -or
     @($workflow.checks).Count -ne 10 -or @($workflow.checks | Where-Object { $_.result -ne 'PASS' }).Count -ne 0 -or
-    (@($workflow.checks.id | Sort-Object) -join ',') -ne ((1..10) -join ',')) { throw 'Incomplete v0.4.2 UX workflow acceptance manifest' }
+    (@($workflow.checks.id | Sort-Object) -join ',') -ne ((1..10) -join ',')) { throw 'Incomplete v0.5.0 UX workflow acceptance manifest' }
 foreach ($build in @('build-release.txt','build-proof.txt')) {
  $text=Get-Content -Raw (Join-Path $OutputDir $build)
  if ($text -notmatch '(?m)^\s*0 Warning\(s\)' -or $text -notmatch '(?m)^\s*0 Error\(s\)') { throw "Build is not warning/error clean: $build" }
 }
 $dll=Join-Path $package 'Ymm4TemplatePlacer.dll'
 $dllHash=(Get-FileHash $dll -Algorithm SHA256).Hash.ToLowerInvariant()
-if ([Reflection.AssemblyName]::GetAssemblyName((Resolve-Path $dll).Path).Version.ToString() -ne '0.4.2.0') { throw 'Distribution assembly version mismatch' }
+if ([Reflection.AssemblyName]::GetAssemblyName((Resolve-Path $dll).Path).Version.ToString() -ne '0.5.0.0') { throw 'Distribution assembly version mismatch' }
 $smoke=Get-Content -Raw (Join-Path $OutputDir 'release-plugin-loaded.txt')
 if ($smoke -notmatch '(?m)^build=distribution\r?$' -or $smoke -notmatch "(?m)^sha256=$dllHash\r?`$") { throw 'Release smoke does not identify this exact distribution DLL' }
 Copy-Item docs/USAGE.md (Join-Path $package 'README.md')
@@ -57,7 +57,7 @@ Copy-Item (Join-Path $OutputDir 'hands-on-round2.json') $package
 $round3Payload=@('hands-on-round3.json','hands-on-round3-appearance.json','hands-on-round3-shortcuts.json','hands-on-round3-settings.json','hands-on-round3-layer.json','hands-on-round3-freshness.json','hands-on-round3-navigation.json','hands-on-round3-playback-observation.json','round3-evidence-guard-tests.json')
 foreach($name in $round3Payload){Copy-Item (Join-Path $OutputDir $name) $package}
 $usage=Get-Content -Raw (Join-Path $package 'README.md')
-if ($usage -notmatch '^# YMM4 Template Placer v0\.4\.2') { throw 'Obsolete package usage documentation' }
+if ($usage -notmatch '^# YMM4 Template Placer v0\.5\.0') { throw 'Obsolete package usage documentation' }
 foreach($section in @('UI Micro Polish Hands-on Candidate','## 配置パネルの簡易設定・固定列・位置ショートカット','## 汎用配置のレイヤーをすばやく指定する','## 表情をまとめて：行クリックと即時反映','## Excelと未配置作業の保護','⚙ 簡易設定','マウスホイールで±1','行の下端にマウスを合わせて上下ドラッグ','数値を直接入力してEnter','今回の変更を戻す','一覧を読み直す','YMM4側の別の場所をクリックすると閉じます','他のアイテムへコピー','「複数種類」')) {
  if (-not $usage.Contains($section,[StringComparison]::Ordinal)) {throw "Missing actual UI Micro Polish usage section: $section"}
 }
@@ -138,4 +138,4 @@ try {
  source_archive='Ymm4TemplatePlacer-source.zip'; ymme_install_folder=$installFolder; ymme_file_entries=$expectedArchive
 } | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'package-checks.json')
 Get-FileHash (Join-Path $OutputDir 'Ymm4TemplatePlacer*') -Algorithm SHA256 | Select-Object @{Name='File';Expression={Split-Path $_.Path -Leaf}},Hash | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'SHA256.json')
-Write-Host "Verified v0.4.2 .ymme stable install folder '$installFolder' / source / provenance packaging: PASS"
+Write-Host "Verified v0.5.0 .ymme stable install folder '$installFolder' / source / provenance packaging: PASS"
