@@ -207,34 +207,36 @@ This does **not** authorize:
 - AI/fuzzy target choice;
 - existing-item transformation.
 
-## Accepted v0.4.2 baseline and next feature
+## v0.5.0 release baseline
 
-The current accepted main baseline contains PR #20, PR #22 and PR #23.
+v0.5.0 promotes the completed Tachie Preset expression source into the normal product baseline while preserving the accepted v0.4.2 placement, Settings, performance and safety architecture.
 
-Accepted Git state:
+The baseline includes:
 
-- main merge commit: `de85c312347ea35371d1c58a92992b50f64cdeb6`;
-- final pre-merge product candidate: `f626e7c71385998b22a6d29e43a3fa349cf03f18`;
-- Release run #399 `35608381259` / job `106361040827`;
-- **1,518 Native assertions PASS / 0 FAIL**;
-- exact distribution DLL smoke and verified stable-root package/provenance: PASS.
+- Item-owned targeted Sets, Generic placement, finite collision rules and shared PlacementPlan/native Undo;
+- staged protected Settings persistence and rollback;
+- lazy/cancelable expression loading with 100 / 500 / 1,000 Voice structural performance coverage;
+- the existing Template expression source;
+- a Tachie Preset expression source that resolves the current Character/plugin through bounded public surfaces, creates fresh FaceParameters/items, and fails locally when unsupported;
+- exact managed association and atomic Template <-> TachiePreset replacement for plugin-managed expressions only;
+- one assisted-calibration path that learns only a bounded plugin/surface adapter, not Character-specific preset state;
+- Voice-relative Tachie Preset placement by default, with explicit relative or absolute layer overrides available;
+- persisted Template/TachiePreset source selection, restored by a new Tool instance without flushing unrelated settings;
+- Template-only Excel behavior unchanged.
 
-The accepted baseline includes:
+The Tachie Preset source remains subject to the accepted expression-performance boundary:
 
-- Item-owned targeted Sets with explicit snapshot copy across Item types and bounded legacy multi-type compatibility;
-- quick-settings light-dismiss, common Voice row-height controls and final Hands-on UI polish;
-- lazy expression loading, expression-task-only Voice monitoring, latest-wins/cancelable background preparation, linear association/candidate indexing, reusable rows and cached aggregates;
-- 100 / 500 / 1,000 Voice structural performance fixtures;
-- direct Set deletion beside the Set picker using the existing protected deletion route;
-- nested Settings wheel routing based on the current physical cursor position rather than stale event-source state.
+- no capability work on plugin open, placement tab or Settings tab;
+- no eager all-plugin scan;
+- scan only distinct current Voice Characters while the expression task and Tachie Preset source are active;
+- WPF/property-editor work remains UI-thread-affine and cancelable;
+- immutable descriptors feed the existing row/preparation pipeline;
+- stale/cancelled results never publish;
+- one incompatible plugin/Character is a local failure.
 
-Known deferred minor issue:
+Built-in preset discovery/loading is functionally accepted but has a deferred performance-polish item. Measure the real cost before changing the discovery/cache architecture.
 
-- continuous wheel rotation while crossing from an inner Settings/list area to outer content can still pause for a few wheel notches before self-recovering;
-- no data loss, persistent input lock or explicit recovery requirement is known;
-- do not broaden to global/window-level input interception unless the symptom materially worsens or a bounded local fix is proved.
-
-The next prepared feature is **Experimental Tachie Preset** Draft PR #19. It remains separate from the accepted baseline. Before resuming implementation, refresh/rebase its branch onto current main and review its assumptions against this document, the current validation strategy and the accepted expression-performance boundary.
+The detailed Tachie Preset design/acceptance documents are retained as implementation evidence and compatibility authority, not as an active feature-preparation gate.
 
 ## Validation
 
@@ -254,7 +256,7 @@ For current work, prefer documents in this order:
 2. `docs/GLOSSARY.md`;
 3. `docs/VALIDATION_STRATEGY.md`;
 4. current accepted feature authorities such as `docs/FINAL_HANDS_ON_POLISH.md` and the expression-performance design/acceptance documents;
-5. the active feature's own handoff/spec after it has been refreshed onto current main;
+5. the active feature's frozen Tachie Preset design/acceptance/workplan/implementation-prep documents;
 6. `docs/BACKLOG.md`;
 7. historical Round/W documents when reconstructing rationale.
 

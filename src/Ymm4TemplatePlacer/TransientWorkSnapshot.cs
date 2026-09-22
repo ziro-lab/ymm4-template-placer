@@ -61,17 +61,22 @@ internal sealed record PresetDraftState(
     string MaxGap,
     string StartOffset,
     string EndOffset,
-    bool UseTemplateLayer,
+    ExpressionLayerMode LayerMode,
+    RelativeLayerDirection Direction,
+    string RelativeOffset,
     string Minimum,
     string Maximum,
-    string Preferred)
+    string AbsoluteLayer,
+    LayerSearchMode OccupiedBehavior)
 {
     public static PresetDraftState Capture(PresetDraft draft) => new(draft.Name, draft.Duration, draft.MaxGap, draft.StartOffset,
-        draft.EndOffset, draft.UseTemplateLayer, draft.Minimum, draft.Maximum, draft.Preferred);
+        draft.EndOffset, draft.LayerMode, draft.Direction, draft.RelativeOffset, draft.Minimum, draft.Maximum,
+        draft.AbsoluteLayer, draft.OccupiedBehavior);
     public void Apply(PresetDraft draft)
     {
         draft.Name = Name; draft.Duration = Duration; draft.MaxGap = MaxGap; draft.StartOffset = StartOffset; draft.EndOffset = EndOffset;
-        draft.UseTemplateLayer = UseTemplateLayer; draft.Minimum = Minimum; draft.Maximum = Maximum; draft.Preferred = Preferred;
+        draft.LayerMode = LayerMode; draft.Direction = Direction; draft.RelativeOffset = RelativeOffset;
+        draft.Minimum = Minimum; draft.Maximum = Maximum; draft.AbsoluteLayer = AbsoluteLayer; draft.OccupiedBehavior = OccupiedBehavior;
     }
 }
 

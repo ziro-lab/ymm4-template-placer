@@ -9,6 +9,8 @@ public static partial class WorkbookBridge
 {
     public static void Export(string path, string sceneName, IReadOnlyList<AssignmentRow> rows, IReadOnlyList<FaceTemplate> catalog)
     {
+        if (rows.Any(x => x.SelectedChoice.TachiePreset != null || x.SelectedChoice.IsCurrentOtherSource || x.Choices.Any(c => c.TachiePreset != null)))
+            throw Bad("立ち絵プリセットはExcelに出力できません。テンプレート表示で出力してください。");
         if (rows.Count > MaxRows || catalog.Count > MaxRows) throw Bad("一度に扱える音声 / テンプレートは50,000件までです。");
         var templates = catalog.OrderBy(x => x.Character, StringComparer.Ordinal).ThenBy(x => x.Name, StringComparer.Ordinal).ToArray();
         if (templates.GroupBy(x => (x.Character, x.Name)).Any(x => x.Count() != 1)) throw Bad("同じキャラクターに同名テンプレートが複数あります。名前を区別して登録し直してください。");

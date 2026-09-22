@@ -1,5 +1,6 @@
 param([switch]$SelfTest)
 $ErrorActionPreference='Stop'
+# main and versioned native-validation branches are explicit Release lanes.
 function Test-NativePath([string]$Path) {
  return $Path -match '^(src/.+\.(cs|csproj|xaml)|tests/.+\.(cs|csproj|ps1)|fixtures/.+\.(json|ymmp|png|xlsx)|\.github/workflows/native-yymm4-proof\.yml)$'
 }
@@ -33,7 +34,7 @@ $event=Get-Content -Raw $env:GITHUB_EVENT_PATH | ConvertFrom-Json
 $run=$true; $changed=@(); $requested=[string]$env:REQUESTED_VALIDATION_LEVEL
 if (-not [string]::IsNullOrWhiteSpace($requested)) {
  $level=Normalize-Level $requested
-} elseif ($env:GITHUB_EVENT_NAME -eq 'push' -and $env:GITHUB_REF -in @('refs/heads/main','refs/heads/work/v0.4-native-validation')) {
+} elseif ($env:GITHUB_EVENT_NAME -eq 'push' -and $env:GITHUB_REF -in @('refs/heads/main','refs/heads/work/v0.4-native-validation','refs/heads/work/v0.5-native-validation')) {
  $level='release'
 } elseif ($env:GITHUB_EVENT_NAME -eq 'push') {
  $level='checkpoint'

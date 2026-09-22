@@ -4,49 +4,34 @@ This file is now a navigation roadmap. The older W1-W12 implementation ladder is
 
 ## Current accepted baseline
 
-Round 4 A/B/C is merged to main through PR #16.
+v0.5.0 is the integrated baseline.
 
-- main merge: `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`
-- main Release run #227: `35508468265`
-- full native regression / exact distribution DLL smoke / verified package: PASS
+It retains the accepted v0.4.2 Hands-on/performance architecture and adds the completed Tachie Preset expression-source work:
+
+- Template / TachiePreset source switching in `表情をまとめて`;
+- built-in and supported third-party preset discovery through bounded public surfaces;
+- exact managed cross-source replacement and native Undo;
+- assisted adapter calibration for otherwise undiscoverable public preset surfaces;
+- Voice-relative preset placement with finite overrides;
+- persisted source-mode selection across Tool reopen;
+- retained Template-mode performance and regression behavior.
 
 Current architecture authority:
 
-- `CURRENT_ARCHITECTURE.md`
-- `GLOSSARY.md`
-- `VALIDATION_STRATEGY.md`
-- `LEGACY_COMPATIBILITY_MAP.md`
+- `CURRENT_ARCHITECTURE.md`;
+- `GLOSSARY.md`;
+- `VALIDATION_STRATEGY.md`;
+- `LEGACY_COMPATIBILITY_MAP.md`.
 
-## Active priority — UI Micro Polish corrective pass
+## Next improvements
 
-Owner Hands-on feedback is frozen in:
+No new large feature is required to make the core workflow usable. Continue from `BACKLOG.md` as independent bounded improvements.
 
-- `UI_MICRO_POLISH_HANDS_ON_FEEDBACK.md`
-- `UI_MICRO_POLISH_CORRECTIVE_DESIGN.md`
-- `UI_MICRO_POLISH_CORRECTIVE_ACCEPTANCE.md`
-- `UI_MICRO_POLISH_CORRECTIVE_WORKPLAN.md`
-- `UI_MICRO_POLISH_CORRECTIVE_STATUS.md`
+Current high-priority candidate:
 
-Corrective implementation currently includes:
+- portable settings storage.
 
-1. direct Generic digit interception removed;
-2. wheel success logging quieted;
-3. any-Voice-row bottom-boundary common-height drag + numeric height entry;
-4. Fixed square cells growing to fill wide viewport without changing slot mapping;
-5. quick settings closing when the owner YMM4 Window deactivates;
-6. small public-readiness cleanup only.
-
-The first candidate Release #262 remains historical green evidence. Corrective Native/Release validation is pending because recent Actions jobs are failing before executing any step.
-
-## Next
-
-Experimental Tachie Preset — paused Draft PR #19.
-
-Resume only after the UI pass is accepted/merged and PR #19 is refreshed from that main.
-
-## Later
-
-Placement Recipe extensions and other collected ideas remain in `BACKLOG.md`. Their implementation order is not frozen.
+Other planned/deferred work includes compact Settings visibility polish, the Full Settings Workspace, placement-recipe extensions and measured optimization of built-in Tachie Preset loading.
 
 ---
 

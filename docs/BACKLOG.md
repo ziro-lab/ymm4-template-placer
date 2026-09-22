@@ -6,21 +6,6 @@ Being listed here is not implementation approval or priority commitment.
 
 ## Active
 
-### Experimental Tachie Preset source
-
-Status: **PAUSED / NEXT — Draft PR #19**
-
-Use `docs/EXPERIMENTAL_PRESET_HANDOFF.md`.
-
-Goal:
-
-- Template/Tachie-Preset source switch in `表情をまとめて`;
-- structural detection through current Character/plugin and fresh FaceParameter;
-- exact managed preset association;
-- reuse current placement geometry/PlacementPlan/native Undo.
-
-Do not repeat completed generic-preset research.
-
 ## Portable settings storage — high priority candidate
 
 Status: **HIGH PRIORITY / DESIGN NEXT**
@@ -58,6 +43,25 @@ Packaging caution:
 Because the observed `.ymme` updater preserves files that are omitted from a later package, future package-layout changes must explicitly account for stale plugin files. Do not rely on update installation to clean old files automatically.
 
 This portability work is independent from placement semantics and should not broaden the active placement feature PR.
+
+
+## Built-in Tachie Preset loading performance — deferred
+
+Status: **DEFERRED / MEASURE FIRST**
+
+User problem:
+
+Built-in/standard Tachie Preset loading works, but Hands-on use feels noticeably heavier than expected.
+
+Boundary:
+
+- functionality is accepted in v0.5.0;
+- do not reopen the Tachie Preset feature architecture merely because the built-in route feels slow;
+- first profile discovery/editor construction/session-cache behavior on the real built-in path;
+- preserve the distinct-Character scaling, cancellation/latest-wins behavior and Template-mode performance gates;
+- optimize only the measured hot path.
+
+This is a performance-polish item, not a merge blocker for v0.5.0.
 
 ## Compact Settings visibility polish — planned
 

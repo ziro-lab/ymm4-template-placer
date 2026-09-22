@@ -17,7 +17,7 @@ public sealed partial class PlacerViewModel
                  UsesRelativeExpressions && IntentAssociationTag.Read(x.Remark, out _) != AssociationTagState.None));
         }
     }
-    public string ResyncHint => !UsesRelativeExpressions && ExpressionPresetDirty ? "編集中の配置範囲を保存するか、編集を戻してください。" :
+    public string ResyncHint => IsTachiePresetExpressionSource ? "立ち絵プリセットの再同期は未対応です。テンプレート表示で対象を確認してください。" : !UsesRelativeExpressions && ExpressionPresetDirty ? "編集中の配置範囲を保存するか、編集を戻してください。" :
         !HasSelectedAssociation ? "タイムラインで関連付け済みの音声または表情を選択してください。「表情をまとめて」の行選択やクイック配置は対象外です。" :
         UsesRelativeExpressions ? "選択した関連演出を、保存済みのパレット設定でまとめて合わせ直します。欠落・コピーされたBundleは推測復元しません。" :
         "選択した関連表情だけを、現在の配置範囲で合わせ直します。関連のないアイテムは変更しません。";
@@ -26,7 +26,7 @@ public sealed partial class PlacerViewModel
         get
         {
             if (resyncCommand != null) return resyncCommand;
-            resyncCommand = new ActionCommand(_ => undo != null && settingsAvailable && (UsesRelativeExpressions || !ExpressionPresetDirty) && HasSelectedAssociation, _ => Guard(() => Resync()));
+            resyncCommand = new ActionCommand(_ => IsTemplateExpressionSource && undo != null && settingsAvailable && (UsesRelativeExpressions || !ExpressionPresetDirty) && HasSelectedAssociation, _ => Guard(() => Resync()));
             resyncCommand.CanExecuteChanged += (_, _) => OnPropertyChanged(nameof(ResyncHint)); return resyncCommand;
         }
     }
@@ -42,6 +42,7 @@ public sealed partial class PlacerViewModel
     }
     public ResyncPlan Resync()
     {
+        RequireTemplateExpressionSource();
         CloseExpressionTrialSession();
         var current = RequireTimeline();
         if (undo == null) throw new InvalidOperationException("YMM4の「元に戻す」に接続できません。");

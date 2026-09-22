@@ -35,13 +35,15 @@ public sealed class PlacerSettingsStore
         var result = bytes == null ? new PlacerSettings() : JsonSerializer.Deserialize<PlacerSettings>(bytes, Options) ?? throw new InvalidDataException("設定ファイルが空です。");
         SelectionPresetSettings.Upgrade(result);
         IntentPaletteSettings.Upgrade(result);
+        ExpressionPresetSettings.Upgrade(result);
         Validate(result); expectedDigest = Digest(bytes); loaded = true; return result;
     }
     public static PlacerSettings Copy(PlacerSettings settings) =>
         JsonSerializer.Deserialize<PlacerSettings>(JsonSerializer.SerializeToUtf8Bytes(settings, Options), Options)!;
     public static void Validate(PlacerSettings settings)
     {
-        if (settings.Schema != 4 || settings.Library == null || settings.Library.Count > 2048 || settings.NextAssociationId < 1)
+        if (settings.Schema != 4 || settings.Library == null || settings.Library.Count > 2048 || settings.NextAssociationId < 1 ||
+            !Enum.IsDefined(settings.ExpressionSourceMode))
             throw new InvalidDataException("未対応または不正なプラグイン設定です。元ファイルは保持しています。");
         if (settings.Library.Any(x => x == null || x.Id == Guid.Empty || x.Source == null || x.Source.Name == null || x.Source.PathJson == null || string.IsNullOrWhiteSpace(x.DisplayName) || x.DisplayName.Length > 256) ||
             settings.Library.Select(x => x.Id).Distinct().Count() != settings.Library.Count)
@@ -50,6 +52,7 @@ public sealed class PlacerSettingsStore
         settings.Presentation.Validate();
         PaletteSettings.Validate(settings);
         ExpressionPresetSettings.Validate(settings);
+        TachiePresetLearnedAdapterSettings.Validate(settings);
         SelectionPresetSettings.Validate(settings);
         IntentPaletteSettings.Validate(settings);
     }
@@ -57,7 +60,29 @@ public sealed class PlacerSettingsStore
     {
         if (!loaded) throw new InvalidOperationException("設定の読み込みに成功していないため保存しません。元ファイルを確認してツールを開き直してください。");
         Validate(settings);
-        var bytes = JsonSerializer.SerializeToUtf8Bytes(settings, Options);
+        SaveBytes(JsonSerializer.SerializeToUtf8Bytes(settings, Options));
+    }
+
+    internal void SaveExpressionSourceMode(ExpressionSourceMode mode)
+    {
+        if (!loaded) throw new InvalidOperationException("設定の読み込みに成功していないため表示モードを保存しません。");
+        if (!Enum.IsDefined(mode)) throw new InvalidOperationException("表情の表示モードが不正です。");
+        var bytes = ReadBytes();
+        if (Digest(bytes) != expectedDigest)
+            throw new InvalidOperationException("別のツールまたはYMM4で設定が変更されました。ツールを開き直してください。外部変更は上書きしていません。");
+        var stored = bytes == null
+            ? new PlacerSettings()
+            : JsonSerializer.Deserialize<PlacerSettings>(bytes, Options) ?? throw new InvalidDataException("設定ファイルが空です。");
+        SelectionPresetSettings.Upgrade(stored);
+        IntentPaletteSettings.Upgrade(stored);
+        ExpressionPresetSettings.Upgrade(stored);
+        stored.ExpressionSourceMode = mode;
+        Validate(stored);
+        SaveBytes(JsonSerializer.SerializeToUtf8Bytes(stored, Options));
+    }
+
+    private void SaveBytes(byte[] bytes)
+    {
         if (bytes.Length > MaximumBytes) throw new InvalidOperationException("設定が1 MiBを超えるため保存できません。");
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         // Cooperating Tool instances cannot pass the digest check concurrently.

@@ -18,9 +18,10 @@ public sealed partial class PlacerViewModel
     private readonly HashSet<VoiceItem> dirtyVoiceOrder = new(ReferenceEqualityComparer.Instance);
     private DispatcherOperation? queuedVoiceFreshness;
     private bool voiceFreshnessActive, voiceFreshnessDisposed, fullVoiceReconcilePending;
+    private int ownedExpressionTimelineMutationDepth;
     private ExpressionRowsFreshness voiceRowsFreshness;
     private string voiceFreshnessProblem = "";
-    public bool CanEditExpressionRows => voiceRowsFreshness != ExpressionRowsFreshness.StalePending && !IsExpressionLoading;
+    public bool CanEditExpressionRows => ExpressionRowsMatchSource && voiceRowsFreshness != ExpressionRowsFreshness.StalePending && !IsExpressionLoading;
     public bool ExpressionRowsStale => voiceRowsFreshness == ExpressionRowsFreshness.StalePending;
     public string ExpressionFreshnessNotice => ExpressionRowsStale
         ? "音声やシーンが変わりました。未配置の割り当ては保持しています。Excelを読み込み直すか、内容を確認して［一覧を読み直す］を選んでください。"
@@ -54,16 +55,18 @@ public sealed partial class PlacerViewModel
     }
     private void RequireFreshExpressionRows()
     {
+        if (!ExpressionRowsMatchSource) throw new InvalidOperationException("現在の表示元の候補を読み直してください。");
         if (ExpressionRowsStale || IsExpressionLoading) throw new InvalidOperationException(IsExpressionLoading ? "表情一覧の読み込み完了後に実行してください。" : ExpressionFreshnessNotice);
     }
     private void SetVoiceFreshnessActive(bool active)
     {
-        active &= UsesRelativeExpressions && !voiceFreshnessDisposed;
+        active &= (UsesRelativeExpressions || IsTachiePresetExpressionSource) && !voiceFreshnessDisposed;
         if (voiceFreshnessActive == active) return;
         voiceFreshnessActive = active;
         if (active) RebindVoiceFreshness();
         else
         {
+            ClearPresetContextWatchers();
             queuedVoiceFreshness?.Abort(); queuedVoiceFreshness = null;
             dirtyVoices.Clear(); dirtyVoiceOrder.Clear(); fullVoiceReconcilePending = false;
         }
@@ -92,9 +95,19 @@ public sealed partial class PlacerViewModel
         foreach (var added in current)
             if (watchedVoices.Add(added)) added.PropertyChanged += VoiceItemChanged;
     }
+    private T ExecuteOwnedExpressionTimelineMutation<T>(Func<T> action)
+    {
+        ownedExpressionTimelineMutationDepth++;
+        try { return action(); }
+        finally { ownedExpressionTimelineMutationDepth--; }
+    }
     private void VoiceTimelineChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (!voiceFreshnessActive || !ReferenceEquals(sender, watchedVoiceTimeline)) return;
+        // Immediate managed-expression replacement changes only plugin-owned non-Voice
+        // members plus Voice Remark. Rows/candidates remain authoritative, so do not
+        // start a redundant source reload that could swallow the next immediate choice.
+        if (ownedExpressionTimelineMutationDepth > 0) return;
         if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(Timeline.Items))
         {
             fullVoiceReconcilePending = true; RequestVoiceFreshnessCheck();

@@ -120,7 +120,7 @@ internal static partial class NativeProof
             };
             var manifest = new
             {
-                schema = "YMM4-Template-Placer-Hands-On-UX-Polish/1", version = "0.4.2", host = "YMM4 4.55.1.1 Lite", result = "PASS",
+                schema = "YMM4-Template-Placer-Hands-On-UX-Polish/1", version = "0.5.0", host = "YMM4 4.55.1.1 Lite", result = "PASS",
                 checks = ids.Select(id => new { id, result = "PASS", evidence = "Native hands-on polish proof plus retained v0.4.2 regression gate." }).ToArray()
             };
             File.WriteAllText(Path.Combine(output, "hands-on-ux-polish.json"), JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));

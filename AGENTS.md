@@ -8,37 +8,35 @@
 
 ## Current revision and Git authority
 
-Main contains the accepted v0.4.2 Hands-on/performance baseline after PR #20, PR #22 and PR #23.
+v0.5.0 is the integrated product baseline.
 
-Accepted baseline:
+It retains the accepted v0.4.2 Hands-on/performance architecture and adds the completed Tachie Preset expression-source path:
 
-- main merge commit `de85c312347ea35371d1c58a92992b50f64cdeb6`;
-- final pre-merge product candidate `f626e7c71385998b22a6d29e43a3fa349cf03f18`;
-- Release run #399 `35608381259` / job `106361040827`: **1,518 Native assertions PASS / 0 FAIL**, exact distribution-DLL smoke and verified package/provenance succeeded.
+- lazy, source-scoped, cancelable and session-cached preset discovery;
+- built-in and supported third-party public preset routes;
+- exact managed Template <-> TachiePreset replacement;
+- assisted bounded plugin/surface adapter calibration;
+- Voice-relative preset placement with finite relative/absolute overrides;
+- persisted Template/TachiePreset source-mode selection across Tool reopen;
+- retained Template-mode performance, PlacementPlan/native Undo and protected Settings guarantees.
 
-Accepted v0.4.2 includes:
-
-- Round 2 Item-owned Set / quick-settings / row-height polish from PR #20;
-- lazy, cancelable expression-workspace performance architecture and large-Voice structural proof from PR #22;
-- direct Set-delete discoverability and bounded nested-wheel recovery from PR #23.
-
-Known minor residual: continuous wheel rotation while crossing from an inner Settings/list area to outer content can still produce a short self-recovering pause for a few wheel notches. It is recorded as a deferred minor issue in PR #23. Do not broaden input interception merely to chase this edge unless it becomes persistent, requires explicit recovery, affects normal controls, or a bounded local fix is proved.
-
-The next prepared feature is Experimental Tachie Preset Draft PR #19. Its branch predates the current accepted main baseline; refresh/rebase its work onto current main and re-check the current architecture before implementation. Do not mix unrelated placement, Settings or input redesign into that feature.
+Known deferred items include portable settings storage, compact/Full Settings UX improvements and measured built-in Tachie Preset loading optimization. Do not broaden the accepted v0.5.0 baseline while addressing one of those items.
 
 Read in this order:
 
 1. `docs/CURRENT_ARCHITECTURE.md`
 2. `docs/GLOSSARY.md`
 3. `docs/VALIDATION_STRATEGY.md`
-4. `docs/FINAL_HANDS_ON_POLISH.md`
-5. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
-6. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
-7. `docs/BACKLOG.md` only for scope context
-8. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
-9. historical Round/W documents only when the current authority points to them or when reconstructing rationale
+4. `docs/TACHIE_PRESET_DESIGN.md`
+5. `docs/TACHIE_PRESET_ACCEPTANCE.md`
+6. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
+7. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
+8. `docs/FINAL_HANDS_ON_POLISH.md`
+9. `docs/BACKLOG.md` only for scope context
+10. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
+11. historical Round/W documents only when current authority points to them or when reconstructing rationale
 
-Do not reimplement completed v0.4.2 work. Preserve its Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary and validation tiers.
+Do not reimplement completed v0.5.0 work. Preserve its Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary and validation tiers.
 
 ## Product boundary
 

@@ -22,7 +22,7 @@ function Assert-Round3Evidence {
  }
  if (@($Lines | Where-Object {$_ -cmatch '^ASSERT FAIL:|^FAIL(?:\s|$)'}).Count) { throw 'Failed native proof cannot be packaged' }
  if ($null -eq $Manifest -or $Manifest.schema -cne 'YMM4-Template-Placer-Hands-On-Round3/1' -or
-     $Manifest.version -cne '0.4.2' -or $Manifest.host -cne 'YMM4 4.55.1.1 Lite' -or $Manifest.result -cne 'PASS') { throw 'Round3 manifest identity mismatch' }
+     $Manifest.version -cne '0.5.0' -or $Manifest.host -cne 'YMM4 4.55.1.1 Lite' -or $Manifest.result -cne 'PASS') { throw 'Round3 manifest identity mismatch' }
  if ($Manifest.source_head -cne $context.source -or $Manifest.checkout_tree -cne $context.tree -or
      [string]$Manifest.run_id -cne $context.run -or [string]$Manifest.run_attempt -cne $context.attempt) { throw 'Stale Round3 source/tree/run/attempt' }
  if (@($Manifest.checks).Count -ne 78 -or (@($Manifest.checks.id | Sort-Object) -join ',') -cne (($ids | Sort-Object) -join ',')) { throw 'Missing/duplicate Round3 check IDs' }

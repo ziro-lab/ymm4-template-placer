@@ -88,7 +88,7 @@ internal static partial class NativeProof
         Round3Assert(round3Checks.Count == 77 && expected.Where(x => x != "G9").All(round3Checks.ContainsKey), "G9", "all 78 A-F/G1-G9 checks have one authoritative current native manifest; release gates G10-G15 remain separate");
         var manifest = new
         {
-            schema = "YMM4-Template-Placer-Hands-On-Round3/1", version = "0.4.2", host = "YMM4 4.55.1.1 Lite", result = "PASS",
+            schema = "YMM4-Template-Placer-Hands-On-Round3/1", version = "0.5.0", host = "YMM4 4.55.1.1 Lite", result = "PASS",
             source_head = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_SOURCE_HEAD"),
             checkout_tree = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_CHECKOUT_TREE"),
             run_id = Environment.GetEnvironmentVariable("GITHUB_RUN_ID"), run_attempt = Environment.GetEnvironmentVariable("GITHUB_RUN_ATTEMPT"),

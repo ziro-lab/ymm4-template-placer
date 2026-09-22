@@ -159,7 +159,7 @@ internal static partial class NativeProof
             };
             File.WriteAllText(Path.Combine(output, "v042-uiux-acceptance.json"), JsonSerializer.Serialize(new
             {
-                schema = "YMM4-Template-Placer-Relative-UIUX/1", version = "0.4.2", result = "PASS", host = "YMM4 4.55.1.1 Lite",
+                schema = "YMM4-Template-Placer-Relative-UIUX/1", version = "0.5.0", result = "PASS", host = "YMM4 4.55.1.1 Lite",
                 checks = checks.Select((x, i) => new { id = i + 1, requirement = x.Requirement, evidence = x.Evidence, result = "PASS" })
             }, new JsonSerializerOptions { WriteIndented = true }));
             Log("RELATIVE_UIUX=PASS");

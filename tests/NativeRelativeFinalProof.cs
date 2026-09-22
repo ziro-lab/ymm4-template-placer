@@ -148,7 +148,7 @@ internal static partial class NativeProof
             ("Original safety, association, Excel, Tool lifecycle and task UX regression ladders retained", "P1-P9/V04/UX_ACCEPTANCE/UX_WORKFLOW_ACCEPTANCE")
         };
         File.WriteAllText(Path.Combine(output, "v042-acceptance.json"), JsonSerializer.Serialize(new {
-            schema = "YMM4-Template-Placer-Relative-Acceptance/1", version = "0.4.2", result = "PASS", host = "YMM4 4.55.1.1 Lite",
+            schema = "YMM4-Template-Placer-Relative-Acceptance/1", version = "0.5.0", result = "PASS", host = "YMM4 4.55.1.1 Lite",
             required_native_stages = required, checks = checks.Select((x, i) => new { id = i + 1, requirement = x.Requirement, evidence = x.Evidence, result = "PASS" }),
             packaging = "Separate exact distribution DLL smoke and stable-root archive gates must still PASS before distribution.",
             boundary = "Actual WPF commands and synthetic Items; no physical mouse/installer, arbitrary PSD rendering, third-party effect fidelity, crash recovery, or future-host compatibility claim. Character registry uses a fixed read-only host compatibility adapter."

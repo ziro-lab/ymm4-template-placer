@@ -8,9 +8,14 @@ public sealed record ExpressionDurationChoice(ExpressionDuration Value, string L
 public sealed record ExpressionPreset(Guid Id, string Name, ExpressionDuration Duration,
     int MaxGap, int StartOffset, int EndOffset, LayerPolicy Layer)
 {
+    public ExpressionLayerRule? LayerRule { get; init; }
+
     public static ExpressionPreset Default { get; } = new(
         Guid.Parse("62677098-74d1-4b55-8667-62b3f7bd81d1"), "音声と同じ",
-        ExpressionDuration.VoiceSpan, 90, 0, 0, new LayerPolicy());
+        ExpressionDuration.VoiceSpan, 90, 0, 0, new LayerPolicy())
+    {
+        LayerRule = new ExpressionLayerRule()
+    };
 
     public void Validate()
     {
@@ -18,12 +23,13 @@ public sealed record ExpressionPreset(Guid Id, string Name, ExpressionDuration D
             !Enum.IsDefined(Duration) || MaxGap < 0 || Layer == null)
             throw new InvalidOperationException("表情プリセットの名前・期間・最大間隔が不正です。最大間隔は0以上にしてください。");
         Layer.Validate();
+        LayerRule?.Validate();
     }
 
     public string Describe() =>
         (Duration == ExpressionDuration.VoiceSpan ? "音声と同じ" : $"次の同じキャラクターの音声まで（最大間隔 {MaxGap}）") +
         $" ／ 開始 {StartOffset:+0;-0;0}・終了 {EndOffset:+0;-0;0}フレーム ／ " +
-        (Layer.UseTemplateLayer ? "テンプレートのレイヤー" : $"レイヤー {Layer.Minimum}〜{Layer.Maximum}・優先 {Layer.Preferred}");
+        (LayerRule?.Describe() ?? (Layer.UseTemplateLayer ? "旧設定: テンプレートのレイヤー" : $"旧設定: レイヤー {Layer.Minimum}〜{Layer.Maximum}・優先 {Layer.Preferred}"));
 }
 
 public sealed partial class PlacerSettings
@@ -34,6 +40,29 @@ public sealed partial class PlacerSettings
 
 public static class ExpressionPresetSettings
 {
+    public static void Upgrade(PlacerSettings settings)
+    {
+        if (settings.ExpressionPresets == null) return;
+        var historicalDefaultLayer = new LayerPolicy();
+        for (var i = 0; i < settings.ExpressionPresets.Count; i++)
+        {
+            var preset = settings.ExpressionPresets[i];
+            if (preset?.LayerRule != null) continue;
+            var untouchedHistoricalDefault =
+                preset!.Id == ExpressionPreset.Default.Id &&
+                preset.Name == "音声と同じ" &&
+                preset.Duration == ExpressionDuration.VoiceSpan &&
+                preset.MaxGap == 90 && preset.StartOffset == 0 && preset.EndOffset == 0 &&
+                preset.Layer == historicalDefaultLayer;
+            settings.ExpressionPresets[i] = preset with
+            {
+                LayerRule = untouchedHistoricalDefault
+                    ? new ExpressionLayerRule()
+                    : ExpressionLayerRule.FromLegacy(preset.Layer)
+            };
+        }
+    }
+
     public static void Validate(PlacerSettings settings)
     {
         if (settings.ExpressionPresets == null || settings.ExpressionPresets.Count is < 1 or > 128 ||

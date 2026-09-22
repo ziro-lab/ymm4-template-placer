@@ -19,6 +19,9 @@ public sealed partial class PlacerViewModel
     private Dictionary<string, IReadOnlyList<TemplateChoice>> expressionChoicesByCharacter = new(StringComparer.Ordinal);
     private readonly Dictionary<AssignmentRow, ExpressionRowContribution> expressionRowContributions = new(ReferenceEqualityComparer.Instance);
     private int expressionSelectedCount, expressionUnselectedCount, expressionNoCandidateCount, expressionUnavailableCount, expressionPendingCount;
+    private ExpressionSourceMode expressionRowsSource = ExpressionSourceMode.Template;
+    private IReadOnlyList<TachiePresetCharacterCapability> expressionPresetCapabilities = [];
+    internal Task ExpressionLoadCompletion { get; private set; } = Task.CompletedTask;
     private string expressionSummary = "0件 / 選択 0件 / 未選択 0件 / 候補なし 0件";
 
     private readonly record struct ExpressionRowContribution(int Selected, int Unselected, int NoCandidate, int Unavailable, int Pending);
@@ -46,13 +49,14 @@ public sealed partial class PlacerViewModel
 
     internal void EnterExpressionTask()
     {
-        if (!UsesRelativeExpressions) return;
+        if (!UsesRelativeExpressions && !IsTachiePresetExpressionSource) return;
         SetVoiceFreshnessActive(true);
         RequestExpressionLoad(false, false);
     }
 
     internal void LeaveExpressionTask()
     {
+        CancelTachiePresetApply();
         CancelExpressionLoad();
         expressionCacheDirty = true;
         SetVoiceFreshnessActive(false);
@@ -62,16 +66,17 @@ public sealed partial class PlacerViewModel
     {
         if (expressionLoadCancellation != null)
         {
-            expressionLoadCancellation.Cancel(); expressionLoadCancellation.Dispose(); expressionLoadCancellation = null;
+            expressionLoadCancellation.Cancel(); expressionLoadCancellation = null;
             expressionPerformance.CancelledLoads++;
         }
         expressionLoadGeneration++;
+        tachiePresetCoordinator?.Cancel();
         IsExpressionLoading = false;
     }
 
     internal void RequestExpressionLoad(bool force, bool forceCandidates = false)
     {
-        if (!UsesRelativeExpressions || timeline == null || voiceFreshnessDisposed) return;
+        if ((!UsesRelativeExpressions && !IsTachiePresetExpressionSource) || timeline == null || voiceFreshnessDisposed || activeTask != "expression") return;
         if (HasProtectedPendingVoiceWork() && expressionCacheTimeline != null && ReferenceEquals(expressionCacheTimeline, timeline))
         {
             SetVoiceFreshnessState(ExpressionRowsFreshness.StalePending); return;
@@ -80,35 +85,49 @@ public sealed partial class PlacerViewModel
         {
             if (voiceFreshnessActive && watchedVoiceTimeline != null) return;
         }
-        _ = LoadExpressionAsync(forceCandidates);
+        ExpressionLoadCompletion = LoadExpressionAsync(forceCandidates);
     }
 
     private async Task LoadExpressionAsync(bool forceCandidates)
     {
-        if (timeline == null || !UsesRelativeExpressions) return;
+        if (timeline == null) return;
         var current = timeline;
-        expressionLoadCancellation?.Cancel(); expressionLoadCancellation?.Dispose();
-        var cancellation = new CancellationTokenSource(); expressionLoadCancellation = cancellation;
+        var source = expressionSourceMode;
+        var originalItems = current.Items;
+        CancelExpressionLoad();
+        using var cancellation = new CancellationTokenSource();
+        var token = cancellation.Token;
+        expressionLoadCancellation = cancellation;
         var generation = ++expressionLoadGeneration;
+        bool IsCurrent() => !token.IsCancellationRequested && generation == expressionLoadGeneration &&
+            ReferenceEquals(timeline, current) && activeTask == "expression" && source == expressionSourceMode && !voiceFreshnessDisposed &&
+            (source != ExpressionSourceMode.TachiePreset || ReferenceEquals(current.Items, originalItems));
         IsExpressionLoading = true;
-
-        ExpressionHostSnapshot snapshot;
-        try { snapshot = CaptureExpressionHostSnapshot(generation, current, forceCandidates); }
-        catch (Exception ex)
-        {
-            if (generation != expressionLoadGeneration) return;
-            IsExpressionLoading = false; voiceFreshnessProblem = "表情一覧を読み込めませんでした: " + ex.GetBaseException().Message;
-            OnPropertyChanged(nameof(ExpressionFreshnessNotice)); return;
-        }
-
         try
         {
-            var result = await Task.Run(() => ExpressionPreparation.Prepare(snapshot, cancellation.Token), cancellation.Token);
-            if (cancellation.IsCancellationRequested || generation != expressionLoadGeneration || !ReferenceEquals(timeline, current) || activeTask != "expression")
+            var snapshot = CaptureExpressionHostSnapshot(generation, current, forceCandidates, out var characters);
+            if (source == ExpressionSourceMode.TachiePreset)
             {
-                expressionPerformance.StaleResultsDiscarded++; return;
+                var capabilities = await PresetCoordinator.ScanAsync(characters, IsCurrent, token);
+                if (!IsCurrent()) { expressionPerformance.StaleResultsDiscarded++; return; }
+                snapshot = snapshot with
+                {
+                    PresetCapabilities = capabilities,
+                    CandidateGenerationChanged = forceCandidates || expressionRowsSource != source ||
+                        !expressionPresetCapabilities.SequenceEqual(capabilities)
+                };
+            }
+            var result = await Task.Run(() => ExpressionPreparation.Prepare(snapshot, token), token);
+            if (!IsCurrent()) { expressionPerformance.StaleResultsDiscarded++; return; }
+            if (source == ExpressionSourceMode.TachiePreset && !PresetSnapshotStillCurrent(snapshot, characters, token))
+            {
+                expressionPerformance.StaleResultsDiscarded++;
+                voiceFreshnessProblem = "確認中に音声または立ち絵設定が変わりました。［一覧を読み直す］で再確認してください。";
+                OnPropertyChanged(nameof(ExpressionFreshnessNotice));
+                return;
             }
             PublishExpressionPrepared(result);
+            if (source == ExpressionSourceMode.TachiePreset) expressionPresetCapabilities = snapshot.PresetCapabilities;
         }
         catch (OperationCanceledException)
         {
@@ -116,20 +135,18 @@ public sealed partial class PlacerViewModel
         }
         catch (Exception ex)
         {
-            if (generation != expressionLoadGeneration || cancellation.IsCancellationRequested) return;
-            voiceFreshnessProblem = "表情一覧を更新できませんでした。現在の一覧は保持しています: " + ex.GetBaseException().Message;
+            if (!IsCurrent()) return;
+            voiceFreshnessProblem = "表情一覧を更新できませんでした。現在の一覧は保持しています: " + TachiePresetCapabilityCoordinator.LocalReason(ex);
             OnPropertyChanged(nameof(ExpressionFreshnessNotice));
         }
         finally
         {
-            if (generation == expressionLoadGeneration)
-            {
-                expressionLoadCancellation?.Dispose(); expressionLoadCancellation = null; IsExpressionLoading = false;
-            }
+            if (ReferenceEquals(expressionLoadCancellation, cancellation)) expressionLoadCancellation = null;
+            if (generation == expressionLoadGeneration) IsExpressionLoading = false;
         }
     }
 
-    private ExpressionHostSnapshot CaptureExpressionHostSnapshot(long generation, Timeline current, bool forceCandidates)
+    private ExpressionHostSnapshot CaptureExpressionHostSnapshot(long generation, Timeline current, bool forceCandidates, out Character[] presetCharacters)
     {
         if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
             throw new InvalidOperationException("表情一覧のYMM4 Snapshot取得はUIスレッドで実行する必要があります。");
@@ -138,6 +155,7 @@ public sealed partial class PlacerViewModel
         expressionPerformance.LastCaptureThreadId = Environment.CurrentManagedThreadId;
         var items = new List<ExpressionCapturedItem>(current.Items.Count);
         var voices = new List<VoiceSnapshot>();
+        var characters = new HashSet<Character>(ReferenceEqualityComparer.Instance);
         foreach (var item in current.Items)
         {
             var remark = item.Remark ?? "";
@@ -145,25 +163,35 @@ public sealed partial class PlacerViewModel
             {
                 var snapshot = new VoiceSnapshot(voice, voice.CharacterName, voice.Frame, voice.Length, voice.Serif ?? "", voice.Layer);
                 voices.Add(snapshot); items.Add(new(item, true, snapshot.Character, item.Group, remark));
+                if (IsTachiePresetExpressionSource && voice.Character != null) characters.Add(voice.Character);
             }
             else items.Add(new(item, false, "", item.Group, remark));
         }
         expressionPerformance.TimelineItemsCaptured += items.Count;
         expressionPerformance.FullVoiceReconciles++;
         ReconcileVoiceWatchers(voices);
+        presetCharacters = characters.ToArray();
+        ReconcilePresetContextWatchers(presetCharacters);
 
-        var candidateChanged = forceCandidates || expressionCandidateDirty || expressionCandidateCache == null;
-        if (candidateChanged)
+        var candidateChanged = forceCandidates || expressionCandidateDirty || expressionCandidateCache == null || expressionRowsSource != expressionSourceMode;
+        if (candidateChanged && IsTemplateExpressionSource)
         {
             expressionCandidateCache = CaptureExpressionCandidates();
             expressionCandidateDirty = false;
         }
         captureWatch.Stop();
         expressionPerformance.LastCaptureMilliseconds = captureWatch.ElapsedMilliseconds;
-        return new(generation, current, voices, items, expressionCandidateCache ?? [], candidateChanged,
+        return new(generation, current, voices, items, IsTemplateExpressionSource ? expressionCandidateCache ?? [] : [], candidateChanged,
             ReferenceEquals(expressionCacheTimeline, current) ? expressionHostFingerprint : null,
             ReferenceEquals(expressionCacheTimeline, current) ? expressionPreparedVoices : [],
-            ReferenceEquals(expressionCacheTimeline, current) ? expressionPreparedItems : []);
+            ReferenceEquals(expressionCacheTimeline, current) ? expressionPreparedItems : [])
+        {
+            SourceMode = expressionSourceMode,
+            PreviousPresetChoices = IsTachiePresetExpressionSource && expressionRowsSource == expressionSourceMode && ReferenceEquals(expressionCacheTimeline, current)
+                ? Rows.Where(x => x.SelectedChoice.TachiePreset != null).ToDictionary(x => x.Target.Voice, x => x.SelectedChoice.TachiePreset!,
+                    (IEqualityComparer<VoiceItem>)ReferenceEqualityComparer.Instance)
+                : new Dictionary<VoiceItem, TachiePresetCandidateDescriptor>(ReferenceEqualityComparer.Instance)
+        };
     }
 
     private IReadOnlyList<ExpressionCandidateDescriptor> CaptureExpressionCandidates()
@@ -190,6 +218,8 @@ public sealed partial class PlacerViewModel
     private void PublishExpressionPrepared(ExpressionPreparedResult result)
     {
         var publishWatch = System.Diagnostics.Stopwatch.StartNew();
+        expressionRowsSource = result.SourceMode;
+        PublishExpressionSourceProperties();
         expressionPerformance.LastPrepareMilliseconds = (long)result.PreparationElapsed.TotalMilliseconds;
         expressionPerformance.LastPrepareThreadId = result.PreparationThreadId;
         expressionPerformance.LastPublishThreadId = Environment.CurrentManagedThreadId;
@@ -215,6 +245,7 @@ public sealed partial class PlacerViewModel
                 if (!old.TryGetValue(prepared.Target.Voice, out var row))
                     row = new AssignmentRow(i + 1, prepared.Target, prepared.Choices, true);
                 row.ApplyPrepared(i + 1, prepared.Target, prepared.Choices, prepared.Selected, prepared.UnavailableLabel, prepared.AssociationMatchesSelection);
+                row.SetSourceNotice(prepared.SourceNotice);
                 next.Add(row);
             }
             var keep = next.ToHashSet(ReferenceEqualityComparer.Instance);
@@ -254,7 +285,8 @@ public sealed partial class PlacerViewModel
             if (nextTarget.Character != row.Target.Character) { RequestExpressionLoad(true); return; }
             var choices = expressionChoicesByCharacter.GetValueOrDefault(nextTarget.Character) ?? row.Choices;
             var selected = choices.FirstOrDefault(x => SameChoiceIdentity(x, row.SelectedChoice));
-            if (selected == null && row.SelectedChoice.Template == null && row.SelectedChoice.IsAvailable) selected = choices.FirstOrDefault(x => x.Template == null);
+            if (selected == null && row.SelectedChoice.IsCurrentOtherSource) selected = row.SelectedChoice;
+            if (selected == null && !row.SelectedChoice.HasCandidate && row.SelectedChoice.IsAvailable) selected = choices.FirstOrDefault(x => !x.HasCandidate && !x.IsCurrentOtherSource);
             suppressExpressionApply = true; suppressExpressionRowEvents = true;
             try { row.ApplyPrepared(row.No, nextTarget, choices, selected, selected == null && !row.SelectedChoice.IsAvailable ? row.SelectedChoice.Label : null, row.AssociationMatchesSelection); }
             finally { suppressExpressionRowEvents = false; suppressExpressionApply = false; }
@@ -294,6 +326,10 @@ public sealed partial class PlacerViewModel
 
     private static bool SameChoiceIdentity(TemplateChoice left, TemplateChoice right)
     {
+        if (left.TachiePreset != null || right.TachiePreset != null)
+            return left.TachiePreset == right.TachiePreset && left.IsAvailable == right.IsAvailable;
+        if (left.IsCurrentOtherSource || right.IsCurrentOtherSource || left.IsInvalidAssociation || right.IsInvalidAssociation)
+            return left.IsCurrentOtherSource == right.IsCurrentOtherSource && left.IsInvalidAssociation == right.IsInvalidAssociation && left.Label == right.Label;
         if (left.Template == null || right.Template == null) return left.Template == null && right.Template == null && left.IsAvailable == right.IsAvailable;
         return ReferenceEquals(left.Template.Template, right.Template.Template) && ReferenceEquals(left.Template.Face, right.Template.Face) &&
             left.Template.Name == right.Template.Name && left.Template.Character == right.Template.Character;
@@ -302,6 +338,8 @@ public sealed partial class PlacerViewModel
     internal void RefreshExpressionSynchronously(bool forceCandidates)
     {
         if (timeline == null) return;
+        if (IsTachiePresetExpressionSource) { RequestExpressionLoad(true, forceCandidates); return; }
+        CancelExpressionLoad();
         if (!UsesRelativeExpressions)
         {
             var catalog = TemplateCatalog.Read();
@@ -309,18 +347,18 @@ public sealed partial class PlacerViewModel
             return;
         }
         var generation = ++expressionLoadGeneration;
-        var snapshot = CaptureExpressionHostSnapshot(generation, timeline, forceCandidates);
+        var snapshot = CaptureExpressionHostSnapshot(generation, timeline, forceCandidates, out _);
         var result = ExpressionPreparation.Prepare(snapshot, CancellationToken.None);
         PublishExpressionPrepared(result);
     }
 
     private ExpressionRowContribution Contribution(AssignmentRow row)
     {
-        var selected = row.SelectedChoice.Template != null ? 1 : 0;
+        var selected = row.SelectedChoice.HasCandidate ? 1 : 0;
         var unavailable = !row.SelectedChoice.IsAvailable ? 1 : 0;
         var noCandidate = !row.HasCandidates ? 1 : 0;
         var unselected = selected == 0 && noCandidate == 0 ? 1 : 0;
-        var pending = UsesRelativeExpressions && row.SelectedChoice.Template != null && row.SelectedChoice.IsAvailable && !row.AssociationMatchesSelection ? 1 : 0;
+        var pending = IsTemplateExpressionSource && UsesRelativeExpressions && row.SelectedChoice.Template != null && row.SelectedChoice.IsAvailable && !row.AssociationMatchesSelection ? 1 : 0;
         return new(selected, unselected, noCandidate, unavailable, pending);
     }
 

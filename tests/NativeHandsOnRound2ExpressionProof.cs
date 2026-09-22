@@ -93,6 +93,8 @@ internal static partial class NativeProof
                 "R2-E G3/G4/G8 exact dirty Set blocks before mutation with affected Set name and zero writes");
 
             vm.ResetIntentSettings(); session = vm.IntentSettings!; session.Palettes.Single(x => x.Id == unrelated.Id).Name = "別Setだけ編集中";
+            Assert(vm.IsTemplateExpressionSource && vm.ExpressionRowsMatchSource,
+                "R2-E G2 removal starts from authoritative Template rows even if candidate refresh is still in flight");
             row.SelectedChoice = row.Choices[0]; await Idle();
             var removed = ManagedIntentExpressionReader.Read(timeline, voice);
             Assert(!vm.HasError && removed.Serial.HasValue && removed.Bundle == null && timeline.Items.Contains(manual) && manual.Remark == "r2e-manual" &&
@@ -122,7 +124,7 @@ internal static partial class NativeProof
             var ids = Enumerable.Range(1, 13).Select(x => $"F{x}").Concat(Enumerable.Range(1, 8).Select(x => $"G{x}")).ToArray();
             var manifest = new
             {
-                schema = "YMM4-Template-Placer-Round2-Expression/1", version = "0.4.2", host = "YMM4 4.55.1.1 Lite", result = "PASS",
+                schema = "YMM4-Template-Placer-Round2-Expression/1", version = "0.5.0", host = "YMM4 4.55.1.1 Lite", result = "PASS",
                 checks = ids.Select(id => new { id, result = "PASS", evidence = "Native R2-E proof plus retained strict association/Undo/regression gates." }).ToArray()
             };
             File.WriteAllText(Path.Combine(output, "hands-on-round2-expression.json"), JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
