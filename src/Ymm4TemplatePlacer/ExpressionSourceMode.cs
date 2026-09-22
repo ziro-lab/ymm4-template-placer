@@ -17,9 +17,9 @@ public sealed partial class PlacerViewModel
         set { if (value) TrySetExpressionSourceMode(ExpressionSourceMode.TachiePreset); }
     }
     public bool ExpressionRowsMatchSource => expressionRowsSource == expressionSourceMode;
-    public string ExpressionChoiceColumnTitle => IsTemplateExpressionSource ? "テンプレート" : "立ち絵プリセット";
+    public string ExpressionChoiceColumnTitle => IsTemplateExpressionSource ? "テンプレート" : "表情プリセット";
     public string ExpressionSourceNotice => IsTachiePresetExpressionSource
-        ? "Strong候補は選択すると即時反映されます。実験候補は確認のみです。配置は現在の「配置ルール」に従います。Excelはテンプレート表示で利用できます。"
+        ? "候補は選択すると安全なfresh表情アイテム経路で即時反映を試します。実験候補は失敗する場合がありますが、配置できればPreviewですぐ確認できます。Excelはテンプレート表示で利用できます。"
         : "";
 
     private bool HasProtectedExpressionSourceWork() => HasProtectedPendingVoiceWork() ||
@@ -31,12 +31,13 @@ public sealed partial class PlacerViewModel
         if (next == ExpressionSourceMode.TachiePreset && HasProtectedExpressionSourceWork())
         {
             HasError = false;
-            Status = "未配置のテンプレート / Excel割り当てが残っています。配置するか一覧を読み直してから、立ち絵プリセットへ切り替えてください。";
+            Status = "未配置のテンプレート / Excel割り当てが残っています。配置するか一覧を読み直してから、表情プリセットへ切り替えてください。";
             PublishExpressionSourceProperties();
             return false;
         }
         CancelExpressionNavigation();
         CancelTachiePresetApply();
+        CancelTachiePresetCalibration();
         CloseExpressionTrialSession();
         CancelExpressionLoad();
         SetVoiceFreshnessActive(false);
