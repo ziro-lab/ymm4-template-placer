@@ -27,13 +27,14 @@ This feature adds Tachie Preset content as an experimental second source in the 
 
 Add one session-local source mode with two values: Template and TachiePreset.
 
-Every Tool/session starts Template. The mode is not persisted in product settings or ToolState in this round.
+The last successfully selected source mode is persisted in the existing protected product settings and restored by the next Tool instance. Existing settings that predate this field default to Template.
 
 Switching mode:
 
 - closes any open expression trial;
 - cancels source-specific in-flight work;
-- writes no Timeline or settings;
+- writes no Timeline content;
+- persists only the selected source-mode preference after the switch is accepted;
 - entering TachiePreset is blocked while protected pending Template/Excel work exists;
 - returning Template is always allowed after safe cancellation.
 
