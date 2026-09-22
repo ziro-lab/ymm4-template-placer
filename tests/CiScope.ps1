@@ -1,5 +1,6 @@
 param([switch]$SelfTest)
 $ErrorActionPreference='Stop'
+# main and versioned native-validation branches are explicit Release lanes.
 function Test-NativePath([string]$Path) {
  return $Path -match '^(src/.+\.(cs|csproj|xaml)|tests/.+\.(cs|csproj|ps1)|fixtures/.+\.(json|ymmp|png|xlsx)|\.github/workflows/native-yymm4-proof\.yml)$'
 }
