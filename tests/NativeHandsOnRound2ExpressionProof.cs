@@ -124,7 +124,7 @@ internal static partial class NativeProof
             var ids = Enumerable.Range(1, 13).Select(x => $"F{x}").Concat(Enumerable.Range(1, 8).Select(x => $"G{x}")).ToArray();
             var manifest = new
             {
-                schema = "YMM4-Template-Placer-Round2-Expression/1", version = "0.4.2", host = "YMM4 4.55.1.1 Lite", result = "PASS",
+                schema = "YMM4-Template-Placer-Round2-Expression/1", version = "0.5.0", host = "YMM4 4.55.1.1 Lite", result = "PASS",
                 checks = ids.Select(id => new { id, result = "PASS", evidence = "Native R2-E proof plus retained strict association/Undo/regression gates." }).ToArray()
             };
             File.WriteAllText(Path.Combine(output, "hands-on-round2-expression.json"), JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
