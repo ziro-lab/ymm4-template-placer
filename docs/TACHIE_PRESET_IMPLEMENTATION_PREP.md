@@ -1,6 +1,6 @@
 # Tachie Preset source — implementation prep
 
-Status: P0-P5 GREEN / READY FOR P6
+Status: P0-P6 GREEN / READY FOR P7
 
 Base before this refresh:
 
@@ -179,3 +179,18 @@ P4/P5 checkpoint:
 - full Checkpoint semantic regression/evidence guards PASS.
 
 P6 should now change only the managed-association seam. Preserve existing `IntentAssociationTag` bytes and Template mutation semantics. Add the separate preset descriptor and a discriminated union reader/index, prove mixed/duplicate/missing tags fail closed, and do not enable preset Timeline mutation until P7.
+
+
+## P6 implementation result
+
+The common managed-expression seam is native-green.
+
+- source `0a2710457ff635038f7a6cd83cf36418bd649b35`;
+- Checkpoint run `35662905394`;
+- job `106542053072`;
+- artifact `10667807294`;
+- artifact SHA256 `04cff59ccb2b02dd08a1562877f5622825fdeba0589c4385866a8fa7ed7a7002`;
+- marker `TACHIE_PRESET_ASSOCIATION_P6=PASS`;
+- full Checkpoint semantic regression/evidence guards PASS.
+
+P7 may add only planning/revalidation/application. Keep row-selection mutation disconnected until P8.
