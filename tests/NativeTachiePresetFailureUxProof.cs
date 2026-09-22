@@ -113,10 +113,10 @@ internal static partial class NativeProof
             view.ExpressionTab.IsSelected = true;
             await vm.ExpressionLoadCompletion; await Idle(); await WaitExpressionRows(vm, 6);
 
-            Check(vm.ExpressionSourceNotice.Contains("Strong候補", StringComparison.Ordinal) &&
-                vm.ExpressionSourceNotice.Contains("実験候補", StringComparison.Ordinal) &&
+            Check(vm.ExpressionSourceNotice.Contains("実験候補", StringComparison.Ordinal) &&
+                vm.ExpressionSourceNotice.Contains("Preview", StringComparison.Ordinal) &&
                 view.TachiePresetSourceNotice.IsVisible && view.VoiceGrid.IsVisible,
-                "live preset UI explains Strong immediate apply versus Experimental inspection-only behavior");
+                "live preset UI explains that plausible Experimental candidates may be tried and judged in Preview");
 
             var strongRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, strongVoice));
             var experimentalRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, experimentalVoice));
@@ -135,9 +135,9 @@ internal static partial class NativeProof
             var beforeExperimental = Signature(timeline);
             experimentalRow.SelectedChoice = experimentalRow.Choices.Single(x => x.TachiePreset?.CandidateIdentity == "Smile");
             await vm.TachiePresetApplyCompletion; await Idle();
-            Check(!vm.HasError && vm.Status.Contains("確認のみ", StringComparison.Ordinal) &&
+            Check(vm.HasError && vm.Status.Contains("変更できませんでした", StringComparison.Ordinal) &&
                 Signature(timeline) == beforeExperimental,
-                "selecting an Experimental candidate is explicit inspection-only and Timeline zero-write");
+                "unstable Experimental candidate is tried through the safe fresh-item path and fails before Timeline mutation");
 
             Check(!noneRow.HasCandidates && noneRow.State == "候補なし" &&
                 noneRow.SourceNotice.Contains("このキャラクターでは立ち絵プリセットを利用できません", StringComparison.Ordinal),
@@ -176,8 +176,9 @@ internal static partial class NativeProof
             otherRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, otherVoice));
             otherRow.SelectedChoice = otherRow.Choices.Single(x => x.TachiePreset?.CandidateIdentity == "Smile");
             await vm.TachiePresetApplyCompletion; await Idle();
-            Check(ManagedExpressionReader.Read(timeline, otherVoice).Bundle?.Descriptor.Kind == ManagedExpressionSourceKind.Template,
-                "Experimental inspection over other-source leaves managed Timeline truth unchanged");
+            Check(vm.HasError &&
+                ManagedExpressionReader.Read(timeline, otherVoice).Bundle?.Descriptor.Kind == ManagedExpressionSourceKind.Template,
+                "failed Experimental trial over other-source leaves the existing managed Template truth unchanged");
             otherConfig.PresetDefinitions = "//Neutral\nmood=other\n//Smile\nmood=other-smile\n";
             for (var i = 0; i < 120; i++)
             {
