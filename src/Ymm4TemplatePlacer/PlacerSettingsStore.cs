@@ -42,7 +42,8 @@ public sealed class PlacerSettingsStore
         JsonSerializer.Deserialize<PlacerSettings>(JsonSerializer.SerializeToUtf8Bytes(settings, Options), Options)!;
     public static void Validate(PlacerSettings settings)
     {
-        if (settings.Schema != 4 || settings.Library == null || settings.Library.Count > 2048 || settings.NextAssociationId < 1)
+        if (settings.Schema != 4 || settings.Library == null || settings.Library.Count > 2048 || settings.NextAssociationId < 1 ||
+            !Enum.IsDefined(settings.ExpressionSourceMode))
             throw new InvalidDataException("未対応または不正なプラグイン設定です。元ファイルは保持しています。");
         if (settings.Library.Any(x => x == null || x.Id == Guid.Empty || x.Source == null || x.Source.Name == null || x.Source.PathJson == null || string.IsNullOrWhiteSpace(x.DisplayName) || x.DisplayName.Length > 256) ||
             settings.Library.Select(x => x.Id).Distinct().Count() != settings.Library.Count)
