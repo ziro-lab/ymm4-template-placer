@@ -18,7 +18,7 @@ $package=Join-Path $OutputDir 'package'
 $logPath=Join-Path $OutputDir 'proof-log.txt'
 $log=Get-Content $logPath
 if ((Get-Content -Raw (Join-Path $OutputDir 'proof-result.txt')).Trim() -cne 'PASS P1 P2 P3 P4 P5 P6 P7 P8 P9') { throw 'Native result is not a complete PASS' }
-$stages=@('P1','P2','P3','P4','P5','P6','P7','P8','P9','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12_UI','W12_SELECTORS','W12','V04') + (1..13 | ForEach-Object { "WUX$_" }) + @('UX_ACCEPTANCE','UX_WORKFLOW_ACCEPTANCE','TEMPLATE_FIDELITY','HANDS_ON_H1_H2','HANDS_ON_H3_H4_H5','HANDS_ON_UX_POLISH','HANDS_ON_ROUND2_A','HANDS_ON_ROUND2_B','HANDS_ON_ROUND2_C','HANDS_ON_ROUND2_D','HANDS_ON_ROUND2_E','HANDS_ON_ROUND2')
+$stages=@('PORTABLE_SETTINGS','P1','P2','P3','P4','P5','P6','P7','P8','P9','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12_UI','W12_SELECTORS','W12','V04') + (1..13 | ForEach-Object { "WUX$_" }) + @('UX_ACCEPTANCE','UX_WORKFLOW_ACCEPTANCE','TEMPLATE_FIDELITY','HANDS_ON_H1_H2','HANDS_ON_H3_H4_H5','HANDS_ON_UX_POLISH','HANDS_ON_ROUND2_A','HANDS_ON_ROUND2_B','HANDS_ON_ROUND2_C','HANDS_ON_ROUND2_D','HANDS_ON_ROUND2_E','HANDS_ON_ROUND2')
 $stages += @('A','B','C','D','E','F' | ForEach-Object {"HANDS_ON_ROUND3_$_"}) + @('HANDS_ON_ROUND3')
 foreach ($stage in $stages) {
  if ($log -cnotcontains "$stage=PASS") { throw "Missing native success stage: $stage" }
@@ -108,6 +108,7 @@ try {
   throw "Unexpected .ymme archive layout. Every payload file must live under $installFolder/."
  }
  if ($zip.GetEntry('Ymm4TemplatePlacer.dll') -ne $null) { throw 'Flat .ymme root detected; this would install beside older version-named folders.' }
+ if (@($archiveFiles | Where-Object { $_ -like "$installFolder/Data/*" }).Count -ne 0) { throw 'User Data must never be packaged into the .ymme payload.' }
  $entry=$zip.GetEntry("$installFolder/Ymm4TemplatePlacer.dll"); if ($null -eq $entry) { throw 'Missing archived plugin DLL under stable install folder' }
  $stream=$entry.Open(); $sha=[Security.Cryptography.SHA256]::Create()
  try { $archivedHash=[Convert]::ToHexString($sha.ComputeHash($stream)).ToLowerInvariant() }
