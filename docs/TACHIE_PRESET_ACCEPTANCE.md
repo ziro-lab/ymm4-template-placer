@@ -62,6 +62,7 @@ Before product source changes:
 - E3: stale plugin/fingerprint/candidate fails before mutation.
 - E4: a fresh TachieFaceItem is built for current Character and receives the newly applied FaceParameter.
 - E5: placement uses existing ExpressionPreset/CharacterExpressionProfile/LayerPlanner semantics.
+- E5a: because a generated TachieFaceItem has no source Template layer, legacy UseTemplateLayer state must use bounded Preferred/Minimum/Maximum free-layer search; an occupied generated default/preferred layer must not fail while a valid free layer remains.
 - E6: complete preflight precedes mutation.
 - E7: successful immediate choice participates in the existing one logical native trial Undo.
 - E8: Preview/viewport confirmation uses the existing root navigation coordinator.
