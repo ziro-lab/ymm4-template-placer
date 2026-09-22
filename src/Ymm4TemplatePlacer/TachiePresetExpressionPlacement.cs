@@ -81,7 +81,7 @@ internal sealed class TachiePresetExpressionMutation
         }
 
         var existing = ManagedExpressionReader.Read(timeline, voice);
-        ValidateExistingPresetState(existing.Bundle, token);
+        ManagedExpressionSafety.ValidatePresetState(existing.Bundle, token);
         EnsureCurrent();
 
         var applied = await TachiePresetCandidateApplier.ApplyAsync(target, candidate, EnsureCurrent, token);
@@ -136,17 +136,15 @@ internal sealed class TachiePresetExpressionMutation
         if (target.Fingerprint != candidate.Fingerprint || !target.IsCurrent(token))
             throw new InvalidOperationException("計画後に立ち絵設定が変わりました。配置していません。");
         var current = ManagedExpressionReader.Read(timeline, row.Target.Voice);
-        if (!SameAssociation(existing, current))
+        if (!ManagedExpressionSafety.Same(existing, current))
             throw new InvalidOperationException("計画後に現在の関連表情が変わりました。配置していません。");
-        ValidateExistingPresetState(current.Bundle, token);
+        ManagedExpressionSafety.ValidatePresetState(current.Bundle, token);
     }
 
-    private static bool SameAssociation(ManagedExpressionAssociation left, ManagedExpressionAssociation right)
+    internal int CommitWithinOpenRecord(Timeline timeline, CancellationToken token = default)
     {
-        if (left.Serial != right.Serial) return false;
-        if (left.Bundle == null || right.Bundle == null) return left.Bundle == null && right.Bundle == null;
-        if (left.Bundle.Descriptor != right.Bundle.Descriptor || left.Bundle.Members.Count != right.Bundle.Members.Count) return false;
-        return left.Bundle.Members.Select((item, i) => ReferenceEquals(item, right.Bundle.Members[i])).All(x => x);
+        ValidateCurrent(timeline, token);
+        return Plan.CommitWithinOpenRecord(timeline);
     }
 
     private static void ValidateRows(Timeline timeline, IReadOnlyList<AssignmentRow> rows, AssignmentRow selected)
@@ -156,13 +154,4 @@ internal sealed class TachiePresetExpressionMutation
         PlacementEngine.ValidateSnapshot(timeline, rows.Select(x => x.Target).ToArray());
     }
 
-    private static void ValidateExistingPresetState(ManagedExpressionBundle? bundle, CancellationToken token)
-    {
-        if (bundle?.Descriptor is not { Kind: ManagedExpressionSourceKind.TachiePreset, TachiePreset: { } descriptor }) return;
-        if (bundle.Members.Count != 1 || bundle.Members[0] is not TachieFaceItem face || face.TachieFaceParameter == null)
-            throw new InvalidOperationException("現在の立ち絵プリセット表情を安全に一意確認できません。変更していません。");
-        var current = TachiePresetPublicState.TryHash(face.TachieFaceParameter, token);
-        if (current == null || current != descriptor.StateHash)
-            throw new InvalidOperationException("現在の立ち絵プリセット表情は配置後に変更されています。自動置換せず停止しました。");
-    }
 }
