@@ -12,6 +12,15 @@ public sealed partial class PlacerViewModel
     public ObservableCollection<ExpressionPreset> ExpressionPresets { get; } = [];
     public IReadOnlyList<ExpressionDurationChoice> ExpressionDurations { get; } =
         [new(ExpressionDuration.VoiceSpan, "音声と同じ"), new(ExpressionDuration.NextSameCharacter, "次の同じキャラクターの音声まで")];
+    public IReadOnlyList<ExpressionLayerModeChoice> ExpressionLayerModes { get; } =
+        [new(ExpressionLayerMode.VoiceSet, "Voice用の表情Setと同じ"),
+         new(ExpressionLayerMode.Relative, "Voiceの上／下を指定"),
+         new(ExpressionLayerMode.Absolute, "レイヤー番号を指定")];
+    public IReadOnlyList<IntentOption<LayerSearchMode>> ExpressionLayerBehaviors { get; } =
+        [new(LayerSearchMode.Legacy, "旧設定の範囲探索"),
+         new(LayerSearchMode.DoNotPlace, "使用中なら配置しない"),
+         new(LayerSearchMode.SearchUp, "使用中なら上の空きを探す"),
+         new(LayerSearchMode.SearchDown, "使用中なら下の空きを探す")];
     private ExpressionPreset CurrentExpressionPreset => settings.ExpressionPresets.Single(x => x.Id == settings.CurrentExpressionPresetId);
     public ExpressionPreset? SelectedExpressionPreset
     {
