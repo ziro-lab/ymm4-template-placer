@@ -55,24 +55,52 @@ internal static partial class NativeProof
                 PluginRemarks.Append(PlacementEngine.Marker, AssociationTag.SourceLine(serial)),
                 templateTag.Line)
         };
-        var generatedDefaultLayerBlocker = new TextItem
+        var inheritedLayerBlocker = new TextItem
         {
             Frame = 100,
             Length = 100,
-            Layer = 0,
-            Remark = "p7-generated-default-layer-blocker"
+            Layer = 22,
+            Remark = "p7-inherited-layer-blocker"
         };
-        var preferredLayerBlocker = new TextItem
+        var relativeLayerBlocker = new TextItem
         {
             Frame = 100,
             Length = 100,
-            Layer = ExpressionPreset.Default.Layer.Preferred,
-            Remark = "p7-preferred-layer-blocker"
+            Layer = 17,
+            Remark = "p7-relative-layer-blocker"
+        };
+        var absoluteLayerBlocker = new TextItem
+        {
+            Frame = 100,
+            Length = 100,
+            Layer = 15,
+            Remark = "p7-absolute-layer-blocker"
         };
         var settings = PlacerSettingsStore.Copy(scope.Original);
         settings.ExpressionBootstrapComplete = true;
         settings.LegacyWorkspace = false;
-        scope.Apply(settings, [voice, nextVoice, oldManaged, generatedDefaultLayerBlocker, preferredLayerBlocker], []);
+        settings.IntentPaletteRevision = 1;
+        settings.IntentPalettes.Add(new(
+            Guid.NewGuid(),
+            "P7 Voice Set",
+            "表情",
+            new IntentTargetContext
+            {
+                ItemTypeKeys = [IntentSelectionContext.TypeKey(typeof(VoiceItem))],
+                CharacterName = character.Name
+            },
+            new IntentRelation
+            {
+                Layer = new RelativeLayerPolicy
+                {
+                    Direction = RelativeLayerDirection.Down,
+                    Offset = 2,
+                    Minimum = 0,
+                    Maximum = 99
+                }
+            },
+            []) { ExpressionCandidates = true });
+        scope.Apply(settings, [voice, nextVoice, oldManaged, inheritedLayerBlocker, relativeLayerBlocker, absoluteLayerBlocker], []);
         await Idle();
 
         var choices = new TemplateChoice[] { new(null, "— 選択しない —"), TemplateChoice.Preset(candidate) };
@@ -100,7 +128,7 @@ internal static partial class NativeProof
             File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(disk);
 
         var mutation = await TachiePresetExpressionMutation.CreateAsync(
-            timeline, rows, row, preset, candidate, Resolve, 1);
+            timeline, rows, row, preset, scope.Current, candidate, Resolve, 1);
         Check(mutation.Plan.Count == 1 && mutation.Plan.RemoveCount == 1 && mutation.Plan.UpdateCount == 0 &&
             timeline.Items.Contains(oldManaged) && !timeline.Items.Contains(mutation.Addition),
             "complete replacement is preflighted without mutating Timeline");
@@ -120,20 +148,66 @@ internal static partial class NativeProof
         Check(Signature(timeline) == signature && JsonSerializer.Serialize(scope.Current) == settingsJson && DiskSame(),
             "successful P7 planning and full multi-Voice revalidation are Timeline/settings zero-write");
 
-        var defaultLayerMutation = await TachiePresetExpressionMutation.CreateAsync(
-            timeline, rows, row, ExpressionPreset.Default, candidate, Resolve, 1);
-        Check(defaultLayerMutation.Addition.Layer == ExpressionPreset.Default.Layer.Preferred + 1 &&
-            timeline.Items.Contains(generatedDefaultLayerBlocker) &&
-            timeline.Items.Contains(preferredLayerBlocker) &&
+        var inheritedLayerMutation = await TachiePresetExpressionMutation.CreateAsync(
+            timeline, rows, row, ExpressionPreset.Default, scope.Current, candidate, Resolve, 1);
+        Check(inheritedLayerMutation.Addition.Layer == 23 &&
+            timeline.Items.Contains(inheritedLayerBlocker) &&
             Signature(timeline) == signature,
-            "generated preset has no Template layer: occupied constructor-default and preferred layers fall through the bounded ExpressionPreset search");
+            "default preset inherits the applicable Voice expression Set: down 2 targets layer 22 and continues down to free layer 23");
+
+        var relativeRule = ExpressionPreset.Default with
+        {
+            Id = Guid.NewGuid(),
+            Name = "P7 relative override",
+            LayerRule = new ExpressionLayerRule
+            {
+                Mode = ExpressionLayerMode.Relative,
+                Relative = new RelativeLayerPolicy
+                {
+                    Direction = RelativeLayerDirection.Up,
+                    Offset = 3,
+                    Minimum = 0,
+                    Maximum = 99
+                }
+            }
+        };
+        var relativeLayerMutation = await TachiePresetExpressionMutation.CreateAsync(
+            timeline, rows, row, relativeRule, scope.Current, candidate, Resolve, 1);
+        Check(relativeLayerMutation.Addition.Layer == 16 &&
+            timeline.Items.Contains(relativeLayerBlocker) &&
+            Signature(timeline) == signature,
+            "relative override targets Voice layer 17 then continues upward to free layer 16");
+
+        var absoluteRule = ExpressionPreset.Default with
+        {
+            Id = Guid.NewGuid(),
+            Name = "P7 absolute override",
+            LayerRule = new ExpressionLayerRule
+            {
+                Mode = ExpressionLayerMode.Absolute,
+                Absolute = new LayerPolicy
+                {
+                    UseTemplateLayer = false,
+                    Minimum = 0,
+                    Maximum = 99,
+                    Preferred = 15,
+                    SearchMode = LayerSearchMode.SearchDown
+                }
+            }
+        };
+        var absoluteLayerMutation = await TachiePresetExpressionMutation.CreateAsync(
+            timeline, rows, row, absoluteRule, scope.Current, candidate, Resolve, 1);
+        Check(absoluteLayerMutation.Addition.Layer == 16 &&
+            timeline.Items.Contains(absoluteLayerBlocker) &&
+            Signature(timeline) == signature,
+            "absolute override targets layer 15 and follows the saved occupied-layer SearchDown behavior");
 
         var experimental = new TachiePresetCandidateDescriptor(
             candidate.Fingerprint, candidate.Route, candidate.CandidateIdentity, candidate.Label,
             TachiePresetCapabilityLevel.Experimental);
         row.RestoreSelectedChoice(TemplateChoice.Preset(experimental));
         var experimentalMutation = await TachiePresetExpressionMutation.CreateAsync(
-            timeline, rows, row, preset, experimental, Resolve, 1);
+            timeline, rows, row, preset, scope.Current, experimental, Resolve, 1);
         Check(experimentalMutation.Plan.Count == 1 &&
             experimentalMutation.Addition.TachieFaceParameter is P3DirectFace experimentalApplied &&
             experimentalApplied.Preset == "Smile" &&
@@ -143,7 +217,7 @@ internal static partial class NativeProof
 
         config.Revision++;
         var staleRejected = false;
-        try { _ = await TachiePresetExpressionMutation.CreateAsync(timeline, rows, row, preset, candidate, Resolve, 1); }
+        try { _ = await TachiePresetExpressionMutation.CreateAsync(timeline, rows, row, preset, scope.Current, candidate, Resolve, 1); }
         catch (InvalidOperationException) { staleRejected = true; }
         finally { config.Revision--; }
         Check(staleRejected && Signature(timeline) == signature,
@@ -176,7 +250,7 @@ internal static partial class NativeProof
         try
         {
             _ = await TachiePresetExpressionMutation.CreateAsync(
-                timeline, [presetRow], presetRow, preset, candidate, Resolve, 1);
+                timeline, [presetRow], presetRow, preset, scope.Current, candidate, Resolve, 1);
         }
         catch (InvalidOperationException) { stateMismatchRejected = true; }
         finally
