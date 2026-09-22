@@ -119,16 +119,16 @@ $perfPath=Join-Path $OutputDir 'expression-performance.json'
 if (-not (Test-Path $perfPath)) { throw 'Expression performance evidence is missing' }
 $perf=Get-Content -Raw $perfPath | ConvertFrom-Json
 $perfVoices=@($perf.sizes | ForEach-Object { [int]$_.Voices })
-if ($perf.version -ne '0.4.2' -or $perf.result -ne 'PASS' -or @($perf.sizes).Count -ne 3 -or ($perfVoices -join ',') -ne '100,500,1000') {
+if ($perf.version -ne '0.5.0' -or $perf.result -ne 'PASS' -or @($perf.sizes).Count -ne 3 -or ($perfVoices -join ',') -ne '100,500,1000') {
  throw 'Expression performance evidence is incomplete or stale'
 }
 $null = & "$PSScriptRoot/ValidateRelativeEvidence.ps1" -OutputDir $OutputDir
 $null = & "$PSScriptRoot/ValidateRound3Evidence.ps1" -OutputDir $OutputDir
 $null = & "$PSScriptRoot/ValidateRound4Checkpoint.ps1" -OutputDir $OutputDir -Phases A,B,CT,CS,C
 $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
-if ($acceptance.version -ne '0.4.2' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 core acceptance evidence' }
+if ($acceptance.version -ne '0.5.0' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.5.0 core acceptance evidence' }
 $ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-Json
 if ($ux.version -ne '0.4.0' -or $ux.result -ne 'PASS' -or @($ux.checks).Count -ne 12 -or @($ux.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete retained Task UX acceptance evidence' }
 $workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
-if ($workflow.version -ne '0.4.2' -or $workflow.result -ne 'PASS' -or @($workflow.checks).Count -ne 10 -or @($workflow.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.4.2 UX workflow acceptance evidence' }
+if ($workflow.version -ne '0.5.0' -or $workflow.result -ne 'PASS' -or @($workflow.checks).Count -ne 10 -or @($workflow.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.5.0 UX workflow acceptance evidence' }
 Write-Host 'Checkpoint native validation: full semantic regression and evidence guards PASS'
