@@ -82,9 +82,10 @@ internal static partial class NativeProof
             CheckP5(vm.Rows[0].SelectedChoice.IsCurrentOtherSource && vm.Rows[0].State == "別の元から配置済み",
                 "valid current Template association is explicit other-source state in TachiePreset mode");
             Check(view.PresetSurface.IsVisible && view.TachiePresetPlacementRuleLabel.IsVisible && !view.ExcelEditor.IsVisible &&
-                vm.ExpressionSourceNotice.Contains("Strong候補", StringComparison.Ordinal) &&
-                vm.ExpressionSourceNotice.Contains("実験候補", StringComparison.Ordinal),
-                "placement-rule UI truthfully describes immediate Strong candidates, inspection-only Experimental candidates and Excel limitation");
+                vm.ExpressionSourceNotice.Contains("実験候補", StringComparison.Ordinal) &&
+                vm.ExpressionSourceNotice.Contains("Preview", StringComparison.Ordinal) &&
+                vm.ExpressionSourceNotice.Contains("Excel", StringComparison.Ordinal),
+                "placement-rule UI truthfully describes safe trial of Experimental candidates, Preview verification and Template-only Excel");
             SaveNamedView(view, "tachie-preset-p4-inspector.png");
             var row = vm.Rows[1];
             view.PaletteTab.IsSelected = true; await Idle();
