@@ -19,7 +19,7 @@ public sealed partial class PlacerViewModel
     public bool ExpressionRowsMatchSource => expressionRowsSource == expressionSourceMode;
     public string ExpressionChoiceColumnTitle => IsTemplateExpressionSource ? "テンプレート" : "立ち絵プリセット";
     public string ExpressionSourceNotice => IsTachiePresetExpressionSource
-        ? "候補の確認モードです。選択しても表情は配置しません。配置・置換はまだ未接続です。Excelはテンプレート表示で利用できます。"
+        ? "Strong候補は選択すると即時反映されます。実験候補は確認のみです。配置は現在の「配置ルール」に従います。Excelはテンプレート表示で利用できます。"
         : "";
 
     private bool HasProtectedExpressionSourceWork() => HasProtectedPendingVoiceWork() ||
@@ -36,6 +36,7 @@ public sealed partial class PlacerViewModel
             return false;
         }
         CancelExpressionNavigation();
+        CancelTachiePresetApply();
         CloseExpressionTrialSession();
         CancelExpressionLoad();
         SetVoiceFreshnessActive(false);
