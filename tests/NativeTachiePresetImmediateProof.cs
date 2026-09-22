@@ -54,10 +54,13 @@ internal static partial class NativeProof
         var manual = new TextItem { Frame = 500, Length = 24, Layer = 70, Remark = "p8-manual" };
         scope.Apply(settings, [voice, secondVoice, manual], []);
         var settingsJson = JsonSerializer.Serialize(scope.Current);
-        var diskBefore = File.Exists(PlacerSettingsStore.DefaultPath)
-            ? File.ReadAllBytes(PlacerSettingsStore.DefaultPath) : null;
-        bool DiskSame() => diskBefore == null ? !File.Exists(PlacerSettingsStore.DefaultPath) :
-            File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(diskBefore);
+        var storedBeforeSourceSwitch = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
+        static string WithoutSourceMode(PlacerSettings value)
+        {
+            var copy = PlacerSettingsStore.Copy(value);
+            copy.ExpressionSourceMode = ExpressionSourceMode.Template;
+            return JsonSerializer.Serialize(copy);
+        }
 
         try
         {
@@ -183,8 +186,11 @@ internal static partial class NativeProof
                     ManagedExpressionSourceKind.Template,
                 "second Undo restores pre-Preset state; unrelated edit was not captured");
 
-            Check(JsonSerializer.Serialize(scope.Current) == settingsJson && DiskSame(),
-                "immediate trials do not persist candidate identity or settings schema");
+            var storedAfterTrials = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
+            Check(JsonSerializer.Serialize(scope.Current) == settingsJson &&
+                storedAfterTrials.ExpressionSourceMode == ExpressionSourceMode.TachiePreset &&
+                WithoutSourceMode(storedAfterTrials) == WithoutSourceMode(storedBeforeSourceSwitch),
+                "immediate trials persist no candidate identity or product settings beyond the selected source preference");
         }
         finally
         {
