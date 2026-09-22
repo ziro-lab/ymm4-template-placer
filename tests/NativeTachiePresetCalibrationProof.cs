@@ -35,6 +35,7 @@ internal static partial class NativeProof
         using var scope = new Round3Fixture(timeline, undo);
         var vm = ViewModel!;
         var view = View!;
+        var maintenanceWasExpanded = view.ExpressionMaintenance.IsExpanded;
         var checks = new List<string>();
         void Check(bool ok, string name) { Assert(ok, "TP-P12 " + name); checks.Add(name); }
 
@@ -161,6 +162,7 @@ internal static partial class NativeProof
         }
         finally
         {
+            view.ExpressionMaintenance.IsExpanded = maintenanceWasExpanded;
             view.PaletteTab.IsSelected = true; await Idle();
             vm.IsTemplateExpressionSource = true;
             await vm.ExpressionLoadCompletion;
