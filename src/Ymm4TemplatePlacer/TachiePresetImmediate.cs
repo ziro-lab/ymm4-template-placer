@@ -6,6 +6,10 @@ public sealed partial class PlacerViewModel
     private long tachiePresetApplyGeneration;
     internal Task TachiePresetApplyCompletion { get; private set; } = Task.CompletedTask;
 
+#if YMM4_PROOF
+    internal void CancelTachiePresetApplyForProof() => CancelTachiePresetApply();
+#endif
+
     private void CancelTachiePresetApply()
     {
         tachiePresetApplyGeneration++;

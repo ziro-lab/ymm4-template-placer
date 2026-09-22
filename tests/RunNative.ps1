@@ -37,7 +37,7 @@ else {
  Get-ChildItem $OutputDir -Filter 'hands-on-round4*.json' -File | Remove-Item
  Remove-Item (Join-Path $OutputDir 'round4-checkpoint-guard-tests.json') -ErrorAction SilentlyContinue
  Remove-Item (Join-Path $OutputDir 'round3-evidence-guard-tests.json') -ErrorAction SilentlyContinue
- foreach ($name in @('proof-result.txt','proof-log.txt','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json','hands-on-ux-polish.json','hands-on-round2-input.json','hands-on-round2-sets.json','hands-on-round2-tiles.json','hands-on-round2-settings.json','hands-on-round2-expression.json','hands-on-round2.json','evidence-guard-tests.json','expression-performance.json','tachie-preset-capability.json','tachie-preset-guards.json','tachie-preset-rows.json','tachie-preset-choice-model.json','tachie-preset-association.json','tachie-preset-planning.json','tachie-preset-immediate.json')) { Remove-Item (Join-Path $OutputDir $name) -ErrorAction SilentlyContinue }
+ foreach ($name in @('proof-result.txt','proof-log.txt','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json','hands-on-ux-polish.json','hands-on-round2-input.json','hands-on-round2-sets.json','hands-on-round2-tiles.json','hands-on-round2-settings.json','hands-on-round2-expression.json','hands-on-round2.json','evidence-guard-tests.json','expression-performance.json','tachie-preset-capability.json','tachie-preset-guards.json','tachie-preset-rows.json','tachie-preset-choice-model.json','tachie-preset-association.json','tachie-preset-planning.json','tachie-preset-immediate.json','tachie-preset-failure-ux.json')) { Remove-Item (Join-Path $OutputDir $name) -ErrorAction SilentlyContinue }
 }
 $p=Start-Process (Join-Path $Ymm4Dir 'YukkuriMovieMaker.exe') -WorkingDirectory $Ymm4Dir -PassThru
 try {
@@ -90,7 +90,8 @@ $presetProofs=@(
  @{File='tachie-preset-choice-model.json'; Schema='YMM4-Template-Placer-Tachie-Preset-Choice-Model/1'; Marker='TACHIE_PRESET_CHOICE_MODEL_P5=PASS'},
  @{File='tachie-preset-association.json'; Schema='YMM4-Template-Placer-Tachie-Preset-Association/1'; Marker='TACHIE_PRESET_ASSOCIATION_P6=PASS'},
  @{File='tachie-preset-planning.json'; Schema='YMM4-Template-Placer-Tachie-Preset-Planning/1'; Marker='TACHIE_PRESET_PLANNING_P7=PASS'},
- @{File='tachie-preset-immediate.json'; Schema='YMM4-Template-Placer-Tachie-Preset-Immediate/1'; Marker='TACHIE_PRESET_IMMEDIATE_P8=PASS'}
+ @{File='tachie-preset-immediate.json'; Schema='YMM4-Template-Placer-Tachie-Preset-Immediate/1'; Marker='TACHIE_PRESET_IMMEDIATE_P8=PASS'},
+ @{File='tachie-preset-failure-ux.json'; Schema='YMM4-Template-Placer-Tachie-Preset-Failure-UX/1'; Marker='TACHIE_PRESET_FAILURE_UX_P9=PASS'}
 )
 foreach ($proof in $presetProofs) {
  if (-not (Select-String -Path $log -Pattern ('^'+[regex]::Escape($proof.Marker)+'$'))) { throw "Missing preset proof marker: $($proof.Marker)" }
