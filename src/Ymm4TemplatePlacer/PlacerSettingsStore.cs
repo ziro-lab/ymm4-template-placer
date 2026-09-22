@@ -1,6 +1,5 @@
 using System.IO;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 
 namespace Ymm4TemplatePlacer;
@@ -16,11 +15,9 @@ public sealed partial class PlacerSettings
 public sealed class PlacerSettingsStore
 {
     private const int MaximumBytes = 1024 * 1024;
-    private const string MigrationReceiptPrefix = "v1:";
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true, MaxDepth = 32 };
     private readonly string path;
     private readonly string? legacyPath;
-    private readonly string migrationReceiptPath;
     private string? expectedDigest;
     private bool loaded;
 
@@ -38,7 +35,6 @@ public sealed class PlacerSettingsStore
 
     public static string DefaultPath => Path.Combine(PluginDirectory, "Data", "settings-v04.json");
     public static string LegacyPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ymm4TemplatePlacer", "settings-v04.json");
-    internal static string DefaultMigrationReceiptPath => DefaultPath + ".legacy-baseline";
     public bool MigratedLegacyOnLastLoad { get; private set; }
 
     public static PlacerSettingsStore CreateDefault() => new(DefaultPath, LegacyPath);
@@ -51,7 +47,6 @@ public sealed class PlacerSettingsStore
         this.legacyPath = string.IsNullOrWhiteSpace(legacyPath) ? null : Path.GetFullPath(legacyPath);
         if (this.legacyPath != null && string.Equals(this.path, this.legacyPath, StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException("Portable設定と旧設定のパスは分けてください。", nameof(legacyPath));
-        migrationReceiptPath = this.path + ".legacy-baseline";
     }
 
     private static byte[]? ReadBytes(string target)
@@ -82,26 +77,6 @@ public sealed class PlacerSettingsStore
     private static byte[] CanonicalBytes(PlacerSettings settings) =>
         JsonSerializer.SerializeToUtf8Bytes(settings, Options);
 
-    private string? ReadMigrationReceipt()
-    {
-        if (!File.Exists(migrationReceiptPath)) return null;
-        var bytes = File.ReadAllBytes(migrationReceiptPath);
-        if (bytes.Length is < 1 or > 128)
-            throw new InvalidDataException("旧設定の移行情報が壊れています。設定は変更していません。");
-        var value = Encoding.ASCII.GetString(bytes).Trim();
-        if (!value.StartsWith(MigrationReceiptPrefix, StringComparison.Ordinal) ||
-            value.Length != MigrationReceiptPrefix.Length + 64 ||
-            value[MigrationReceiptPrefix.Length..].Any(c => !char.IsAsciiHexDigit(c)))
-            throw new InvalidDataException("旧設定の移行情報が壊れています。設定は変更していません。");
-        return value[MigrationReceiptPrefix.Length..].ToUpperInvariant();
-    }
-
-    private void WriteMigrationReceiptWithinLock(string legacyDigest)
-    {
-        var bytes = Encoding.ASCII.GetBytes(MigrationReceiptPrefix + legacyDigest.ToUpperInvariant());
-        WriteFileAtomically(migrationReceiptPath, bytes, overwrite: true);
-    }
-
     private static void WriteFileAtomically(string target, byte[] bytes, bool overwrite)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(target)!);
@@ -121,19 +96,6 @@ public sealed class PlacerSettingsStore
         }
     }
 
-    private void EstablishMigrationReceipt(byte[] portableBytes, byte[] legacyBytes)
-    {
-        var portableDigest = Digest(portableBytes)!;
-        var legacyDigest = Digest(legacyBytes)!;
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        using var saveLock = new FileStream(path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-        var currentPortable = ReadBytes(path);
-        var currentLegacy = legacyPath == null ? null : ReadBytes(legacyPath);
-        if (Digest(currentPortable) != portableDigest || Digest(currentLegacy) != legacyDigest)
-            throw new InvalidOperationException("移行確認中に設定が変更されました。どちらも上書きしていません。ツールを開き直してください。");
-        WriteMigrationReceiptWithinLock(legacyDigest);
-    }
-
     private void MigrateLegacy(byte[] legacyBytes)
     {
         if (legacyPath == null) throw new InvalidOperationException("旧設定の移行元がありません。");
@@ -141,58 +103,24 @@ public sealed class PlacerSettingsStore
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         using var saveLock = new FileStream(path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         if (ReadBytes(path) != null)
-            throw new InvalidOperationException("Portable設定が移行中に作成されました。どちらも上書きしていません。ツールを開き直してください。");
+            throw new InvalidOperationException("Portable設定が移行中に作成されました。既存のPortable設定を優先するため、旧設定は移行していません。ツールを開き直してください。");
         var currentLegacy = ReadBytes(legacyPath);
         if (Digest(currentLegacy) != legacyDigest)
             throw new InvalidOperationException("旧設定が移行中に変更されました。どちらも上書きしていません。ツールを開き直してください。");
         WriteFileAtomically(path, legacyBytes, overwrite: false);
-        WriteMigrationReceiptWithinLock(legacyDigest);
         MigratedLegacyOnLastLoad = true;
-    }
-
-    private void ValidateLegacyCoexistence(byte[] portableBytes, PlacerSettings portable)
-    {
-        if (legacyPath == null) return;
-        var legacyBytes = ReadBytes(legacyPath);
-        if (legacyBytes == null) return;
-
-        var legacyDigest = Digest(legacyBytes)!;
-        var receipt = ReadMigrationReceipt();
-        if (receipt != null && string.Equals(receipt, legacyDigest, StringComparison.OrdinalIgnoreCase))
-            return;
-
-        PlacerSettings legacy;
-        try
-        {
-            legacy = DeserializeAndValidate(legacyBytes);
-        }
-        catch (Exception ex) when (ex is JsonException or InvalidDataException)
-        {
-            // The portable file is already authoritative. A stale/corrupt legacy backup is not
-            // silently promoted back into service.
-            return;
-        }
-
-        if (CanonicalBytes(portable).SequenceEqual(CanonicalBytes(legacy)))
-        {
-            EstablishMigrationReceipt(portableBytes, legacyBytes);
-            return;
-        }
-
-        throw new InvalidOperationException(
-            "Portable設定と旧LocalAppData設定の両方に異なる有効データがあります。自動では選択していません。" +
-            "必要な方をバックアップして内容を整理してから、もう一度ツールを開いてください。\n" +
-            $"Portable: {path}\n旧設定: {legacyPath}");
     }
 
     public PlacerSettings Load()
     {
         MigratedLegacyOnLastLoad = false;
+
+        // Once Portable settings exist they are the sole authority. The retained LocalAppData
+        // file is only a legacy backup/migration source and never overrides or blocks Portable.
         var portableBytes = ReadBytes();
         if (portableBytes != null)
         {
             var portable = DeserializeAndValidate(portableBytes);
-            ValidateLegacyCoexistence(portableBytes, portable);
             expectedDigest = Digest(portableBytes);
             loaded = true;
             return portable;
@@ -272,8 +200,4 @@ public sealed class PlacerSettingsStore
         WriteFileAtomically(path, bytes, overwrite: true);
         expectedDigest = Digest(bytes);
     }
-
-#if YMM4_PROOF
-    internal string MigrationReceiptPathForProof => migrationReceiptPath;
-#endif
 }
