@@ -90,6 +90,9 @@ internal static partial class NativeProof
                 smileTag.CandidateHash == TachiePresetAssociationTag.CandidateIdentity(row.SelectedChoice.TachiePreset!) &&
                 timeline.Items.Contains(manual),
                 "Template -> TachiePreset replacement is exact and preserves unrelated content");
+            Check(!vm.IsExpressionLoading && vm.ExpressionRowsMatchSource &&
+                row.SelectedChoice.TachiePreset?.CandidateIdentity == "Smile",
+                "owned preset replacement keeps the authoritative row ready for the next immediate choice");
 
             row.SelectedChoice = row.Choices.Single(x => x.TachiePreset?.CandidateIdentity == "Neutral");
             await vm.TachiePresetApplyCompletion; await Idle();
