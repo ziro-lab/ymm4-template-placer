@@ -111,7 +111,7 @@ if ($Profile -eq 'focused') {
 
 if (-not (Select-String -Path $log -Pattern '^V04=PASS$')) { throw 'Integrated v0.4 native proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^UX_ACCEPTANCE=PASS$')) { throw 'Task UX acceptance is incomplete' }
-if (-not (Select-String -Path $log -Pattern '^UX_WORKFLOW_ACCEPTANCE=PASS$') -or -not (Select-String -Path $log -Pattern '^WUX13=PASS$')) { throw 'v0.4.2 UX workflow acceptance is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^UX_WORKFLOW_ACCEPTANCE=PASS$') -or -not (Select-String -Path $log -Pattern '^WUX13=PASS$')) { throw 'v0.5.0 UX workflow acceptance is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^HANDS_ON_UX_POLISH=PASS$')) { throw 'Hands-on UX polish native acceptance is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^HANDS_ON_ROUND2=PASS$')) { throw 'Hands-on Round 2 native acceptance is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^EXPRESSION_PERFORMANCE=PASS$')) { throw 'Expression performance proof is incomplete' }
