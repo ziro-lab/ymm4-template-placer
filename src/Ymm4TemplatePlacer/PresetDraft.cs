@@ -34,21 +34,32 @@ public sealed class PresetDraft : Bindable
 
     public ExpressionPreset Read(Guid id)
     {
-        var relative = new RelativeLayerPolicy
-        {
-            Direction = Direction,
-            Offset = Number(RelativeOffset, "Voiceから離すレイヤー数"),
-            Minimum = Number(Minimum, "最小レイヤー"),
-            Maximum = Number(Maximum, "最大レイヤー")
-        };
-        var absolute = new LayerPolicy
-        {
-            UseTemplateLayer = false,
-            Minimum = Number(Minimum, "最小レイヤー"),
-            Maximum = Number(Maximum, "最大レイヤー"),
-            Preferred = Number(AbsoluteLayer, "指定レイヤー"),
-            SearchMode = OccupiedBehavior
-        };
+        var relative = LayerMode == ExpressionLayerMode.Relative
+            ? new RelativeLayerPolicy
+            {
+                Direction = Direction,
+                Offset = Number(RelativeOffset, "Voiceから離すレイヤー数"),
+                Minimum = Number(Minimum, "最小レイヤー"),
+                Maximum = Number(Maximum, "最大レイヤー")
+            }
+            : new RelativeLayerPolicy();
+        var absolute = LayerMode == ExpressionLayerMode.Absolute
+            ? new LayerPolicy
+            {
+                UseTemplateLayer = false,
+                Minimum = Number(Minimum, "最小レイヤー"),
+                Maximum = Number(Maximum, "最大レイヤー"),
+                Preferred = Number(AbsoluteLayer, "指定レイヤー"),
+                SearchMode = OccupiedBehavior
+            }
+            : new LayerPolicy
+            {
+                UseTemplateLayer = false,
+                Minimum = 0,
+                Maximum = 99,
+                Preferred = 15,
+                SearchMode = LayerSearchMode.DoNotPlace
+            };
         var preset = new ExpressionPreset(id, Name.Trim(), Duration, Number(MaxGap, "最大間隔"),
             Number(StartOffset, "開始位置の調整"), Number(EndOffset, "終了位置の調整"), legacyLayer)
         {
