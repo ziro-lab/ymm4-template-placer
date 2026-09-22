@@ -60,7 +60,29 @@ public sealed class PlacerSettingsStore
     {
         if (!loaded) throw new InvalidOperationException("設定の読み込みに成功していないため保存しません。元ファイルを確認してツールを開き直してください。");
         Validate(settings);
-        var bytes = JsonSerializer.SerializeToUtf8Bytes(settings, Options);
+        SaveBytes(JsonSerializer.SerializeToUtf8Bytes(settings, Options));
+    }
+
+    internal void SaveExpressionSourceMode(ExpressionSourceMode mode)
+    {
+        if (!loaded) throw new InvalidOperationException("設定の読み込みに成功していないため表示モードを保存しません。");
+        if (!Enum.IsDefined(mode)) throw new InvalidOperationException("表情の表示モードが不正です。");
+        var bytes = ReadBytes();
+        if (Digest(bytes) != expectedDigest)
+            throw new InvalidOperationException("別のツールまたはYMM4で設定が変更されました。ツールを開き直してください。外部変更は上書きしていません。");
+        var stored = bytes == null
+            ? new PlacerSettings()
+            : JsonSerializer.Deserialize<PlacerSettings>(bytes, Options) ?? throw new InvalidDataException("設定ファイルが空です。");
+        SelectionPresetSettings.Upgrade(stored);
+        IntentPaletteSettings.Upgrade(stored);
+        ExpressionPresetSettings.Upgrade(stored);
+        stored.ExpressionSourceMode = mode;
+        Validate(stored);
+        SaveBytes(JsonSerializer.SerializeToUtf8Bytes(stored, Options));
+    }
+
+    private void SaveBytes(byte[] bytes)
+    {
         if (bytes.Length > MaximumBytes) throw new InvalidOperationException("設定が1 MiBを超えるため保存できません。");
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         // Cooperating Tool instances cannot pass the digest check concurrently.
