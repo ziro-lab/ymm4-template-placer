@@ -110,11 +110,13 @@ internal static partial class NativeProof
             candidate.Fingerprint, candidate.Route, candidate.CandidateIdentity, candidate.Label,
             TachiePresetCapabilityLevel.Experimental);
         row.RestoreSelectedChoice(TemplateChoice.Preset(experimental));
-        var rejectedExperimental = false;
-        try { _ = await TachiePresetExpressionMutation.CreateAsync(timeline, rows, row, preset, experimental, Resolve, 1); }
-        catch (InvalidOperationException) { rejectedExperimental = true; }
-        Check(rejectedExperimental && Signature(timeline) == signature,
-            "Experimental candidate remains inspection-only and cannot enter mutation planning");
+        var experimentalMutation = await TachiePresetExpressionMutation.CreateAsync(
+            timeline, rows, row, preset, experimental, Resolve, 1);
+        Check(experimentalMutation.Plan.Count == 1 &&
+            experimentalMutation.Addition.TachieFaceParameter is P3DirectFace experimentalApplied &&
+            experimentalApplied.Preset == "Smile" &&
+            Signature(timeline) == signature,
+            "Experimental candidate may enter the same fresh-item planning path while planning remains Timeline zero-write");
         row.RestoreSelectedChoice(choices[1]);
 
         config.Revision++;
