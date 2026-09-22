@@ -42,9 +42,7 @@ public sealed partial class PlacerViewModel
         if (!settingsAvailable) return true;
         try
         {
-            var saved = PlacerSettingsStore.Copy(settings);
-            saved.ExpressionSourceMode = next;
-            settingsStore.Save(saved);
+            settingsStore.SaveExpressionSourceMode(next);
             settings.ExpressionSourceMode = next;
             return true;
         }
