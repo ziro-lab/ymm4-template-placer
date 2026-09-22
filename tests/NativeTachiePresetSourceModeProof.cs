@@ -55,11 +55,14 @@ internal static partial class NativeProof
                 "TP-P1/P4 stale Template choices are hidden until the current-source projection is ready");
             gate.Set(); await vm.ExpressionLoadCompletion; await Idle();
             var presetStored = StoredSettings();
-            Assert(vm.Rows.SequenceEqual(stableRows) && vm.Rows.All(r => r.Choices.All(c => c.Template == null)) &&
-                Signature(timeline) == signature &&
-                presetStored.ExpressionSourceMode == ExpressionSourceMode.TachiePreset &&
-                WithoutSourceMode(presetStored) == WithoutSourceMode(baselineSettings),
-                "TP-P1/P4 stale Template work cannot publish choices or mutate Timeline; source switch persists only the selected mode");
+            Assert(vm.Rows.SequenceEqual(stableRows) && vm.Rows.All(r => r.Choices.All(c => c.Template == null)),
+                "TP-P1/P4 stale Template work cannot publish Template choices after switching");
+            Assert(Signature(timeline) == signature,
+                "TP-P1 source switch is Timeline zero-write");
+            Assert(presetStored.ExpressionSourceMode == ExpressionSourceMode.TachiePreset,
+                "TP-P1 TachiePreset source preference is persisted");
+            Assert(WithoutSourceMode(presetStored) == WithoutSourceMode(baselineSettings),
+                "TP-P1 source preference persistence preserves all other stored settings");
 
             PlacerViewModel? persistedPreset = null;
             try
