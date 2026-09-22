@@ -18,6 +18,7 @@ public sealed partial class PlacerViewModel
     private readonly HashSet<VoiceItem> dirtyVoiceOrder = new(ReferenceEqualityComparer.Instance);
     private DispatcherOperation? queuedVoiceFreshness;
     private bool voiceFreshnessActive, voiceFreshnessDisposed, fullVoiceReconcilePending;
+    private int ownedExpressionTimelineMutationDepth;
     private ExpressionRowsFreshness voiceRowsFreshness;
     private string voiceFreshnessProblem = "";
     public bool CanEditExpressionRows => ExpressionRowsMatchSource && voiceRowsFreshness != ExpressionRowsFreshness.StalePending && !IsExpressionLoading;
@@ -94,9 +95,19 @@ public sealed partial class PlacerViewModel
         foreach (var added in current)
             if (watchedVoices.Add(added)) added.PropertyChanged += VoiceItemChanged;
     }
+    private T ExecuteOwnedExpressionTimelineMutation<T>(Func<T> action)
+    {
+        ownedExpressionTimelineMutationDepth++;
+        try { return action(); }
+        finally { ownedExpressionTimelineMutationDepth--; }
+    }
     private void VoiceTimelineChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (!voiceFreshnessActive || !ReferenceEquals(sender, watchedVoiceTimeline)) return;
+        // Immediate managed-expression replacement changes only plugin-owned non-Voice
+        // members plus Voice Remark. Rows/candidates remain authoritative, so do not
+        // start a redundant source reload that could swallow the next immediate choice.
+        if (ownedExpressionTimelineMutationDepth > 0) return;
         if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(Timeline.Items))
         {
             fullVoiceReconcilePending = true; RequestVoiceFreshnessCheck();
