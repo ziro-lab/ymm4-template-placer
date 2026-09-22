@@ -82,13 +82,20 @@ internal static partial class NativeProof
             CheckP5(vm.Rows[0].SelectedChoice.IsCurrentOtherSource && vm.Rows[0].State == "別の元から配置済み",
                 "valid current Template association is explicit other-source state in TachiePreset mode");
             Check(view.PresetSurface.IsVisible && view.TachiePresetPlacementRuleLabel.IsVisible && !view.ExcelEditor.IsVisible &&
-                vm.ExpressionSourceNotice.Contains("配置しません", StringComparison.Ordinal),
-                "placement-rule UI is real and candidate-only/Excel limitations are explicit");
+                vm.ExpressionSourceNotice.Contains("Strong候補", StringComparison.Ordinal) &&
+                vm.ExpressionSourceNotice.Contains("実験候補", StringComparison.Ordinal),
+                "placement-rule UI truthfully describes immediate Strong candidates, inspection-only Experimental candidates and Excel limitation");
             SaveNamedView(view, "tachie-preset-p4-inspector.png");
             var row = vm.Rows[1];
+            view.PaletteTab.IsSelected = true; await Idle();
             row.SelectedChoice = row.Choices.Single(c => c.TachiePreset?.CandidateIdentity == "Smile");
+            await vm.TachiePresetApplyCompletion; await Idle();
             Check(row.SelectedChoice.TachiePreset != null && Signature(timeline) == signature && JsonSerializer.Serialize(scope.Current) == saved && DiskSame(),
-                "candidate inspection changes neither Timeline nor settings bytes");
+                "inactive candidate state can be retained for row-projection proof without mutating Timeline/settings");
+            view.ExpressionTab.IsSelected = true; await vm.ExpressionLoadCompletion; await Idle();
+            row = vm.Rows.Single(r => ReferenceEquals(r.Target.Voice, voices[1]));
+            Check(row.SelectedChoice.TachiePreset?.CandidateIdentity == "Smile",
+                "re-entering expression preserves the inactive candidate state without inventing a managed association");
             CheckP5(row.SelectedChoice.TachiePreset?.CandidateIdentity == "Smile" && row.SelectedChoice.IsAvailable &&
                 row.State == "選択済み", "TachiePreset is an explicit candidate state without a fake Template");
             RejectWithoutMutation(timeline, () => vm.Place(), "TP-P4 direct Place cannot bypass source admission");
