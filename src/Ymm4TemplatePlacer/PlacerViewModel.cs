@@ -55,6 +55,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
             if (dialog.ShowDialog() == true) ImportFrom(dialog.FileName);
         }));
         InitializeV04();
+        RestoreExpressionSourceModePreference();
         InitializeExpressionImmediate();
         PropertyChanged += ExpressionModeChanged;
 #if YMM4_PROOF
