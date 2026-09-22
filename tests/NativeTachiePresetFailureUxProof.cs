@@ -102,7 +102,7 @@ internal static partial class NativeProof
             [strongVoice, experimentalVoice, noneVoice, brokenVoice, otherVoice, otherManaged, missingVoice, missingManaged],
             []);
         var baseline = Signature(timeline);
-        var settingsJson = JsonSerializer.Serialize(scope.Current);
+        var baselineSettings = PlacerSettingsStore.Copy(scope.Current);
         var storedBeforeSourceSwitch = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
         static string WithoutSourceMode(PlacerSettings value)
         {
@@ -202,7 +202,8 @@ internal static partial class NativeProof
 
             SaveNamedView(view, "tachie-preset-p9-failure-ux.png");
             var storedAfterInspection = new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load();
-            Check(Signature(timeline) == baseline && JsonSerializer.Serialize(scope.Current) == settingsJson &&
+            Check(Signature(timeline) == baseline &&
+                WithoutSourceMode(scope.Current) == WithoutSourceMode(baselineSettings) &&
                 storedAfterInspection.ExpressionSourceMode == ExpressionSourceMode.TachiePreset &&
                 WithoutSourceMode(storedAfterInspection) == WithoutSourceMode(storedBeforeSourceSwitch),
                 "all P9 failure/unavailable UX paths preserve Timeline and product settings beyond the selected source preference");
