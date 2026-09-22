@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
 using YukkuriMovieMaker.UndoRedo;
@@ -61,7 +62,20 @@ internal static partial class NativeProof
                 "TP-P1 source switch is Timeline zero-write");
             Assert(presetStored.ExpressionSourceMode == ExpressionSourceMode.TachiePreset,
                 "TP-P1 TachiePreset source preference is persisted");
-            Assert(WithoutSourceMode(presetStored) == WithoutSourceMode(baselineSettings),
+            var beforeNode = JsonSerializer.SerializeToNode(baselineSettings)!.AsObject();
+            var afterNode = JsonSerializer.SerializeToNode(presetStored)!.AsObject();
+            beforeNode.Remove(nameof(PlacerSettings.ExpressionSourceMode));
+            afterNode.Remove(nameof(PlacerSettings.ExpressionSourceMode));
+            var changedTopLevel = beforeNode.Select(x => x.Key).Union(afterNode.Select(x => x.Key), StringComparer.Ordinal)
+                .Where(key =>
+                {
+                    beforeNode.TryGetPropertyValue(key, out var beforeValue);
+                    afterNode.TryGetPropertyValue(key, out var afterValue);
+                    return !JsonNode.DeepEquals(beforeValue, afterValue);
+                })
+                .Order(StringComparer.Ordinal).ToArray();
+            Log("TP-P1 persisted-other-diff=" + (changedTopLevel.Length == 0 ? "<none>" : string.Join(",", changedTopLevel)));
+            Assert(changedTopLevel.Length == 0,
                 "TP-P1 source preference persistence preserves all other stored settings");
 
             PlacerViewModel? persistedPreset = null;
