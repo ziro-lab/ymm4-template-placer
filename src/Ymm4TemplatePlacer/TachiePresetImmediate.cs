@@ -52,7 +52,7 @@ public sealed partial class PlacerViewModel
             if (requestedChoice.TachiePreset is { } candidate)
             {
                 var mutation = await TachiePresetExpressionMutation.CreateAsync(
-                    current, Rows.ToArray(), row, RequireExpressionPreset(),
+                    current, Rows.ToArray(), row, RequireExpressionPreset(), settings,
                     candidate, PresetTargetResolver, ExpressionSerialSeed(current), token);
                 if (!IsCurrentRequest()) return;
                 ObserveExpressionSerial(mutation.NextSerial);
