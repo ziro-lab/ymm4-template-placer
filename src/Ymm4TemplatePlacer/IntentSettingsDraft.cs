@@ -240,8 +240,6 @@ public sealed partial class IntentPaletteDraft : IntentEditable
         Entries.CollectionChanged += (_, _) => Notify(nameof(Entries));
     }
 
-    }
-
     private static PlacerSettings LegacySettings(IReadOnlyList<LibraryEntry> library) =>
         new() { Library = library.ToList() };
 
