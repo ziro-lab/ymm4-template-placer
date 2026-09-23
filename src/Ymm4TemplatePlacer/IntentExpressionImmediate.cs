@@ -292,7 +292,7 @@ public sealed partial class PlacerViewModel
         {
             HasError = true; Status = "表情を変更できませんでした: " + ex.GetBaseException().Message; RestoreExpressionChoiceFromTimeline(row);
         }
-        finally { OnPropertyChanged(nameof(Summary)); UpdateCommands(); }
+        finally { RegisterTachiePresetSourceCommand?.RaiseCanExecuteChanged(); OnPropertyChanged(nameof(Summary)); UpdateCommands(); }
     }
     private void RestoreExpressionChoiceFromTimeline(AssignmentRow row)
     {
