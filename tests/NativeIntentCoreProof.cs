@@ -156,6 +156,33 @@ internal static partial class NativeProof
             Assert(execution.Count == 2 && Signature(timeline) == signature, "R9 saved Palette relation plans the complete bundle without mutation");
             Assert(execution.Commit(timeline, undo) == 2, "R9 bundle execution uses the existing PlacementPlan/native Undo commit gateway");
             await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == signature, "R9 one native Undo restores a complete Palette tile action");
+
+            // P3 integration: center alignment must move the whole normalized bundle, not individual members.
+            timeline.SelectedItems = [target];
+            var centeredPalette = palette with
+            {
+                Relation = palette.Relation with
+                {
+                    Anchor = IntentAnchor.SelectedCenter,
+                    Duration = IntentDuration.Template,
+                    Alignment = IntentAlignment.CenterAtAnchor
+                }
+            };
+            var centeredBaseline = Signature(timeline);
+            var centeredExisting = timeline.Items.ToArray();
+            var centeredExecution = IntentExecutionPlan.Create(timeline, centeredPalette, tile, [entry]);
+            Assert(centeredExecution.Count == 2 && Signature(timeline) == centeredBaseline,
+                "PLACEMENT_RULE P3 centered multi-item Template fully preflights before mutation");
+            _ = centeredExecution.Commit(timeline, undo);
+            var centeredAdded = timeline.Items.Except(centeredExisting).OrderBy(x => x.Frame).ThenBy(x => x.Layer).ToArray();
+            Assert(centeredAdded.Length == 2 &&
+                centeredAdded[0].Frame == 115 && centeredAdded[0].Length == 25 && centeredAdded[0].Layer == 17 &&
+                centeredAdded[1].Frame == 130 && centeredAdded[1].Length == 35 && centeredAdded[1].Layer == 19,
+                "PLACEMENT_RULE P3 center alignment translates one multi-item Template as a whole while preserving internal Frame/Layer relationships");
+            await undo.UndoAsync(); await Idle();
+            Assert(Signature(timeline) == centeredBaseline,
+                "PLACEMENT_RULE P3 centered multi-item Template remains one native Undo unit");
+
             timeline.SelectedItems = [target];
             var guarded = IntentExecutionPlan.Create(timeline, palette, tile, [entry]); timeline.SelectedItems = [nextVoice];
             RejectWithoutMutation(timeline, () => guarded.Commit(timeline, undo), "R9 changed selection between plan/click and commit is zero-write");
