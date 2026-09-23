@@ -8,7 +8,7 @@ Being listed here is not implementation approval or priority commitment.
 
 ## Placement Source unification — active
 
-Status: **DESIGN / ACCEPTANCE FROZEN — IMPLEMENT NEXT**
+Status: **P0-P7 IMPLEMENTED / NATIVE GREEN — P8 FINAL RELEASE**
 
 Goal:
 
@@ -29,6 +29,21 @@ Primary product result:
 - no generated FaceParameter/TachieFaceItem body is persisted as a fake Template.
 
 This phase comes before Preview/Checklist and before broader Placement Recipe expansion.
+
+
+Implementation state:
+
+- P0 persisted Source model / v0.5 settings compatibility: GREEN;
+- P1 source-neutral geometry seam: GREEN;
+- P2 registered preset materialization: GREEN;
+- P3 ordinary targeted Set/tile placement: GREEN;
+- P4 expression-catalog unification: GREEN;
+- P5 association v2 / exact cross-source replacement: GREEN;
+- P6 Set-owned preset geometry Resync: GREEN;
+- P7 explicit registration + source-aware Settings/UX: GREEN;
+- P8 final exact Release: next gate.
+
+Release #606 passed 1,763 Native assertions plus full regression, exact DLL smoke and verified packaging before final explanatory P7 text cleanup.
 
 ## Portable settings storage
 
