@@ -49,7 +49,22 @@ public sealed partial class PlacerViewModel
             if (current == null || undo == null)
                 throw new InvalidOperationException("YMM4の対象シーンまたは「元に戻す」に接続できません。");
             int changed;
-            if (requestedChoice.TachiePreset is { } candidate)
+            if (requestedChoice.RegisteredPreset is { } registered)
+            {
+                var mutation = await RegisteredPresetExpressionMutation.CreateAsync(
+                    current, row, registered, settings,
+                    PresetTargetResolver, ExpressionSerialSeed(current), token);
+                if (!IsCurrentRequest()) return;
+                ObserveExpressionSerial(mutation.NextSerial);
+                expressionTrialSession.Begin(current, undo, row.Target.Voice);
+                changed = expressionTrialSession.ExecuteOwned(() =>
+                {
+                    if (!IsCurrentRequest()) throw new OperationCanceledException(token);
+                    return ExecuteOwnedExpressionTimelineMutation(() =>
+                        mutation.CommitWithinOpenRecord(current, settings, token));
+                });
+            }
+            else if (requestedChoice.TachiePreset is { } candidate)
             {
                 var mutation = await TachiePresetExpressionMutation.CreateAsync(
                     current, Rows.ToArray(), row, RequireExpressionPreset(), settings,
@@ -91,7 +106,7 @@ public sealed partial class PlacerViewModel
             }
             if (!IsCurrentRequest()) return;
             HasError = false;
-            Status = requestedChoice.TachiePreset != null
+            Status = requestedChoice.HasCandidate
                 ? $"「{requestedChoice.DisplayName}」を即時反映しました（{changed}変更）。"
                 : changed == 0 ? "この音声には管理対象の関連表情がありません。"
                 : "この音声の関連表情を外しました。";
@@ -117,8 +132,12 @@ public sealed partial class PlacerViewModel
 
     private static bool SameRequestedChoice(TemplateChoice current, TemplateChoice requested)
     {
+        if (requested.RegisteredPreset != null)
+            return current.IsAvailable == requested.IsAvailable &&
+                current.RegisteredPreset == requested.RegisteredPreset;
         if (requested.TachiePreset != null)
-            return current.IsAvailable == requested.IsAvailable && current.TachiePreset == requested.TachiePreset;
+            return current.IsAvailable == requested.IsAvailable &&
+                current.TachiePreset == requested.TachiePreset;
         return !current.HasCandidate && current.IsAvailable &&
             !current.IsCurrentOtherSource && !current.IsInvalidAssociation;
     }
