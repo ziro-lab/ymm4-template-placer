@@ -253,7 +253,7 @@ Safety / architecture:
 
 ## UI polish — active preparation
 
-Status: **ACTIVE — UI Micro Polish prep**
+Status: **ACTIVE — PHASE 4 COMPACT SETTINGS FRICTION PASS**
 
 ### Generic layer controls always visible
 

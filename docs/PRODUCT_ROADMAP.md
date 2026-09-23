@@ -178,13 +178,19 @@ Exit:
 - any pre-Preview placement additions are Native GREEN;
 - the Preview/Checklist can consume one authoritative placement-description model without source-specific geometry forks.
 
-### 4. Compact Settings friction / discoverability pass — NEXT
+### 4. Compact Settings friction / discoverability pass — ACTIVE
 
 Improve the existing Settings surface after the source/placement model is understood, but before introducing a separate large workspace.
 
 Primary goal:
 
 > Make it obvious **where to go to change a behavior** without reducing the available configuration width.
+
+Active authorities:
+
+- `COMPACT_SETTINGS_FRICTION_DESIGN.md`;
+- `COMPACT_SETTINGS_FRICTION_ACCEPTANCE.md`;
+- `COMPACT_SETTINGS_FRICTION_WORKPLAN.md`.
 
 Direction:
 
