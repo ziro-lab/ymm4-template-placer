@@ -312,6 +312,40 @@ internal static partial class NativeProof
                 "PLACEMENT_SOURCE P6 grouped registered preset item is skipped without partial geometry mutation");
             presetFace.Group = 0;
 
+            // P3 integration: the same managed preset must consume newly completed Set geometry on Resync.
+            settings.IntentPalettes[0] = presetPalette with
+            {
+                Relation = presetPalette.Relation with
+                {
+                    Anchor = IntentAnchor.SelectedStart,
+                    Alignment = IntentAlignment.CenterAtAnchor,
+                    Duration = IntentDuration.TargetSpan,
+                    Layer = new RelativeLayerPolicy
+                    {
+                        Mode = LayerPlacementMode.Absolute,
+                        AbsoluteLayer = 15,
+                        Direction = RelativeLayerDirection.Down,
+                        Minimum = 0,
+                        Maximum = 99
+                    }
+                }
+            };
+            timeline.SelectedItems = [presetFace];
+            var completedRuleBaseline = Signature(timeline);
+            var completedRuleResync = await RegisteredPresetAssociationResync.CreateAsync(
+                timeline, settings, Resolve, [presetFace]);
+            Assert(completedRuleResync.Result.Plan.UpdateCount == 1 && Signature(timeline) == completedRuleBaseline,
+                "PLACEMENT_RULE P3 center/absolute managed-preset Resync preflights with zero Timeline mutation");
+            completedRuleResync.ValidateCurrent(timeline, settings);
+            _ = completedRuleResync.Commit(timeline, undo, settings);
+            Assert(presetFace.Frame == 80 && presetFace.Length == 40 && presetFace.Layer == 15 &&
+                ReferenceEquals(presetFace.TachieFaceParameter, faceReference) && presetFace.Remark == faceRemark,
+                "PLACEMENT_RULE P3 managed preset Resync consumes CenterAtAnchor + Absolute Layer while preserving content/association");
+            await undo.UndoAsync();
+            Assert(Signature(timeline) == completedRuleBaseline && ReferenceEquals(presetFace.TachieFaceParameter, faceReference),
+                "PLACEMENT_RULE P3 center/absolute Resync is one native Undo and restores the exact prior geometry");
+            Log("PLACEMENT_RULE_P3=PASS");
+
             Log("PLACEMENT_SOURCE_P6=PASS");
         }
         finally
