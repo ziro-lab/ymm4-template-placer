@@ -44,6 +44,7 @@ public partial class PlacerView : UserControl
                 observedViewModel?.CloseExpressionTrialSession();
         };
         IsKeyboardFocusWithinChanged += (_, e) => { if (e.NewValue is false) observedViewModel?.CloseExpressionTrialSession(); };
+        PreviewMouseWheel += OnPlacerPreviewMouseWheel;
         DataContextChanged += ChangeViewModel;
         Loaded += (_, _) => { ObserveViewModel(DataContext as PlacerViewModel); SynchronizeTask(); };
         Unloaded += (_, _) => ObserveViewModel(null);
@@ -52,6 +53,17 @@ public partial class PlacerView : UserControl
         NativeProof.View = this;
 #endif
     }
+    private void OnPlacerPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (e.Handled || observedViewModel == null || observedViewModel.UseLegacyWorkspace ||
+            observedViewModel.IsAddingTemplate || observedViewModel.IsManagingTemplates ||
+            !SelectionTab.IsSelected || !ReferenceEquals(SelectionTab.Content, RelativeSettingsSurface))
+            return;
+
+        if (NestedWheelRouting.TryScrollFromHost(this, RelativeSettingsSurface.SettingsScroll, e.Delta, Keyboard.Modifiers))
+            e.Handled = true;
+    }
+
     private const double ExpressionRowResizeBand = 4d;
 
     private static bool IsExpressionRowResizeHit(DataGridRow row, MouseEventArgs e)

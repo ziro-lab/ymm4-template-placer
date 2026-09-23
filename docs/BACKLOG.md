@@ -114,9 +114,9 @@ Boundary:
 
 This is a performance-polish item, not a merge blocker for v0.5.0.
 
-## Compact Settings visibility polish — planned
+## Compact Settings visibility polish — complete
 
-Status: **PLANNED / BOUNDED UI POLISH**
+Status: **COMPLETE / RELEASE #654 GREEN / USER HANDS-ON ACCEPTED**
 
 User problem:
 
@@ -163,6 +163,25 @@ Direction:
 - do not shrink the list aggressively; the goal is only to make outer Settings scrolling easy across different YMM4 panel widths/layout arrangements;
 - keep the current nested-wheel routing unless hands-on testing shows width/spacing alone is insufficient.
 
+### Hands-on Round 1 corrective findings
+
+First candidate: PR #31 / Checkpoint #638, 1,800 Native assertions PASS.
+
+Freeze before further implementation:
+
+- keep useful whitespace; do not optimize for minimum width because the Tool is commonly floated near the editing area and resized;
+- move `このセットの形` to the bottom; placement quick settings are the high-frequency route;
+- remove the duplicate top-row Set `削除`; retain deletion under `セットの管理`;
+- visually group Set management and cross-Item copy; use horizontal room when available and wrap when narrow;
+- align the `演出と並び順` list start with the Template-row lane in `テンプレートをまとめて追加`;
+- no outer horizontal scrolling or required content hidden off-screen;
+- wrap text and control groups vertically when width becomes insufficient;
+- preserve list margins as breathing room / pointer space;
+- investigate and fix white-space/header wheel dead zones so ordinary non-interactive Settings areas scroll the outer Settings viewer;
+- preserve ComboBox/RangeBase and inner-ScrollViewer wheel ownership.
+
+Preview remains blocked until this corrective pass and another hands-on gate are complete.
+
 ### Set picker row alignment
 
 The Set picker row should look like one coherent control group.
@@ -179,6 +198,9 @@ Scope boundary:
 - do not add search/filter/diagnostic workspace features here — those belong to the Full Settings Workspace;
 - do not change what can be configured or the settings model;
 - validate the final spacing and first-level visibility in actual YMM4 at narrow and normal Tool widths.
+
+Final accepted source: `05285a7bae1eb59b4b588c565aa46e29bdea795c`.
+Release #654 passed **1,822 Native assertions** and verified distribution/package provenance. The final user Hands-on pass accepted the compact Settings surface; further Preview work belongs to the next roadmap phase, not this backlog item.
 
 ## Full Settings Workspace — planned UX direction
 
@@ -253,7 +275,7 @@ Safety / architecture:
 
 ## UI polish — active preparation
 
-Status: **ACTIVE — UI Micro Polish prep**
+Status: **ACTIVE — PHASE 4 COMPACT SETTINGS FRICTION PASS**
 
 ### Generic layer controls always visible
 

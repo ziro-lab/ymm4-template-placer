@@ -178,13 +178,34 @@ Exit:
 - any pre-Preview placement additions are Native GREEN;
 - the Preview/Checklist can consume one authoritative placement-description model without source-specific geometry forks.
 
-### 4. Compact Settings friction / discoverability pass — NEXT
+### 4. Compact Settings friction / discoverability pass — COMPLETE
 
 Improve the existing Settings surface after the source/placement model is understood, but before introducing a separate large workspace.
 
 Primary goal:
 
 > Make it obvious **where to go to change a behavior** without reducing the available configuration width.
+
+Active authorities:
+
+- `COMPACT_SETTINGS_FRICTION_DESIGN.md`;
+- `COMPACT_SETTINGS_FRICTION_ACCEPTANCE.md`;
+- `COMPACT_SETTINGS_FRICTION_WORKPLAN.md`.
+
+Hands-on Round 1 status:
+
+- PR #31 first candidate / Checkpoint #638 is Native GREEN with 1,800 assertions;
+- the overall visible-first-level direction is accepted for continued refinement;
+- a bounded corrective pass remains before Phase 4 can close;
+- move Set shape to the bottom because placement quick settings are the primary route;
+- remove the duplicate top Set delete and keep deletion in Set management;
+- group Set management and cross-Item copy without forcing dense one-row compression;
+- align equivalent list lanes, at minimum `演出と並び順` with the Template list lane;
+- preserve comfortable margins for the floating/resizable Tool workflow;
+- never use horizontal scrolling/hiding as the narrow-width solution: wrap text and control groups vertically;
+- fix ordinary white-space/header wheel dead zones while retaining intentional inner-control wheel ownership.
+
+Phase 5 Preview / Checklist remains blocked until this corrective pass is Native GREEN and a second real YMM4 hands-on pass accepts the remaining Settings friction.
 
 Direction:
 
@@ -208,7 +229,16 @@ Exit:
 - bounded Hands-on at narrow and normal Tool widths identifies no major navigation ambiguity;
 - no second Settings model or persistence route is introduced.
 
-### 5. Behavior preview + “what I want” checklist
+Final Phase 4 result:
+
+- user Hands-on accepted the final compact Settings candidate;
+- exact accepted implementation/test/package source: `05285a7bae1eb59b4b588c565aa46e29bdea795c`;
+- Release #654 (`35897405826`) passed **1,822 Native assertions**, `COMPACT_SETTINGS_P1` through `P7`, full retained regression, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging;
+- whole-Tool gray-surface wheel routing is active only while Settings is selected, while intentional inner control ownership remains protected.
+
+Phase 4 is complete. Phase 5 is the next product phase.
+
+### 5. Behavior preview + “what I want” checklist — NEXT
 
 Add a reusable Settings-assistance surface that can be opened from both Compact Settings and the later Full Settings Workspace.
 

@@ -1,5 +1,7 @@
 using System.IO;
 using System.Reflection;
+using System.Windows;
+using System.Windows.Input;
 using System.Text.Json;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
@@ -72,7 +74,9 @@ internal static partial class NativeProof
             session.SourceSearch = "R11/Bundle";
             Assert(session.Sources.Count(x => x.Selected) == 2 && session.VisibleSources.Cast<object>().Count() == 1,
                 "R11 filtering preserves checked sources across a bulk registration draft");
-            panel.SourceEditor.IsExpanded = true; await Idle();
+            Assert(panel.SourceEditor.IsVisible,
+                "COMPACT_SETTINGS P1 bulk Template addition is a visible first-level section without a disclosure click");
+            await Idle();
             await InvokeSelectionButton(panel.AddSourcesButton);
             Assert(draft.Entries.Count == 2 && draft.Entries.Single(x => x.Name == "Bundle").UseTemplateDuration,
                 "R11 one bulk action includes singleton and multi-item templates with bundle duration preserved");
@@ -115,14 +119,99 @@ internal static partial class NativeProof
             session.ImportNewExpressions();
             Assert(!session.Palettes.Single(x => x.Id == draft.Id).Entries.Any(x => x.LibraryEntryId == removed.LibraryEntryId),
                 "R11 explicit new-expression import does not resurrect a user-removed manual registration");
+            Assert(panel.SetManagement.IsVisible && panel.TargetEditor.IsVisible && panel.RelationEditor.IsVisible &&
+                panel.EntryEditor.IsVisible && panel.SourceEditor.IsVisible &&
+                !panel.TargetAdvanced.IsExpanded && !panel.RelationAdvanced.IsExpanded &&
+                !panel.PresentationSettingsSurface.PresentationExpander.IsExpanded,
+                "COMPACT_SETTINGS P1 ordinary Set sections are first-level visible while detailed/global disclosure stays folded");
+
+            var sourceY = panel.SourceEditor.TranslatePoint(new Point(0, 0), panel.SettingsScroll).Y;
+            var presentationY = panel.PresentationSettingsSurface.TranslatePoint(new Point(0, 0), panel.SettingsScroll).Y;
+            Assert(presentationY > sourceY,
+                "COMPACT_SETTINGS P1 global presentation controls are lower than the current Set/source editing flow");
+            var shapeY = panel.SetShapeButtons.TranslatePoint(new Point(0, 0), panel.SettingsScroll).Y;
+            Assert(shapeY > presentationY,
+                "COMPACT_SETTINGS P4 Set shape remains available but moves below global presentation as a secondary full-Settings route");
+            Assert(panel.FindName("DirectDeletePaletteButton") == null && panel.ManageDeletePaletteButton.IsVisible &&
+                ReferenceEquals(panel.ManageDeletePaletteButton.Command, vm.DeleteIntentPaletteCommand),
+                "COMPACT_SETTINGS P4 compact Settings has one visible destructive Set-delete route under Set management");
+
             var width = view.Width; var height = view.Height;
             try
             {
-                view.Width = 360; view.Height = 400; await Idle(); SaveNamedView(view, "r11-settings-narrow.png");
-                Assert(panel.RollbackButton.IsVisible && panel.RollbackButton.ActualWidth > 0 && panel.ActualWidth <= 360,
-                    "R11 narrow native settings keeps the session rollback action accessible outside the scrollable editor");
+                view.Width = 360; view.Height = 400; await Idle(); panel.UpdateLayout();
+                var sourceLeft = panel.SourceList.TranslatePoint(new Point(0, 0), panel.SourceEditor).X;
+                var sourceRight = panel.SourceEditor.ActualWidth -
+                    panel.SourceList.TranslatePoint(new Point(panel.SourceList.ActualWidth, 0), panel.SourceEditor).X;
+                Assert(sourceLeft > sourceRight && sourceRight > 0 && panel.SourceList.ActualWidth > 0 &&
+                    panel.SourceList.ActualWidth < panel.SourceEditor.ActualWidth &&
+                    panel.SourceList.ActualWidth >= panel.SourceEditor.ActualWidth * 0.70,
+                    "COMPACT_SETTINGS P2 narrow bulk-source list leaves wider left outer-scroll escape space without aggressively shrinking the list");
+                Assert(Math.Abs(panel.PalettePicker.ActualHeight - panel.NewPaletteButton.ActualHeight) <= 4,
+                    "COMPACT_SETTINGS P3 targeted Set picker and plus control have comparable native heights after duplicate delete removal");
+                var entryLeft = panel.EntryList.TranslatePoint(new Point(0, 0), panel).X;
+                var sourceListLeft = panel.SourceList.TranslatePoint(new Point(0, 0), panel).X;
+                Assert(Math.Abs(entryLeft - sourceListLeft) <= 1,
+                    "COMPACT_SETTINGS P4 entry and Template source lists share one visual content lane");
+                Assert(panel.RollbackButton.IsVisible && panel.RollbackButton.ActualWidth > 0 && panel.ActualWidth <= 360 &&
+                    panel.SettingsScroll.ExtentWidth <= panel.SettingsScroll.ViewportWidth + 1,
+                    "COMPACT_SETTINGS P2 narrow Settings keeps rollback accessible and introduces no horizontal width overflow");
+                Assert(panel.ContextNoticeText.TextWrapping == TextWrapping.Wrap,
+                    "COMPACT_SETTINGS P4 narrow contextual text wraps instead of being horizontally clipped");
+                SaveNamedView(view, "compact-settings-narrow-top.png");
+                panel.SettingsScroll.ScrollToEnd(); await Idle(); panel.SourceList.BringIntoView(); await Idle(); panel.UpdateLayout();
+                var gutterPoint = panel.SourceList.TranslatePoint(new Point(-8, Math.Max(1, panel.SourceList.ActualHeight / 2)), panel.SettingsScroll);
+                Assert(gutterPoint.X >= 0 && gutterPoint.Y >= 0 &&
+                    gutterPoint.X <= panel.SettingsScroll.ActualWidth && gutterPoint.Y <= panel.SettingsScroll.ActualHeight,
+                    "COMPACT_SETTINGS P5 fixture brings the left source-list gutter into the live Settings viewport");
+                var gutterHit = NestedWheelRouting.ResolveCurrentSource(panel.SettingsScroll, gutterPoint);
+                var gutterBefore = panel.SettingsScroll.VerticalOffset;
+                var gutterAccepted = gutterHit != null && NestedWheelRouting.TryScroll(panel.SettingsScroll, gutterHit, 120, ModifierKeys.None);
+                await Idle(); panel.SettingsScroll.UpdateLayout();
+                Log($"COMPACT_SETTINGS P5 gutter trace: hit={gutterHit?.GetType().FullName}; accepted={gutterAccepted}; before={gutterBefore:0.###}; after={panel.SettingsScroll.VerticalOffset:0.###}; scrollable={panel.SettingsScroll.ScrollableHeight:0.###}");
+                Assert(gutterAccepted && panel.SettingsScroll.VerticalOffset < gutterBefore,
+                    "COMPACT_SETTINGS P5 left source-list gutter is real outer-scroll space, not a wheel dead zone");
+                panel.SettingsScroll.ScrollToEnd(); await Idle();
+                SaveNamedView(view, "compact-settings-narrow-source.png");
+
+                view.Width = 520; view.Height = 520; await Idle(); panel.SettingsScroll.ScrollToEnd(); panel.UpdateLayout();
+                var normalLeft = panel.SourceList.TranslatePoint(new Point(0, 0), panel.SourceEditor).X;
+                var normalRight = panel.SourceEditor.ActualWidth -
+                    panel.SourceList.TranslatePoint(new Point(panel.SourceList.ActualWidth, 0), panel.SourceEditor).X;
+                Assert(normalLeft > normalRight && normalRight > 0 &&
+                    panel.SettingsScroll.ExtentWidth <= panel.SettingsScroll.ViewportWidth + 1,
+                    "COMPACT_SETTINGS P2 normal-width source list retains asymmetric outer-scroll escape space without horizontal overflow");
+                panel.SetManagement.BringIntoView(); await Idle(); panel.UpdateLayout();
+                var manageTop = panel.SetManagementBlock.TranslatePoint(new Point(), panel).Y;
+                var copyTop = panel.CopySetToItemPanel.TranslatePoint(new Point(), panel).Y;
+                var manageActionsY = panel.SetManagementActions.TranslatePoint(new Point(), panel).Y;
+                var copyActionsY = panel.CopySetActions.TranslatePoint(new Point(), panel).Y;
+                Assert(Math.Abs(manageTop - copyTop) <= 1 && Math.Abs(manageActionsY - copyActionsY) <= 1,
+                    "COMPACT_SETTINGS P6 normal-width Set management and cross-Item copy align heading-to-heading and action-row-to-action-row");
+                var copyHeadingLeft = panel.CopySetHeading.TranslatePoint(new Point(), panel).X;
+                var copyPickerLeft = panel.CopyDestinationPicker.TranslatePoint(new Point(), panel).X;
+                var copyButtonRight = panel.CopyToItemButton.TranslatePoint(new Point(panel.CopyToItemButton.ActualWidth, 0), panel).X;
+                var copyBlockRight = panel.CopySetToItemPanel.TranslatePoint(new Point(panel.CopySetToItemPanel.ActualWidth, 0), panel).X;
+                Assert(Math.Abs(copyHeadingLeft - copyPickerLeft) <= 1 &&
+                    Math.Abs(copyButtonRight - copyBlockRight) <= 1 &&
+                    panel.CopyDestinationPicker.ActualWidth >= 170 &&
+                    Math.Abs(panel.CopyDestinationPicker.ActualHeight - panel.CopyToItemButton.ActualHeight) <= 1,
+                    "COMPACT_SETTINGS P7 copy block uses a wide destination picker aligned to its heading, with equal-height copy action at the block right edge");
+                var entryActionsLeft = panel.EntryListActions.TranslatePoint(new Point(), panel).X;
+                var sourceActionsLeft = panel.SourceListActions.TranslatePoint(new Point(), panel).X;
+                Assert(Math.Abs(entryActionsLeft - entryLeft) <= 1 && Math.Abs(sourceActionsLeft - sourceListLeft) <= 1 &&
+                    Math.Abs(entryActionsLeft - sourceActionsLeft) <= 1,
+                    "COMPACT_SETTINGS P6 list action rows start on the same lane as their corresponding lists");
+                SaveNamedView(view, "compact-settings-normal-source.png");
+                Log("COMPACT_SETTINGS_P1=PASS");
+                Log("COMPACT_SETTINGS_P2=PASS");
+                Log("COMPACT_SETTINGS_P3=PASS");
+                Log("COMPACT_SETTINGS_P4=PASS");
+                Log("COMPACT_SETTINGS_P5=PASS");
+                Log("COMPACT_SETTINGS_P6=PASS");
+                Log("COMPACT_SETTINGS_P7=PASS");
             }
-            finally { view.Width = width; view.Height = height; await Idle(); }
+            finally { view.Width = width; view.Height = height; panel.SettingsScroll.ScrollToHome(); await Idle(); }
             await InvokeSelectionButton(panel.RollbackButton);
             Assert(vm.IntentSettings!.Palettes.Count == 0 && !vm.IntentSettings.HasChanges && JsonSerializer.Serialize(fixture) == baseline && Signature(timeline) == signature,
                 "R11/R4 session rollback restores opening settings and a clean draft without Timeline writes");

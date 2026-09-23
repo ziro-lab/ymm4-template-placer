@@ -46,20 +46,20 @@ internal static partial class NativeProof
         var session = vm.IntentSettings ?? throw new InvalidOperationException("Final polish Settings session missing.");
         session.SelectedItemContext = session.ItemContexts.Single(x => x.IsRealItemType && x.Key == voiceKey);
         await Idle();
-        Assert(panel.DirectDeletePaletteButton.IsVisible &&
-            ReferenceEquals(panel.DirectDeletePaletteButton.Command, vm.DeleteIntentPaletteCommand) &&
-            panel.DirectDeletePaletteButton.IsEnabled,
-            "FINAL H1: selected Item-owned Set exposes direct delete beside the Set picker");
+        Assert(panel.FindName("DirectDeletePaletteButton") == null && panel.ManageDeletePaletteButton.IsVisible &&
+            ReferenceEquals(panel.ManageDeletePaletteButton.Command, vm.DeleteIntentPaletteCommand) &&
+            panel.ManageDeletePaletteButton.IsEnabled,
+            "FINAL H1: selected Item-owned Set exposes one protected delete route under Set management");
 
         session.SelectedItemContext = session.ItemContexts.Single(x => x.IsGeneric);
         await Idle();
-        Assert(panel.DirectDeletePaletteButton.IsVisible &&
-            ReferenceEquals(panel.DirectDeletePaletteButton.Command, vm.DeleteIntentPaletteCommand) &&
-            panel.DirectDeletePaletteButton.IsEnabled,
-            "FINAL H1: Generic Set uses the same directly visible protected delete command");
+        Assert(panel.FindName("DirectDeletePaletteButton") == null && panel.ManageDeletePaletteButton.IsVisible &&
+            ReferenceEquals(panel.ManageDeletePaletteButton.Command, vm.DeleteIntentPaletteCommand) &&
+            panel.ManageDeletePaletteButton.IsEnabled,
+            "FINAL H1: Generic Set uses the same single protected Set-management delete command");
 
-        // Exercise deletion semantics without driving the confirmation dialog: the UI button
-        // above is the authoritative command, while the detached session proves the mutation
+        // Exercise deletion semantics without driving the confirmation dialog: the Set-management
+        // button above is the authoritative command, while the detached session proves the mutation
         // remains settings-only and never touches source templates or Timeline.
         var detached = new IntentSettingsSession(fixture, new[] { typeof(VoiceItem) });
         var beforeTimeline = Signature(timeline);
@@ -85,9 +85,14 @@ internal static partial class NativeProof
         var root = panel.SettingsScroll;
         Assert(root.ScrollableHeight > 1, "FINAL H2 fixture has a genuinely scrollable Settings surface");
 
+        panel.RelationSummaryText.BringIntoView();
+        await Idle();
+        root.UpdateLayout();
         var ordinaryPoint = panel.RelationSummaryText.TranslatePoint(new Point(
             Math.Min(2, Math.Max(0, panel.RelationSummaryText.ActualWidth - 1)),
             Math.Min(2, Math.Max(0, panel.RelationSummaryText.ActualHeight - 1))), root);
+        Assert(ordinaryPoint.X >= 0 && ordinaryPoint.Y >= 0 && ordinaryPoint.X <= root.ActualWidth && ordinaryPoint.Y <= root.ActualHeight,
+            "FINAL H2 fixture brings ordinary Settings content into the current viewport");
         var live = NestedWheelRouting.ResolveCurrentSource(root, ordinaryPoint);
         Assert(live != null && !IsDescendantOf(live, panel.AnchorBox),
             "FINAL H2: live hit-test resolves ordinary Settings content independently of a historical event source");
@@ -97,6 +102,106 @@ internal static partial class NativeProof
         root.UpdateLayout();
         Assert(parentAccepted && root.VerticalOffset > beforeOffset,
             "FINAL H2: ordinary current content scrolls the parent Settings viewer");
+
+        // The compact Settings header is visually part of the same white surface but remains
+        // outside SettingsScroll so selection controls stay fixed. It must not become a wheel dead zone.
+        root.ScrollToVerticalOffset(Math.Max(1, root.ScrollableHeight / 2));
+        await Idle(); panel.UpdateLayout();
+        Point? headerTarget = null;
+        for (var y = 2d; y < panel.SettingsHeader.ActualHeight - 2 && headerTarget == null; y += 8)
+            for (var x = 2d; x < panel.SettingsHeader.ActualWidth - 2; x += 12)
+            {
+                var headerPoint = panel.SettingsHeader.TranslatePoint(new Point(x, y), panel);
+                var rootPoint = panel.TranslatePoint(headerPoint, root);
+                if (rootPoint.X >= 0 && rootPoint.Y >= 0 && rootPoint.X <= root.ActualWidth && rootPoint.Y <= root.ActualHeight) continue;
+                var hit = panel.InputHitTest(headerPoint) as DependencyObject;
+                var owned = false;
+                for (var current = hit; current != null; current = TimelinePointerIntentClassifier.Parent(current))
+                {
+                    if (current is ComboBox or System.Windows.Controls.Primitives.RangeBase) { owned = true; break; }
+                    if (ReferenceEquals(current, panel)) break;
+                }
+                if (!owned) { headerTarget = headerPoint; break; }
+            }
+        Assert(headerTarget.HasValue, "FINAL H2 fixture finds ordinary fixed-header Settings space outside the outer ScrollViewer");
+        var headerScreen = panel.PointToScreen(headerTarget!.Value);
+        Assert(Round2Input.SetCursorPos((int)Math.Round(headerScreen.X), (int)Math.Round(headerScreen.Y)),
+            "FINAL H2 OS cursor moved onto ordinary fixed-header Settings space");
+        beforeOffset = root.VerticalOffset;
+        var headerAccepted = NestedWheelRouting.TryScrollFromHost(panel, root, -120, ModifierKeys.None);
+        root.UpdateLayout();
+        Assert(headerAccepted && root.VerticalOffset > beforeOffset,
+            "FINAL H2: ordinary fixed-header/white Settings space scrolls the authoritative outer viewer");
+
+        var pickerScreen = panel.PalettePicker.PointToScreen(new Point(
+            Math.Max(1, panel.PalettePicker.ActualWidth / 2), Math.Max(1, panel.PalettePicker.ActualHeight / 2)));
+        Assert(Round2Input.SetCursorPos((int)Math.Round(pickerScreen.X), (int)Math.Round(pickerScreen.Y)) &&
+            !NestedWheelRouting.TryScrollFromHost(panel, root, -120, ModifierKeys.None),
+            "FINAL H2: fixed-header ComboBox keeps intentional wheel ownership");
+
+        // Hands-on Round 2 found remaining dead zones in the fixed auto-commit/footer strip
+        // and the white outer edges beside SettingsScroll. Exercise the real WPF mouse-wheel
+        // event path there, not only the routing helper.
+        var owner = Window.GetWindow(view)!;
+        Assert(owner.Activate(), "FINAL H2 owner Window is active for physical outer-surface wheel proof");
+        await Task.Delay(80); await Idle();
+
+        async Task<bool> PhysicalOuterWheel(Point panelPoint)
+        {
+            root.ScrollToVerticalOffset(Math.Max(1, root.ScrollableHeight / 2));
+            await Idle(); panel.UpdateLayout();
+            var start = root.VerticalOffset;
+            var screen = panel.PointToScreen(panelPoint);
+            if (!Round2Input.SetCursorPos((int)Math.Round(screen.X), (int)Math.Round(screen.Y))) return false;
+            await Task.Delay(40);
+            Round2Input.mouse_event(0x0800, 0, 0, unchecked((uint)-120), UIntPtr.Zero);
+            await Task.Delay(120); await Idle(); root.UpdateLayout();
+            return root.VerticalOffset > start;
+        }
+
+        var footerPoint = panel.SettingsFooter.TranslatePoint(new Point(
+            Math.Max(1, panel.SettingsCommitNoticeText.ActualWidth / 2),
+            Math.Max(1, panel.SettingsCommitNoticeText.ActualHeight / 2)), panel);
+        Assert(await PhysicalOuterWheel(footerPoint),
+            "FINAL H2: physical wheel over the fixed auto-commit/footer strip scrolls the outer Settings viewer");
+
+        var rootMiddleY = root.TranslatePoint(new Point(0, Math.Max(1, root.ActualHeight / 2)), panel).Y;
+        Assert(await PhysicalOuterWheel(new Point(2, rootMiddleY)),
+            "FINAL H2: physical wheel over the far-left white Settings edge scrolls the outer viewer");
+        Assert(await PhysicalOuterWheel(new Point(Math.Max(1, panel.ActualWidth - 2), rootMiddleY)),
+            "FINAL H2: physical wheel outside the right scrollbar on the white Settings edge scrolls the outer viewer");
+
+        async Task<bool> PhysicalToolWheel(Point viewPoint)
+        {
+            root.ScrollToVerticalOffset(Math.Max(1, root.ScrollableHeight / 2));
+            await Idle(); view.UpdateLayout();
+            var start = root.VerticalOffset;
+            var screen = view.PointToScreen(viewPoint);
+            if (!Round2Input.SetCursorPos((int)Math.Round(screen.X), (int)Math.Round(screen.Y))) return false;
+            await Task.Delay(40);
+            Round2Input.mouse_event(0x0800, 0, 0, unchecked((uint)-120), UIntPtr.Zero);
+            await Task.Delay(120); await Idle(); root.UpdateLayout();
+            return root.VerticalOffset > start;
+        }
+
+        Assert(await PhysicalToolWheel(new Point(2, Math.Max(12, view.ActualHeight / 2))),
+            "FINAL H2: physical wheel over the gray far-left Tool surface scrolls Settings while the Settings tab is active");
+        Assert(await PhysicalToolWheel(new Point(Math.Max(2, view.ActualWidth - 2), Math.Max(12, view.ActualHeight / 2))),
+            "FINAL H2: physical wheel over the gray far-right Tool surface scrolls Settings while the Settings tab is active");
+        Assert(await PhysicalToolWheel(new Point(Math.Max(12, view.ActualWidth / 2), 2)),
+            "FINAL H2: physical wheel over the gray top Tool surface scrolls Settings while the Settings tab is active");
+
+        root.ScrollToVerticalOffset(Math.Max(1, root.ScrollableHeight / 2));
+        await Idle(); var inactiveBefore = root.VerticalOffset;
+        view.PaletteTab.IsSelected = true; await Idle();
+        var inactiveScreen = view.PointToScreen(new Point(2, Math.Max(12, view.ActualHeight / 2)));
+        Assert(Round2Input.SetCursorPos((int)Math.Round(inactiveScreen.X), (int)Math.Round(inactiveScreen.Y)),
+            "FINAL H2 OS cursor moved onto gray Tool surface with placement tab active");
+        Round2Input.mouse_event(0x0800, 0, 0, unchecked((uint)-120), UIntPtr.Zero);
+        await Task.Delay(120); await Idle(); root.UpdateLayout();
+        Assert(Math.Abs(root.VerticalOffset - inactiveBefore) < 0.01,
+            "FINAL H2: whole-Tool Settings wheel routing is gated off outside the Settings tab");
+        view.SelectionTab.IsSelected = true; await Idle();
 
         panel.AnchorBox.BringIntoView();
         await Idle();

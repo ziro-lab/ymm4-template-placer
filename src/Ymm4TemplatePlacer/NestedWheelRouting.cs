@@ -47,7 +47,41 @@ public static class NestedWheelRouting
     internal static DependencyObject? ResolveCurrentSource(ScrollViewer root, Point point)
     {
         if (point.X < 0 || point.Y < 0 || point.X > root.ActualWidth || point.Y > root.ActualHeight) return null;
-        return root.InputHitTest(point) as DependencyObject;
+        return root.InputHitTest(point) as DependencyObject ?? root;
+    }
+
+    internal static bool TryScrollFromHost(FrameworkElement host, ScrollViewer root, int delta, ModifierKeys modifiers)
+    {
+        if (!GetCursorPos(out var cursor) || !host.IsVisible || !root.IsVisible ||
+            host.ActualWidth <= 0 || host.ActualHeight <= 0 || root.ActualWidth <= 0 || root.ActualHeight <= 0) return false;
+
+        try
+        {
+            var screen = new Point(cursor.X, cursor.Y);
+            var rootPoint = root.PointFromScreen(screen);
+            if (rootPoint.X >= 0 && rootPoint.Y >= 0 && rootPoint.X <= root.ActualWidth && rootPoint.Y <= root.ActualHeight)
+                return false; // The existing root PreviewMouseWheel route remains authoritative inside SettingsScroll.
+
+            var hostPoint = host.PointFromScreen(screen);
+            if (hostPoint.X < 0 || hostPoint.Y < 0 || hostPoint.X > host.ActualWidth || hostPoint.Y > host.ActualHeight)
+                return false;
+
+            var source = host.InputHitTest(hostPoint) as DependencyObject;
+            var depth = 0;
+            for (var current = source; current != null && depth++ < 64; current = TimelinePointerIntentClassifier.Parent(current))
+            {
+                // Keep the same explicit wheel owners as the in-scroll route.
+                if (current is ComboBox or RangeBase) return false;
+                if (current is ScrollViewer other && !ReferenceEquals(other, root) && CanScroll(other, delta)) return false;
+                if (ReferenceEquals(current, host)) break;
+            }
+
+            return TryScrollTarget(root, delta, modifiers);
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
     }
     internal static bool TryScroll(ScrollViewer root, DependencyObject? source, int delta, ModifierKeys modifiers)
     {
@@ -63,9 +97,18 @@ public static class NestedWheelRouting
             if (ReferenceEquals(current, root)) { inside = true; break; }
         }
         if (!inside) return false;
-        var target = viewers.FirstOrDefault(viewer => viewer.IsEnabled && viewer.VerticalScrollBarVisibility != ScrollBarVisibility.Disabled &&
-            (delta > 0 ? viewer.VerticalOffset > 0.01 : viewer.VerticalOffset + 0.01 < viewer.ScrollableHeight));
-        if (target == null) return false;
+        var target = viewers.FirstOrDefault(viewer => CanScroll(viewer, delta));
+        return target != null && TryScrollTarget(target, delta, modifiers);
+    }
+
+    private static bool CanScroll(ScrollViewer viewer, int delta) =>
+        viewer.IsEnabled && viewer.VerticalScrollBarVisibility != ScrollBarVisibility.Disabled &&
+        (delta > 0 ? viewer.VerticalOffset > 0.01 : viewer.VerticalOffset + 0.01 < viewer.ScrollableHeight);
+
+    private static bool TryScrollTarget(ScrollViewer target, int delta, ModifierKeys modifiers)
+    {
+        if (delta == 0 || modifiers != ModifierKeys.None || SystemParameters.WheelScrollLines == 0 || !CanScroll(target, delta))
+            return false;
 
         // Use WPF line/page operations, not guessed pixel sizes: these preserve
         // logical item scrolling as well as physical ScrollViewer scrolling.
