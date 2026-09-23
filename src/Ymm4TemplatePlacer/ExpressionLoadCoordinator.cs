@@ -13,6 +13,7 @@ public sealed partial class PlacerViewModel
     private string? expressionHostFingerprint;
     private Timeline? expressionCacheTimeline;
     private IReadOnlyList<ExpressionCandidateDescriptor>? expressionCandidateCache;
+    private IReadOnlyList<RegisteredPresetExpressionSource>? expressionRegisteredPresetCache;
     private VoiceSnapshot[] expressionPreparedVoices = [];
     private readonly Dictionary<VoiceItem, int> expressionPreparedVoiceIndex = new((IEqualityComparer<VoiceItem>)ReferenceEqualityComparer.Instance);
     private IReadOnlyList<ExpressionCapturedItem> expressionPreparedItems = [];
@@ -113,7 +114,8 @@ public sealed partial class PlacerViewModel
                 snapshot = snapshot with
                 {
                     PresetCapabilities = capabilities,
-                    CandidateGenerationChanged = forceCandidates || expressionRowsSource != source ||
+                    CandidateGenerationChanged = snapshot.CandidateGenerationChanged ||
+                        forceCandidates || expressionRowsSource != source ||
                         !expressionPresetCapabilities.SequenceEqual(capabilities)
                 };
             }
@@ -173,10 +175,15 @@ public sealed partial class PlacerViewModel
         presetCharacters = characters.ToArray();
         ReconcilePresetContextWatchers(presetCharacters);
 
-        var candidateChanged = forceCandidates || expressionCandidateDirty || expressionCandidateCache == null || expressionRowsSource != expressionSourceMode;
-        if (candidateChanged && IsTemplateExpressionSource)
+        var candidateChanged = forceCandidates || expressionCandidateDirty ||
+            (IsTemplateExpressionSource ? expressionCandidateCache == null : expressionRegisteredPresetCache == null) ||
+            expressionRowsSource != expressionSourceMode;
+        if (candidateChanged)
         {
-            expressionCandidateCache = CaptureExpressionCandidates();
+            if (IsTemplateExpressionSource)
+                expressionCandidateCache = CaptureExpressionCandidates();
+            else
+                expressionRegisteredPresetCache = RegisteredPresetExpressionCatalog.Read(settings);
             expressionCandidateDirty = false;
         }
         captureWatch.Stop();
@@ -187,6 +194,7 @@ public sealed partial class PlacerViewModel
             ReferenceEquals(expressionCacheTimeline, current) ? expressionPreparedItems : [])
         {
             SourceMode = expressionSourceMode,
+            RegisteredPresetCandidates = IsTachiePresetExpressionSource ? expressionRegisteredPresetCache ?? [] : [],
             PreviousPresetChoices = IsTachiePresetExpressionSource && expressionRowsSource == expressionSourceMode && ReferenceEquals(expressionCacheTimeline, current)
                 ? Rows.Where(x => x.SelectedChoice.TachiePreset != null).ToDictionary(x => x.Target.Voice, x => x.SelectedChoice.TachiePreset!,
                     (IEqualityComparer<VoiceItem>)ReferenceEqualityComparer.Instance)
