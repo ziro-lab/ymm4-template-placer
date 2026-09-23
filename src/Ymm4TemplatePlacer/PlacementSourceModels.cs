@@ -74,7 +74,7 @@ public sealed record TachiePresetSourceEntry(
     {
         Validate();
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-        Span<byte> length = stackalloc byte[4];
+        var length = new byte[4];
 
         void Add(string value)
         {
