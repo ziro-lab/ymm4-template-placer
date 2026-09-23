@@ -25,6 +25,18 @@
    <Setter Property="Padding" Value="8,3"/>
    <Setter Property="VerticalContentAlignment" Value="Center"/>
   </Style>
+  <Style x:Key="CopyDestinationComboStyle" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+   <Setter Property="Height" Value="30"/>
+   <Setter Property="Margin" Value="0,0,6,0"/>
+   <Setter Property="Padding" Value="5,3"/>
+   <Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
+  <Style x:Key="CopyActionButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+   <Setter Property="Height" Value="30"/>
+   <Setter Property="Margin" Value="0"/>
+   <Setter Property="Padding" Value="8,3"/>
+   <Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
  </UserControl.Resources>
  <Grid x:Name="SettingsRoot" Margin="6" Background="Transparent">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -68,14 +80,15 @@
        <Button x:Name="ManageDeletePaletteButton" Content="削除" Command="{Binding DeleteIntentPaletteCommand}" ToolTip="現在選択しているセットを削除"/>
       </WrapPanel>
      </StackPanel>
-     <StackPanel x:Name="CopySetToItemPanel" Margin="0,0,0,4" VerticalAlignment="Top"
+     <StackPanel x:Name="CopySetToItemPanel" Width="260" Margin="0,0,0,4" VerticalAlignment="Top"
                  ToolTip="現在のSetをその時点の設定で複製します。コピー後は元と別々に編集できます。"
                  Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}">
-      <TextBlock Text="ほかのアイテムへコピー" FontWeight="SemiBold" Margin="0,0,0,2"/>
-      <WrapPanel x:Name="CopySetActions">
-       <ComboBox x:Name="CopyDestinationPicker" ItemsSource="{Binding IntentSettings.CopyDestinations}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedCopyDestination,Mode=TwoWay}" MinWidth="150" MaxWidth="220" AutomationProperties.Name="Setのコピー先アイテム"/>
-       <Button x:Name="CopyToItemButton" Content="コピー" Command="{Binding CopyIntentPaletteToItemCommand}"/>
-      </WrapPanel>
+      <TextBlock x:Name="CopySetHeading" Text="ほかのアイテムへコピー" FontWeight="SemiBold" Margin="0,0,0,2"/>
+      <Grid x:Name="CopySetActions">
+       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+       <ComboBox Grid.Column="0" x:Name="CopyDestinationPicker" Style="{StaticResource CopyDestinationComboStyle}" ItemsSource="{Binding IntentSettings.CopyDestinations}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedCopyDestination,Mode=TwoWay}" MinWidth="170" AutomationProperties.Name="Setのコピー先アイテム"/>
+       <Button Grid.Column="1" x:Name="CopyToItemButton" Style="{StaticResource CopyActionButtonStyle}" Content="コピー" Command="{Binding CopyIntentPaletteToItemCommand}"/>
+      </Grid>
      </StackPanel>
     </WrapPanel>
    </StackPanel>
