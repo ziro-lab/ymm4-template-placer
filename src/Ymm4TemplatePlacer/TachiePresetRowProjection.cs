@@ -10,13 +10,26 @@ internal static partial class ExpressionPreparation
         Stopwatch watch, int threadId, CancellationToken token)
     {
         var capabilities = snapshot.PresetCapabilities.ToDictionary(x => x.CharacterIdentity, StringComparer.Ordinal);
+        var registeredByCharacter = snapshot.RegisteredPresetCandidates
+            .GroupBy(x => x.Character, StringComparer.Ordinal)
+            .ToDictionary(x => x.Key, x => x.ToArray(), StringComparer.Ordinal);
         var choicesByCharacter = new Dictionary<string, IReadOnlyList<TemplateChoice>>(StringComparer.Ordinal);
         foreach (var name in voices.Select(x => x.Character).Distinct(StringComparer.Ordinal))
         {
             token.ThrowIfCancellationRequested();
             var capability = capabilities.GetValueOrDefault(name)?.Capability;
-            var choices = new List<TemplateChoice> { new(null, capability?.HasCandidates == true ? "— 選択しない —" : "— 候補なし —") };
-            foreach (var candidate in capability?.Candidates ?? []) choices.Add(TemplateChoice.Preset(candidate));
+            var registered = registeredByCharacter.GetValueOrDefault(name) ?? [];
+            var availableRegistered = new HashSet<RegisteredPresetExpressionSource>();
+            foreach (var source in registered)
+                if ((capability?.Candidates ?? []).Any(source.MatchesCandidate))
+                    availableRegistered.Add(source);
+
+            var hasCandidates = availableRegistered.Count > 0 || capability?.HasCandidates == true;
+            var choices = new List<TemplateChoice> { new(null, hasCandidates ? "— 選択しない —" : "— 候補なし —") };
+            foreach (var source in registered)
+                choices.Add(TemplateChoice.Registered(source, availableRegistered.Contains(source)));
+            foreach (var candidate in capability?.Candidates ?? [])
+                choices.Add(TemplateChoice.Preset(candidate));
             choicesByCharacter.Add(name, choices.AsReadOnly());
         }
 
