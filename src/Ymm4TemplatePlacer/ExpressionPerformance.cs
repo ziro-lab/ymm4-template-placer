@@ -29,6 +29,7 @@ internal sealed record ExpressionHostSnapshot(
 {
     public ExpressionSourceMode SourceMode { get; init; }
     public IReadOnlyList<TachiePresetCharacterCapability> PresetCapabilities { get; init; } = [];
+    public IReadOnlyList<RegisteredPresetExpressionSource> RegisteredPresetCandidates { get; init; } = [];
     public IReadOnlyDictionary<VoiceItem, TachiePresetCandidateDescriptor> PreviousPresetChoices { get; init; } =
         new Dictionary<VoiceItem, TachiePresetCandidateDescriptor>(ReferenceEqualityComparer.Instance);
 }
