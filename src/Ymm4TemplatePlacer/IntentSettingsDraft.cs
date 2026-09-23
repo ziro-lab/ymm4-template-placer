@@ -301,7 +301,7 @@ public sealed partial class IntentSettingsSession : IntentEditable
         };
         Palettes.Add(draft); return draft;
     }
-    internal bool HasExpressionDependencyChanges(Guid paletteId, Guid libraryEntryId, PlacerSettings saved, out string setName)
+    internal bool HasExpressionDependencyChanges(Guid paletteId, Guid sourceId, PlacerSettings saved, out string setName)
     {
         var savedPalette = saved.IntentPalettes.SingleOrDefault(x => x.Id == paletteId);
         var draftPalette = Palettes.SingleOrDefault(x => x.Id == paletteId);
@@ -313,10 +313,19 @@ public sealed partial class IntentSettingsSession : IntentEditable
             if (JsonSerializer.Serialize(savedPalette) != JsonSerializer.Serialize(draftPalette.Build())) return true;
         }
         catch (InvalidOperationException) { return true; }
-        var savedLibrary = saved.Library.SingleOrDefault(x => x.Id == libraryEntryId);
-        var draftLibrary = working.Library.SingleOrDefault(x => x.Id == libraryEntryId);
-        return savedLibrary == null || draftLibrary == null || JsonSerializer.Serialize(savedLibrary) != JsonSerializer.Serialize(draftLibrary);
+
+        var savedLibrary = saved.Library.SingleOrDefault(x => x.Id == sourceId);
+        var draftLibrary = working.Library.SingleOrDefault(x => x.Id == sourceId);
+        if (savedLibrary != null || draftLibrary != null)
+            return savedLibrary == null || draftLibrary == null ||
+                JsonSerializer.Serialize(savedLibrary) != JsonSerializer.Serialize(draftLibrary);
+
+        var savedPreset = saved.TachiePresetSources.SingleOrDefault(x => x.Id == sourceId);
+        var draftPreset = working.TachiePresetSources.SingleOrDefault(x => x.Id == sourceId);
+        return savedPreset == null || draftPreset == null ||
+            JsonSerializer.Serialize(savedPreset) != JsonSerializer.Serialize(draftPreset);
     }
+
     public PlacerSettings Build()
     {
         var next = PlacerSettingsStore.Copy(working); next.IntentPalettes = Palettes.Select(x => x.Build()).ToList();
