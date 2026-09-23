@@ -148,8 +148,15 @@ internal static partial class NativeProof
             Signature(timeline) == baseline,
             "PLACEMENT_SOURCE P7 removing a Set tile keeps the registered Source identity and never deletes existing Timeline content automatically");
 
+        var staleFingerprint = new TachiePresetCapabilityFingerprint(
+            candidate.Fingerprint.HostIdentity,
+            candidate.Fingerprint.CharacterIdentity,
+            "stale-config",
+            candidate.Fingerprint.PluginRuntimeType,
+            candidate.Fingerprint.FaceParameterRuntimeType,
+            candidate.Fingerprint.PluginModuleMvid);
         var wrong = new TachiePresetCandidateDescriptor(
-            candidate.Fingerprint with { CharacterConfigIdentity = new string('0', 64) },
+            staleFingerprint,
             candidate.Route,
             candidate.CandidateIdentity,
             candidate.Label,
