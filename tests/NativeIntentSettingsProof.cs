@@ -52,6 +52,19 @@ internal static partial class NativeProof
             Assert(draft.Summary.Contains("演出の中央", StringComparison.Ordinal) && draft.Summary.Contains("選択アイテムの中央", StringComparison.Ordinal),
                 "PLACEMENT_RULE P1 human-readable Set summary truthfully describes center alignment");
             draft.Alignment = IntentAlignment.StartAtAnchor; draft.Duration = IntentDuration.TargetSpan;
+            Assert(vm.IntentLayerModes.Select(x => x.Value).SequenceEqual([LayerPlacementMode.RelativeToTarget, LayerPlacementMode.Absolute]),
+                "PLACEMENT_RULE P2 Settings exposes target-relative then absolute layer modes");
+            draft.LayerMode = LayerPlacementMode.Absolute; draft.AbsoluteLayer = "42"; draft.Direction = RelativeLayerDirection.Down;
+            await Idle();
+            Assert(draft.ShowAbsoluteLayerPlacement && !draft.ShowRelativeLayerPlacement &&
+                panel.AbsoluteLayerRow.IsVisible && !panel.RelativeLayerRow.IsVisible &&
+                draft.Summary.Contains("レイヤー42", StringComparison.Ordinal) && draft.Summary.Contains("下", StringComparison.Ordinal),
+                "PLACEMENT_RULE P2 absolute Settings shows only relevant controls and summary describes layer/direction");
+            draft.LayerMode = LayerPlacementMode.RelativeToTarget; draft.Direction = RelativeLayerDirection.Up;
+            await Idle();
+            Assert(draft.ShowRelativeLayerPlacement && !draft.ShowAbsoluteLayerPlacement &&
+                panel.RelativeLayerRow.IsVisible && !panel.AbsoluteLayerRow.IsVisible,
+                "PLACEMENT_RULE P2 switching back restores the existing target-relative Settings surface");
             draft.ExpressionCandidates = true;
             session.Sources.Single(x => ReferenceEquals(x.Source, sourceA)).Selected = true;
             session.Sources.Single(x => ReferenceEquals(x.Source, sourceB)).Selected = true;
