@@ -2,6 +2,8 @@
 
 This file is now a navigation roadmap. The older W1-W12 implementation ladder is retained below as historical evidence.
 
+Post-v0.5 implementation order and the current active product phase are defined in [`PRODUCT_ROADMAP.md`](PRODUCT_ROADMAP.md). This file remains baseline/history navigation.
+
 ## Current accepted baseline
 
 v0.5.0 is the integrated baseline.
