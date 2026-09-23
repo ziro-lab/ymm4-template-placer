@@ -474,6 +474,61 @@ Architecture boundary:
 - if implemented, use a separate bounded Item Action / Effect executor behind the shared tile/action surface;
 - normal Placement remains add-only and does not gain permission to mutate existing Item effects.
 
+### Fit playback speed to a target span
+
+Candidate:
+
+- change a compatible media Item's playback rate so that its effective content duration fits one explicit target span;
+- possible target spans include a selected reference Item, an explicit bounded duration, or another already-supported exact Context boundary.
+
+Why it qualifies:
+
+- ordinary playback-rate commands do not express the desired final duration;
+- execution must read source/effective duration, derive the required playback rate, validate the supported Item type and then update the Item coherently;
+- this is timeline/content retiming, not an Effect Template concern.
+
+Boundary:
+
+- use only exact explicit targets; do not infer a vague "good" duration;
+- preserve pitch/audio behavior only where YMM4's native media semantics support it;
+- prefer host-native property/command semantics instead of reproducing media timing rules manually.
+
+### Extend or trim to an exact neighbor/target boundary
+
+Candidates:
+
+- set the selected Item end to the next exact Item/Voice start;
+- set the selected Item start/end to another explicitly selected target boundary;
+- other finite boundary variants only when the target selector is already exact and understandable.
+
+Why it qualifies:
+
+- the user intent depends on neighboring/context Item geometry rather than one fixed shortcut command;
+- Template Placer already has a strong exact Context/Neighbor vocabulary that could be reused for target resolution.
+
+Boundary:
+
+- no fuzzy "nearest suitable" target;
+- do not move or retime unrelated Items;
+- distinguish destructive trim from safe extension in the final design and fail when the underlying Item type cannot support the requested edge change safely.
+
+### Match Item duration to another Item
+
+Candidates:
+
+- set one selected Item's duration to match one explicit reference Item;
+- for an explicit multi-selection, consider finite policies such as match the designated reference, shortest or longest duration only if hands-on use proves them useful.
+
+Why it qualifies:
+
+- one ordinary shortcut does not encode which other Item supplies the target duration;
+- execution requires an exact reference Item and an Item-type-safe duration update.
+
+Boundary:
+
+- never choose the reference Item implicitly from ambiguous selection order;
+- keep playback-rate fitting separate: "same timeline Length" and "same content fit via playback speed" are different actions.
+
 ### Fixed-gap multi-Item arrangement
 
 Candidate:
