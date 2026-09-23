@@ -131,6 +131,32 @@ After P6-P7:
 
 Do **not** promote to Release or start Preview yet.
 
+## Second corrective candidate — Native GREEN
+
+Exact implementation/test source:
+
+- `b465bdaf221ba42176af1f84aa9b2906f513505d`
+- Checkpoint **#648 / 35880380282**
+- **1,816 Native assertions PASS**
+- `COMPACT_SETTINGS_P1=PASS` through `COMPACT_SETTINGS_P6=PASS`
+- full retained `PASS P1 P2 P3 P4 P5 P6 P7 P8 P9`
+- full semantic regression / evidence guards: PASS
+
+New physical wheel evidence includes:
+
+- fixed auto-commit/footer strip;
+- far-left white Settings edge;
+- white edge outside the right scrollbar.
+
+Layout evidence includes:
+
+- Set management and cross-Item copy heading/action-row alignment;
+- list action rows aligned to their corresponding list lanes.
+
+Status: **NATIVE GREEN / USER HANDS-ON NEXT**.
+
+Do not Release, merge, or begin Behavior Preview until P9 is accepted.
+
 ## P9 — second real YMM4 hands-on gate
 
 User hands-on specifically checks:
