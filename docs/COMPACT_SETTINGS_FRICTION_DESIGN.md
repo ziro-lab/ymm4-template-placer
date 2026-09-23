@@ -1,6 +1,6 @@
 # Compact Settings Friction / Discoverability Design
 
-Status: **FROZEN DESIGN CANDIDATE — IMPLEMENTATION MAY PROCEED ONLY WITHIN THIS SCOPE**
+Status: **HANDS-ON ROUND 1 FEEDBACK FROZEN — CORRECTIVE IMPLEMENTATION NEXT / PREVIEW BLOCKED**
 
 Authority:
 
@@ -114,3 +114,106 @@ Hands-on specifically decides:
 - whether any remaining click/scroll friction should be fixed before Preview.
 
 Preview / Checklist work must not begin before this gate.
+
+
+## Hands-on Round 1 — frozen corrective direction
+
+The first real YMM4 hands-on pass on PR #31 / Checkpoint #638 found the overall Phase 4 direction good enough to keep, but identified a bounded corrective pass that must finish before Behavior Preview begins.
+
+### Density / floating-window principle
+
+Template Placer is comfortable when floated near the active editing area and resized for the current task.
+
+Therefore:
+
+- do **not** optimize the compact Settings surface for minimum width or maximum information density;
+- keep useful breathing room and pointer-safe empty space;
+- allow the surface to use a wider working area when available;
+- when the Tool is narrowed, move content **downward by wrapping** rather than hiding it horizontally;
+- ordinary text should wrap automatically before it is clipped;
+- control groups may wrap to the next row rather than forcing a horizontal scrollbar;
+- the outer Settings surface must not require horizontal scrolling.
+
+The goal is **alignment and predictable resizing**, not compression.
+
+### Set shape moves to the bottom
+
+`このセットの形` is duplicated by the placement panel's quick settings and is normally more convenient there.
+
+Keep the full-Settings route as a secondary/fallback route, but move it to the bottom of the compact Settings flow so it no longer consumes prominent top space.
+
+Do not remove the capability.
+
+### Set management / copy grouping
+
+The current top Set picker and Set-management block contain redundant and vertically expensive actions.
+
+Freeze the following direction:
+
+- the top Set picker row keeps Set selection and `＋`;
+- remove the duplicate top-row `削除`;
+- keep the destructive `削除` action in `セットの管理`;
+- place ordinary Set management actions and `他のアイテムへコピー` in one coherent management area;
+- at comfortable widths, management and copy controls may sit beside each other;
+- at narrow widths, they should naturally wrap to another row instead of being compressed or clipped.
+
+Do not reduce spacing merely to force a one-row layout.
+
+### Column / list alignment
+
+Hands-on found inconsistent left starts visually noisy.
+
+Minimum alignment requirement:
+
+- the content/list start of `演出と並び順` must align with the visible Template rows in `テンプレートをまとめて追加`.
+
+Use a small number of intentional horizontal levels rather than making every control share one absolute X coordinate.
+
+Preferred mental model:
+
+- section header;
+- normal section content;
+- list/content lane;
+- secondary-detail indentation.
+
+Equivalent controls at the same hierarchy should share the same lane.
+
+### White-space wheel continuity
+
+Hands-on found a likely source of the long-standing "wheel catches / stops" feeling: visible white Settings areas exist where the outer Settings scroll does not respond even though the pointer is not intentionally operating an inner control.
+
+This is now an accepted Phase 4 problem, not something to solve only by narrowing lists.
+
+Required behavior:
+
+- ordinary non-interactive white space inside the Settings surface should scroll the authoritative outer `SettingsScroll`;
+- fixed/header areas that visually belong to the same Settings surface should not become unexplained wheel dead zones;
+- empty margins/gutters may remain for comfort and should also be usable as outer-scroll space where practical;
+- ComboBox, RangeBase and an inner ScrollViewer that can still move retain their intentional wheel ownership;
+- when an inner scroll range is exhausted, the existing direction-aware handoff to the outer Settings scroll remains valid;
+- do not synthesize key input or create a second scrolling model.
+
+The exact implementation may broaden wheel admission above `SettingsScroll`, make ordinary white-space hit testing explicit, or use another bounded WPF route. Acceptance is based on observed behavior, not one prescribed mechanism.
+
+### Existing source-list margins remain intentional
+
+The left/right margins around the Template list are no longer justified only as a workaround for wheel routing.
+
+Keep useful margins because they:
+
+- reduce visual crowding;
+- provide an easy pointer resting/scrolling lane;
+- suit the floating/resizable Tool workflow.
+
+The current approximately 16 DIP left / 6 DIP right values remain tunable hands-on values, not hard product constants.
+
+### Preview gate after corrective pass
+
+Checkpoint #638 is Native GREEN for the first Phase 4 candidate, but Phase 4 is **not** complete.
+
+Behavior Preview / Checklist work remains blocked until:
+
+1. the corrective layout/wheel pass above is implemented;
+2. Native regression is GREEN again;
+3. the user performs another real YMM4 hands-on pass;
+4. no known high-frequency Settings friction remains that should reasonably be fixed before Preview.

@@ -114,9 +114,9 @@ Boundary:
 
 This is a performance-polish item, not a merge blocker for v0.5.0.
 
-## Compact Settings visibility polish — planned
+## Compact Settings visibility polish — active
 
-Status: **PLANNED / BOUNDED UI POLISH**
+Status: **ACTIVE / HANDS-ON CORRECTIVE PASS FROZEN**
 
 User problem:
 
@@ -162,6 +162,25 @@ Direction:
 - prefer a somewhat wider escape margin on the **left**, because the right side already contains the inner list scrollbar and may naturally be used for direct inner scrolling;
 - do not shrink the list aggressively; the goal is only to make outer Settings scrolling easy across different YMM4 panel widths/layout arrangements;
 - keep the current nested-wheel routing unless hands-on testing shows width/spacing alone is insufficient.
+
+### Hands-on Round 1 corrective findings
+
+First candidate: PR #31 / Checkpoint #638, 1,800 Native assertions PASS.
+
+Freeze before further implementation:
+
+- keep useful whitespace; do not optimize for minimum width because the Tool is commonly floated near the editing area and resized;
+- move `このセットの形` to the bottom; placement quick settings are the high-frequency route;
+- remove the duplicate top-row Set `削除`; retain deletion under `セットの管理`;
+- visually group Set management and cross-Item copy; use horizontal room when available and wrap when narrow;
+- align the `演出と並び順` list start with the Template-row lane in `テンプレートをまとめて追加`;
+- no outer horizontal scrolling or required content hidden off-screen;
+- wrap text and control groups vertically when width becomes insufficient;
+- preserve list margins as breathing room / pointer space;
+- investigate and fix white-space/header wheel dead zones so ordinary non-interactive Settings areas scroll the outer Settings viewer;
+- preserve ComboBox/RangeBase and inner-ScrollViewer wheel ownership.
+
+Preview remains blocked until this corrective pass and another hands-on gate are complete.
 
 ### Set picker row alignment
 

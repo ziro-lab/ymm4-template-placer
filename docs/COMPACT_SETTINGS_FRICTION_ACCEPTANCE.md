@@ -1,6 +1,6 @@
 # Compact Settings Friction / Discoverability Acceptance
 
-Status: **FROZEN ACCEPTANCE CANDIDATE**
+Status: **HANDS-ON ROUND 1 CORRECTIVE ACCEPTANCE FROZEN**
 
 This acceptance applies to `COMPACT_SETTINGS_FRICTION_DESIGN.md`.
 
@@ -58,3 +58,66 @@ Before Phase 5 begins, real YMM4 hands-on must check:
 5. overall scroll length/friction at narrow and normal widths.
 
 A Native-green candidate is not enough to waive this gate.
+
+
+## A11 — Set shape is secondary in full Settings
+
+`このセットの形` remains available in full Settings but is located at the bottom of the compact Settings flow rather than in the prominent top area.
+
+The placement panel quick-settings route remains the expected high-frequency route.
+
+## A12 — One destructive Set delete route in compact Settings
+
+The top Set picker row contains Set selection and `＋`, but does not duplicate `削除`.
+
+`セットの管理` retains the Set delete action.
+
+## A13 — Management and cross-Item copy form one coherent area
+
+`セットの管理` and `他のアイテムへコピー` are visually grouped so they do not consume unnecessary vertical space at comfortable widths.
+
+At narrow widths they wrap naturally. No action may be clipped or hidden merely to keep the group on one row.
+
+## A14 — Equivalent list lanes align
+
+The left start of the `演出と並び順` item list aligns with the visible Template-row lane in `テンプレートをまとめて追加`, within normal layout tolerance.
+
+Other indentation should follow a small intentional hierarchy rather than unrelated per-section offsets.
+
+## A15 — Horizontal hiding is not an escape route
+
+At supported narrow widths:
+
+- the outer Settings surface requires no horizontal scrollbar;
+- ordinary explanatory text wraps before clipping;
+- long source/template labels wrap;
+- multi-control rows wrap vertically when needed;
+- required actions remain reachable without horizontal panning.
+
+## A16 — White-space wheel continuity
+
+With a genuinely scrollable compact Settings surface, wheel input over ordinary visible white Settings space advances the authoritative outer Settings scroll unless the current live control intentionally owns wheel input.
+
+The native proof must cover at least:
+
+- ordinary content inside the scrolling editor;
+- an empty/margin/gutter point;
+- a visually continuous fixed/header Settings area if one remains outside the outer ScrollViewer;
+- ComboBox ownership;
+- an inner source-list ScrollViewer while it can move;
+- handoff to the outer scroll when the inner range is exhausted;
+- pointer-outside behavior remaining unhandled.
+
+No stale event-source fallback is allowed.
+
+## A17 — Floating/resizable density principle
+
+The corrective pass must not shrink the UI merely to reduce vertical or horizontal footprint.
+
+At normal/wide widths the UI may retain comfortable spacing. At narrow widths it should reflow vertically rather than clip horizontally.
+
+## A18 — Preview remains blocked after first Native-green candidate
+
+Checkpoint #638 / PR #31 proved the first Phase 4 candidate Native-green with 1,800 assertions, but this does not close Phase 4.
+
+Phase 5 may begin only after the A11-A17 corrective pass is Native-green and the user completes a second real YMM4 hands-on pass with no known high-frequency Settings friction that should be fixed first.

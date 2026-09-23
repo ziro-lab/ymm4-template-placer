@@ -1,6 +1,6 @@
 # Compact Settings Friction / Discoverability Workplan
 
-Status: **P0 DESIGN FROZEN — P1 IMPLEMENTATION NEXT**
+Status: **FIRST CANDIDATE NATIVE GREEN — HANDS-ON CORRECTIVE PASS FROZEN / IMPLEMENTATION NOT YET STARTED**
 
 Authorities:
 
@@ -68,3 +68,79 @@ Treat width values and small spacing as tunable:
 - fix any remaining first-look/click/scroll friction.
 
 Only after hands-on acceptance should closeout/Release promote Phase 4 and Roadmap Phase 5 become NEXT.
+
+
+## Current checkpoint — first candidate
+
+PR #31 first hands-on candidate:
+
+- exact candidate head: `1792e55bcb9b4b93e2c9e41265eeb6a4f8240214`;
+- Checkpoint run: **#638 / 35864275327**;
+- result: **SUCCESS**;
+- Native assertions: **1,800 PASS**;
+- `COMPACT_SETTINGS_P1=PASS`;
+- `COMPACT_SETTINGS_P2=PASS`;
+- `COMPACT_SETTINGS_P3=PASS`;
+- retained Round 4 and Final wheel regression: GREEN.
+
+This proves the first layout candidate, not Phase 4 completion.
+
+## P6 — hands-on corrective layout pass — NEXT
+
+Do not begin implementation until this frozen handoff is intentionally resumed.
+
+Corrective scope:
+
+1. move `このセットの形` to the bottom of compact Settings;
+2. remove the duplicate top-row Set `削除`, retaining management delete;
+3. group Set management and cross-Item copy so normal widths can use horizontal space without forced compression;
+4. allow the management/copy group to wrap naturally at narrow widths;
+5. align the `演出と並び順` list lane with the Template-row lane in `テンプレートをまとめて追加`;
+6. preserve useful list margins and breathing room;
+7. guarantee no outer horizontal scrolling / hidden required content;
+8. wrap text and control groups vertically when width becomes insufficient.
+
+Do not change Settings semantics, commands, persistence, placement rules or Preview.
+
+## P7 — wheel dead-zone correction — NEXT
+
+Treat the user-observed white-space wheel dead zone as a real Phase 4 friction item.
+
+Investigate the live WPF hit-test/admission path before choosing the smallest correction.
+
+Required result:
+
+- ordinary Settings white space scrolls the authoritative outer Settings viewer;
+- visually continuous fixed/header Settings areas do not create unexplained wheel dead zones;
+- ComboBox / RangeBase ownership remains protected;
+- inner ScrollViewer ownership remains direction-aware;
+- exhausted inner scrolling hands off to the outer viewer;
+- useful visual margins remain; do not solve this by deleting whitespace.
+
+Add focused Native proof for live hit testing at representative white-space/header/gutter points.
+
+## P8 — second integrated candidate
+
+After P6-P7:
+
+- run focused proof;
+- run Checkpoint/native full regression;
+- capture narrow and normal-width screenshots;
+- capture evidence for no horizontal overflow and wheel continuity;
+- produce a Hands-on `.ymme`.
+
+Do **not** promote to Release or start Preview yet.
+
+## P9 — second real YMM4 hands-on gate
+
+User hands-on specifically checks:
+
+- Set management/copy grouping;
+- duplicate delete removal;
+- Set-shape placement at the bottom;
+- visual column/list alignment;
+- normal and narrow floating-window resizing;
+- auto-wrap instead of horizontal hiding;
+- wheel continuity across ordinary white space, margins, list boundaries and fixed/header areas.
+
+Only when this pass has no remaining high-frequency Settings friction should Phase 4 close and Phase 5 Behavior Preview become NEXT.

@@ -192,6 +192,21 @@ Active authorities:
 - `COMPACT_SETTINGS_FRICTION_ACCEPTANCE.md`;
 - `COMPACT_SETTINGS_FRICTION_WORKPLAN.md`.
 
+Hands-on Round 1 status:
+
+- PR #31 first candidate / Checkpoint #638 is Native GREEN with 1,800 assertions;
+- the overall visible-first-level direction is accepted for continued refinement;
+- a bounded corrective pass remains before Phase 4 can close;
+- move Set shape to the bottom because placement quick settings are the primary route;
+- remove the duplicate top Set delete and keep deletion in Set management;
+- group Set management and cross-Item copy without forcing dense one-row compression;
+- align equivalent list lanes, at minimum `演出と並び順` with the Template list lane;
+- preserve comfortable margins for the floating/resizable Tool workflow;
+- never use horizontal scrolling/hiding as the narrow-width solution: wrap text and control groups vertically;
+- fix ordinary white-space/header wheel dead zones while retaining intentional inner-control wheel ownership.
+
+Phase 5 Preview / Checklist remains blocked until this corrective pass is Native GREEN and a second real YMM4 hands-on pass accepts the remaining Settings friction.
+
 Direction:
 
 - remove first-level folding where it hides the existence of ordinary Set capabilities;
