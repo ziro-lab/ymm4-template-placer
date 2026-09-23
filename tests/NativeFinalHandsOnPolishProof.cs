@@ -103,6 +103,42 @@ internal static partial class NativeProof
         Assert(parentAccepted && root.VerticalOffset > beforeOffset,
             "FINAL H2: ordinary current content scrolls the parent Settings viewer");
 
+        // The compact Settings header is visually part of the same white surface but remains
+        // outside SettingsScroll so selection controls stay fixed. It must not become a wheel dead zone.
+        root.ScrollToVerticalOffset(Math.Max(1, root.ScrollableHeight / 2));
+        await Idle(); panel.UpdateLayout();
+        Point? headerTarget = null;
+        for (var y = 2d; y < panel.SettingsHeader.ActualHeight - 2 && headerTarget == null; y += 8)
+            for (var x = 2d; x < panel.SettingsHeader.ActualWidth - 2; x += 12)
+            {
+                var headerPoint = panel.SettingsHeader.TranslatePoint(new Point(x, y), panel);
+                var rootPoint = panel.TranslatePoint(headerPoint, root);
+                if (rootPoint.X >= 0 && rootPoint.Y >= 0 && rootPoint.X <= root.ActualWidth && rootPoint.Y <= root.ActualHeight) continue;
+                var hit = panel.InputHitTest(headerPoint) as DependencyObject;
+                var owned = false;
+                for (var current = hit; current != null; current = TimelinePointerIntentClassifier.Parent(current))
+                {
+                    if (current is ComboBox or System.Windows.Controls.Primitives.RangeBase) { owned = true; break; }
+                    if (ReferenceEquals(current, panel)) break;
+                }
+                if (!owned) { headerTarget = headerPoint; break; }
+            }
+        Assert(headerTarget.HasValue, "FINAL H2 fixture finds ordinary fixed-header Settings space outside the outer ScrollViewer");
+        var headerScreen = panel.PointToScreen(headerTarget!.Value);
+        Assert(Round2Input.SetCursorPos((int)Math.Round(headerScreen.X), (int)Math.Round(headerScreen.Y)),
+            "FINAL H2 OS cursor moved onto ordinary fixed-header Settings space");
+        beforeOffset = root.VerticalOffset;
+        var headerAccepted = NestedWheelRouting.TryScrollFromHost(panel, root, -120, ModifierKeys.None);
+        root.UpdateLayout();
+        Assert(headerAccepted && root.VerticalOffset > beforeOffset,
+            "FINAL H2: ordinary fixed-header/white Settings space scrolls the authoritative outer viewer");
+
+        var pickerScreen = panel.PalettePicker.PointToScreen(new Point(
+            Math.Max(1, panel.PalettePicker.ActualWidth / 2), Math.Max(1, panel.PalettePicker.ActualHeight / 2)));
+        Assert(Round2Input.SetCursorPos((int)Math.Round(pickerScreen.X), (int)Math.Round(pickerScreen.Y)) &&
+            !NestedWheelRouting.TryScrollFromHost(panel, root, -120, ModifierKeys.None),
+            "FINAL H2: fixed-header ComboBox keeps intentional wheel ownership");
+
         panel.AnchorBox.BringIntoView();
         await Idle();
         root.UpdateLayout();
