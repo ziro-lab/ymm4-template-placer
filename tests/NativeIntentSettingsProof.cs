@@ -159,8 +159,11 @@ internal static partial class NativeProof
                 Assert(panel.ContextNoticeText.TextWrapping == TextWrapping.Wrap,
                     "COMPACT_SETTINGS P4 narrow contextual text wraps instead of being horizontally clipped");
                 SaveNamedView(view, "compact-settings-narrow-top.png");
-                panel.SettingsScroll.ScrollToEnd(); await Idle(); panel.UpdateLayout();
+                panel.SettingsScroll.ScrollToEnd(); await Idle(); panel.SourceList.BringIntoView(); await Idle(); panel.UpdateLayout();
                 var gutterPoint = panel.SourceList.TranslatePoint(new Point(-8, Math.Max(1, panel.SourceList.ActualHeight / 2)), panel.SettingsScroll);
+                Assert(gutterPoint.X >= 0 && gutterPoint.Y >= 0 &&
+                    gutterPoint.X <= panel.SettingsScroll.ActualWidth && gutterPoint.Y <= panel.SettingsScroll.ActualHeight,
+                    "COMPACT_SETTINGS P5 fixture brings the left source-list gutter into the live Settings viewport");
                 var gutterHit = NestedWheelRouting.ResolveCurrentSource(panel.SettingsScroll, gutterPoint);
                 var gutterBefore = panel.SettingsScroll.VerticalOffset;
                 var gutterAccepted = gutterHit != null && NestedWheelRouting.TryScroll(panel.SettingsScroll, gutterHit, 120, ModifierKeys.None);
