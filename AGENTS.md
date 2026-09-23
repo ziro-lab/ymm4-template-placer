@@ -25,16 +25,20 @@ Known deferred items include portable settings storage, compact/Full Settings UX
 Read in this order:
 
 1. `docs/CURRENT_ARCHITECTURE.md`
-2. `docs/GLOSSARY.md`
-3. `docs/VALIDATION_STRATEGY.md`
-4. `docs/TACHIE_PRESET_DESIGN.md`
-5. `docs/TACHIE_PRESET_ACCEPTANCE.md`
-6. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
-7. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
-8. `docs/FINAL_HANDS_ON_POLISH.md`
-9. `docs/BACKLOG.md` only for scope context
-10. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
-11. historical Round/W documents only when current authority points to them or when reconstructing rationale
+2. `docs/PRODUCT_ROADMAP.md` for current product sequencing
+3. `docs/PLACEMENT_SOURCE_UNIFICATION_DESIGN.md` for the active Source/Placement phase
+4. `docs/PLACEMENT_SOURCE_UNIFICATION_ACCEPTANCE.md`
+5. `docs/PLACEMENT_SOURCE_UNIFICATION_WORKPLAN.md`
+6. `docs/GLOSSARY.md`
+7. `docs/VALIDATION_STRATEGY.md`
+8. `docs/TACHIE_PRESET_DESIGN.md`
+9. `docs/TACHIE_PRESET_ACCEPTANCE.md`
+10. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
+11. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
+12. `docs/FINAL_HANDS_ON_POLISH.md`
+13. `docs/BACKLOG.md` only for scope/detail
+14. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
+15. historical Round/W documents only when current authority points to them or when reconstructing rationale
 
 Do not reimplement completed v0.5.0 work. Preserve its Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary and validation tiers.
 
