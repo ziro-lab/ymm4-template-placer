@@ -171,6 +171,35 @@ internal static partial class NativeProof
             await undo.UndoAsync();
             await Idle();
 
+            var centerAbsolutePalette = palette with
+            {
+                Relation = palette.Relation with
+                {
+                    Anchor = IntentAnchor.SelectedStart,
+                    Alignment = IntentAlignment.CenterAtAnchor,
+                    Duration = IntentDuration.TargetSpan,
+                    Layer = new RelativeLayerPolicy
+                    {
+                        Mode = LayerPlacementMode.Absolute,
+                        AbsoluteLayer = 15,
+                        Direction = RelativeLayerDirection.Down,
+                        Minimum = 0,
+                        Maximum = 99
+                    }
+                }
+            };
+            fixture.IntentPalettes[0] = centerAbsolutePalette;
+            vm.RefreshIntentWorkspace();
+            presetTile = vm.IntentTiles.Single(x => x.Label == "Preset Smile");
+            _ = await vm.ExecuteIntentTileAsync(presetTile);
+            presetAdded = timeline.Items.Except(new IItem[] { voice, blocker }).Single() as TachieFaceItem;
+            Assert(presetAdded is { Frame: 80, Length: 40, Layer: 15, TachieFaceParameter: P3DirectFace { Preset: "Smile" } },
+                "PLACEMENT_RULE P3 registered preset normal tile combines CenterAtAnchor and Absolute Layer through the same Set-owned geometry path");
+            await undo.UndoAsync();
+            await Idle();
+            Assert(Signature(timeline) == baseline,
+                "PLACEMENT_RULE P3 center/absolute registered preset placement remains one native Undo and restores baseline");
+
             var noCharacterPalette = downPalette with
             {
                 Id = Guid.Parse("31000000-0000-4000-8000-000000000011"),
