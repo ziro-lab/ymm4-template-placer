@@ -46,6 +46,12 @@ internal static partial class NativeProof
             draft = session.SelectedPalette!;
             panel.SetNameBox.Text = "表情セット"; panel.SetNameBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)!.UpdateSource();
             Assert(panel.FindName("IntentNameBox") == null && draft.Intent == "表情", "R11/R2-C new Voice Set automatically retains bounded compatibility Intent without a second name input");
+            Assert(vm.IntentAlignments.Select(x => x.Value).SequenceEqual([IntentAlignment.StartAtAnchor, IntentAlignment.CenterAtAnchor, IntentAlignment.EndAtAnchor]),
+                "PLACEMENT_RULE P1 Settings exposes start/center/end alignment in user order");
+            draft.Anchor = IntentAnchor.SelectedCenter; draft.Duration = IntentDuration.Fixed; draft.FixedDuration = "30"; draft.Alignment = IntentAlignment.CenterAtAnchor;
+            Assert(draft.Summary.Contains("演出の中央", StringComparison.Ordinal) && draft.Summary.Contains("選択アイテムの中央", StringComparison.Ordinal),
+                "PLACEMENT_RULE P1 human-readable Set summary truthfully describes center alignment");
+            draft.Alignment = IntentAlignment.StartAtAnchor; draft.Duration = IntentDuration.TargetSpan;
             draft.ExpressionCandidates = true;
             session.Sources.Single(x => ReferenceEquals(x.Source, sourceA)).Selected = true;
             session.Sources.Single(x => ReferenceEquals(x.Source, sourceB)).Selected = true;

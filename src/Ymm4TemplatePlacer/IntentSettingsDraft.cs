@@ -261,11 +261,18 @@ public sealed partial class IntentPaletteDraft : IntentEditable
             IntentAnchor.RelatedEnd => NeighborPhrase() + "の終了",
             _ => "選択位置"
         };
+        string Aligned(string length) => Alignment switch
+        {
+            IntentAlignment.StartAtAnchor => $"{anchor}から{length}で",
+            IntentAlignment.CenterAtAnchor => $"演出の中央を{anchor}に合わせて{length}で",
+            IntentAlignment.EndAtAnchor => $"{anchor}で終わるように{length}で",
+            _ => $"{anchor}から{length}で"
+        };
         var timing = Duration switch
         {
-            IntentDuration.Template => Alignment == IntentAlignment.EndAtAnchor ? $"{anchor}で終わるようにテンプレートの長さで" : $"{anchor}からテンプレートの長さで",
-            IntentDuration.TargetSpan => Alignment == IntentAlignment.EndAtAnchor ? $"{anchor}で終わるように選択対象と同じ長さで" : $"{anchor}から選択対象と同じ長さで",
-            IntentDuration.Fixed => Alignment == IntentAlignment.EndAtAnchor ? $"{anchor}で終わるように{ReadableFixedDuration()}で" : $"{anchor}から{ReadableFixedDuration()}で",
+            IntentDuration.Template => Aligned("テンプレートの長さ"),
+            IntentDuration.TargetSpan => Aligned("選択対象と同じ長さ"),
+            IntentDuration.Fixed => Aligned(ReadableFixedDuration()),
             IntentDuration.UntilRelated => $"{anchor}から{NeighborPhrase()}の{(NeighborEdge == IntentNeighborEdge.Start ? "開始" : "終了")}まで",
             _ => anchor
         };

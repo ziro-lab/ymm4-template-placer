@@ -115,6 +115,19 @@ internal static partial class NativeProof
             Assert(maxGap.Frame == 100 && maxGap.Length == 80, "R8 MaxGap switches to the explicit current-target-end fallback");
             var overridden = IntentRelationResolver.Resolve(context, relation, standard with { FixedDurationOverride = 15 }, 50);
             Assert(overridden.Frame == 100 && overridden.Length == 15, "R8 per-entry override changes a small duration parameter, not the whole relation");
+            Assert((int)IntentAlignment.StartAtAnchor == 0 && (int)IntentAlignment.EndAtAnchor == 1 && (int)IntentAlignment.CenterAtAnchor == 2,
+                "PLACEMENT_RULE P1 center alignment is additive and preserves existing serialized enum values");
+            var centerEven = IntentRelationResolver.Resolve(context, new()
+                { Anchor = IntentAnchor.SelectedCenter, Duration = IntentDuration.Fixed, FixedDuration = 30, Alignment = IntentAlignment.CenterAtAnchor }, standard, 50);
+            Assert(centerEven.Frame == 125 && centerEven.Length == 30, "PLACEMENT_RULE P1 even span centers on the selected anchor");
+            var centerOdd = IntentRelationResolver.Resolve(context, new()
+                { Anchor = IntentAnchor.SelectedCenter, Duration = IntentDuration.Fixed, FixedDuration = 31, Alignment = IntentAlignment.CenterAtAnchor }, standard, 50);
+            Assert(centerOdd.Frame == 125 && centerOdd.Length == 31, "PLACEMENT_RULE P1 odd span uses floor(length/2) center convention");
+            var centerOffsets = IntentRelationResolver.Resolve(context, new()
+                { Anchor = IntentAnchor.SelectedCenter, Duration = IntentDuration.Fixed, FixedDuration = 30, Alignment = IntentAlignment.CenterAtAnchor, StartOffset = -2, EndOffset = 3 }, standard, 50);
+            Assert(centerOffsets.Frame == 123 && centerOffsets.Length == 35, "PLACEMENT_RULE P1 existing start/end offsets apply after center alignment");
+            RejectWithoutMutation(timeline, () => IntentRelationResolver.Resolve(context, relation with { Alignment = IntentAlignment.CenterAtAnchor }, standard, 50),
+                "PLACEMENT_RULE P1 UntilRelated still rejects non-start alignment");
             timeline.Items = [target]; timeline.SelectedItems = [target]; var alone = IntentSelectionContext.Capture(timeline);
             Assert(IntentRelationResolver.Resolve(alone, relation, standard, 50).Length == 80, "R8 no neighbor falls back to current target end");
             Assert(IntentRelationResolver.Resolve(alone, relation with { Fallback = IntentFallback.FixedDuration }, standard, 50).Length == 30,

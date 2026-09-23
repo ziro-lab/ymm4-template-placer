@@ -43,7 +43,13 @@ public static class IntentRelationResolver
             var end = relation.NeighborEdge == IntentNeighborEdge.Start ? neighbor!.Frame : neighbor!.End;
             return Span(anchor + startOffset, end + endOffset);
         }
-        var start = relation.Alignment == IntentAlignment.EndAtAnchor ? anchor - length : anchor;
+        var start = relation.Alignment switch
+        {
+            IntentAlignment.StartAtAnchor => anchor,
+            IntentAlignment.CenterAtAnchor => anchor - length / 2,
+            IntentAlignment.EndAtAnchor => anchor - length,
+            _ => throw new InvalidOperationException("配置の揃え方が不正です。")
+        };
         return Span(start + startOffset, start + length + endOffset);
     }
 
