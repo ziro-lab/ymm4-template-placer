@@ -28,8 +28,21 @@ internal static partial class NativeProof
         Assert(!row.HasCandidates, "WUX3 missing-expression fixture starts with no matching native Template");
         view.VoiceGrid.ScrollIntoView(row); view.VoiceGrid.UpdateLayout(); await Idle();
         var rowView = (DataGridRow)view.VoiceGrid.ItemContainerGenerator.ContainerFromItem(row);
-        var recovery = Descendant<Button>(rowView)!;
-        Assert(recovery.IsVisible && recovery.IsEnabled && ReferenceEquals(recovery.Command, vm.AddExpressionTemplateCommand) && ReferenceEquals(recovery.CommandParameter, row),
+        Button? FindRecoveryButton(System.Windows.DependencyObject root)
+        {
+            for (var i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+                if (child is Button button && ReferenceEquals(button.Command, vm.AddExpressionTemplateCommand))
+                    return button;
+                var nested = FindRecoveryButton(child);
+                if (nested != null) return nested;
+            }
+            return null;
+        }
+        var recovery = FindRecoveryButton(rowView)
+            ?? throw new InvalidOperationException("WUX3 expression recovery button was not realized");
+        Assert(recovery.IsVisible && recovery.IsEnabled && ReferenceEquals(recovery.CommandParameter, row),
             "WUX3 an actionable per-row recovery is visible and carries the exact Character context");
         SaveNamedView(view, "ux-expression-missing-normal.png");
         await InvokeSelectionButton(recovery);
