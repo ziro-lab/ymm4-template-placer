@@ -70,7 +70,23 @@ internal static partial class NativeProof
             var missing = vm.Rows.Single(x => x.Character == "TestC");
             view.VoiceGrid.SelectedItem = missing; view.VoiceGrid.ScrollIntoView(missing); await Idle();
             container = (DataGridRow)view.VoiceGrid.ItemContainerGenerator.ContainerFromItem(missing);
-            Assert(WithinView(Descendant<Button>(container)!, view) && view.ExpressionSelectedSerif.Text == missing.Serif,
+            Button? FindRecoveryButton(System.Windows.DependencyObject root)
+            {
+                for (var i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+                {
+                    var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+                    if (child is Button button && ReferenceEquals(button.Command, vm.AddExpressionTemplateCommand))
+                        return button;
+                    var nested = FindRecoveryButton(child);
+                    if (nested != null) return nested;
+                }
+                return null;
+            }
+            var recovery = FindRecoveryButton(container)
+                ?? throw new InvalidOperationException("WUX4 expression recovery button was not realized");
+            Assert(WithinView(recovery, view) && recovery.IsVisible && recovery.IsEnabled &&
+                ReferenceEquals(recovery.CommandParameter, missing) &&
+                view.ExpressionSelectedSerif.Text == missing.Serif,
                 "WUX4 missing-candidate recovery remains reachable next to a readable full-width Serif at 360px");
             SaveNamedView(view, "ux-expression-missing-narrow.png");
         }
