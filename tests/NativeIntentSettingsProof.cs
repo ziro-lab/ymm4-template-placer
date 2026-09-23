@@ -164,7 +164,8 @@ internal static partial class NativeProof
                 var gutterHit = NestedWheelRouting.ResolveCurrentSource(panel.SettingsScroll, gutterPoint);
                 var gutterBefore = panel.SettingsScroll.VerticalOffset;
                 var gutterAccepted = gutterHit != null && NestedWheelRouting.TryScroll(panel.SettingsScroll, gutterHit, 120, ModifierKeys.None);
-                panel.SettingsScroll.UpdateLayout();
+                await Idle(); panel.SettingsScroll.UpdateLayout();
+                Log($"COMPACT_SETTINGS P5 gutter trace: hit={gutterHit?.GetType().FullName}; accepted={gutterAccepted}; before={gutterBefore:0.###}; after={panel.SettingsScroll.VerticalOffset:0.###}; scrollable={panel.SettingsScroll.ScrollableHeight:0.###}");
                 Assert(gutterAccepted && panel.SettingsScroll.VerticalOffset < gutterBefore,
                     "COMPACT_SETTINGS P5 left source-list gutter is real outer-scroll space, not a wheel dead zone");
                 panel.SettingsScroll.ScrollToEnd(); await Idle();
