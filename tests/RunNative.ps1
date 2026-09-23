@@ -87,6 +87,8 @@ if (-not (Select-String -Path $log -Pattern '^PLACEMENT_SOURCE_P0=PASS$')) { thr
 if (-not (Select-String -Path $log -Pattern '^PLACEMENT_SOURCE_P1=PASS$')) { throw 'Placement Source P1 proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^PLACEMENT_SOURCE_P2=PASS$')) { throw 'Placement Source P2 proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^PLACEMENT_SOURCE_P3=PASS$')) { throw 'Placement Source P3 proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^PLACEMENT_SOURCE_P4=PASS$')) { throw 'Placement Source P4 proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^PLACEMENT_SOURCE_P5=PASS$')) { throw 'Placement Source P5 proof is incomplete' }
 
 $presetProofs=@(
  @{File='tachie-preset-capability.json'; Schema='YMM4-Template-Placer-Tachie-Preset-Capability/1'; Marker='TACHIE_PRESET_CAPABILITY_P3=PASS'},
