@@ -52,7 +52,7 @@ public sealed partial class PlacerViewModel
             useLegacyWorkspace = false;
             ExecuteIntentTileCommand = new ActionCommand(x => !intentExecuting && tileEditState == IntentTileEditState.Idle && settingsAvailable && undo != null &&
                 x is IntentTileChoice tile && tile.Available && (!tile.IsGeneric || GenericLayerReadyForExecution) && IntentTiles.Any(x => ReferenceEquals(x, tile)),
-                x => Guard(() => ExecuteIntentTile((IntentTileChoice)x!)));
+                x => ExecuteIntentTileFromCommand((IntentTileChoice)x!));
             OpenIntentSettingsCommand = new ActionCommand(_ => true, _ => IntentSettingsRequested?.Invoke(this, EventArgs.Empty));
             OpenLegacyWorkspaceCommand = new ActionCommand(_ => true, _ => SetLegacyWorkspace(true));
             CloseLegacyWorkspaceCommand = new ActionCommand(_ => true, _ => SetLegacyWorkspace(false));
@@ -181,15 +181,42 @@ public sealed partial class PlacerViewModel
         if (selectedIntentSet == null) { RaiseIntentSurfaceState(); ExecuteIntentTileCommand?.RaiseCanExecuteChanged(); return; }
         if (selectedIntentSet.Targeted is { } palette)
         {
-            var labels = palette.Entries.Select(x => IntentTileAppearance.Label(x, settings.Library.SingleOrDefault(e => e.Id == x.LibraryEntryId))).ToArray();
-            var displayLabels = IntentTileAppearance.Distinguish(labels);
+            PlacementSourceRegistration? Resolve(Guid id)
+            {
+                try { return PlacementSourceRegistry.Resolve(settings, id); }
+                catch (InvalidOperationException) { return null; }
+            }
+
+            var sources = palette.Entries.Select(x => Resolve(x.SourceId)).ToArray();
+            var labels = IntentTileAppearance.Distinguish(
+                palette.Entries.Select((entry, index) => IntentTileAppearance.Label(entry, sources[index])).ToArray());
             for (var index = 0; index < palette.Entries.Count; index++)
             {
                 var tile = palette.Entries[index];
-                var source = settings.Library.SingleOrDefault(x => x.Id == tile.LibraryEntryId);
-                if (source == null) { IntentTiles.Add(new(palette.Id, tile, displayLabels[index], "設定で元テンプレートの登録を確認してください。", false)); continue; }
-                var resolution = TemplateResolver.ResolveBundle(source);
-                IntentTiles.Add(new(palette.Id, tile, displayLabels[index], resolution.Bundle == null ? resolution.Message : source.Source.Name, resolution.Bundle != null));
+                var source = sources[index];
+                if (source == null)
+                {
+                    IntentTiles.Add(new(palette.Id, tile, labels[index], "設定で配置Sourceの登録を確認してください。", false));
+                    continue;
+                }
+
+                if (source.Kind == PlacementSourceKind.Template)
+                {
+                    var resolution = TemplateResolver.ResolveBundle(source.Template!);
+                    IntentTiles.Add(new(palette.Id, tile, labels[index],
+                        resolution.Bundle == null ? resolution.Message : source.Template!.Source.Name,
+                        resolution.Bundle != null));
+                    continue;
+                }
+
+                var preset = source.TachiePreset!;
+                var characterBound = palette.Target.CharacterName != null &&
+                    string.Equals(palette.Target.CharacterName, preset.CharacterName, StringComparison.Ordinal);
+                IntentTiles.Add(new(palette.Id, tile, labels[index],
+                    characterBound
+                        ? $"立ち絵プリセット · {preset.CharacterName}"
+                        : "立ち絵プリセットはキャラクターを指定したSetで使用してください。",
+                    characterBound));
             }
         }
         else if (selectedIntentSet?.Generic is { } style)
@@ -240,6 +267,64 @@ public sealed partial class PlacerViewModel
             return $"「{context.Selected[0].CharacterName}」のこのボイスで使える操作はまだありません。";
         return "この種類・選択で使える操作はまだありません。";
     }
+    private async void ExecuteIntentTileFromCommand(IntentTileChoice tile)
+    {
+        if (tile.IsGeneric)
+        {
+            Guard(() => ExecuteIntentTile(tile));
+            return;
+        }
+        try { await ExecuteIntentTileAsync(tile); }
+        catch (Exception ex)
+        {
+            HasError = true;
+            Status = "操作を完了できませんでした: " + ex.GetBaseException().Message;
+        }
+    }
+
+    internal async Task<int> ExecuteIntentTileAsync(IntentTileChoice tile, CancellationToken token = default)
+    {
+        if (tile.IsGeneric)
+            throw new InvalidOperationException("非同期配置は対象アイテム用Setにだけ使用します。");
+        if (intentExecuting || tileEditState != IntentTileEditState.Idle ||
+            !IntentTiles.Any(x => ReferenceEquals(x, tile)) || selectedIntentSet?.Id != tile.PaletteId)
+            throw new InvalidOperationException("表示しているセットが変わりました。演出を選び直してください。");
+        if (undo == null || !settingsAvailable)
+            throw new InvalidOperationException("現在は配置できません。Toolと設定を確認してください。");
+        if (PlacementContext != PlacementContext.Selection || selectedIntentSet?.Targeted == null)
+            throw new InvalidOperationException("対象アイテム用のセットを選び直してください。");
+
+        intentExecuting = true;
+        ExecuteIntentTileCommand.RaiseCanExecuteChanged();
+        try
+        {
+            var current = RequireTimeline();
+            var manager = undo;
+            var settingsSnapshot = settings;
+            var palette = settingsSnapshot.IntentPalettes.Single(x => x.Id == tile.PaletteId);
+            var entry = palette.Entries.Single(x => x.SourceId == tile.LibraryEntryId);
+            var plan = await IntentExecutionPlan.CreateAsync(
+                current, palette, entry, settingsSnapshot, PresetTargetResolver, token);
+
+            if (!ReferenceEquals(settings, settingsSnapshot))
+                throw new InvalidOperationException("配置の準備中に設定が変更されました。配置していません。もう一度選んでください。");
+            if (!ReferenceEquals(current, timeline) || selectedIntentSet?.Id != tile.PaletteId)
+                throw new InvalidOperationException("配置の準備中に対象シーンまたはSetが変わりました。配置していません。");
+
+            var count = plan.Commit(current, manager, settings);
+            HasError = false;
+            Status = plan.Skipped
+                ? "必要な周囲アイテムが見つからないため、この設定では配置しません。"
+                : $"「{tile.Label}」を配置しました。YMM4の「元に戻す」1回で戻せます。";
+            return count;
+        }
+        finally
+        {
+            intentExecuting = false;
+            RefreshIntentWorkspace();
+        }
+    }
+
     public int ExecuteIntentTile(IntentTileChoice tile)
     {
         if (intentExecuting || tileEditState != IntentTileEditState.Idle || !IntentTiles.Any(x => ReferenceEquals(x, tile)) || selectedIntentSet?.Id != tile.PaletteId)
