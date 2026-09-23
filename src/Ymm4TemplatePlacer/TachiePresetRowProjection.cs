@@ -56,6 +56,20 @@ internal static partial class ExpressionPreparation
                     notice = "現在の表情はテンプレートから配置されています。表示切替だけでは変更しません。" +
                         (notice.Length == 0 ? "" : " " + notice);
                 }
+                else if (association.Descriptor is
+                    { Kind: ManagedExpressionSourceKind.RegisteredTachiePreset, RegisteredTachiePreset: { } currentRegistered })
+                {
+                    selected = choices.SingleOrDefault(x => x.RegisteredPreset is { } registered &&
+                        registered.PaletteId == currentRegistered.Palette &&
+                        registered.SourceId == currentRegistered.Source &&
+                        registered.SourceSemanticHash == currentRegistered.SourceHash)
+                        ?? new TemplateChoice(null,
+                            "⚠ 現在：登録済み立ち絵プリセット（Set/Sourceを確認）",
+                            null, false);
+                    notice = selected.IsAvailable
+                        ? "現在の表情は登録済み立ち絵プリセットSourceからSetの配置ルールで配置されています。"
+                        : "現在の登録済み立ち絵プリセットSourceを現在のSet候補から一意に再確認できません。SetまたはSource設定を確認してください。";
+                }
                 else if (association.Descriptor is { Kind: ManagedExpressionSourceKind.TachiePreset, TachiePreset: { } currentPreset })
                 {
                     selected = choices.SingleOrDefault(x => x.TachiePreset is { } candidate &&
