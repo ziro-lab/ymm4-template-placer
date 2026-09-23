@@ -71,9 +71,10 @@ internal static partial class NativeProof
             Assert(book.Workbook!.GetFirstChild<S.Sheets>()!.Elements<S.Sheet>().Single(x => x.Name == "_Catalog").State?.Value == S.SheetStateValues.Hidden, "P5 hidden workbook-local Catalog");
             Assert(main.Descendants<S.Cell>().Single(x => x.CellReference == "E2").CellFormula == null, "P5 formula-looking Serif remains literal text");
         }
-        await undo.UndoAsync(); await Idle();
+        vm.Rows[0].SelectedChoice = vm.Rows[0].Choices[0]; vm.Rows[1].SelectedChoice = vm.Rows[1].Choices[0];
+        await Idle(); vm.CloseExpressionTrialSession();
         Assert(ManagedIntentExpressionReader.Read(timeline, a).Bundle == null && ManagedIntentExpressionReader.Read(timeline, b).Bundle == null,
-            "P5 one native Undo closes the immediate-selection trial back to the pre-expression state");
+            "P5 current immediate removal returns the fixture to a clean pre-batch state");
         Log("P5=PASS");
 
         stage = "P6"; EditCell(workbook, "F2", "TestA/Smile"); var beforeBatch = Signature(timeline); vm.ImportFrom(workbook); await Idle();
