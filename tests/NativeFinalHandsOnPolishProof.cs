@@ -85,9 +85,14 @@ internal static partial class NativeProof
         var root = panel.SettingsScroll;
         Assert(root.ScrollableHeight > 1, "FINAL H2 fixture has a genuinely scrollable Settings surface");
 
+        panel.RelationSummaryText.BringIntoView();
+        await Idle();
+        root.UpdateLayout();
         var ordinaryPoint = panel.RelationSummaryText.TranslatePoint(new Point(
             Math.Min(2, Math.Max(0, panel.RelationSummaryText.ActualWidth - 1)),
             Math.Min(2, Math.Max(0, panel.RelationSummaryText.ActualHeight - 1))), root);
+        Assert(ordinaryPoint.X >= 0 && ordinaryPoint.Y >= 0 && ordinaryPoint.X <= root.ActualWidth && ordinaryPoint.Y <= root.ActualHeight,
+            "FINAL H2 fixture brings ordinary Settings content into the current viewport");
         var live = NestedWheelRouting.ResolveCurrentSource(root, ordinaryPoint);
         Assert(live != null && !IsDescendantOf(live, panel.AnchorBox),
             "FINAL H2: live hit-test resolves ordinary Settings content independently of a historical event source");
