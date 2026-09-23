@@ -171,6 +171,38 @@ internal static partial class NativeProof
         Assert(await PhysicalOuterWheel(new Point(Math.Max(1, panel.ActualWidth - 2), rootMiddleY)),
             "FINAL H2: physical wheel outside the right scrollbar on the white Settings edge scrolls the outer viewer");
 
+        async Task<bool> PhysicalToolWheel(Point viewPoint)
+        {
+            root.ScrollToVerticalOffset(Math.Max(1, root.ScrollableHeight / 2));
+            await Idle(); view.UpdateLayout();
+            var start = root.VerticalOffset;
+            var screen = view.PointToScreen(viewPoint);
+            if (!Round2Input.SetCursorPos((int)Math.Round(screen.X), (int)Math.Round(screen.Y))) return false;
+            await Task.Delay(40);
+            Round2Input.mouse_event(0x0800, 0, 0, unchecked((uint)-120), UIntPtr.Zero);
+            await Task.Delay(120); await Idle(); root.UpdateLayout();
+            return root.VerticalOffset > start;
+        }
+
+        Assert(await PhysicalToolWheel(new Point(2, Math.Max(12, view.ActualHeight / 2))),
+            "FINAL H2: physical wheel over the gray far-left Tool surface scrolls Settings while the Settings tab is active");
+        Assert(await PhysicalToolWheel(new Point(Math.Max(2, view.ActualWidth - 2), Math.Max(12, view.ActualHeight / 2))),
+            "FINAL H2: physical wheel over the gray far-right Tool surface scrolls Settings while the Settings tab is active");
+        Assert(await PhysicalToolWheel(new Point(Math.Max(12, view.ActualWidth / 2), 2)),
+            "FINAL H2: physical wheel over the gray top Tool surface scrolls Settings while the Settings tab is active");
+
+        root.ScrollToVerticalOffset(Math.Max(1, root.ScrollableHeight / 2));
+        await Idle(); var inactiveBefore = root.VerticalOffset;
+        view.PaletteTab.IsSelected = true; await Idle();
+        var inactiveScreen = view.PointToScreen(new Point(2, Math.Max(12, view.ActualHeight / 2)));
+        Assert(Round2Input.SetCursorPos((int)Math.Round(inactiveScreen.X), (int)Math.Round(inactiveScreen.Y)),
+            "FINAL H2 OS cursor moved onto gray Tool surface with placement tab active");
+        Round2Input.mouse_event(0x0800, 0, 0, unchecked((uint)-120), UIntPtr.Zero);
+        await Task.Delay(120); await Idle(); root.UpdateLayout();
+        Assert(Math.Abs(root.VerticalOffset - inactiveBefore) < 0.01,
+            "FINAL H2: whole-Tool Settings wheel routing is gated off outside the Settings tab");
+        view.SelectionTab.IsSelected = true; await Idle();
+
         panel.AnchorBox.BringIntoView();
         await Idle();
         root.UpdateLayout();
