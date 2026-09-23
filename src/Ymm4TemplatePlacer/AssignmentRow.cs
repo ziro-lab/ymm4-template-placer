@@ -6,13 +6,21 @@ namespace Ymm4TemplatePlacer;
 public sealed record TemplateChoice(FaceTemplate? Template, string Label, string? ShortName = null, bool IsAvailable = true)
 {
     internal TachiePresetCandidateDescriptor? TachiePreset { get; init; }
+    internal RegisteredPresetExpressionSource? RegisteredPreset { get; init; }
     public bool IsCurrentOtherSource { get; init; }
     internal bool IsInvalidAssociation { get; init; }
-    public bool HasCandidate => Template != null || TachiePreset != null;
+    public bool HasCandidate => Template != null || TachiePreset != null || RegisteredPreset != null;
     public string DisplayName => ShortName ?? Label;
     internal static TemplateChoice Preset(TachiePresetCandidateDescriptor value) => new(null,
         value.Confidence == TachiePresetCapabilityLevel.Experimental ? value.Label + "（実験・状態未確認）" : value.Label)
         { TachiePreset = value };
+
+    internal static TemplateChoice Registered(RegisteredPresetExpressionSource value, bool available = true) =>
+        new(null,
+            available ? value.DisplayName + "（登録済み）" : "⚠ " + value.DisplayName + "（登録元を確認）",
+            value.DisplayName,
+            available)
+        { RegisteredPreset = value };
 }
 
 public sealed class AssignmentRow : INotifyPropertyChanged
