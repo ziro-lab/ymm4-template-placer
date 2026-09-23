@@ -4,9 +4,7 @@ internal static partial class NativeProof
     private static void ShowTask(PlacerView view, string task)
     {
         var vm = (PlacerViewModel)view.DataContext;
-        // These task names belong to the retained v0.4.1 regression ladder.
-        // The relative-intent acceptance drives its own default action surface separately.
-        vm.ActivateIntentWorkspace(); vm.SetLegacyWorkspace(true);
+        vm.ActivateIntentWorkspace();
         if (vm.IsAddingTemplate) throw new InvalidOperationException("Finish or cancel the explicit add task before switching test tasks.");
         if (task == "library") { vm.OpenTemplateManagementCommand.Execute(null); return; }
         vm.CloseTemplateManagementCommand.Execute(null);
