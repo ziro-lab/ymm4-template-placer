@@ -31,7 +31,7 @@
         AutomationProperties.Name="セリフ一覧の共通行高さ"/>
        <TextBlock Text="px" VerticalAlignment="Center" Margin="4,0,0,0"/>
       </WrapPanel>
-      <TextBlock x:Name="TachiePresetPlacementRuleLabel" Text="配置ルール" FontWeight="SemiBold" Margin="0,3,0,1">
+      <TextBlock x:Name="TachiePresetPlacementRuleLabel" Text="未登録プリセットの配置ルール（互換）" FontWeight="SemiBold" Margin="0,3,0,1">
        <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsTachiePresetExpressionSource}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
       </TextBlock>
       <local:ExpressionPresetPanel x:Name="PresetSurface"/>
