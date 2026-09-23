@@ -47,9 +47,10 @@ public sealed class IntentEntryDraft : IntentEditable
     private string displayAlias;
     private IntentTileColor color;
     private IntentTileShape shape;
-    private readonly LibraryEntry? source;
+    private readonly PlacementSourceRegistration? source;
     public Guid LibraryEntryId { get; }
-    public string Name => IntentTileAppearance.Label(new(LibraryEntryId) { DisplayAlias = DisplayAlias }, source);
+    public Guid SourceId => LibraryEntryId;
+    public string Name => IntentTileAppearance.Label(new(SourceId) { DisplayAlias = DisplayAlias }, source);
     public string DisplayAlias { get => displayAlias; set { if (displayAlias == value) return; displayAlias = value; Notify(); Raise(nameof(Name)); } }
     public IntentTileColor Color { get => color; set { if (color == value) return; color = value; Notify(); } }
     public IntentTileShape Shape { get => shape; set { if (shape == value) return; shape = value; Notify(); } }
@@ -58,17 +59,56 @@ public sealed class IntentEntryDraft : IntentEditable
     public string EndOffset { get => end; set { end = value; Notify(); } }
     public string FixedDuration { get => length; set { length = value; Notify(); } }
     public bool UseTemplateDuration { get => intrinsic; set { intrinsic = value; Notify(); } }
-    public IntentEntryDraft(IntentEntry entry, IReadOnlyList<LibraryEntry> library)
+
+    private IntentEntryDraft(IntentEntry entry, PlacementSourceRegistration? source)
     {
         LibraryEntryId = entry.LibraryEntryId;
-        source = library.SingleOrDefault(x => x.Id == LibraryEntryId);
-        displayAlias = entry.DisplayAlias ?? ""; color = entry.Color; shape = entry.Shape;
-        SourceDetail = source == null ? "元の登録がありません。" : source.Source.Name + "\n" + TemplateResolver.ResolveBundle(source).Message;
-        start = entry.StartOffsetDelta.ToString(CultureInfo.InvariantCulture); end = entry.EndOffsetDelta.ToString(CultureInfo.InvariantCulture);
-        length = entry.FixedDurationOverride?.ToString(CultureInfo.InvariantCulture) ?? ""; intrinsic = entry.UseTemplateDuration;
+        this.source = source;
+        displayAlias = entry.DisplayAlias ?? "";
+        color = entry.Color;
+        shape = entry.Shape;
+        SourceDetail = source?.Kind switch
+        {
+            PlacementSourceKind.Template =>
+                source.Template!.Source.Name + "\n" + TemplateResolver.ResolveBundle(source.Template).Message,
+            PlacementSourceKind.TachiePreset =>
+                $"立ち絵プリセット · {source.TachiePreset!.CharacterName}\n{source.TachiePreset.DisplayName}",
+            _ => "元の登録がありません。"
+        };
+        start = entry.StartOffsetDelta.ToString(CultureInfo.InvariantCulture);
+        end = entry.EndOffsetDelta.ToString(CultureInfo.InvariantCulture);
+        length = entry.FixedDurationOverride?.ToString(CultureInfo.InvariantCulture) ?? "";
+        intrinsic = entry.UseTemplateDuration;
     }
-    public IntentEntry Build() => new(LibraryEntryId) { DisplayAlias = string.IsNullOrWhiteSpace(DisplayAlias) ? null : DisplayAlias.Trim(), Color = Color, Shape = Shape, StartOffsetDelta = Number(StartOffset, "演出の開始差分"),
-        EndOffsetDelta = Number(EndOffset, "演出の終了差分"), FixedDurationOverride = OptionalNumber(FixedDuration, "演出の固定長"), UseTemplateDuration = UseTemplateDuration };
+
+    public IntentEntryDraft(IntentEntry entry, IReadOnlyList<LibraryEntry> library)
+        : this(entry, library.SingleOrDefault(x => x.Id == entry.SourceId) is { } template
+            ? new PlacementSourceRegistration(template.Id, PlacementSourceKind.Template, template, null)
+            : null)
+    {
+    }
+
+    internal IntentEntryDraft(IntentEntry entry, PlacerSettings settings)
+        : this(entry, Resolve(settings, entry.SourceId))
+    {
+    }
+
+    private static PlacementSourceRegistration? Resolve(PlacerSettings settings, Guid sourceId)
+    {
+        try { return PlacementSourceRegistry.Resolve(settings, sourceId); }
+        catch (InvalidOperationException) { return null; }
+    }
+
+    public IntentEntry Build() => new(LibraryEntryId)
+    {
+        DisplayAlias = string.IsNullOrWhiteSpace(DisplayAlias) ? null : DisplayAlias.Trim(),
+        Color = Color,
+        Shape = Shape,
+        StartOffsetDelta = Number(StartOffset, "演出の開始差分"),
+        EndOffsetDelta = Number(EndOffset, "演出の終了差分"),
+        FixedDurationOverride = OptionalNumber(FixedDuration, "演出の固定長"),
+        UseTemplateDuration = UseTemplateDuration
+    };
 }
 
 public sealed partial class IntentPaletteDraft : IntentEditable
@@ -171,7 +211,13 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     public string Summary => BuildSummary();
 
     public IntentPaletteDraft(IntentPalette source, IReadOnlyList<LibraryEntry> library, IReadOnlyDictionary<string, string> types)
+        : this(source, LegacySettings(library), types)
     {
+    }
+
+    internal IntentPaletteDraft(IntentPalette source, PlacerSettings settings, IReadOnlyDictionary<string, string> types)
+    {
+
         model = IntentPaletteSettings.Copy(source);
         text[nameof(Name)] = source.Name; text[nameof(Intent)] = source.Intent; text[nameof(CharacterName)] = source.Target.CharacterName ?? "";
         text[nameof(MinimumCount)] = source.Target.MinimumCount.ToString(CultureInfo.InvariantCulture);
@@ -190,9 +236,15 @@ public sealed partial class IntentPaletteDraft : IntentEditable
             var option = new IntentTypeOption(key, types.GetValueOrDefault(key) ?? "利用できない種類", source.Target.ItemTypeKeys.Contains(key));
             option.Edited += (_, _) => { Notify(nameof(TypeChoices)); RaiseUiState(); }; TypeChoices.Add(option);
         }
-        foreach (var entry in source.Entries) AddEntry(entry, library);
+        foreach (var entry in source.Entries) AddEntry(entry, settings);
         Entries.CollectionChanged += (_, _) => Notify(nameof(Entries));
     }
+
+    }
+
+    private static PlacerSettings LegacySettings(IReadOnlyList<LibraryEntry> library) =>
+        new() { Library = library.ToList() };
+
     private IntentNeighbor DefaultNeighbor() => CharacterRestricted ? IntentNeighbor.NextSameTypeAndCharacter : IntentNeighbor.NextSameType;
     private string BuildSummary()
     {
@@ -293,7 +345,7 @@ public sealed partial class IntentSettingsSession : IntentEditable
     private void MarkDirty() { HasChanges = true; Notify(nameof(HasChanges)); Raise(nameof(ChangeNotice)); }
     private IntentPaletteDraft AddDraft(IntentPalette palette)
     {
-        var draft = new IntentPaletteDraft(palette, working.Library, KnownTypes);
+        var draft = new IntentPaletteDraft(palette, working, KnownTypes);
         draft.Edited += (_, _) => MarkDirty();
         draft.PropertyChanged += (_, e) =>
         {
@@ -379,7 +431,7 @@ public sealed partial class IntentSettingsSession : IntentEditable
         working.Library = nextLibrary;
         foreach (var addition in additions)
         {
-            palette.AddEntry(addition.Entry, working.Library);
+            palette.AddEntry(addition.Entry, working);
             if (palette.ExpressionCandidates && !working.ImportedExpressionSources.Contains(addition.Locator)) working.ImportedExpressionSources.Add(addition.Locator);
         }
         foreach (var option in selected) option.Selected = false;
