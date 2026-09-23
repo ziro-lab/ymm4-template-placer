@@ -11,6 +11,16 @@ public static class IntentTileAppearance
         var name = source?.Source.Name ?? "参照切れ";
         return ShortName(name);
     }
+    internal static string Label(IntentEntry entry, PlacementSourceRegistration? source)
+    {
+        if (!string.IsNullOrWhiteSpace(entry.DisplayAlias)) return entry.DisplayAlias.Trim();
+        return source?.Kind switch
+        {
+            PlacementSourceKind.Template => ShortName(source.Template!.Source.Name),
+            PlacementSourceKind.TachiePreset => source.TachiePreset!.DisplayName,
+            _ => "参照切れ"
+        };
+    }
     public static string ShortName(string name) =>
         name.Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).LastOrDefault() ?? name;
     public static IReadOnlyList<string> Distinguish(IReadOnlyList<string> labels)
