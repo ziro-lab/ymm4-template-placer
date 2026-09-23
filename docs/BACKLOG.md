@@ -6,9 +6,33 @@ Being listed here is not implementation approval or priority commitment.
 
 ## Active
 
+## Placement Source unification — active
+
+Status: **DESIGN / ACCEPTANCE FROZEN — IMPLEMENT NEXT**
+
+Goal:
+
+Converge Template and Tachie Preset content behind one explicit Placement Source model so both can use the same Set-owned placement relation.
+
+Frozen authorities:
+
+- `PLACEMENT_SOURCE_UNIFICATION_DESIGN.md`;
+- `PLACEMENT_SOURCE_UNIFICATION_ACCEPTANCE.md`;
+- `PLACEMENT_SOURCE_UNIFICATION_WORKPLAN.md`.
+
+Primary product result:
+
+- registered Tachie Presets can be used from ordinary targeted Sets/tiles;
+- one Expression Set can contain Template and Tachie Preset sources;
+- new registered preset placements use the Set's `IntentRelation` rather than independent preset-only geometry;
+- existing v0.5 settings/tags remain compatible and fail closed;
+- no generated FaceParameter/TachieFaceItem body is persisted as a fake Template.
+
+This phase comes before Preview/Checklist and before broader Placement Recipe expansion.
+
 ## Portable settings storage
 
-Status: **RELEASE GREEN / MERGE READY — PR #27**
+Status: **COMPLETE / MAIN**
 
 User problem:
 
@@ -54,7 +78,7 @@ Implementation candidate:
 - corrupt legacy data is rejected only when it is still the sole first-migration source;
 - Release packaging rejects any packaged `Data/` payload.
 
-Release #532 (`35799709551`) at source `01003e072103cd5fefd032000456c65afaeaa15b`: **1,702 Native assertions PASS**, including real `CreateDefault()` migration/reopen on YMM4's actual plugin/Data and LocalAppData paths, Portable-over-legacy precedence, exact distribution-DLL smoke, and verified `.ymme` / source / provenance packaging. Public Lab PR #85 remains the real YMM4 `.ymme` update-preservation host evidence.
+Release #532 (`35799709551`) proved the feature branch with **1,702 Native assertions PASS**. PR #27 is merged to main; main Release #535 also passed full Native, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Public Lab PR #85 remains the real YMM4 `.ymme` update-preservation host evidence.
 
 
 ## Built-in Tachie Preset loading performance — deferred
