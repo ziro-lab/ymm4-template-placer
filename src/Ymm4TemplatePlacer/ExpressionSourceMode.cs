@@ -24,7 +24,7 @@ public sealed partial class PlacerViewModel
     public bool ExpressionRowsMatchSource => expressionRowsSource == expressionSourceMode;
     public string ExpressionChoiceColumnTitle => IsTemplateExpressionSource ? "テンプレート" : "表情プリセット";
     public string ExpressionSourceNotice => IsTachiePresetExpressionSource
-        ? "候補は選択すると安全なfresh表情アイテム経路で即時反映を試します。実験候補は失敗する場合がありますが、配置できればPreviewですぐ確認できます。Excelはテンプレート表示で利用できます。"
+        ? "「登録済み」の表情プリセットは所属Setの配置ルールで置きます。未登録候補を一覧から直接使う場合だけ、上の互換配置ルールを使います。［Setへ登録］すると通常の配置タイルからも利用できます。実験候補は失敗する場合があります。Excelはテンプレート表示で利用できます。"
         : "";
 
     private bool HasProtectedExpressionSourceWork() => HasProtectedPendingVoiceWork() ||
