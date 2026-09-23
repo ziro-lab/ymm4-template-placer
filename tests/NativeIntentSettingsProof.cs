@@ -181,12 +181,25 @@ internal static partial class NativeProof
                 Assert(normalLeft > normalRight && normalRight > 0 &&
                     panel.SettingsScroll.ExtentWidth <= panel.SettingsScroll.ViewportWidth + 1,
                     "COMPACT_SETTINGS P2 normal-width source list retains asymmetric outer-scroll escape space without horizontal overflow");
+                panel.SetManagement.BringIntoView(); await Idle(); panel.UpdateLayout();
+                var manageTop = panel.SetManagementBlock.TranslatePoint(new Point(), panel).Y;
+                var copyTop = panel.CopySetToItemPanel.TranslatePoint(new Point(), panel).Y;
+                var manageActionsY = panel.SetManagementActions.TranslatePoint(new Point(), panel).Y;
+                var copyActionsY = panel.CopySetActions.TranslatePoint(new Point(), panel).Y;
+                Assert(Math.Abs(manageTop - copyTop) <= 1 && Math.Abs(manageActionsY - copyActionsY) <= 1,
+                    "COMPACT_SETTINGS P6 normal-width Set management and cross-Item copy align heading-to-heading and action-row-to-action-row");
+                var entryActionsLeft = panel.EntryListActions.TranslatePoint(new Point(), panel).X;
+                var sourceActionsLeft = panel.SourceListActions.TranslatePoint(new Point(), panel).X;
+                Assert(Math.Abs(entryActionsLeft - entryLeft) <= 1 && Math.Abs(sourceActionsLeft - sourceListLeft) <= 1 &&
+                    Math.Abs(entryActionsLeft - sourceActionsLeft) <= 1,
+                    "COMPACT_SETTINGS P6 list action rows start on the same lane as their corresponding lists");
                 SaveNamedView(view, "compact-settings-normal-source.png");
                 Log("COMPACT_SETTINGS_P1=PASS");
                 Log("COMPACT_SETTINGS_P2=PASS");
                 Log("COMPACT_SETTINGS_P3=PASS");
                 Log("COMPACT_SETTINGS_P4=PASS");
                 Log("COMPACT_SETTINGS_P5=PASS");
+                Log("COMPACT_SETTINGS_P6=PASS");
             }
             finally { view.Width = width; view.Height = height; panel.SettingsScroll.ScrollToHome(); await Idle(); }
             await InvokeSelectionButton(panel.RollbackButton);
