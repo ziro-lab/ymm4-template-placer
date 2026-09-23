@@ -183,6 +183,7 @@ internal static partial class NativeProof
                 timeline, row, templateChoice, settings, allocator, false);
             templateMutation.ValidateCurrent(timeline, settings);
             _ = templateMutation.Plan.Commit(timeline, undo);
+            var firstTemplateItem = timeline.Items.Except(new IItem[] { voice, blocker }).Single();
 
             var templateAssociation = ManagedExpressionReader.Read(timeline, voice);
             Assert(templateAssociation.Bundle?.Descriptor.Kind == ManagedExpressionSourceKind.Template &&
@@ -212,7 +213,7 @@ internal static partial class NativeProof
                     Layer: 17,
                     TachieFaceParameter: P3DirectFace { Preset: "Smile" }
                 } &&
-                !timeline.Items.Any(x => ReferenceEquals(x, templateMutation.Plan.Items.FirstOrDefault())),
+                !timeline.Items.Contains(firstTemplateItem),
                 "PLACEMENT_SOURCE P5 Template -> registered preset replacement removes only the managed Template bundle and applies Set-owned geometry");
 
             row.SelectedChoice = neutralChoice;
