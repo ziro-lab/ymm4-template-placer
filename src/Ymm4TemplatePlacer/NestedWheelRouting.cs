@@ -72,6 +72,7 @@ public static class NestedWheelRouting
             {
                 // Keep the same explicit wheel owners as the in-scroll route.
                 if (current is ComboBox or RangeBase) return false;
+                if (current is ScrollViewer other && !ReferenceEquals(other, root) && CanScroll(other, delta)) return false;
                 if (ReferenceEquals(current, host)) break;
             }
 
