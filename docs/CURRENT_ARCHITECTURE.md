@@ -149,6 +149,25 @@ The `.ymme` package must never own or overwrite `Data/settings-v04.json`.
 
 Settings operations do not mutate Timeline or original YMM4 Templates.
 
+## Accepted Compact Settings surface
+
+Compact Settings friction/discoverability is accepted by Release #654 at exact source `05285a7bae1eb59b4b588c565aa46e29bdea795c`.
+
+Current UI contract:
+
+- ordinary Set capabilities are visible at first level; only genuinely detailed/global controls remain folded;
+- the top Set picker keeps Set selection and `＋`; destructive Set deletion is centralized under `セットの管理`;
+- Set management and cross-Item copy are aligned peer blocks and may reflow vertically at narrow widths;
+- equivalent lists and their action rows use consistent horizontal lanes;
+- Set shape remains available at the bottom of full Settings, while placement quick settings are the high-frequency route;
+- the compact surface preserves useful whitespace and never requires outer horizontal Settings scrolling to reach required content;
+- text and control groups reflow vertically when width becomes insufficient;
+- the authoritative outer Settings scroller owns ordinary wheel behavior across the white Settings surface and, while the Settings tab is active, ordinary gray Template Placer Tool space;
+- ComboBox, RangeBase and independently scrollable inner surfaces retain their own wheel ownership;
+- whole-Tool Settings wheel routing is disabled when another task/tab is active.
+
+This is presentation/input routing only. It introduces no second Settings model, persistence path or placement semantics.
+
 ## Expression workspace
 
 `表情をまとめて` is a specialist high-throughput workflow, not permission to make normal placement destructive.

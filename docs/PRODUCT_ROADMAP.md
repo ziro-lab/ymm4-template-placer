@@ -178,7 +178,7 @@ Exit:
 - any pre-Preview placement additions are Native GREEN;
 - the Preview/Checklist can consume one authoritative placement-description model without source-specific geometry forks.
 
-### 4. Compact Settings friction / discoverability pass — ACTIVE
+### 4. Compact Settings friction / discoverability pass — COMPLETE
 
 Improve the existing Settings surface after the source/placement model is understood, but before introducing a separate large workspace.
 
@@ -229,7 +229,16 @@ Exit:
 - bounded Hands-on at narrow and normal Tool widths identifies no major navigation ambiguity;
 - no second Settings model or persistence route is introduced.
 
-### 5. Behavior preview + “what I want” checklist
+Final Phase 4 result:
+
+- user Hands-on accepted the final compact Settings candidate;
+- exact accepted implementation/test/package source: `05285a7bae1eb59b4b588c565aa46e29bdea795c`;
+- Release #654 (`35897405826`) passed **1,822 Native assertions**, `COMPACT_SETTINGS_P1` through `P7`, full retained regression, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging;
+- whole-Tool gray-surface wheel routing is active only while Settings is selected, while intentional inner control ownership remains protected.
+
+Phase 4 is complete. Phase 5 is the next product phase.
+
+### 5. Behavior preview + “what I want” checklist — NEXT
 
 Add a reusable Settings-assistance surface that can be opened from both Compact Settings and the later Full Settings Workspace.
 

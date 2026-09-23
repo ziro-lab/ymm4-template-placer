@@ -1,6 +1,6 @@
 # Compact Settings Friction / Discoverability Workplan
 
-Status: **FIRST CANDIDATE NATIVE GREEN — HANDS-ON CORRECTIVE PASS FROZEN / IMPLEMENTATION NOT YET STARTED**
+Status: **COMPLETE — USER HANDS-ON ACCEPTED / RELEASE #654 GREEN**
 
 Authorities:
 
@@ -85,7 +85,7 @@ PR #31 first hands-on candidate:
 
 This proves the first layout candidate, not Phase 4 completion.
 
-## P6 — hands-on corrective layout pass — NEXT
+## P6 — hands-on corrective layout pass — COMPLETE
 
 Do not begin implementation until this frozen handoff is intentionally resumed.
 
@@ -102,7 +102,7 @@ Corrective scope:
 
 Do not change Settings semantics, commands, persistence, placement rules or Preview.
 
-## P7 — wheel dead-zone correction — NEXT
+## P7 — wheel dead-zone correction — COMPLETE
 
 Treat the user-observed white-space wheel dead zone as a real Phase 4 friction item.
 
@@ -119,7 +119,7 @@ Required result:
 
 Add focused Native proof for live hit testing at representative white-space/header/gutter points.
 
-## P8 — second integrated candidate
+## P8 — second integrated candidate — COMPLETE
 
 After P6-P7:
 
@@ -157,7 +157,7 @@ Status: **NATIVE GREEN / USER HANDS-ON NEXT**.
 
 Do not Release, merge, or begin Behavior Preview until P9 is accepted.
 
-## P9 — second real YMM4 hands-on gate
+## P9 — second real YMM4 hands-on gate — COMPLETE
 
 User hands-on specifically checks:
 
@@ -170,3 +170,28 @@ User hands-on specifically checks:
 - wheel continuity across ordinary white space, margins, list boundaries and fixed/header areas.
 
 Only when this pass has no remaining high-frequency Settings friction should Phase 4 close and Phase 5 Behavior Preview become NEXT.
+
+
+## Final closeout — Release #654
+
+Final accepted exact implementation/test/package source:
+
+- `05285a7bae1eb59b4b588c565aa46e29bdea795c`
+
+Evidence:
+
+- Checkpoint #653 / `35884196081`: **1,822 Native assertions PASS**;
+- Release #654 / `35897405826`: **1,822 Native assertions PASS**;
+- `COMPACT_SETTINGS_P1=PASS` through `COMPACT_SETTINGS_P7=PASS`;
+- full retained P1-P9 regression and evidence guards: PASS;
+- exact distribution DLL smoke: PASS;
+- distribution DLL SHA256: `648014c22af02f726fc95beb6282b177d94673632e21f108c53e057a80081875`;
+- v0.5.0 `.ymme` stable-root / source / provenance packaging: PASS;
+- Release artifact: `10767621834`;
+- artifact ZIP SHA256: `bf217e5162f31de9ff6fc97d441cc08d3327f033a944ac5c61e35b22b78010d1`.
+
+User Hands-on accepted the final candidate. PR #31 is merge-ready after this docs-only closeout.
+
+No code, XAML, tests, project, package or workflow semantics are changed after the exact Release source above.
+
+Next product phase: **Behavior Preview + “what I want” checklist**.

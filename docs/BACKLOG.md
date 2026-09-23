@@ -114,9 +114,9 @@ Boundary:
 
 This is a performance-polish item, not a merge blocker for v0.5.0.
 
-## Compact Settings visibility polish — active
+## Compact Settings visibility polish — complete
 
-Status: **ACTIVE / HANDS-ON CORRECTIVE PASS FROZEN**
+Status: **COMPLETE / RELEASE #654 GREEN / USER HANDS-ON ACCEPTED**
 
 User problem:
 
@@ -198,6 +198,9 @@ Scope boundary:
 - do not add search/filter/diagnostic workspace features here — those belong to the Full Settings Workspace;
 - do not change what can be configured or the settings model;
 - validate the final spacing and first-level visibility in actual YMM4 at narrow and normal Tool widths.
+
+Final accepted source: `05285a7bae1eb59b4b588c565aa46e29bdea795c`.
+Release #654 passed **1,822 Native assertions** and verified distribution/package provenance. The final user Hands-on pass accepted the compact Settings surface; further Preview work belongs to the next roadmap phase, not this backlog item.
 
 ## Full Settings Workspace — planned UX direction
 

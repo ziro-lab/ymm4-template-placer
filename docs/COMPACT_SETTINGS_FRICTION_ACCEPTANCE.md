@@ -1,6 +1,6 @@
 # Compact Settings Friction / Discoverability Acceptance
 
-Status: **HANDS-ON ROUND 1 CORRECTIVE ACCEPTANCE FROZEN**
+Status: **ACCEPTED — RELEASE #654 GREEN / USER HANDS-ON APPROVED**
 
 This acceptance applies to `COMPACT_SETTINGS_FRICTION_DESIGN.md`.
 
@@ -28,7 +28,7 @@ At a narrow native Settings width, the panel remains within the host width, the 
 
 ## A6 — Set picker row coherence
 
-The targeted Set picker ComboBox and `＋` / `削除` buttons have comparable native heights and aligned vertical placement without changing global control styles.
+The targeted Set picker ComboBox and `＋` button have comparable native heights and aligned vertical placement without changing global control styles. The duplicate top-row `削除` is absent; the retained Set delete lives under `セットの管理`.
 
 ## A7 — Existing advanced visibility regression
 
@@ -121,3 +121,24 @@ At normal/wide widths the UI may retain comfortable spacing. At narrow widths it
 Checkpoint #638 / PR #31 proved the first Phase 4 candidate Native-green with 1,800 assertions, but this does not close Phase 4.
 
 Phase 5 may begin only after the A11-A17 corrective pass is Native-green and the user completes a second real YMM4 hands-on pass with no known high-frequency Settings friction that should be fixed first.
+
+
+## A19 — Final hands-on acceptance / Release
+
+**ACCEPTED.**
+
+The final user hands-on pass reported the Settings surface as good enough to close Phase 4 after the whole-Tool wheel and copy-block alignment corrections.
+
+Release #654 (`35897405826`) at exact source `05285a7bae1eb59b4b588c565aa46e29bdea795c` passed:
+
+- **1,822 Native assertions**;
+- `COMPACT_SETTINGS_P1=PASS` through `COMPACT_SETTINGS_P7=PASS`;
+- full retained P1-P9 semantic regression;
+- exact distribution-DLL smoke;
+- verified stable-root `.ymme` / source / provenance packaging.
+
+Distribution DLL SHA256: `648014c22af02f726fc95beb6282b177d94673632e21f108c53e057a80081875`.
+
+Release artifact: `10767621834`, ZIP SHA256 `bf217e5162f31de9ff6fc97d441cc08d3327f033a944ac5c61e35b22b78010d1`.
+
+A10 and A18 gates are satisfied. Phase 5 is no longer blocked by Compact Settings friction.

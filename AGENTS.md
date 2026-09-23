@@ -26,13 +26,13 @@ The current product architecture retains the accepted v0.4.2 Hands-on/performanc
 - targeted Set layer placement with existing target-relative mode or explicit Absolute Layer, both using the shared bounded one-direction collision planner;
 - retained Template-mode performance and protected Settings guarantees.
 
-Compact Settings friction/discoverability is now the active phase. Known later items include Full Settings UX, Preview/Checklist work, Composite/Fan-out placement, stronger Target/Neighbor grammar and measured built-in Tachie Preset loading optimization. Do not reopen completed Portable Settings, Placement Source or bounded Placement Rule architecture while addressing those items.
+Compact Settings friction/discoverability is accepted at exact product/test/package source `05285a7bae1eb59b4b588c565aa46e29bdea795c` by Release #654 (`35897405826`), with **1,822 Native assertions PASS**, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Behavior Preview + checklist is the next product phase. Known later items include Full Settings UX, Composite/Fan-out placement, stronger Target/Neighbor grammar and measured built-in Tachie Preset loading optimization. Do not reopen completed Portable Settings, Placement Source, bounded Placement Rule or Compact Settings architecture while addressing those items.
 
 Read in this order:
 
 1. `docs/CURRENT_ARCHITECTURE.md`
 2. `docs/PRODUCT_ROADMAP.md` for current product sequencing
-3. `docs/COMPACT_SETTINGS_FRICTION_DESIGN.md` for the active compact-Settings friction pass
+3. `docs/COMPACT_SETTINGS_FRICTION_DESIGN.md` for the accepted compact-Settings friction baseline
 4. `docs/COMPACT_SETTINGS_FRICTION_ACCEPTANCE.md`
 5. `docs/COMPACT_SETTINGS_FRICTION_WORKPLAN.md`
 6. `docs/PLACEMENT_RULE_COMPLETION_DESIGN.md` for the accepted bounded placement-rule model

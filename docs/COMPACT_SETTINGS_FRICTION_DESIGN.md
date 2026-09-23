@@ -1,6 +1,6 @@
 # Compact Settings Friction / Discoverability Design
 
-Status: **HANDS-ON ROUND 1 FEEDBACK FROZEN — CORRECTIVE IMPLEMENTATION NEXT / PREVIEW BLOCKED**
+Status: **ACCEPTED — RELEASE #654 GREEN / USER HANDS-ON APPROVED**
 
 Authority:
 
@@ -66,10 +66,11 @@ No first-level section may force horizontal scrolling or increase the compact Se
 
 ## Set picker row
 
-The Set picker ComboBox and adjacent `＋` / `削除` buttons should read as one row:
+The Set picker ComboBox and adjacent `＋` button should read as one row:
 
 - comparable visible height;
 - aligned vertical position;
+- the duplicate top-row Set delete is intentionally absent; deletion lives under `セットの管理`;
 - no global Button/ComboBox style change.
 
 Exact height remains a hands-on visual tuning point.
@@ -217,3 +218,38 @@ Behavior Preview / Checklist work remains blocked until:
 2. Native regression is GREEN again;
 3. the user performs another real YMM4 hands-on pass;
 4. no known high-frequency Settings friction remains that should reasonably be fixed before Preview.
+
+
+## Final accepted hands-on / Release baseline
+
+Final user hands-on accepted the compact Settings surface after the corrective passes.
+
+Exact implementation/test/package source:
+
+- `05285a7bae1eb59b4b588c565aa46e29bdea795c`
+- Checkpoint #653 / `35884196081`: **1,822 Native assertions PASS**
+- Release #654 / `35897405826`: **1,822 Native assertions PASS**
+- `COMPACT_SETTINGS_P1=PASS` through `COMPACT_SETTINGS_P7=PASS`
+- retained `PASS P1 P2 P3 P4 P5 P6 P7 P8 P9`
+- exact distribution DLL SHA256: `648014c22af02f726fc95beb6282b177d94673632e21f108c53e057a80081875`
+- verified v0.5.0 `.ymme` stable-root / source / provenance packaging: PASS
+- Release artifact `10767621834` (`native-yymm4-release`)
+- artifact ZIP SHA256: `bf217e5162f31de9ff6fc97d441cc08d3327f033a944ac5c61e35b22b78010d1`
+
+Accepted product behavior includes:
+
+- ordinary first-level Set capabilities remain visible;
+- low-frequency/detail controls remain bounded disclosures;
+- Set shape is secondary at the bottom of full compact Settings;
+- duplicate top Set delete is removed;
+- Set management and cross-Item copy form aligned peer blocks;
+- the destination ComboBox is intentionally wide and equal-height with the copy action;
+- equivalent lists and their action rows share consistent visual lanes;
+- narrow widths reflow vertically instead of requiring horizontal Settings scrolling;
+- useful whitespace remains for the floating/resizable Tool workflow;
+- white Settings margins, footer and edges participate in outer scrolling;
+- while the Settings tab is active, the surrounding gray Template Placer Tool surface also routes ordinary wheel input to the Settings scroller;
+- ComboBox / RangeBase / independently scrollable inner surfaces retain their own intentional wheel ownership;
+- whole-Tool Settings wheel routing is disabled outside the Settings tab.
+
+Phase 4 is complete. Behavior Preview / Checklist may now begin against this accepted Settings surface.
