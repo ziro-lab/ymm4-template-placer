@@ -334,6 +334,8 @@ public sealed partial class PlacerViewModel
 
     private static bool SameChoiceIdentity(TemplateChoice left, TemplateChoice right)
     {
+        if (left.RegisteredPreset != null || right.RegisteredPreset != null)
+            return left.RegisteredPreset == right.RegisteredPreset && left.IsAvailable == right.IsAvailable;
         if (left.TachiePreset != null || right.TachiePreset != null)
             return left.TachiePreset == right.TachiePreset && left.IsAvailable == right.IsAvailable;
         if (left.IsCurrentOtherSource || right.IsCurrentOtherSource || left.IsInvalidAssociation || right.IsInvalidAssociation)
