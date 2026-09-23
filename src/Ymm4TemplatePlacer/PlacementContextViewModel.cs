@@ -20,7 +20,7 @@ public sealed partial class PlacerViewModel
     }
     internal void ObserveTimelinePointer(TimelinePointerOrigin origin)
     {
-        if (intentTimeline == null || UseLegacyWorkspace) return;
+        if (intentTimeline == null) return;
         pointerGesture = origin;
         pendingItemPointer = origin == TimelinePointerOrigin.Item;
         // An Item hit records intent only: the old Selection is not the clicked Selection.

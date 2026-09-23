@@ -49,7 +49,7 @@ public sealed partial class PlacerViewModel
     private void RequestSettingsAutoCommit()
     {
         rollbackIntentSettingsCommand?.RaiseCanExecuteChanged();
-        if (activeTask != "intent-settings" || UseLegacyWorkspace || IntentSettings?.HasChanges != true ||
+        if (activeTask != "intent-settings" || IntentSettings?.HasChanges != true ||
             settingsCommitPhase is SettingsCommitPhase.Committing or SettingsCommitPhase.Conflict or SettingsCommitPhase.Disposed ||
             settingsCommitOperation != null) return;
         var dispatcher = Application.Current?.Dispatcher;

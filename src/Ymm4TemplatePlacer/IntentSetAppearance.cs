@@ -10,7 +10,7 @@ public sealed partial class PlacerViewModel
     public ActionCommand OpenIntentSetSettingsCommand { get; private set; } = null!;
     public bool HasCurrentIntentSet => selectedIntentSet != null;
     private bool IsCurrentIntentSet(IntentSetChoice set) => intentTimeline != null && ReferenceEquals(intentTimeline, timeline) &&
-        !UseLegacyWorkspace && ReferenceEquals(selectedIntentSet, set) && IntentSets.Any(x => ReferenceEquals(x, set));
+        ReferenceEquals(selectedIntentSet, set) && IntentSets.Any(x => ReferenceEquals(x, set));
     private bool CanEditIntentSet(IntentSetChoice set) => settingsAvailable && !intentExecuting &&
         tileEditState == IntentTileEditState.Idle && IntentSettings?.HasChanges != true && IsCurrentIntentSet(set);
     private void InitializeIntentSetAppearance()

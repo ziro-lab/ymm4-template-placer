@@ -20,9 +20,9 @@ internal static partial class NativeProof
             "R1 historical first-use fixture contains only new automatic-bootstrap references before isolation");
         var legacyFixture = PlacerSettingsStore.Copy(bootstrapped);
         legacyFixture.Library.Clear(); legacyFixture.IntentPalettes.Clear(); legacyFixture.ImportedExpressionSources.Clear();
-        legacyFixture.ExpressionBootstrapComplete = true; legacyFixture.LegacyWorkspace = true;
+        legacyFixture.ExpressionBootstrapComplete = true;
         settingsField.SetValue(ViewModel!, legacyFixture);
-        ViewModel!.ActivateIntentWorkspace(); ViewModel.SetLegacyWorkspace(true); ViewModel.Refresh();
+        ViewModel!.ActivateIntentWorkspace(); ViewModel.Refresh();
         await VerifyTachiePresetSourceModeFoundation(timeline, undo);
         await VerifyTachiePresetCapability(timeline, undo);
         await VerifyTachiePresetGuards(timeline);

@@ -99,8 +99,6 @@ public sealed partial class PlacerSettings
     public List<IntentPalette> IntentPalettes { get; set; } = [];
     public bool ExpressionBootstrapComplete { get; set; }
     public List<TemplateLocator> ImportedExpressionSources { get; set; } = [];
-    // An explicit compatibility workspace, never an implicit fallback after a failed new operation.
-    public bool LegacyWorkspace { get; set; }
 }
 
 public static class IntentPaletteSettings
