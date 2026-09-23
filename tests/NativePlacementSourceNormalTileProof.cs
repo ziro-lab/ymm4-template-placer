@@ -49,8 +49,8 @@ internal static partial class NativeProof
         try
         {
             var templateSource = TemplateResolver.Reference(template, "Template Smile", character.Name);
-            var templateEntry = new IntentEntry(templateSource.Id);
-            var presetEntry = new IntentEntry(presetSource.Id);
+            var templateEntry = new IntentEntry(templateSource.Id) { DisplayAlias = "Template Smile" };
+            var presetEntry = new IntentEntry(presetSource.Id) { DisplayAlias = "Preset Smile" };
             var palette = new IntentPalette(
                 Guid.Parse("31000000-0000-4000-8000-000000000010"),
                 "P3 mixed Set",
@@ -186,11 +186,6 @@ internal static partial class NativeProof
 
             fixture.IntentPalettes = [palette];
             vm.RefreshIntentWorkspace();
-            var context = IntentSelectionContext.Capture(timeline);
-            var materialized = await TachiePresetSourceMaterializer.MaterializeAsync(presetSource, character, Resolve);
-            var geometry = IntentPlacementGeometry.Prepare(
-                timeline, context, palette, presetEntry, materialized, timeline.Items);
-            var plan = PlacementPlan.Create(timeline, geometry.Items);
             var execution = await IntentExecutionPlan.CreateAsync(
                 timeline, palette, presetEntry, fixture, Resolve);
             var settingsBeforeCommit = Signature(timeline);
