@@ -60,9 +60,9 @@ Accepted behavior:
 - real `.ymme` update preservation is backed by public Lab/native evidence;
 - Release/native regression is GREEN.
 
-### 2. Expression Source / Placement Model review — ACTIVE
+### 2. Expression Source / Placement Model unification — FINAL RELEASE
 
-**Current product phase. Do this before building Preview/Checklist.**
+**Current product phase. P0-P7 are implemented; P8 exact Release is the remaining gate before this phase is accepted.**
 
 v0.5.0 proved both Template expressions and Tachie Presets as usable content sources, but they still enter placement through different product paths.
 
@@ -121,6 +121,19 @@ Frozen direction:
 - keep existing v0.5 Template and TachiePreset association readers compatible;
 - use a backward-compatible new preset association version for Set-owned preset expressions;
 - keep standalone `ExpressionPreset` only as compatibility while the new common path is proven.
+
+Implemented candidate:
+
+- ordinary Character-bound Sets can place registered Tachie Preset sources beside Template sources;
+- ExpressionCandidates Sets can mix registered Template/Preset content;
+- registered presets use the owning Set's `IntentRelation` in ordinary placement, expression replacement and geometry Resync;
+- a backward-compatible preset association v2 preserves exact Set/Source/state identity while old v0.5 preset tags remain readable;
+- detection alone does not persist a Source; `Setへ登録` is explicit;
+- registered sources appear in Settings without eager plugin discovery;
+- Template/TachiePreset source mode remains a visibility/filter choice;
+- the old standalone `ExpressionPreset` path remains only for unregistered direct preset placement compatibility.
+
+Release #606 passed P0-P7 with 1,763 Native assertions and full retained regression. P8 reruns the exact final source after closeout text/UI clarification.
 
 Exit:
 
