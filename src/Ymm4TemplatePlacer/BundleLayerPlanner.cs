@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using YukkuriMovieMaker.Project.Items;
 
 namespace Ymm4TemplatePlacer;
@@ -6,17 +7,20 @@ public enum RelativeLayerDirection { Up, Down }
 public enum LayerPlacementMode { RelativeToTarget = 0, Absolute = 1 }
 public sealed record RelativeLayerPolicy
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public LayerPlacementMode Mode { get; init; } = LayerPlacementMode.RelativeToTarget;
     public RelativeLayerDirection Direction { get; init; } = RelativeLayerDirection.Up;
     public int Offset { get; init; } = 1;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public int AbsoluteLayer { get; init; }
     public int Minimum { get; init; }
     public int Maximum { get; init; } = 99;
     public void Validate()
     {
         if (!Enum.IsDefined(Mode) || !Enum.IsDefined(Direction) || Offset < 1 || Offset > 9999 ||
-            AbsoluteLayer < 0 || AbsoluteLayer > 9999 || Minimum < 0 || Maximum < Minimum || Maximum > 9999)
-            throw new InvalidOperationException("レイヤー配置は0〜9999、上下の間隔は1〜9999段、探索範囲は0〜9999で設定してください。");
+            AbsoluteLayer < 0 || AbsoluteLayer > 9999 || Minimum < 0 || Maximum < Minimum || Maximum > 9999 ||
+            (Mode == LayerPlacementMode.Absolute && (AbsoluteLayer < Minimum || AbsoluteLayer > Maximum)))
+            throw new InvalidOperationException("レイヤー配置は保存済み探索範囲内の0〜9999、上下の間隔は1〜9999段で設定してください。");
     }
 }
 
