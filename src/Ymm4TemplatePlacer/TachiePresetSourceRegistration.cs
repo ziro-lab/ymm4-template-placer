@@ -41,7 +41,7 @@ public sealed partial class PlacerViewModel
                     ? "設定に未保存の変更があります。保存または破棄してから表情プリセットを登録してください。"
                     : "現在の表情プリセットをSetへ登録できません。一覧を読み直して選び直してください。");
 
-        var targets = ApplicablePresetRegistrationSets(settings, row);
+        var targets = ApplicablePresetRegistrationSets(settings, row.Character);
         Guid? targetId = null;
         if (targets.Count == 1)
         {
@@ -73,27 +73,38 @@ public sealed partial class PlacerViewModel
         AssignmentRow row,
         Guid? targetPaletteId = null)
     {
+        ArgumentNullException.ThrowIfNull(row);
+        if (!Rows.Contains(row))
+            throw new InvalidOperationException("対象行が現在の表情一覧にありません。一覧を読み直してください。");
+        var candidate = row.SelectedChoice.TachiePreset
+            ?? throw new InvalidOperationException("登録する未登録の表情プリセットを選んでください。");
+        if (!row.SelectedChoice.IsAvailable)
+            throw new InvalidOperationException("現在利用できない表情プリセットは登録できません。");
+        return RegisterTachiePresetSource(row.Target, candidate, targetPaletteId);
+    }
+
+    internal TachiePresetRegistrationResult RegisterTachiePresetSource(
+        VoiceSnapshot targetSnapshot,
+        TachiePresetCandidateDescriptor candidate,
+        Guid? targetPaletteId = null)
+    {
+        ArgumentNullException.ThrowIfNull(targetSnapshot);
+        ArgumentNullException.ThrowIfNull(candidate);
         if (!settingsAvailable)
             throw new InvalidOperationException("設定を保存できないため表情プリセットを登録しません。");
         if (IntentSettings?.HasChanges == true)
             throw new InvalidOperationException("設定に未保存の変更があります。保存または破棄してから登録してください。");
 
         var current = RequireTimeline();
-        var voice = row.Target.Voice;
-        if (!Rows.Contains(row) ||
-            !current.Items.Contains(voice) ||
+        var voice = targetSnapshot.Voice;
+        if (!current.Items.Contains(voice) ||
             voice.Character == null ||
-            voice.CharacterName != row.Target.Character ||
-            voice.Frame != row.Target.Frame ||
-            voice.Length != row.Target.Length ||
-            voice.Layer != row.Target.Layer ||
-            (voice.Serif ?? "") != row.Target.Serif)
+            voice.CharacterName != targetSnapshot.Character ||
+            voice.Frame != targetSnapshot.Frame ||
+            voice.Length != targetSnapshot.Length ||
+            voice.Layer != targetSnapshot.Layer ||
+            (voice.Serif ?? "") != targetSnapshot.Serif)
             throw new InvalidOperationException("対象音声が一覧作成後に変更されています。一覧を読み直してください。");
-
-        var candidate = row.SelectedChoice.TachiePreset
-            ?? throw new InvalidOperationException("登録する未登録の表情プリセットを選んでください。");
-        if (!row.SelectedChoice.IsAvailable)
-            throw new InvalidOperationException("現在利用できない表情プリセットは登録できません。");
 
         CloseExpressionTrialSession();
         var target = PresetTargetResolver(voice.Character);
@@ -115,7 +126,7 @@ public sealed partial class PlacerViewModel
         var source = semanticMatches.SingleOrDefault() ?? prototype;
         if (sourceCreated) next.TachiePresetSources.Add(source);
 
-        var applicable = ApplicablePresetRegistrationSets(next, row);
+        var applicable = ApplicablePresetRegistrationSets(next, targetSnapshot.Character);
         IntentPalette palette;
         var setCreated = false;
         if (targetPaletteId.HasValue)
@@ -131,12 +142,12 @@ public sealed partial class PlacerViewModel
         {
             palette = new IntentPalette(
                 Guid.NewGuid(),
-                row.Character,
+                targetSnapshot.Character,
                 "表情",
                 new IntentTargetContext
                 {
                     ItemTypeKeys = [IntentSelectionContext.TypeKey(typeof(VoiceItem))],
-                    CharacterName = row.Character
+                    CharacterName = targetSnapshot.Character
                 },
                 new IntentRelation
                 {
@@ -188,7 +199,7 @@ public sealed partial class PlacerViewModel
 
     private static IReadOnlyList<IntentPalette> ApplicablePresetRegistrationSets(
         PlacerSettings source,
-        AssignmentRow row)
+        string character)
     {
         var voiceType = IntentSelectionContext.TypeKey(typeof(VoiceItem));
         return source.IntentPalettes.Where(x =>
@@ -196,7 +207,7 @@ public sealed partial class PlacerViewModel
             x.Target.TypeMatch == IntentTypeMatch.UniformType &&
             x.Target.MinimumCount <= 1 &&
             x.Target.MaximumCount >= 1 &&
-            x.Target.CharacterName == row.Character &&
+            x.Target.CharacterName == character &&
             x.Target.ItemTypeKeys.Contains(voiceType, StringComparer.Ordinal))
             .ToArray();
     }
