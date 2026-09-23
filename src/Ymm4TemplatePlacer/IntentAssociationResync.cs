@@ -18,6 +18,16 @@ public sealed class IntentAssociationResync
         foreach (var selected in timeline.SelectedItems.Distinct())
         {
             if (!timeline.Items.Contains(selected)) { skipped.Add("シーンに存在しない選択アイテム"); continue; }
+
+            var registeredSelected = TachiePresetSourceAssociationTag.Read(selected.Remark, out _);
+            if (registeredSelected == AssociationTagState.Invalid)
+            {
+                skipped.Add("選択アイテムの登録済み立ち絵プリセット関連付けが不正です");
+                continue;
+            }
+            if (registeredSelected == AssociationTagState.Valid)
+                continue; // handled by RegisteredPresetAssociationResync
+
             var state = IntentAssociationTag.Read(selected.Remark, out var membership);
             if (state == AssociationTagState.Invalid) { skipped.Add("選択アイテムのBundle関連付けが不正です"); continue; }
             if (state == AssociationTagState.Valid) { groups.Add(membership!.Group); continue; }
@@ -26,6 +36,14 @@ public sealed class IntentAssociationResync
                 var related = tagged.Where(x => AssociationTag.Source(x.Item.Remark, out var source) == AssociationTagState.Valid && source!.Serial == serial).ToArray();
                 foreach (var item in related)
                 {
+                    var registered = TachiePresetSourceAssociationTag.Read(item.Item.Remark, out _);
+                    if (registered == AssociationTagState.Invalid)
+                    {
+                        skipped.Add("対象音声に不正な登録済み立ち絵プリセット関連付けがあります");
+                        continue;
+                    }
+                    if (registered == AssociationTagState.Valid)
+                        continue; // handled by RegisteredPresetAssociationResync
                     if (item.State == AssociationTagState.Valid) groups.Add(item.Tag!.Group);
                     else if (item.State == AssociationTagState.Invalid) skipped.Add("対象音声に不正なBundleメンバーがあります");
                     else if (item.Item is TachieFaceItem face && Equals(face.Character, voice.Character)) legacy.Add(face);
@@ -86,16 +104,23 @@ public sealed class IntentAssociationResync
         var combined = PlacementPlan.Combine(timeline, [relativePlan, old.Plan]);
         return new(new(combined, unchanged + old.Unchanged, ignored + old.Ignored, skipped.Concat(old.Skipped).ToArray()), guarded);
     }
-    public ResyncPlan Commit(Timeline timeline, UndoRedoManager undo, PlacerSettings settings)
+    internal void ValidateCurrent(Timeline timeline, PlacerSettings settings)
     {
         foreach (var check in guarded)
         {
-            check.Geometry.Context.ValidateCurrent(timeline, false); check.Geometry.Source.ValidateCurrent();
+            check.Geometry.Context.ValidateCurrent(timeline, false);
+            check.Geometry.Source.ValidateCurrent();
             if (JsonSerializer.Serialize(settings.IntentPalettes.SingleOrDefault(x => x.Id == check.Palette)) != check.Snapshot ||
                 settings.Library.SingleOrDefault(x => x.Id == check.Geometry.Source.Entry.Id)?.Source != check.Geometry.Source.Entry.Source)
                 throw new InvalidOperationException("計画後にパレット・元テンプレートの登録が変わりました。再同期していません。");
             IntentPlacementGeometry.ValidateCharacters(check.Geometry.Context, check.Geometry.Source);
         }
-        Result.Plan.Commit(timeline, undo); return Result;
+    }
+
+    public ResyncPlan Commit(Timeline timeline, UndoRedoManager undo, PlacerSettings settings)
+    {
+        ValidateCurrent(timeline, settings);
+        Result.Plan.Commit(timeline, undo);
+        return Result;
     }
 }
