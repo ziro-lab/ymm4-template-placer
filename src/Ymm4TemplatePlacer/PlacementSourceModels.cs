@@ -87,7 +87,7 @@ public sealed record TachiePresetSourceEntry(
         Add("tachie-preset-source-v1");
         Add(CharacterName);
         Add(PluginRuntimeType);
-        Add(PluginModuleMvid.ToString("N", CultureInfo.InvariantCulture));
+        Add(PluginModuleMvid.ToString("N"));
         Add(CharacterParameterRuntimeType);
         Add(FaceParameterRuntimeType);
         Add(RouteKind);
