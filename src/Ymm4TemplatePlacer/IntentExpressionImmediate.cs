@@ -205,6 +205,7 @@ public sealed partial class PlacerViewModel
             timeline.Items.Contains(row.Target.Voice), x => Guard(() => NavigateExpressionRow((AssignmentRow)x!)));
         OnPropertyChanged(nameof(NavigateExpressionRowCommand));
         InitializeTachiePresetCalibration();
+        InitializeTachiePresetSourceRegistration();
     }
     private void NavigateExpressionRow(AssignmentRow row) => QueueExpressionNavigation(row);
     internal void SetExpressionRowContext(AssignmentRow? row)
@@ -233,28 +234,42 @@ public sealed partial class PlacerViewModel
     {
         var draft = IntentSettings;
         if (draft?.HasChanges != true) return;
-        Guid paletteId, libraryId;
+        Guid paletteId, sourceId;
         if (choice.Template?.IntentSource is { } source)
         {
             paletteId = source.Palette.Id;
-            libraryId = source.Entry.LibraryEntryId;
+            sourceId = source.Entry.SourceId;
+        }
+        else if (choice.RegisteredPreset is { } registered)
+        {
+            paletteId = registered.PaletteId;
+            sourceId = registered.SourceId;
         }
         else
         {
             var association = ManagedExpressionReader.Read(current, row.Target.Voice);
-            if (association.Bundle?.Descriptor is not
-                { Kind: ManagedExpressionSourceKind.Template, Template: { } descriptor }) return;
-            paletteId = descriptor.Palette;
-            libraryId = descriptor.Entry;
+            if (association.Bundle?.Descriptor is
+                { Kind: ManagedExpressionSourceKind.Template, Template: { } templateDescriptor })
+            {
+                paletteId = templateDescriptor.Palette;
+                sourceId = templateDescriptor.Entry;
+            }
+            else if (association.Bundle?.Descriptor is
+                { Kind: ManagedExpressionSourceKind.RegisteredTachiePreset, RegisteredTachiePreset: { } presetDescriptor })
+            {
+                paletteId = presetDescriptor.Palette;
+                sourceId = presetDescriptor.Source;
+            }
+            else return;
         }
-        if (draft.HasExpressionDependencyChanges(paletteId, libraryId, settings, out var setName))
+        if (draft.HasExpressionDependencyChanges(paletteId, sourceId, settings, out var setName))
             throw new InvalidOperationException(
                 $"この表情Set「{setName}」に未保存の変更があります。保存または破棄してから表情を変更してください。");
     }
 
     private void ApplyImmediateExpressionChoice(AssignmentRow row)
     {
-        if (suppressExpressionApply || !IsTemplateExpressionSource || !ExpressionRowsMatchSource || !UsesRelativeExpressions || row.SelectedChoice.TachiePreset != null || row.SelectedChoice.IsCurrentOtherSource) return;
+        if (suppressExpressionApply || !IsTemplateExpressionSource || !ExpressionRowsMatchSource || !UsesRelativeExpressions || row.SelectedChoice.TachiePreset != null || row.SelectedChoice.RegisteredPreset != null || row.SelectedChoice.IsCurrentOtherSource) return;
         try
         {
             var current = RequireTimeline();
@@ -277,7 +292,7 @@ public sealed partial class PlacerViewModel
         {
             HasError = true; Status = "表情を変更できませんでした: " + ex.GetBaseException().Message; RestoreExpressionChoiceFromTimeline(row);
         }
-        finally { OnPropertyChanged(nameof(Summary)); UpdateCommands(); }
+        finally { RegisterTachiePresetSourceCommand?.RaiseCanExecuteChanged(); OnPropertyChanged(nameof(Summary)); UpdateCommands(); }
     }
     private void RestoreExpressionChoiceFromTimeline(AssignmentRow row)
     {
@@ -325,6 +340,35 @@ public sealed partial class PlacerViewModel
                     }
                     row.RestoreSelectedChoice(match,
                         match == null ? "⚠ 現在の関連表情（選択元を確認）" : null);
+                    row.SetAssociationMatch(true);
+                    return;
+                }
+                if (association.Bundle.Descriptor is
+                    { Kind: ManagedExpressionSourceKind.RegisteredTachiePreset, RegisteredTachiePreset: { } registeredDescriptor })
+                {
+                    if (IsTemplateExpressionSource)
+                    {
+                        row.RestoreSelectedChoice(new TemplateChoice(null, "現在：登録済み立ち絵プリセット由来の表情")
+                            { IsCurrentOtherSource = true });
+                        row.SetSourceNotice("現在の表情は登録済み立ち絵プリセットから配置されています。表示切替だけでは変更しません。");
+                        row.SetAssociationMatch(true);
+                        return;
+                    }
+                    var registeredMatch = row.Choices.FirstOrDefault(x =>
+                        x.IsAvailable && x.RegisteredPreset is { } registered &&
+                        registered.PaletteId == registeredDescriptor.Palette &&
+                        registered.SourceId == registeredDescriptor.Source &&
+                        registered.SourceSemanticHash == registeredDescriptor.SourceHash);
+                    if (registeredMatch != null)
+                    {
+                        row.RestoreSelectedChoice(registeredMatch);
+                        row.SetSourceNotice("現在の表情は登録済み立ち絵プリセットSourceからSetの配置ルールで配置されています。");
+                    }
+                    else
+                    {
+                        row.RestoreSelectedChoice(null, "⚠ 現在の登録済み立ち絵プリセット（Set/Sourceを確認）");
+                        row.SetSourceNotice("現在の登録済み立ち絵プリセットSourceを候補から一意に再確認できません。");
+                    }
                     row.SetAssociationMatch(true);
                     return;
                 }

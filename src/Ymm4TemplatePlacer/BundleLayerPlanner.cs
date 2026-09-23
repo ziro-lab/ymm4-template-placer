@@ -20,12 +20,22 @@ public sealed record RelativeLayerPolicy
 public static class BundleLayerPlanner
 {
     public static IReadOnlyList<IItem> Plan(TemplateBundle source, int frame, int? singletonLength,
+        int targetMinimumLayer, int targetMaximumLayer, RelativeLayerPolicy policy, IEnumerable<IItem> occupancy) =>
+        Plan(MaterializedPlacementSource.FromTemplate(source), frame, singletonLength,
+            targetMinimumLayer, targetMaximumLayer, policy, occupancy);
+
+    internal static IReadOnlyList<IItem> Plan(MaterializedPlacementSource source, int frame, int? singletonLength,
         int targetMinimumLayer, int targetMaximumLayer, RelativeLayerPolicy policy, IEnumerable<IItem> occupancy)
     {
-        policy.Validate(); source.ValidateCurrent();
+        ArgumentNullException.ThrowIfNull(source);
+        policy.Validate();
+        source.ValidateCurrent();
         if (targetMinimumLayer < 0 || targetMaximumLayer < targetMinimumLayer)
             throw new InvalidOperationException("基準アイテムのレイヤー範囲が不正です。");
-        var clones = source.CloneNormalized();
+
+        // MaterializedPlacementSource owns fresh normalized items for this one operation.
+        // Geometry may mutate those items directly; no live source/template item is present here.
+        var clones = source.Items;
         if (clones.Count != 1 && singletonLength.HasValue)
             throw new InvalidOperationException("複数アイテムの内部長さは変更できません。テンプレートの長さを維持してください。");
         foreach (var clone in clones)
@@ -34,12 +44,15 @@ public static class BundleLayerPlanner
             var length = singletonLength ?? clone.Length;
             if (start < 0 || start > int.MaxValue) throw new InvalidOperationException("テンプレート全体の開始位置が範囲外です。");
             PlacementMath.ValidateSpan((int)start, length);
-            clone.Frame = (int)start; clone.Length = length;
+            clone.Frame = (int)start;
+            clone.Length = length;
         }
         for (var i = 0; i < clones.Count; i++)
             for (var j = i + 1; j < clones.Count; j++)
-                if (clones[i].Layer == clones[j].Layer && PlacementMath.Overlaps(clones[i].Frame, clones[i].Length, clones[j].Frame, clones[j].Length))
+                if (clones[i].Layer == clones[j].Layer &&
+                    PlacementMath.Overlaps(clones[i].Frame, clones[i].Length, clones[j].Frame, clones[j].Length))
                     throw new InvalidOperationException("テンプレート内部で同じレイヤーのアイテムが重なっています。全件配置せず停止しました。");
+
         var occupied = occupancy.ToArray();
         var width = clones.Max(x => x.Layer);
         long first = policy.Direction == RelativeLayerDirection.Up

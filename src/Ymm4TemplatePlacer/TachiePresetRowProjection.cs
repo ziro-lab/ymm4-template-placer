@@ -10,13 +10,26 @@ internal static partial class ExpressionPreparation
         Stopwatch watch, int threadId, CancellationToken token)
     {
         var capabilities = snapshot.PresetCapabilities.ToDictionary(x => x.CharacterIdentity, StringComparer.Ordinal);
+        var registeredByCharacter = snapshot.RegisteredPresetCandidates
+            .GroupBy(x => x.Character, StringComparer.Ordinal)
+            .ToDictionary(x => x.Key, x => x.ToArray(), StringComparer.Ordinal);
         var choicesByCharacter = new Dictionary<string, IReadOnlyList<TemplateChoice>>(StringComparer.Ordinal);
         foreach (var name in voices.Select(x => x.Character).Distinct(StringComparer.Ordinal))
         {
             token.ThrowIfCancellationRequested();
             var capability = capabilities.GetValueOrDefault(name)?.Capability;
-            var choices = new List<TemplateChoice> { new(null, capability?.HasCandidates == true ? "— 選択しない —" : "— 候補なし —") };
-            foreach (var candidate in capability?.Candidates ?? []) choices.Add(TemplateChoice.Preset(candidate));
+            var registered = registeredByCharacter.GetValueOrDefault(name) ?? [];
+            var availableRegistered = new HashSet<RegisteredPresetExpressionSource>();
+            foreach (var source in registered)
+                if ((capability?.Candidates ?? []).Any(source.MatchesCandidate))
+                    availableRegistered.Add(source);
+
+            var hasCandidates = availableRegistered.Count > 0 || capability?.HasCandidates == true;
+            var choices = new List<TemplateChoice> { new(null, hasCandidates ? "— 選択しない —" : "— 候補なし —") };
+            foreach (var source in registered)
+                choices.Add(TemplateChoice.Registered(source, availableRegistered.Contains(source)));
+            foreach (var candidate in capability?.Candidates ?? [])
+                choices.Add(TemplateChoice.Preset(candidate));
             choicesByCharacter.Add(name, choices.AsReadOnly());
         }
 
@@ -42,6 +55,20 @@ internal static partial class ExpressionPreparation
                     selected = new(null, "現在：テンプレート由来の表情") { IsCurrentOtherSource = true };
                     notice = "現在の表情はテンプレートから配置されています。表示切替だけでは変更しません。" +
                         (notice.Length == 0 ? "" : " " + notice);
+                }
+                else if (association.Descriptor is
+                    { Kind: ManagedExpressionSourceKind.RegisteredTachiePreset, RegisteredTachiePreset: { } currentRegistered })
+                {
+                    selected = choices.SingleOrDefault(x => x.RegisteredPreset is { } registered &&
+                        registered.PaletteId == currentRegistered.Palette &&
+                        registered.SourceId == currentRegistered.Source &&
+                        registered.SourceSemanticHash == currentRegistered.SourceHash)
+                        ?? new TemplateChoice(null,
+                            "⚠ 現在：登録済み立ち絵プリセット（Set/Sourceを確認）",
+                            null, false);
+                    notice = selected.IsAvailable
+                        ? "現在の表情は登録済み立ち絵プリセットSourceからSetの配置ルールで配置されています。"
+                        : "現在の登録済み立ち絵プリセットSourceを現在のSet候補から一意に再確認できません。SetまたはSource設定を確認してください。";
                 }
                 else if (association.Descriptor is { Kind: ManagedExpressionSourceKind.TachiePreset, TachiePreset: { } currentPreset })
                 {

@@ -224,36 +224,44 @@ This does **not** authorize:
 - AI/fuzzy target choice;
 - existing-item transformation.
 
-## v0.5.0 release baseline
+## Current post-v0.5 baseline
 
-v0.5.0 promotes the completed Tachie Preset expression source into the normal product baseline while preserving the accepted v0.4.2 placement, Settings, performance and safety architecture.
+The accepted product baseline is v0.5.0 plus the completed Portable Settings and Placement Source unification work. Placement Source unification was proven at exact product/test/package source `7ffe3b2c690a57850c77821f7b4c3eeb6517b3dc` by Release #615 (`35834323751`) with **1,763 Native assertions** and verified distribution/package gates.
 
 The baseline includes:
 
 - Item-owned targeted Sets, Generic placement, finite collision rules and shared PlacementPlan/native Undo;
-- staged protected Settings persistence and rollback;
+- protected automatic Settings persistence and rollback using the portable plugin-local store;
 - lazy/cancelable expression loading with 100 / 500 / 1,000 Voice structural performance coverage;
-- the existing Template expression source;
-- a Tachie Preset expression source that resolves the current Character/plugin through bounded public surfaces, creates fresh FaceParameters/items, and fails locally when unsupported;
-- exact managed association and atomic Template <-> TachiePreset replacement for plugin-managed expressions only;
-- one assisted-calibration path that learns only a bounded plugin/surface adapter, not Character-specific preset state;
-- Voice-relative Tachie Preset placement by default, with explicit relative or absolute layer overrides available;
-- persisted Template/TachiePreset source selection, restored by a new Tool instance without flushing unrelated settings;
+- explicit Placement Sources with existing Template Library entries and thin Character-bound registered Tachie Preset locators kept as separate source kinds;
+- one bounded SourceId namespace across Template and registered Tachie Preset sources without rewriting existing serialized Template IDs;
+- fresh source-specific materialization followed by one authoritative Set-owned `IntentRelation` geometry path;
+- ordinary applicable targeted Sets able to place registered Tachie Preset tiles beside Template tiles;
+- ExpressionCandidates Sets able to mix Template and registered Tachie Preset sources;
+- Template/TachiePreset source mode retained as visibility/filter UX only, not as a placement-engine switch;
+- explicit `Setへ登録` source persistence; discovery alone never writes a registered source;
+- exact managed association and atomic cross-source replacement for plugin-managed expressions only;
+- backward-compatible readers for existing Template v1 and TachiePreset v1 associations plus the Set-owned registered-preset association v2;
+- registered-preset Resync that recomputes only Frame/Length/Layer from the owning Set and fails closed after source or FaceParameter edits;
+- the old standalone `ExpressionPreset` geometry retained only for unregistered direct-preset compatibility;
 - Template-only Excel behavior unchanged.
 
-The Tachie Preset source remains subject to the accepted expression-performance boundary:
+Registered Tachie Preset sources persist only bounded re-resolvable identity metadata. They do not persist generated `TachieFaceItem`, FaceParameter bodies, PSD/preset snapshots, Timeline references or a fake second Template database.
+
+The accepted preset/source performance boundary remains:
 
 - no capability work on plugin open, placement tab or Settings tab;
-- no eager all-plugin scan;
-- scan only distinct current Voice Characters while the expression task and Tachie Preset source are active;
+- no eager all-plugin/all-Character scan;
+- registered sources resolve only when placement or an explicit source operation requires them;
+- expression discovery scans only distinct current Voice Characters while that task/source is active;
 - WPF/property-editor work remains UI-thread-affine and cancelable;
 - immutable descriptors feed the existing row/preparation pipeline;
 - stale/cancelled results never publish;
-- one incompatible plugin/Character is a local failure.
+- one incompatible plugin/Character/source is a local fail-closed result.
 
 Built-in preset discovery/loading is functionally accepted but has a deferred performance-polish item. Measure the real cost before changing the discovery/cache architecture.
 
-The detailed Tachie Preset design/acceptance documents are retained as implementation evidence and compatibility authority, not as an active feature-preparation gate.
+The Placement Source design/acceptance/workplan documents are retained as accepted implementation and compatibility authority, not as a future implementation gate.
 
 ## Validation
 
@@ -272,8 +280,8 @@ For current work, prefer documents in this order:
 1. this file;
 2. `docs/GLOSSARY.md`;
 3. `docs/VALIDATION_STRATEGY.md`;
-4. current accepted feature authorities such as `docs/FINAL_HANDS_ON_POLISH.md` and the expression-performance design/acceptance documents;
-5. the active feature's frozen Tachie Preset design/acceptance/workplan/implementation-prep documents;
+4. current accepted feature authorities, including the Placement Source unification design/acceptance/workplan, `docs/FINAL_HANDS_ON_POLISH.md` and the expression-performance design/acceptance documents;
+5. the next active feature's frozen design/acceptance/workplan documents, once that phase intentionally starts;
 6. `docs/BACKLOG.md`;
 7. historical Round/W documents when reconstructing rationale.
 

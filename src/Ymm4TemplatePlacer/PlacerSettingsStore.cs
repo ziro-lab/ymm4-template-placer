@@ -165,6 +165,7 @@ public sealed class PlacerSettingsStore
         PaletteSettings.Validate(settings);
         ExpressionPresetSettings.Validate(settings);
         TachiePresetLearnedAdapterSettings.Validate(settings);
+        TachiePresetSourceSettings.Validate(settings);
         SelectionPresetSettings.Validate(settings);
         IntentPaletteSettings.Validate(settings);
     }

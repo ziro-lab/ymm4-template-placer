@@ -8,35 +8,43 @@
 
 ## Current revision and Git authority
 
-v0.5.0 is the integrated product baseline.
+v0.5.0 is the integrated release baseline. Portable Settings storage is complete on main, and Placement Source unification is accepted at exact Release source `7ffe3b2c690a57850c77821f7b4c3eeb6517b3dc` (Release #615).
 
-It retains the accepted v0.4.2 Hands-on/performance architecture and adds the completed Tachie Preset expression-source path:
+The current product architecture retains the accepted v0.4.2 Hands-on/performance guarantees and includes:
 
 - lazy, source-scoped, cancelable and session-cached preset discovery;
 - built-in and supported third-party public preset routes;
-- exact managed Template <-> TachiePreset replacement;
-- assisted bounded plugin/surface adapter calibration;
-- Voice-relative preset placement with finite relative/absolute overrides;
-- persisted Template/TachiePreset source-mode selection across Tool reopen;
-- retained Template-mode performance, PlacementPlan/native Undo and protected Settings guarantees.
+- explicit Character-bound registered Tachie Preset sources stored as thin resolvable locators;
+- Template and registered Tachie Preset sources sharing one bounded SourceId namespace while keeping their persistence identities separate;
+- fresh source-specific materialization followed by one Set-owned `IntentRelation` geometry path and shared PlacementPlan/native Undo;
+- ordinary targeted Sets and expression Sets able to mix Template and registered Tachie Preset sources;
+- exact managed cross-source replacement plus backward-compatible old Template/TachiePreset association readers;
+- registered-preset geometry Resync that never silently reapplies edited preset content;
+- persisted Template/TachiePreset source-mode selection as visibility/filter UX rather than a placement-engine switch;
+- the old standalone `ExpressionPreset` path retained only for unregistered direct-preset compatibility;
+- retained Template-mode performance and protected Settings guarantees.
 
-Known deferred items include portable settings storage, compact/Full Settings UX improvements and measured built-in Tachie Preset loading optimization. Do not broaden the accepted v0.5.0 baseline while addressing one of those items.
+Known deferred items include placement-rule inventory/completion, compact/Full Settings UX improvements, Preview/Checklist work and measured built-in Tachie Preset loading optimization. Do not reopen completed Portable Settings or Placement Source architecture while addressing those items.
 
 Read in this order:
 
 1. `docs/CURRENT_ARCHITECTURE.md`
-2. `docs/GLOSSARY.md`
-3. `docs/VALIDATION_STRATEGY.md`
-4. `docs/TACHIE_PRESET_DESIGN.md`
-5. `docs/TACHIE_PRESET_ACCEPTANCE.md`
-6. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
-7. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
-8. `docs/FINAL_HANDS_ON_POLISH.md`
-9. `docs/BACKLOG.md` only for scope context
-10. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
-11. historical Round/W documents only when current authority points to them or when reconstructing rationale
+2. `docs/PRODUCT_ROADMAP.md` for current product sequencing
+3. `docs/PLACEMENT_SOURCE_UNIFICATION_DESIGN.md` for the accepted Source/Placement model
+4. `docs/PLACEMENT_SOURCE_UNIFICATION_ACCEPTANCE.md`
+5. `docs/PLACEMENT_SOURCE_UNIFICATION_WORKPLAN.md`
+6. `docs/GLOSSARY.md`
+7. `docs/VALIDATION_STRATEGY.md`
+8. `docs/TACHIE_PRESET_DESIGN.md`
+9. `docs/TACHIE_PRESET_ACCEPTANCE.md`
+10. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
+11. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
+12. `docs/FINAL_HANDS_ON_POLISH.md`
+13. `docs/BACKLOG.md` only for scope/detail
+14. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
+15. historical Round/W documents only when current authority points to them or when reconstructing rationale
 
-Do not reimplement completed v0.5.0 work. Preserve its Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary and validation tiers.
+Do not reimplement completed v0.5.0, Portable Settings or Placement Source work. Preserve the Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary, source-specific materialization / Set-owned geometry split and validation tiers.
 
 ## Product boundary
 

@@ -118,9 +118,11 @@ internal static partial class NativeProof
             await vm.ExpressionLoadCompletion; await Idle(); await WaitExpressionRows(vm, 6);
 
             Check(vm.ExpressionSourceNotice.Contains("実験候補", StringComparison.Ordinal) &&
-                vm.ExpressionSourceNotice.Contains("Preview", StringComparison.Ordinal) &&
+                vm.ExpressionSourceNotice.Contains("登録済み", StringComparison.Ordinal) &&
+                vm.ExpressionSourceNotice.Contains("所属Set", StringComparison.Ordinal) &&
+                vm.ExpressionSourceNotice.Contains("未登録", StringComparison.Ordinal) &&
                 view.TachiePresetSourceNotice.IsVisible && view.VoiceGrid.IsVisible,
-                "live preset UI explains that plausible Experimental candidates may be tried and judged in Preview");
+                "live preset UI distinguishes registered Set-owned presets from unregistered Experimental compatibility candidates");
 
             var strongRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, strongVoice));
             var experimentalRow = vm.Rows.Single(x => ReferenceEquals(x.Target.Voice, experimentalVoice));

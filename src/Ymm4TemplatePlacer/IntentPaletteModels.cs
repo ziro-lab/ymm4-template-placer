@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Ymm4TemplatePlacer;
 
@@ -70,6 +71,11 @@ public sealed record IntentRelation
 
 public sealed record IntentEntry(Guid LibraryEntryId)
 {
+    // Serialized name stays LibraryEntryId for v0.5 compatibility. New code treats
+    // the same GUID as SourceId across Template Library and Tachie Preset Source registries.
+    [JsonIgnore]
+    public Guid SourceId => LibraryEntryId;
+
     // Appearance only: never used by resolution, identity, geometry or association.
     public string? DisplayAlias { get; init; }
     public IntentTileColor Color { get; init; }

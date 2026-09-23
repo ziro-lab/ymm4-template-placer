@@ -88,11 +88,15 @@ internal static partial class NativeProof
                 invalidState.State == "関連付けを確認", "invalid managed association is explicit and never guessed");
             CheckP5(vm.Rows[0].SelectedChoice.IsCurrentOtherSource && vm.Rows[0].State == "別の元から配置済み",
                 "valid current Template association is explicit other-source state in TachiePreset mode");
-            Check(view.PresetSurface.IsVisible && view.TachiePresetPlacementRuleLabel.IsVisible && !view.ExcelEditor.IsVisible &&
-                vm.ExpressionSourceNotice.Contains("実験候補", StringComparison.Ordinal) &&
-                vm.ExpressionSourceNotice.Contains("Preview", StringComparison.Ordinal) &&
+            Check(view.PresetSurface.IsVisible && view.TachiePresetPlacementRuleLabel.IsVisible &&
+                view.TachiePresetPlacementRuleLabel.Text.Contains("未登録", StringComparison.Ordinal) &&
+                view.TachiePresetPlacementRuleLabel.Text.Contains("互換", StringComparison.Ordinal) &&
+                !view.ExcelEditor.IsVisible &&
+                vm.ExpressionSourceNotice.Contains("登録済み", StringComparison.Ordinal) &&
+                vm.ExpressionSourceNotice.Contains("所属Set", StringComparison.Ordinal) &&
+                vm.ExpressionSourceNotice.Contains("未登録", StringComparison.Ordinal) &&
                 vm.ExpressionSourceNotice.Contains("Excel", StringComparison.Ordinal),
-                "placement-rule UI truthfully describes safe trial of Experimental candidates, Preview verification and Template-only Excel");
+                "placement-rule UI distinguishes Set-owned registered presets from the unregistered compatibility path and keeps Excel Template-only");
             SaveNamedView(view, "tachie-preset-p4-inspector.png");
             var row = vm.Rows[1];
             view.PaletteTab.IsSelected = true; await Idle();

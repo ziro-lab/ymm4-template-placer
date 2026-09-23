@@ -6,9 +6,48 @@ Being listed here is not implementation approval or priority commitment.
 
 ## Active
 
+## Placement Source unification — complete
+
+Status: **COMPLETE / RELEASE GREEN — PR #28**
+
+Goal:
+
+Converge Template and Tachie Preset content behind one explicit Placement Source model so both can use the same Set-owned placement relation.
+
+Frozen authorities:
+
+- `PLACEMENT_SOURCE_UNIFICATION_DESIGN.md`;
+- `PLACEMENT_SOURCE_UNIFICATION_ACCEPTANCE.md`;
+- `PLACEMENT_SOURCE_UNIFICATION_WORKPLAN.md`.
+
+Primary product result:
+
+- registered Tachie Presets can be used from ordinary targeted Sets/tiles;
+- one Expression Set can contain Template and Tachie Preset sources;
+- new registered preset placements use the Set's `IntentRelation` rather than independent preset-only geometry;
+- existing v0.5 settings/tags remain compatible and fail closed;
+- no generated FaceParameter/TachieFaceItem body is persisted as a fake Template.
+
+This phase is complete. Product sequencing continues in `PRODUCT_ROADMAP.md`; Preview/Checklist and broader Placement Recipe work remain later phases.
+
+
+Implementation state:
+
+- P0 persisted Source model / v0.5 settings compatibility: GREEN;
+- P1 source-neutral geometry seam: GREEN;
+- P2 registered preset materialization: GREEN;
+- P3 ordinary targeted Set/tile placement: GREEN;
+- P4 expression-catalog unification: GREEN;
+- P5 association v2 / exact cross-source replacement: GREEN;
+- P6 Set-owned preset geometry Resync: GREEN;
+- P7 explicit registration + source-aware Settings/UX: GREEN;
+- P8 exact Release / closeout: GREEN.
+
+Release #615 (`35834323751`) at exact product/test/package source `7ffe3b2c690a57850c77821f7b4c3eeb6517b3dc` passed **1,763 Native assertions**, `PLACEMENT_SOURCE_P0=PASS` through `PLACEMENT_SOURCE_P7=PASS`, full retained regression/evidence guards, exact distribution-DLL native smoke and verified v0.5.0 `.ymme` / source / provenance packaging. Artifact `10739180157` (`native-yymm4-release`) is the final P8 evidence.
+
 ## Portable settings storage
 
-Status: **RELEASE GREEN / MERGE READY — PR #27**
+Status: **COMPLETE / MAIN**
 
 User problem:
 
@@ -54,7 +93,7 @@ Implementation candidate:
 - corrupt legacy data is rejected only when it is still the sole first-migration source;
 - Release packaging rejects any packaged `Data/` payload.
 
-Release #532 (`35799709551`) at source `01003e072103cd5fefd032000456c65afaeaa15b`: **1,702 Native assertions PASS**, including real `CreateDefault()` migration/reopen on YMM4's actual plugin/Data and LocalAppData paths, Portable-over-legacy precedence, exact distribution-DLL smoke, and verified `.ymme` / source / provenance packaging. Public Lab PR #85 remains the real YMM4 `.ymme` update-preservation host evidence.
+Release #532 (`35799709551`) proved the feature branch with **1,702 Native assertions PASS**. PR #27 is merged to main; main Release #535 also passed full Native, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Public Lab PR #85 remains the real YMM4 `.ymme` update-preservation host evidence.
 
 
 ## Built-in Tachie Preset loading performance — deferred

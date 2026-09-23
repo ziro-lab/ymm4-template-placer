@@ -6,13 +6,21 @@ namespace Ymm4TemplatePlacer;
 public sealed record TemplateChoice(FaceTemplate? Template, string Label, string? ShortName = null, bool IsAvailable = true)
 {
     internal TachiePresetCandidateDescriptor? TachiePreset { get; init; }
+    internal RegisteredPresetExpressionSource? RegisteredPreset { get; init; }
     public bool IsCurrentOtherSource { get; init; }
     internal bool IsInvalidAssociation { get; init; }
-    public bool HasCandidate => Template != null || TachiePreset != null;
+    public bool HasCandidate => Template != null || TachiePreset != null || RegisteredPreset != null;
     public string DisplayName => ShortName ?? Label;
     internal static TemplateChoice Preset(TachiePresetCandidateDescriptor value) => new(null,
         value.Confidence == TachiePresetCapabilityLevel.Experimental ? value.Label + "（実験・状態未確認）" : value.Label)
         { TachiePreset = value };
+
+    internal static TemplateChoice Registered(RegisteredPresetExpressionSource value, bool available = true) =>
+        new(null,
+            available ? value.DisplayName + "（登録済み）" : "⚠ " + value.DisplayName + "（登録元を確認）",
+            value.DisplayName,
+            available)
+        { RegisteredPreset = value };
 }
 
 public sealed class AssignmentRow : INotifyPropertyChanged
@@ -25,6 +33,7 @@ public sealed class AssignmentRow : INotifyPropertyChanged
     public int Length => Target.Length;
     public IReadOnlyList<TemplateChoice> Choices { get; private set; }
     public bool HasCandidates => Choices.Any(x => x.HasCandidate && x.IsAvailable);
+    public bool CanRegisterSelectedPreset => selectedChoice.TachiePreset != null && selectedChoice.IsAvailable && !selectedChoice.IsCurrentOtherSource;
     public bool UsesIntentSources { get; private set; }
     public string State => SelectedChoice.IsInvalidAssociation ? "関連付けを確認" :
         SelectedChoice.IsCurrentOtherSource ? "別の元から配置済み" : !SelectedChoice.IsAvailable ? "選択元を確認" :
@@ -45,7 +54,7 @@ public sealed class AssignmentRow : INotifyPropertyChanged
         set
         {
             if (AssignmentLocked || value == null || !Choices.Contains(value) || ReferenceEquals(value, selectedChoice)) return;
-            selectedChoice = value; AssociationMatchesSelection = false; Changed(); Changed(nameof(State));
+            selectedChoice = value; AssociationMatchesSelection = false; Changed(); Changed(nameof(State)); Changed(nameof(CanRegisterSelectedPreset));
         }
     }
     public AssignmentRow(int no, VoiceSnapshot target, IReadOnlyList<FaceTemplate> catalog, bool? intentSources = null)
@@ -72,7 +81,7 @@ public sealed class AssignmentRow : INotifyPropertyChanged
         {
             Changed(nameof(Target)); Changed(nameof(Character)); Changed(nameof(Serif)); Changed(nameof(Frame)); Changed(nameof(Length));
         }
-        Changed(nameof(Choices)); Changed(nameof(SelectedChoice)); Changed(nameof(State)); Changed(nameof(HasCandidates));
+        Changed(nameof(Choices)); Changed(nameof(SelectedChoice)); Changed(nameof(State)); Changed(nameof(HasCandidates)); Changed(nameof(CanRegisterSelectedPreset));
     }
     internal void SetAssociationMatch(bool value)
     {
@@ -104,7 +113,7 @@ public sealed class AssignmentRow : INotifyPropertyChanged
         }
         next ??= Choices.First();
         if (ReferenceEquals(next, selectedChoice)) return;
-        selectedChoice = next; Changed(nameof(SelectedChoice)); Changed(nameof(State));
+        selectedChoice = next; Changed(nameof(SelectedChoice)); Changed(nameof(State)); Changed(nameof(CanRegisterSelectedPreset));
     }
     public void SetCandidateMode(bool relative) => UsesIntentSources = relative;
     public void RefreshCandidates(IReadOnlyList<FaceTemplate> catalog, PlacerSettings settings, bool? relative = null)
@@ -124,7 +133,7 @@ public sealed class AssignmentRow : INotifyPropertyChanged
                 next.Add(replacement); // Retain an explicit unavailable selection; never silently discard or heal an assignment.
             }
             Choices = next; selectedChoice = replacement ?? next[0];
-            Changed(nameof(Choices)); Changed(nameof(SelectedChoice)); Changed(nameof(State)); Changed(nameof(HasCandidates)); return;
+            Changed(nameof(Choices)); Changed(nameof(SelectedChoice)); Changed(nameof(State)); Changed(nameof(HasCandidates)); Changed(nameof(CanRegisterSelectedPreset)); return;
         }
         var selected = SelectedChoice.Template;
         var candidates = TemplateCatalog.ForVoice(Target.Voice, catalog);
