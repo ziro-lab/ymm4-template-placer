@@ -293,7 +293,16 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     private string ReadableFixedDuration() => int.TryParse(FixedDuration, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n > 0 ? $"{n}フレーム" : "指定した長さ";
     public void AddEntry(IntentEntry entry, IReadOnlyList<LibraryEntry> library)
     {
-        var draft = new IntentEntryDraft(entry, library); draft.Edited += (_, _) => Notify(nameof(Entries)); Entries.Add(draft);
+        var draft = new IntentEntryDraft(entry, library);
+        draft.Edited += (_, _) => Notify(nameof(Entries));
+        Entries.Add(draft);
+    }
+
+    internal void AddEntry(IntentEntry entry, PlacerSettings settings)
+    {
+        var draft = new IntentEntryDraft(entry, settings);
+        draft.Edited += (_, _) => Notify(nameof(Entries));
+        Entries.Add(draft);
     }
     public IntentPalette Build()
     {
