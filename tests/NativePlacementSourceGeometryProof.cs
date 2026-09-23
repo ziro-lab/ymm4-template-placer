@@ -80,6 +80,24 @@ internal static partial class NativeProof
             legacyPolicy.Offset == 1 && legacyPolicy.AbsoluteLayer == 0 &&
             legacyPolicy.Minimum == 0 && legacyPolicy.Maximum == 99,
             "PLACEMENT_RULE P2 old layer JSON defaults to the exact existing relative placement semantics");
+        var defaultPolicyJson = JsonSerializer.Serialize(new RelativeLayerPolicy());
+        Assert(!defaultPolicyJson.Contains("\"Mode\"", StringComparison.Ordinal) &&
+            !defaultPolicyJson.Contains("\"AbsoluteLayer\"", StringComparison.Ordinal),
+            "PLACEMENT_RULE P2 default relative policy does not add new placement-mode fields to persisted JSON");
+        var invalidAbsoluteBoundsRejected = false;
+        try
+        {
+            new RelativeLayerPolicy
+            {
+                Mode = LayerPlacementMode.Absolute,
+                AbsoluteLayer = 50,
+                Minimum = 60,
+                Maximum = 99
+            }.Validate();
+        }
+        catch (InvalidOperationException) { invalidAbsoluteBoundsRejected = true; }
+        Assert(invalidAbsoluteBoundsRejected,
+            "PLACEMENT_RULE P2 absolute base outside the saved search bounds is rejected before persistence/execution");
 
         var absolutePreset = new MaterializedPlacementSource(
             Guid.Parse("10000000-0000-4000-8000-000000000003"),
