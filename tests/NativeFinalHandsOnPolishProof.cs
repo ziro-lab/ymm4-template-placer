@@ -139,6 +139,38 @@ internal static partial class NativeProof
             !NestedWheelRouting.TryScrollFromHost(panel, root, -120, ModifierKeys.None),
             "FINAL H2: fixed-header ComboBox keeps intentional wheel ownership");
 
+        // Hands-on Round 2 found remaining dead zones in the fixed auto-commit/footer strip
+        // and the white outer edges beside SettingsScroll. Exercise the real WPF mouse-wheel
+        // event path there, not only the routing helper.
+        var owner = Window.GetWindow(view)!;
+        Assert(owner.Activate(), "FINAL H2 owner Window is active for physical outer-surface wheel proof");
+        await Task.Delay(80); await Idle();
+
+        async Task<bool> PhysicalOuterWheel(Point panelPoint)
+        {
+            root.ScrollToVerticalOffset(Math.Max(1, root.ScrollableHeight / 2));
+            await Idle(); panel.UpdateLayout();
+            var start = root.VerticalOffset;
+            var screen = panel.PointToScreen(panelPoint);
+            if (!Round2Input.SetCursorPos((int)Math.Round(screen.X), (int)Math.Round(screen.Y))) return false;
+            await Task.Delay(40);
+            Round2Input.mouse_event(0x0800, 0, 0, unchecked((uint)-120), UIntPtr.Zero);
+            await Task.Delay(120); await Idle(); root.UpdateLayout();
+            return root.VerticalOffset > start;
+        }
+
+        var footerPoint = panel.SettingsFooter.TranslatePoint(new Point(
+            Math.Max(1, panel.SettingsCommitNoticeText.ActualWidth / 2),
+            Math.Max(1, panel.SettingsCommitNoticeText.ActualHeight / 2)), panel);
+        Assert(await PhysicalOuterWheel(footerPoint),
+            "FINAL H2: physical wheel over the fixed auto-commit/footer strip scrolls the outer Settings viewer");
+
+        var rootMiddleY = root.TranslatePoint(new Point(0, Math.Max(1, root.ActualHeight / 2)), panel).Y;
+        Assert(await PhysicalOuterWheel(new Point(2, rootMiddleY)),
+            "FINAL H2: physical wheel over the far-left white Settings edge scrolls the outer viewer");
+        Assert(await PhysicalOuterWheel(new Point(Math.Max(1, panel.ActualWidth - 2), rootMiddleY)),
+            "FINAL H2: physical wheel outside the right scrollbar on the white Settings edge scrolls the outer viewer");
+
         panel.AnchorBox.BringIntoView();
         await Idle();
         root.UpdateLayout();
