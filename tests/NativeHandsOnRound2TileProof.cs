@@ -181,9 +181,11 @@ internal static partial class NativeProof
                 File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(priorBytes) && Signature(timeline) == signature,
                 "R2-D E4/E9 opening exact Set settings preserves an unrelated invalid draft and performs no save/placement");
             vm.ResetIntentSettings(); view.SelectionTab.IsSelected = true; view.Height = 440;
-            var settingsPanel = view.RelativeSettingsSurface; settingsPanel.SourceEditor.IsExpanded = false;
-            // Round 3 exposes all types directly; retain this compact-layout gate without a removed expander.
-            settingsPanel.SetManagement.IsExpanded = false; settingsPanel.SettingsScroll.ScrollToTop(); await Idle();
+            var settingsPanel = view.RelativeSettingsSurface;
+            // Phase 4 removes the first-level Source/Set-management disclosure. Retain the compact-layout gate against the visible surface.
+            Assert(settingsPanel.SourceEditor.IsVisible,
+                "R2-D/C bulk source registration stays discoverable without a first-level disclosure");
+            settingsPanel.SettingsScroll.ScrollToTop(); await Idle();
             Assert(settingsPanel.PalettePicker.ActualWidth > 150 && settingsPanel.SettingsScroll.ViewportHeight > 140 &&
                 settingsPanel.RollbackButton.TranslatePoint(new Point(0, settingsPanel.RollbackButton.ActualHeight), view).Y <= view.ActualHeight,
                 "R2-D/C narrow Settings uses compact direct targets and a full-width Set picker, retaining a usable scrolling viewport and visible rollback");

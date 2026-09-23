@@ -118,7 +118,8 @@ internal static partial class NativeProof
             // The preceding R3-G proof deliberately expanded the presentation editor.
             // Restore a focused SourceList viewport instead of aiming at a clipped thumb.
             ((Expander)surface.PresentationSettingsSurface.Content).IsExpanded = false;
-            surface.SourceEditor.IsExpanded = true;
+            Assert(surface.SourceEditor.IsVisible,
+                "R4-A source list remains directly visible after compact Settings disclosure removal");
             surface.SettingsScroll.ScrollToBottom(); view.UpdateLayout(); await Idle();
             var root = surface.SettingsScroll;
             var inner = Descendant<ScrollViewer>(surface.SourceList) ?? throw new InvalidOperationException("R4-A inner source ScrollViewer missing");

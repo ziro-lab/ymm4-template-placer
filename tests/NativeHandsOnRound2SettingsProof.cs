@@ -88,7 +88,9 @@ internal static partial class NativeProof
             Assert(JsonSerializer.Serialize(session.Build()) == batchBefore && session.Sources.Count(x => x.Selected) == 2,
                 "R2-C Generic source failure preserves both selected inputs and all draft membership/library bytes");
             session.Sources.Single(x => ReferenceEquals(x.Source, bundle)).Selected = false;
-            panel.SourceEditor.IsExpanded = true; await Idle();
+            Assert(panel.SourceEditor.IsVisible,
+                "R2-C bulk source registration remains directly visible after first-level disclosure removal");
+            await Idle();
             await InvokeSelectionButton(panel.AddSourcesButton);
             Assert(created.Entries.Single().LibraryEntryId == reference.Id && session.Build().Library.Count == 1,
                 "R2-C Generic staged bulk add reuses the exact existing Library reference without another source store");

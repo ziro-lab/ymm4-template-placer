@@ -54,9 +54,11 @@ internal static partial class NativeProof
             Assert(session.Intents.SequenceEqual(new[] { "文字の演出" }) && session.SelectedPalette?.Id == textPalette.Id && !session.HasChanges &&
                 session.Palettes.Single(x => x.Id == palette.Id).Name == session.Palettes.Single(x => x.Id == textPalette.Id).Name,
                 "H1 Item navigation filters the Set, allows the same Set name under different Item owners and makes no clean-draft edit");
-            panel.SetManagement.IsExpanded = true; await Idle();
+            Assert(panel.SetManagement.IsVisible,
+                "H1 Set management is directly visible for the current targeted Set without a first-level disclosure click");
+            await Idle();
             Assert(session.VisiblePalettes.Cast<IntentPaletteDraft>().Single().Id == textPalette.Id && view.MainTabs.Items.Count == 3 && !session.HasChanges,
-                "H1 expanding Set management stays scoped to the current Item owner and adds no fourth task");
+                "H1 visible Set management stays scoped to the current Item owner and adds no fourth task");
 
             session.SelectedItemContext = session.ItemContexts.Single(x => x.IsCurrentSelection); await Idle();
             var sourceDraft = session.SelectedPalette!;
