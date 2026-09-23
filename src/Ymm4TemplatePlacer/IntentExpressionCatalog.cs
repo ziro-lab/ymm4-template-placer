@@ -66,3 +66,76 @@ public static class IntentExpressionCatalog
         })).ToArray();
     }
 }
+
+
+internal sealed record RegisteredPresetExpressionSource(
+    Guid PaletteId,
+    Guid SourceId,
+    string Character,
+    string DisplayName,
+    string PaletteName,
+    string SourceSemanticHash,
+    TachiePresetSourceEntry Source)
+{
+    internal bool MatchesCandidate(TachiePresetCandidateDescriptor candidate)
+    {
+        ArgumentNullException.ThrowIfNull(candidate);
+        return Character == candidate.Fingerprint.CharacterIdentity &&
+            Source.PluginRuntimeType == candidate.Fingerprint.PluginRuntimeType &&
+            Source.PluginModuleMvid == candidate.Fingerprint.PluginModuleMvid &&
+            Source.FaceParameterRuntimeType == candidate.Fingerprint.FaceParameterRuntimeType &&
+            Source.Route() == candidate.Route &&
+            Source.CandidateIdentity == candidate.CandidateIdentity;
+    }
+
+    internal (IntentPalette Palette, IntentEntry Entry, TachiePresetSourceEntry Source) ResolveCurrent(PlacerSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        var palette = settings.IntentPalettes.SingleOrDefault(x => x.Id == PaletteId);
+        var entry = palette?.Entries.SingleOrDefault(x => x.SourceId == SourceId);
+        var source = settings.TachiePresetSources.SingleOrDefault(x => x.Id == SourceId);
+        if (palette == null || !palette.ExpressionCandidates || entry == null || source == null ||
+            source.SemanticHash() != SourceSemanticHash ||
+            source.CharacterName != Character)
+            throw new InvalidOperationException("選択後に登録済み立ち絵プリセットSourceまたは所属Setが変更されました。候補を更新して選び直してください。");
+        return (palette, entry, source);
+    }
+}
+
+internal static class RegisteredPresetExpressionCatalog
+{
+    internal static IReadOnlyList<RegisteredPresetExpressionSource> Read(PlacerSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        var voiceType = IntentSelectionContext.TypeKey(typeof(VoiceItem));
+        var result = new List<RegisteredPresetExpressionSource>();
+        foreach (var palette in settings.IntentPalettes.Where(x =>
+            x.ExpressionCandidates &&
+            x.Target.TypeMatch == IntentTypeMatch.UniformType &&
+            x.Target.MinimumCount <= 1 &&
+            x.Target.MaximumCount >= 1 &&
+            x.Target.ItemTypeKeys.Contains(voiceType, StringComparer.Ordinal)))
+        {
+            foreach (var entry in palette.Entries)
+            {
+                PlacementSourceRegistration registration;
+                try { registration = PlacementSourceRegistry.Resolve(settings, entry.SourceId); }
+                catch (InvalidOperationException) { continue; }
+                if (registration.Kind != PlacementSourceKind.TachiePreset) continue;
+                var source = registration.TachiePreset!;
+                if (palette.Target.CharacterName == null ||
+                    !string.Equals(palette.Target.CharacterName, source.CharacterName, StringComparison.Ordinal))
+                    continue;
+                result.Add(new(
+                    palette.Id,
+                    source.Id,
+                    source.CharacterName,
+                    IntentTileAppearance.Label(entry, registration),
+                    palette.Name,
+                    source.SemanticHash(),
+                    source));
+            }
+        }
+        return result.AsReadOnly();
+    }
+}
