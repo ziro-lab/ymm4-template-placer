@@ -1,6 +1,6 @@
 # Placement Source Unification Workplan
 
-Status: **IMPLEMENTATION PREP CANDIDATE**
+Status: **P0-P7 IMPLEMENTED / NATIVE GREEN — P8 FINAL RELEASE**
 
 Authority:
 
@@ -10,6 +10,31 @@ Authority:
 - `VALIDATION_STRATEGY.md`
 
 Do not redesign the feature while implementing these slices. If a required host behavior contradicts the frozen design, stop that slice and return the evidence to design review.
+
+
+## Current implementation status
+
+P0-P7 are implemented on PR #28.
+
+Release #606 (`35819073910`) at source `a65e8177a7ab21dfc9f442d364a3cc018fb6e483` passed:
+
+- **1,763 Native assertions**;
+- `PLACEMENT_SOURCE_P0=PASS` through `PLACEMENT_SOURCE_P7=PASS`;
+- retained WUX3/WUX4 and full semantic regression/evidence guards;
+- exact distribution DLL native smoke;
+- verified v0.5.0 `.ymme` / source / provenance packaging.
+
+Two later product-only commits clarify the final P7 UX text without changing placement semantics. P8 must run Release at the exact final source after this document/status closeout.
+
+Frozen P7 UX decisions:
+
+- explicit registration lives on an unregistered Tachie Preset row as `Setへ登録`;
+- registered preset sources are first-class Set/tile sources and use the owning Set's `IntentRelation`;
+- current Template / TachiePreset source mode remains as candidate visibility/filter UX for now;
+- the standalone `ExpressionPreset` controls remain only for the unregistered direct-placement compatibility path;
+- removing a Set membership does not delete the registered source or Timeline items automatically;
+- no eager preset/plugin discovery occurs merely by opening Settings.
+
 
 ## P0 — persisted source model / compatibility seam
 
