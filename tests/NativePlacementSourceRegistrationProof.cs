@@ -12,6 +12,7 @@ internal static partial class NativeProof
         stage = "Placement Source P7 explicit preset registration and Settings";
         using var scope = new Round3Fixture(timeline, undo);
         var vm = ViewModel!;
+        var originalResolver = vm.PresetTargetResolver;
 
         var config = new P3Config();
         var character = new Character
@@ -41,6 +42,8 @@ internal static partial class NativeProof
             Layer = 20,
             Serif = "P7 register target"
         };
+        try
+        {
         var fixture = PlacerSettingsStore.Copy(scope.Original);
         fixture.ExpressionBootstrapComplete = true;
         fixture.IntentPaletteRevision = 1;
@@ -145,29 +148,26 @@ internal static partial class NativeProof
             Signature(timeline) == baseline,
             "PLACEMENT_SOURCE P7 removing a Set tile keeps the registered Source identity and never deletes existing Timeline content automatically");
 
-        var oldResolver = vm.PresetTargetResolver;
-        try
-        {
-            var wrong = new TachiePresetCandidateDescriptor(
-                candidate.Fingerprint with { CharacterConfigIdentity = new string('0', 64) },
-                candidate.Route,
-                candidate.CandidateIdentity,
-                candidate.Label,
-                candidate.Confidence);
-            var beforeWrong = File.ReadAllBytes(PlacerSettingsStore.DefaultPath);
-            var rejected = false;
-            try { _ = vm.RegisterTachiePresetSource(snapshot, wrong, createdSet.Id); }
-            catch (InvalidOperationException) { rejected = true; }
-            Assert(rejected &&
-                File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(beforeWrong) &&
-                Signature(timeline) == baseline,
-                "PLACEMENT_SOURCE P7 stale detected candidate is rejected before settings or Timeline mutation");
+        var wrong = new TachiePresetCandidateDescriptor(
+            candidate.Fingerprint with { CharacterConfigIdentity = new string('0', 64) },
+            candidate.Route,
+            candidate.CandidateIdentity,
+            candidate.Label,
+            candidate.Confidence);
+        var beforeWrong = File.ReadAllBytes(PlacerSettingsStore.DefaultPath);
+        var rejected = false;
+        try { _ = vm.RegisterTachiePresetSource(snapshot, wrong, createdSet.Id); }
+        catch (InvalidOperationException) { rejected = true; }
+        Assert(rejected &&
+            File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(beforeWrong) &&
+            Signature(timeline) == baseline,
+            "PLACEMENT_SOURCE P7 stale detected candidate is rejected before settings or Timeline mutation");
+
+        Log("PLACEMENT_SOURCE_P7=PASS");
         }
         finally
         {
-            vm.PresetTargetResolver = oldResolver;
+            vm.PresetTargetResolver = originalResolver;
         }
-
-        Log("PLACEMENT_SOURCE_P7=PASS");
     }
 }
