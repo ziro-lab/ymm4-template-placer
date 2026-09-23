@@ -8,7 +8,7 @@ Being listed here is not implementation approval or priority commitment.
 
 ## Portable settings storage
 
-Status: **IMPLEMENTED CANDIDATE / RELEASE GREEN — PR #27; OWNER HANDS-ON BEFORE MERGE**
+Status: **RELEASE GREEN / MERGE READY — PR #27**
 
 User problem:
 
@@ -54,7 +54,7 @@ Implementation candidate:
 - corrupt legacy data is rejected only when it is still the sole first-migration source;
 - Release packaging rejects any packaged `Data/` payload.
 
-Release #525 (`35797613825`) at source `e0f8128f63a687f90e8491fa0340e724c0229cd5`: **1,702 Native assertions PASS**, exact distribution-DLL smoke PASS, verified `.ymme` / source / provenance packaging PASS. Public Lab PR #85 remains the real YMM4 `.ymme` update-preservation host evidence.
+Release #532 (`35799709551`) at source `01003e072103cd5fefd032000456c65afaeaa15b`: **1,702 Native assertions PASS**, including real `CreateDefault()` migration/reopen on YMM4's actual plugin/Data and LocalAppData paths, Portable-over-legacy precedence, exact distribution-DLL smoke, and verified `.ymme` / source / provenance packaging. Public Lab PR #85 remains the real YMM4 `.ymme` update-preservation host evidence.
 
 
 ## Built-in Tachie Preset loading performance — deferred
