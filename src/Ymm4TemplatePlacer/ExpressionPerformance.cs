@@ -252,7 +252,8 @@ internal static partial class ExpressionPreparation
                     metadata.GeometryHash == descriptor.GeometryHash);
                 if (selected == null) unavailable = "⚠ 現在の関連表情（選択元を確認）";
             }
-            else if (association.Descriptor is { Kind: ManagedExpressionSourceKind.TachiePreset })
+            else if (association.Descriptor?.Kind is
+                ManagedExpressionSourceKind.TachiePreset or ManagedExpressionSourceKind.RegisteredTachiePreset)
             {
                 selected = new(null, "現在：立ち絵プリセット由来の表情") { IsCurrentOtherSource = true };
                 sourceNotice = "現在の表情は立ち絵プリセットから配置されています。表示切替では変更しません。";
