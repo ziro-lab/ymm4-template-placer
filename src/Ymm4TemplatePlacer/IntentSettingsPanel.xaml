@@ -9,11 +9,25 @@
   <Style TargetType="ComboBox"><Setter Property="Margin" Value="0,2,0,7"/><Setter Property="Padding" Value="5,3"/></Style>
   <Style TargetType="Button"><Setter Property="Margin" Value="0,2,6,4"/><Setter Property="Padding" Value="8,5"/></Style>
   <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
+  <Style x:Key="SettingsSectionHeader" TargetType="TextBlock">
+   <Setter Property="FontWeight" Value="SemiBold"/>
+   <Setter Property="Margin" Value="0,8,0,4"/>
+  </Style>
+  <Style x:Key="SetPickerComboStyle" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+   <Setter Property="MinHeight" Value="30"/>
+   <Setter Property="Margin" Value="0,2,6,4"/>
+   <Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
+  <Style x:Key="SetPickerButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+   <Setter Property="MinHeight" Value="30"/>
+   <Setter Property="Margin" Value="0,2,6,4"/>
+   <Setter Property="Padding" Value="8,3"/>
+   <Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
  </UserControl.Resources>
  <Grid Margin="6">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <StackPanel Grid.Row="0">
-   <local:PalettePresentationPanel x:Name="PresentationSettingsSurface"/>
    <StackPanel x:Name="ItemFirstContextPanel">
     <ItemsControl x:Name="SettingsTargetButtons" ItemsSource="{Binding IntentSettings.DirectItemContexts}" AutomationProperties.Name="Setを使う対象">
      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -31,12 +45,12 @@
    <Grid>
     <Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <TextBlock Text="セット" Grid.Column="0" VerticalAlignment="Center"/>
-    <WrapPanel Grid.Column="2">
-     <Button x:Name="NewPaletteButton" Content="＋" Command="{Binding CreateIntentPaletteCommand}" ToolTip="このアイテムで使うセットを作る" AutomationProperties.Name="このアイテムのセットを作成"/>
-     <Button x:Name="DirectDeletePaletteButton" Content="削除" Command="{Binding DeleteIntentPaletteCommand}" ToolTip="現在選択しているセットを削除" AutomationProperties.Name="現在のセットを削除"/>
+    <WrapPanel Grid.Column="2" VerticalAlignment="Top">
+     <Button x:Name="NewPaletteButton" Style="{StaticResource SetPickerButtonStyle}" Content="＋" Command="{Binding CreateIntentPaletteCommand}" ToolTip="このアイテムで使うセットを作る" AutomationProperties.Name="このアイテムのセットを作成"/>
+     <Button x:Name="DirectDeletePaletteButton" Style="{StaticResource SetPickerButtonStyle}" Content="削除" Command="{Binding DeleteIntentPaletteCommand}" ToolTip="現在選択しているセットを削除" AutomationProperties.Name="現在のセットを削除"/>
     </WrapPanel>
-    <ComboBox Grid.Column="1" x:Name="PalettePicker" ItemsSource="{Binding IntentSettings.VisiblePalettes}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedPalette,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集するセット"/>
-    <ComboBox Grid.Column="1" x:Name="GenericPalettePicker" ItemsSource="{Binding IntentSettings.GenericSets}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedGenericSet,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集する汎用セット"/>
+    <ComboBox Grid.Column="1" x:Name="PalettePicker" Style="{StaticResource SetPickerComboStyle}" ItemsSource="{Binding IntentSettings.VisiblePalettes}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedPalette,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集するセット"/>
+    <ComboBox Grid.Column="1" x:Name="GenericPalettePicker" Style="{StaticResource SetPickerComboStyle}" ItemsSource="{Binding IntentSettings.GenericSets}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedGenericSet,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集する汎用セット"/>
    </Grid>
    <TextBlock Text="{Binding IntentSettings.ContextNotice}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Opacity="0.72"/>
 
@@ -49,8 +63,9 @@
     <Button Content="四角" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Square}"/>
     <Button Content="丸" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Circle}"/>
    </WrapPanel>
-   <Expander x:Name="SetManagement" Header="セットの管理" IsExpanded="False" Margin="0,0,0,4">
-    <StackPanel>
+   <StackPanel x:Name="SetManagement" Margin="0,0,0,4" Visibility="{Binding IntentSettings.HasSelectedSet,Converter={StaticResource VisibleWhen}}">
+    <TextBlock Text="セットの管理" Style="{StaticResource SettingsSectionHeader}"/>
+    <StackPanel Margin="8,0,0,0">
      <WrapPanel>
       <Button x:Name="DuplicateButton" Content="複製" Command="{Binding DuplicateIntentPaletteCommand}"/>
       <Button Content="↑" ToolTip="このアイテム内でSetを前へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="-1"/>
@@ -66,7 +81,7 @@
       </WrapPanel>
      </StackPanel>
     </StackPanel>
-   </Expander>
+   </StackPanel>
     <local:GenericSetSettingsPanel x:Name="GenericSettingsSurface" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}"/>
     <StackPanel DataContext="{Binding IntentSettings.SelectedPalette}">
      <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
@@ -81,8 +96,9 @@
      <TextBlock Text="セット名"/>
      <TextBox x:Name="SetNameBox" Text="{Binding Name,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
 
-     <Expander x:Name="TargetEditor" Header="どのアイテムで使うか" IsExpanded="True" Margin="0,4">
-      <StackPanel Margin="8,5">
+     <StackPanel x:Name="TargetEditor" Margin="0,4">
+      <TextBlock Text="どのアイテムで使うか" Style="{StaticResource SettingsSectionHeader}"/>
+      <StackPanel Margin="8,0,0,0">
        <CheckBox x:Name="CharacterRestrictionCheck" Content="{Binding CharacterRestrictionLabel}" IsChecked="{Binding CharacterRestricted,Mode=TwoWay}" Margin="0,3,0,5"/>
        <StackPanel x:Name="CharacterNamePanel">
         <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowCharacterName}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
@@ -97,10 +113,11 @@
         </StackPanel>
        </Expander>
       </StackPanel>
-     </Expander>
+     </StackPanel>
 
-     <Expander x:Name="RelationEditor" Header="どう置く？" IsExpanded="True" Margin="0,4">
-      <StackPanel Margin="8,5">
+     <StackPanel x:Name="RelationEditor" Margin="0,4">
+      <TextBlock Text="どう置く？" Style="{StaticResource SettingsSectionHeader}"/>
+      <StackPanel Margin="8,0,0,0">
        <WrapPanel>
        <ComboBox x:Name="AnchorBox" ItemsSource="{Binding SentenceAnchors}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Anchor,Mode=TwoWay}" MaxWidth="250">
         <ComboBox.ItemContainerStyle><Style TargetType="ComboBoxItem"><Setter Property="IsEnabled" Value="{Binding Available}"/></Style></ComboBox.ItemContainerStyle>
@@ -176,10 +193,11 @@
         </StackPanel>
        </Expander>
       </StackPanel>
-     </Expander>
+     </StackPanel>
 
-     <Expander x:Name="EntryEditor" Header="演出と並び順" IsExpanded="True" Margin="0,4">
-      <StackPanel Margin="8,5">
+     <StackPanel x:Name="EntryEditor" Margin="0,4">
+      <TextBlock Text="演出と並び順" Style="{StaticResource SettingsSectionHeader}"/>
+      <StackPanel Margin="8,0,0,0">
        <ListBox x:Name="EntryList" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry,Mode=TwoWay}" MinHeight="80" MaxHeight="220" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
         <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" ToolTip="{Binding SourceDetail}" Padding="5,4"/></DataTemplate></ListBox.ItemTemplate>
        </ListBox>
@@ -206,19 +224,21 @@
         </StackPanel>
        </Expander>
       </StackPanel>
-     </Expander>
+     </StackPanel>
     </StackPanel>
 
-    <Expander x:Name="SourceEditor" Header="テンプレートをまとめて追加" Margin="0,5">
-     <StackPanel Margin="8,5">
+    <StackPanel x:Name="SourceEditor" Margin="0,5">
+     <TextBlock Text="テンプレートをまとめて追加" Style="{StaticResource SettingsSectionHeader}"/>
+     <StackPanel Margin="8,0,0,0">
       <TextBox Text="{Binding IntentSettings.SourceSearch,UpdateSourceTrigger=PropertyChanged}" ToolTip="元テンプレート名で検索"/>
-      <ListBox x:Name="SourceList" ItemsSource="{Binding IntentSettings.VisibleSources}" MaxHeight="240" MinHeight="80" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
+      <ListBox x:Name="SourceList" ItemsSource="{Binding IntentSettings.VisibleSources}" MaxHeight="240" MinHeight="80" Margin="16,0,6,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
        <ListBox.ItemTemplate><DataTemplate><CheckBox IsChecked="{Binding Selected,Mode=TwoWay}" Margin="2,4"><TextBlock Text="{Binding Label}" TextWrapping="Wrap"/></CheckBox></DataTemplate></ListBox.ItemTemplate>
       </ListBox>
       <Button x:Name="AddSourcesButton" Content="チェックしたテンプレートを追加" Command="{Binding AddIntentSourcesCommand}" HorizontalAlignment="Left"/>
       <Button Content="新しい表情を取り込む" Command="{Binding RescanIntentExpressionsCommand}" HorizontalAlignment="Left"/>
      </StackPanel>
-    </Expander>
+    </StackPanel>
+    <local:PalettePresentationPanel x:Name="PresentationSettingsSurface" Margin="0,6,0,0"/>
    </StackPanel>
   </ScrollViewer>
   <StackPanel Grid.Row="2" Margin="0,6,0,0">
