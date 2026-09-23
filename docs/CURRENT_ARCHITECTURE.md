@@ -128,6 +128,23 @@ Settings persistence must keep:
 - cross-instance locking;
 - no silent rebase/retry over a conflict.
 
+The authoritative product settings file travels with the YMM4 plugin installation:
+
+```text
+<YMM4>/user/plugin/Ymm4TemplatePlacer/Data/settings-v04.json
+```
+
+Migration from the historical LocalAppData file is one-way and fail-closed:
+
+- if no portable file exists and the legacy file is valid, copy its validated bytes to the portable location and retain the legacy file;
+- once the portable file exists, it is the sole authority and legacy LocalAppData contents no longer override or block it;
+- if both exist and differ, load the portable file;
+- if the authoritative portable file is corrupt, never silently fall back to the legacy file;
+- if the legacy file is corrupt before first migration, reject it and create no portable settings file;
+- first migration uses the same cross-instance lock/atomic-write discipline as normal persistence.
+
+The `.ymme` package must never own or overwrite `Data/settings-v04.json`.
+
 `PlacerSettingsStore` is an intentional product boundary, not a temporary substitute for generic plugin-settings helpers. Do not replace it mechanically with host helpers such as `SettingsBase<T>`. The current product contract additionally requires complete-draft/schema validation, the 1 MiB guard, fail-closed handling for corrupt/future settings, digest-based external-change detection, cross-instance locking, atomic replacement and exact Settings-session rollback. Revisit this choice only if a host API is proved to preserve the same conflict-aware/fail-closed contract without weakening those guarantees.
 
 Settings operations do not mutate Timeline or original YMM4 Templates.

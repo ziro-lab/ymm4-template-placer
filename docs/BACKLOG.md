@@ -6,9 +6,9 @@ Being listed here is not implementation approval or priority commitment.
 
 ## Active
 
-## Portable settings storage — high priority candidate
+## Portable settings storage
 
-Status: **HIGH PRIORITY / DESIGN NEXT**
+Status: **RELEASE GREEN / MERGE READY — PR #27**
 
 User problem:
 
@@ -35,7 +35,7 @@ Migration direction:
 1. if the new portable settings file exists, load it;
 2. otherwise, if the old `%LOCALAPPDATA%` settings file exists, validate/read it and migrate safely to the portable location;
 3. do not delete the old file automatically during the first migration;
-4. never choose between two divergent valid files silently — surface the conflict and preserve both;
+4. once the Portable file exists, it is authoritative even if the retained legacy file differs;
 5. migration must not weaken the existing fail-closed settings behavior.
 
 Packaging caution:
@@ -43,6 +43,18 @@ Packaging caution:
 Because the observed `.ymme` updater preserves files that are omitted from a later package, future package-layout changes must explicitly account for stale plugin files. Do not rely on update installation to clean old files automatically.
 
 This portability work is independent from placement semantics and should not broaden the active placement feature PR.
+
+Implementation candidate:
+
+- authoritative path: `<YMM4>/user/plugin/Ymm4TemplatePlacer/Data/settings-v04.json`;
+- valid legacy-only LocalAppData settings migrate byte-for-byte after validation;
+- legacy file remains in place;
+- once Portable exists, it is authoritative and retained LocalAppData differences do not block startup;
+- corrupt Portable never silently falls back to legacy;
+- corrupt legacy data is rejected only when it is still the sole first-migration source;
+- Release packaging rejects any packaged `Data/` payload.
+
+Release #532 (`35799709551`) at source `01003e072103cd5fefd032000456c65afaeaa15b`: **1,702 Native assertions PASS**, including real `CreateDefault()` migration/reopen on YMM4's actual plugin/Data and LocalAppData paths, Portable-over-legacy precedence, exact distribution-DLL smoke, and verified `.ymme` / source / provenance packaging. Public Lab PR #85 remains the real YMM4 `.ymme` update-preservation host evidence.
 
 
 ## Built-in Tachie Preset loading performance — deferred

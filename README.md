@@ -82,11 +82,13 @@ Template Placerの固定インストールフォルダは次の場所です。
 YMM4/user/plugin/Ymm4TemplatePlacer/
 ```
 
-設定ファイルは次の場所に保存します。
+設定ファイルはYMM4フォルダと一緒に持ち運べるよう、プラグインの `Data` フォルダへ保存します。
 
 ```text
-%LOCALAPPDATA%/Ymm4TemplatePlacer/settings-v04.json
+YMM4/user/plugin/Ymm4TemplatePlacer/Data/settings-v04.json
 ```
+
+旧バージョンの `%LOCALAPPDATA%/Ymm4TemplatePlacer/settings-v04.json` だけが存在する場合は、内容を検証してから初回起動時にPortable側へ移行します。旧ファイルは自動削除せず、バックアップとして残します。Portable側が存在する場合はそちらを常に正として使い、旧LocalAppData側の内容が異なっていてもPortable側を優先します。
 
 更新前や大きな設定変更を行う前は、普段のYMM4プロジェクトと設定をバックアップしておくことをおすすめします。
 

@@ -82,6 +82,7 @@ if (Test-Path $log) { Get-Content $log }
 if (-not (Test-Path $result)) { throw "Native proof did not finish within $TimeoutSeconds seconds; inspect windows-seen and build evidence" }
 Get-Content $result
 if (-not (Select-String -Path $result -Pattern '^PASS P1 P2 P3 P4 P5 P6 P7 P8 P9$')) { throw 'Native functional proof failed' }
+if (-not (Select-String -Path $log -Pattern '^PORTABLE_SETTINGS=PASS$')) { throw 'Portable Settings migration proof is incomplete' }
 
 $presetProofs=@(
  @{File='tachie-preset-capability.json'; Schema='YMM4-Template-Placer-Tachie-Preset-Capability/1'; Marker='TACHIE_PRESET_CAPABILITY_P3=PASS'},
