@@ -143,26 +143,33 @@ Exit:
 - existing v0.5 settings/tags stay safe and readable;
 - full Native/Release acceptance is GREEN.
 
-### 3. Placement rule inventory / bounded model completion — NEXT
+### 3. Placement rule inventory / bounded model completion — COMPLETE
 
 Before implementing a visual behavior preview, decide whether the near-term placement vocabulary is complete enough to explain.
 
 Review the current model and the Backlog together.
 
-Likely high-value candidates include:
+Inventory result:
 
-- Template Pivot / source-side alignment;
-- Absolute Layer;
-- finite stronger Target conditions;
-- finite stronger Neighbor selectors.
+- implement the missing **center alignment** by extending the existing `IntentAlignment`; do not add a duplicate general Source Pivot model;
+- implement **Absolute Layer** as an additive mode on the existing bounded layer policy;
+- current Target contracts are already sufficient before Preview; stronger target grammar is deferred;
+- current previous/next same-type / same-Character Neighbor selectors are already sufficient before Preview; arbitrary/typed neighbor grammar is deferred;
+- Composite Placement Steps and Fan-out are deferred because they change output multiplicity and deserve a separate design after the one-source Preview model is understood.
 
-Larger multiplicity changes such as Composite Placement Steps and Fan-out require a separate decision because they change what one tile/rule can produce and therefore materially change Preview structure.
+Accepted authorities:
+
+- `PLACEMENT_RULE_COMPLETION_DESIGN.md`;
+- `PLACEMENT_RULE_COMPLETION_ACCEPTANCE.md`;
+- `PLACEMENT_RULE_COMPLETION_WORKPLAN.md`.
 
 Rule:
 
 > Do not implement every collected Placement Recipe idea before Preview. Add only the placement axes that are likely to be part of the near-term normal product vocabulary.
 
 Also use this phase to finish the Expression Source decision from Phase 2. A Preview should not be built against a placement model that is already expected to be reorganized immediately afterward.
+
+Release #629 (`35857198385`) at exact source `5bfbccb5dd81071662ba756ec27591519ff98e19` passed **1,787 Native assertions**, P1-P3 explicit gates, full retained regression, exact distribution-DLL smoke and verified packaging. Phase 3 is complete.
 
 Exit:
 
@@ -171,7 +178,7 @@ Exit:
 - any pre-Preview placement additions are Native GREEN;
 - the Preview/Checklist can consume one authoritative placement-description model without source-specific geometry forks.
 
-### 4. Compact Settings friction / discoverability pass
+### 4. Compact Settings friction / discoverability pass — NEXT
 
 Improve the existing Settings surface after the source/placement model is understood, but before introducing a separate large workspace.
 

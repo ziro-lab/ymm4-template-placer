@@ -1,18 +1,26 @@
+using System.Text.Json.Serialization;
 using YukkuriMovieMaker.Project.Items;
 
 namespace Ymm4TemplatePlacer;
 
 public enum RelativeLayerDirection { Up, Down }
+public enum LayerPlacementMode { RelativeToTarget = 0, Absolute = 1 }
 public sealed record RelativeLayerPolicy
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public LayerPlacementMode Mode { get; init; } = LayerPlacementMode.RelativeToTarget;
     public RelativeLayerDirection Direction { get; init; } = RelativeLayerDirection.Up;
     public int Offset { get; init; } = 1;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int AbsoluteLayer { get; init; }
     public int Minimum { get; init; }
     public int Maximum { get; init; } = 99;
     public void Validate()
     {
-        if (!Enum.IsDefined(Direction) || Offset < 1 || Offset > 9999 || Minimum < 0 || Maximum < Minimum || Maximum > 9999)
-            throw new InvalidOperationException("上下の配置は1〜9999段、探索範囲は0〜9999で設定してください。");
+        if (!Enum.IsDefined(Mode) || !Enum.IsDefined(Direction) || Offset < 1 || Offset > 9999 ||
+            AbsoluteLayer < 0 || AbsoluteLayer > 9999 || Minimum < 0 || Maximum < Minimum || Maximum > 9999 ||
+            (Mode == LayerPlacementMode.Absolute && (AbsoluteLayer < Minimum || AbsoluteLayer > Maximum)))
+            throw new InvalidOperationException("レイヤー配置は保存済み探索範囲内の0〜9999、上下の間隔は1〜9999段で設定してください。");
     }
 }
 
@@ -55,12 +63,22 @@ public static class BundleLayerPlanner
 
         var occupied = occupancy.ToArray();
         var width = clones.Max(x => x.Layer);
-        long first = policy.Direction == RelativeLayerDirection.Up
-            ? (long)targetMinimumLayer - policy.Offset - width
-            : (long)targetMaximumLayer + policy.Offset;
         var step = policy.Direction == RelativeLayerDirection.Up ? -1 : 1;
-        // Clamp only farther in the requested direction; never move back toward/across the target band.
-        first = step < 0 ? Math.Min(first, (long)policy.Maximum - width) : Math.Max(first, policy.Minimum);
+        long first;
+        if (policy.Mode == LayerPlacementMode.Absolute)
+        {
+            first = policy.AbsoluteLayer;
+            if (first < policy.Minimum || first + width > policy.Maximum)
+                throw new InvalidOperationException("指定した絶対レイヤーでは配置Source全体が探索範囲に収まりません。");
+        }
+        else
+        {
+            first = policy.Direction == RelativeLayerDirection.Up
+                ? (long)targetMinimumLayer - policy.Offset - width
+                : (long)targetMaximumLayer + policy.Offset;
+            // Clamp only farther in the requested direction; never move back toward/across the target band.
+            first = step < 0 ? Math.Min(first, (long)policy.Maximum - width) : Math.Max(first, policy.Minimum);
+        }
         for (var baseline = first; baseline >= policy.Minimum && baseline + width <= policy.Maximum; baseline += step)
         {
             var free = clones.All(clone => !occupied.Any(x => (long)x.Layer == baseline + clone.Layer &&

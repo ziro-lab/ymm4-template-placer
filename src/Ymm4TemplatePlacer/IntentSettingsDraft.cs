@@ -134,6 +134,7 @@ public sealed partial class IntentPaletteDraft : IntentEditable
         Raise(nameof(Summary)); Raise(nameof(ShowTypeMatch)); Raise(nameof(ShowFixedDuration)); Raise(nameof(ShowNeighborSettings));
         Raise(nameof(ShowNeighborEdge)); Raise(nameof(ShowNeighborFallback)); Raise(nameof(ShowMaximumGap)); Raise(nameof(ShowBoundaryTolerance));
         Raise(nameof(ShowAlignment)); Raise(nameof(ShowCharacterName)); Raise(nameof(CharacterRestrictionLabel));
+        Raise(nameof(ShowRelativeLayerPlacement)); Raise(nameof(ShowAbsoluteLayerPlacement));
         Raise(nameof(SentenceAnchors)); Raise(nameof(SentenceNeighbors)); Raise(nameof(SentenceAnchorJoin));
     }
     public string Name { get => Get(); set => Put(value); }
@@ -148,6 +149,7 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     public string MaximumGap { get => Get(); set => Put(value); }
     public string BoundaryTolerance { get => Get(); set => Put(value); }
     public string LayerOffset { get => Get(); set => Put(value); }
+    public string AbsoluteLayer { get => Get(); set => Put(value); }
     public string LayerMinimum { get => Get(); set => Put(value); }
     public string LayerMaximum { get => Get(); set => Put(value); }
     public IntentTypeMatch TypeMatch { get => model.Target.TypeMatch; set => Change(model with { Target = model.Target with { TypeMatch = value } }); }
@@ -182,6 +184,7 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     public IntentNeighbor Neighbor { get => model.Relation.Neighbor; set => Change(model with { Relation = model.Relation with { Neighbor = value } }); }
     public IntentNeighborEdge NeighborEdge { get => model.Relation.NeighborEdge; set => Change(model with { Relation = model.Relation with { NeighborEdge = value } }); }
     public IntentFallback Fallback { get => model.Relation.Fallback; set => Change(model with { Relation = model.Relation with { Fallback = value } }); }
+    public LayerPlacementMode LayerMode { get => model.Relation.Layer.Mode; set => Change(model with { Relation = model.Relation with { Layer = model.Relation.Layer with { Mode = value } } }); }
     public RelativeLayerDirection Direction { get => model.Relation.Layer.Direction; set => Change(model with { Relation = model.Relation with { Layer = model.Relation.Layer with { Direction = value } } }); }
     public bool ExpressionCandidates { get => model.ExpressionCandidates; set => Change(model with { ExpressionCandidates = value }); }
     public bool CharacterRestricted
@@ -205,6 +208,8 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     public bool ShowMaximumGap => ShowNeighborFallback;
     public bool ShowBoundaryTolerance => Anchor == IntentAnchor.PairBoundary;
     public bool ShowAlignment => Duration != IntentDuration.UntilRelated;
+    public bool ShowRelativeLayerPlacement => LayerMode == LayerPlacementMode.RelativeToTarget;
+    public bool ShowAbsoluteLayerPlacement => LayerMode == LayerPlacementMode.Absolute;
     public ObservableCollection<IntentTypeOption> TypeChoices { get; } = [];
     public ObservableCollection<IntentEntryDraft> Entries { get; } = [];
     public IntentEntryDraft? SelectedEntry { get => selectedEntry; set { if (selectedEntry == value) return; selectedEntry = value; Raise(); } }
@@ -228,6 +233,7 @@ public sealed partial class IntentPaletteDraft : IntentEditable
         text[nameof(MaximumGap)] = source.Relation.MaximumNeighborGap?.ToString(CultureInfo.InvariantCulture) ?? "";
         text[nameof(BoundaryTolerance)] = source.Relation.BoundaryTolerance.ToString(CultureInfo.InvariantCulture);
         text[nameof(LayerOffset)] = source.Relation.Layer.Offset.ToString(CultureInfo.InvariantCulture);
+        text[nameof(AbsoluteLayer)] = source.Relation.Layer.AbsoluteLayer.ToString(CultureInfo.InvariantCulture);
         text[nameof(LayerMinimum)] = source.Relation.Layer.Minimum.ToString(CultureInfo.InvariantCulture);
         text[nameof(LayerMaximum)] = source.Relation.Layer.Maximum.ToString(CultureInfo.InvariantCulture);
         characterRestricted = !string.IsNullOrWhiteSpace(source.Target.CharacterName);
@@ -261,15 +267,25 @@ public sealed partial class IntentPaletteDraft : IntentEditable
             IntentAnchor.RelatedEnd => NeighborPhrase() + "の終了",
             _ => "選択位置"
         };
+        string Aligned(string length) => Alignment switch
+        {
+            IntentAlignment.StartAtAnchor => $"{anchor}から{length}で",
+            IntentAlignment.CenterAtAnchor => $"演出の中央を{anchor}に合わせて{length}で",
+            IntentAlignment.EndAtAnchor => $"{anchor}で終わるように{length}で",
+            _ => $"{anchor}から{length}で"
+        };
         var timing = Duration switch
         {
-            IntentDuration.Template => Alignment == IntentAlignment.EndAtAnchor ? $"{anchor}で終わるようにテンプレートの長さで" : $"{anchor}からテンプレートの長さで",
-            IntentDuration.TargetSpan => Alignment == IntentAlignment.EndAtAnchor ? $"{anchor}で終わるように選択対象と同じ長さで" : $"{anchor}から選択対象と同じ長さで",
-            IntentDuration.Fixed => Alignment == IntentAlignment.EndAtAnchor ? $"{anchor}で終わるように{ReadableFixedDuration()}で" : $"{anchor}から{ReadableFixedDuration()}で",
+            IntentDuration.Template => Aligned("テンプレートの長さ"),
+            IntentDuration.TargetSpan => Aligned("選択対象と同じ長さ"),
+            IntentDuration.Fixed => Aligned(ReadableFixedDuration()),
             IntentDuration.UntilRelated => $"{anchor}から{NeighborPhrase()}の{(NeighborEdge == IntentNeighborEdge.Start ? "開始" : "終了")}まで",
             _ => anchor
         };
         var direction = Direction == RelativeLayerDirection.Up ? "上" : "下";
+        var layer = LayerMode == LayerPlacementMode.Absolute
+            ? $"レイヤー{ReadableAbsoluteLayer()}を基準に配置します。塞がっていればさらに{direction}へ探します。"
+            : $"対象より{direction}の空いているレイヤーへ配置します。塞がっていればさらに{direction}へ探します。";
         var fallback = ShowNeighborFallback ? Fallback switch
         {
             IntentFallback.CurrentTargetEnd => " 見つからなければ現在の対象の終了までにします。",
@@ -278,8 +294,9 @@ public sealed partial class IntentPaletteDraft : IntentEditable
             IntentFallback.DoNotPlace => " 見つからなければ配置しません。",
             _ => ""
         } : "";
-        return $"{target}を選んだとき、{timing}、対象より{direction}の空いているレイヤーへ配置します。塞がっていればさらに{direction}へ探します。{fallback}".Trim();
+        return $"{target}を選んだとき、{timing}、{layer}{fallback}".Trim();
     }
+    private string ReadableAbsoluteLayer() => int.TryParse(AbsoluteLayer, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n >= 0 ? n.ToString(CultureInfo.InvariantCulture) : "指定";
     private string NeighborPhrase() => Neighbor switch
     {
         IntentNeighbor.NextSameType => "次の同じ種類のアイテム",
@@ -314,7 +331,10 @@ public sealed partial class IntentPaletteDraft : IntentEditable
             FixedDuration = ShowFixedDuration ? Number(FixedDuration, "固定の長さ") : model.Relation.FixedDuration,
             MaximumNeighborGap = ShowMaximumGap ? OptionalNumber(MaximumGap, "周囲参照の最大間隔") : model.Relation.MaximumNeighborGap,
             BoundaryTolerance = ShowBoundaryTolerance ? Number(BoundaryTolerance, "境界の許容間隔") : model.Relation.BoundaryTolerance,
-            Layer = model.Relation.Layer with { Offset = Number(LayerOffset, "対象からの段数"), Minimum = Number(LayerMinimum, "探索レイヤーの最小"), Maximum = Number(LayerMaximum, "探索レイヤーの最大") } };
+            Layer = model.Relation.Layer with {
+                Offset = ShowRelativeLayerPlacement ? Number(LayerOffset, "対象からの段数") : model.Relation.Layer.Offset,
+                AbsoluteLayer = ShowAbsoluteLayerPlacement ? Number(AbsoluteLayer, "配置するレイヤー番号") : model.Relation.Layer.AbsoluteLayer,
+                Minimum = Number(LayerMinimum, "探索レイヤーの最小"), Maximum = Number(LayerMaximum, "探索レイヤーの最大") } };
         return model with { Name = Name.Trim(), Intent = Intent, Target = target, Relation = relation, Entries = Entries.Select(x => x.Build()).ToList() };
     }
 }

@@ -10,7 +10,7 @@ public enum IntentTileColor { Neutral, Rose, Amber, Green, Blue, Violet }
 public enum IntentTypeMatch { UniformType, ExactMixedTypes }
 public enum IntentAnchor { SelectedStart, SelectedEnd, SelectedCenter, SelectionRangeStart, SelectionRangeEnd, PairBoundary, RelatedStart, RelatedEnd }
 public enum IntentDuration { Template, TargetSpan, Fixed, UntilRelated }
-public enum IntentAlignment { StartAtAnchor, EndAtAnchor }
+public enum IntentAlignment { StartAtAnchor = 0, EndAtAnchor = 1, CenterAtAnchor = 2 }
 public enum IntentNeighbor { None, NextSameType, PreviousSameType, NextSameCharacter, PreviousSameCharacter, NextSameTypeAndCharacter, PreviousSameTypeAndCharacter }
 public enum IntentFallback { CurrentTargetEnd, FixedDuration, TargetSpan, DoNotPlace }
 public enum IntentNeighborEdge { Start, End }

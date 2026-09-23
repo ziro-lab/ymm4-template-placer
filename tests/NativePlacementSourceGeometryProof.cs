@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.Json;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
 using YukkuriMovieMaker.Settings;
@@ -73,6 +74,121 @@ internal static partial class NativeProof
             multiPlanned[0].Frame == 200 && multiPlanned[0].Length == 10 && multiPlanned[0].Layer == 21 &&
             multiPlanned[1].Frame == 205 && multiPlanned[1].Length == 20 && multiPlanned[1].Layer == 22,
             "PLACEMENT_SOURCE P1 shared geometry preserves normalized multi-item relative frame/layer structure");
+
+        var legacyPolicy = JsonSerializer.Deserialize<RelativeLayerPolicy>("{}")!;
+        Assert(legacyPolicy.Mode == LayerPlacementMode.RelativeToTarget &&
+            legacyPolicy.Offset == 1 && legacyPolicy.AbsoluteLayer == 0 &&
+            legacyPolicy.Minimum == 0 && legacyPolicy.Maximum == 99,
+            "PLACEMENT_RULE P2 old layer JSON defaults to the exact existing relative placement semantics");
+        var defaultPolicyJson = JsonSerializer.Serialize(new RelativeLayerPolicy());
+        Assert(!defaultPolicyJson.Contains("\"Mode\"", StringComparison.Ordinal) &&
+            !defaultPolicyJson.Contains("\"AbsoluteLayer\"", StringComparison.Ordinal),
+            "PLACEMENT_RULE P2 default relative policy does not add new placement-mode fields to persisted JSON");
+        var invalidAbsoluteBoundsRejected = false;
+        try
+        {
+            new RelativeLayerPolicy
+            {
+                Mode = LayerPlacementMode.Absolute,
+                AbsoluteLayer = 50,
+                Minimum = 60,
+                Maximum = 99
+            }.Validate();
+        }
+        catch (InvalidOperationException) { invalidAbsoluteBoundsRejected = true; }
+        Assert(invalidAbsoluteBoundsRejected,
+            "PLACEMENT_RULE P2 absolute base outside the saved search bounds is rejected before persistence/execution");
+
+        var absolutePreset = new MaterializedPlacementSource(
+            Guid.Parse("10000000-0000-4000-8000-000000000003"),
+            PlacementSourceKind.TachiePreset,
+            [new TextItem { Frame = 0, Length = 20, Layer = 0 }],
+            20,
+            null,
+            new string('d', 64),
+            () => { });
+        var absoluteOccupied = new TextItem { Frame = 100, Length = 20, Layer = 50 };
+        var absolutePresetPlan = BundleLayerPlanner.Plan(
+            absolutePreset,
+            frame: 100,
+            singletonLength: 20,
+            targetMinimumLayer: 20,
+            targetMaximumLayer: 20,
+            new RelativeLayerPolicy
+            {
+                Mode = LayerPlacementMode.Absolute,
+                AbsoluteLayer = 50,
+                Direction = RelativeLayerDirection.Up,
+                Minimum = 0,
+                Maximum = 99
+            },
+            [absoluteOccupied]);
+        Assert(absolutePresetPlan.Single().Layer == 49,
+            "PLACEMENT_RULE P2 absolute preset source starts at the requested layer and collision search moves only Up");
+
+        var absoluteMulti = new MaterializedPlacementSource(
+            Guid.Parse("10000000-0000-4000-8000-000000000004"),
+            PlacementSourceKind.Template,
+            [
+                new TextItem { Frame = 0, Length = 10, Layer = 0 },
+                new TextItem { Frame = 3, Length = 12, Layer = 1 }
+            ],
+            15,
+            null,
+            new string('e', 64),
+            () => { });
+        var absoluteMultiPlan = BundleLayerPlanner.Plan(
+            absoluteMulti,
+            frame: 300,
+            singletonLength: null,
+            targetMinimumLayer: 1,
+            targetMaximumLayer: 1,
+            new RelativeLayerPolicy
+            {
+                Mode = LayerPlacementMode.Absolute,
+                AbsoluteLayer = 40,
+                Direction = RelativeLayerDirection.Down,
+                Minimum = 0,
+                Maximum = 99
+            },
+            []);
+        Assert(absoluteMultiPlan[0].Layer == 40 && absoluteMultiPlan[1].Layer == 41,
+            "PLACEMENT_RULE P2 absolute multi-item source preserves normalized internal layer offsets");
+
+        var noRoom = new MaterializedPlacementSource(
+            Guid.Parse("10000000-0000-4000-8000-000000000005"),
+            PlacementSourceKind.Template,
+            [
+                new TextItem { Frame = 0, Length = 10, Layer = 0 },
+                new TextItem { Frame = 0, Length = 10, Layer = 1 }
+            ],
+            10,
+            null,
+            new string('f', 64),
+            () => { });
+        var absoluteRejected = false;
+        try
+        {
+            _ = BundleLayerPlanner.Plan(
+                noRoom,
+                frame: 400,
+                singletonLength: null,
+                targetMinimumLayer: 20,
+                targetMaximumLayer: 20,
+                new RelativeLayerPolicy
+                {
+                    Mode = LayerPlacementMode.Absolute,
+                    AbsoluteLayer = 99,
+                    Direction = RelativeLayerDirection.Down,
+                    Minimum = 0,
+                    Maximum = 99
+                },
+                []);
+        }
+        catch (InvalidOperationException) { absoluteRejected = true; }
+        Assert(absoluteRejected && Signature(timeline) == signature,
+            "PLACEMENT_RULE P2 absolute source that cannot fit the saved bounds fails with zero Timeline mutation");
+        Log("PLACEMENT_RULE_P2=PASS");
 
         var rejectedUnnormalized = false;
         try

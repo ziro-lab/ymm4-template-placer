@@ -115,6 +115,19 @@ internal static partial class NativeProof
             Assert(maxGap.Frame == 100 && maxGap.Length == 80, "R8 MaxGap switches to the explicit current-target-end fallback");
             var overridden = IntentRelationResolver.Resolve(context, relation, standard with { FixedDurationOverride = 15 }, 50);
             Assert(overridden.Frame == 100 && overridden.Length == 15, "R8 per-entry override changes a small duration parameter, not the whole relation");
+            Assert((int)IntentAlignment.StartAtAnchor == 0 && (int)IntentAlignment.EndAtAnchor == 1 && (int)IntentAlignment.CenterAtAnchor == 2,
+                "PLACEMENT_RULE P1 center alignment is additive and preserves existing serialized enum values");
+            var centerEven = IntentRelationResolver.Resolve(context, new()
+                { Anchor = IntentAnchor.SelectedCenter, Duration = IntentDuration.Fixed, FixedDuration = 30, Alignment = IntentAlignment.CenterAtAnchor }, standard, 50);
+            Assert(centerEven.Frame == 125 && centerEven.Length == 30, "PLACEMENT_RULE P1 even span centers on the selected anchor");
+            var centerOdd = IntentRelationResolver.Resolve(context, new()
+                { Anchor = IntentAnchor.SelectedCenter, Duration = IntentDuration.Fixed, FixedDuration = 31, Alignment = IntentAlignment.CenterAtAnchor }, standard, 50);
+            Assert(centerOdd.Frame == 125 && centerOdd.Length == 31, "PLACEMENT_RULE P1 odd span uses floor(length/2) center convention");
+            var centerOffsets = IntentRelationResolver.Resolve(context, new()
+                { Anchor = IntentAnchor.SelectedCenter, Duration = IntentDuration.Fixed, FixedDuration = 30, Alignment = IntentAlignment.CenterAtAnchor, StartOffset = -2, EndOffset = 3 }, standard, 50);
+            Assert(centerOffsets.Frame == 123 && centerOffsets.Length == 35, "PLACEMENT_RULE P1 existing start/end offsets apply after center alignment");
+            RejectWithoutMutation(timeline, () => IntentRelationResolver.Resolve(context, relation with { Alignment = IntentAlignment.CenterAtAnchor }, standard, 50),
+                "PLACEMENT_RULE P1 UntilRelated still rejects non-start alignment");
             timeline.Items = [target]; timeline.SelectedItems = [target]; var alone = IntentSelectionContext.Capture(timeline);
             Assert(IntentRelationResolver.Resolve(alone, relation, standard, 50).Length == 80, "R8 no neighbor falls back to current target end");
             Assert(IntentRelationResolver.Resolve(alone, relation with { Fallback = IntentFallback.FixedDuration }, standard, 50).Length == 30,
@@ -143,6 +156,33 @@ internal static partial class NativeProof
             Assert(execution.Count == 2 && Signature(timeline) == signature, "R9 saved Palette relation plans the complete bundle without mutation");
             Assert(execution.Commit(timeline, undo) == 2, "R9 bundle execution uses the existing PlacementPlan/native Undo commit gateway");
             await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == signature, "R9 one native Undo restores a complete Palette tile action");
+
+            // P3 integration: center alignment must move the whole normalized bundle, not individual members.
+            timeline.SelectedItems = [target];
+            var centeredPalette = palette with
+            {
+                Relation = palette.Relation with
+                {
+                    Anchor = IntentAnchor.SelectedCenter,
+                    Duration = IntentDuration.Template,
+                    Alignment = IntentAlignment.CenterAtAnchor
+                }
+            };
+            var centeredBaseline = Signature(timeline);
+            var centeredExisting = timeline.Items.ToArray();
+            var centeredExecution = IntentExecutionPlan.Create(timeline, centeredPalette, tile, [entry]);
+            Assert(centeredExecution.Count == 2 && Signature(timeline) == centeredBaseline,
+                "PLACEMENT_RULE P3 centered multi-item Template fully preflights before mutation");
+            _ = centeredExecution.Commit(timeline, undo);
+            var centeredAdded = timeline.Items.Except(centeredExisting).OrderBy(x => x.Frame).ThenBy(x => x.Layer).ToArray();
+            Assert(centeredAdded.Length == 2 &&
+                centeredAdded[0].Frame == 115 && centeredAdded[0].Length == 25 && centeredAdded[0].Layer == 17 &&
+                centeredAdded[1].Frame == 130 && centeredAdded[1].Length == 35 && centeredAdded[1].Layer == 19,
+                "PLACEMENT_RULE P3 center alignment translates one multi-item Template as a whole while preserving internal Frame/Layer relationships");
+            await undo.UndoAsync(); await Idle();
+            Assert(Signature(timeline) == centeredBaseline,
+                "PLACEMENT_RULE P3 centered multi-item Template remains one native Undo unit");
+
             timeline.SelectedItems = [target];
             var guarded = IntentExecutionPlan.Create(timeline, palette, tile, [entry]); timeline.SelectedItems = [nextVoice];
             RejectWithoutMutation(timeline, () => guarded.Commit(timeline, undo), "R9 changed selection between plan/click and commit is zero-write");

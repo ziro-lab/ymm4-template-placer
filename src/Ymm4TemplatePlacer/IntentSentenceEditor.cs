@@ -15,7 +15,13 @@ public sealed class SettingsContextMatchConverter : IMultiValueConverter
 public sealed partial class IntentPaletteDraft
 {
     private bool SingleTarget => int.TryParse(MinimumCount, out var min) && int.TryParse(MaximumCount, out var max) && min == 1 && max == 1;
-    public string SentenceAnchorJoin => Duration == IntentDuration.UntilRelated || Alignment == IntentAlignment.StartAtAnchor ? "から" : "で終わるように";
+    public string SentenceAnchorJoin => Duration == IntentDuration.UntilRelated ? "から" : Alignment switch
+    {
+        IntentAlignment.StartAtAnchor => "から",
+        IntentAlignment.CenterAtAnchor => "に中央を合わせて",
+        IntentAlignment.EndAtAnchor => "で終わるように",
+        _ => ""
+    };
     public IReadOnlyList<IntentSentenceOption<IntentAnchor>> SentenceAnchors =>
     [
         new(IntentAnchor.SelectedStart, "選択アイテムの開始", SingleTarget), new(IntentAnchor.SelectedEnd, "選択アイテムの終了", SingleTarget),

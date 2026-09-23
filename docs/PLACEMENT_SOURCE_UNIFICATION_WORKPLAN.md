@@ -1,6 +1,6 @@
 # Placement Source Unification Workplan
 
-Status: **COMPLETE / RELEASE GREEN — PR #28 MERGE READY**
+Status: **COMPLETE / MERGED TO MAIN — PR #28**
 
 Authority:
 
@@ -25,7 +25,7 @@ Final Release #615 (`35834323751`) ran from `work/v0.5-native-validation` at exa
 - verified v0.5.0 `.ymme` stable install root / source / provenance packaging;
 - Release artifact `10739180157` (`native-yymm4-release`), uploaded artifact ZIP SHA256 `449fe9f5e366a89da7fb4218b55d87943bc753ddc145f542b6c0c70efb179ddc`.
 
-Any commit after that exact Release source is closeout documentation only and must not change product, tests, project files, packaging inputs or workflow semantics.
+PR #28 merged to main as `73532a13c725153b462771c9edbbfad15356a6b4`. Main run #618 (`35845660485`) completed GREEN, including Native validation, exact distribution-DLL smoke, verified packaging and release artifact upload.
 
 Frozen P7 UX decisions:
 

@@ -115,9 +115,20 @@
        </WrapPanel>
        <WrapPanel>
        <ComboBox x:Name="DurationBox" ItemsSource="{Binding DataContext.IntentDurations,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Duration,Mode=TwoWay}"/>
-       <TextBlock Text="で、" VerticalAlignment="Center" Margin="4,0"/>
-       <ComboBox x:Name="DirectionBox" ItemsSource="{Binding DataContext.IntentDirections,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Direction,Mode=TwoWay}"/>
-       <TextBlock Text="へ配置。" VerticalAlignment="Center" Margin="4,0"/>
+       <TextBlock Text="で、配置レイヤーは" VerticalAlignment="Center" Margin="4,0"/>
+       <ComboBox x:Name="LayerModeBox" ItemsSource="{Binding DataContext.IntentLayerModes,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding LayerMode,Mode=TwoWay}"/>
+       </WrapPanel>
+       <WrapPanel x:Name="RelativeLayerRow" Visibility="{Binding ShowRelativeLayerPlacement,Converter={StaticResource VisibleWhen}}">
+        <TextBlock Text="対象より" VerticalAlignment="Center" Margin="0,0,4,0"/>
+        <ComboBox x:Name="DirectionBox" ItemsSource="{Binding DataContext.IntentDirections,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Direction,Mode=TwoWay}"/>
+        <TextBlock Text="へ配置。塞がっていれば同じ方向へ空きを探します。" VerticalAlignment="Center" Margin="4,0"/>
+       </WrapPanel>
+       <WrapPanel x:Name="AbsoluteLayerRow" Visibility="{Binding ShowAbsoluteLayerPlacement,Converter={StaticResource VisibleWhen}}">
+        <TextBlock Text="レイヤー" VerticalAlignment="Center" Margin="0,0,4,0"/>
+        <TextBox x:Name="AbsoluteLayerBox" Text="{Binding AbsoluteLayer,UpdateSourceTrigger=PropertyChanged}" Width="64"/>
+        <TextBlock Text="を基準に配置。塞がっていれば" VerticalAlignment="Center" Margin="4,0"/>
+        <ComboBox x:Name="AbsoluteDirectionBox" ItemsSource="{Binding DataContext.IntentDirections,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Direction,Mode=TwoWay}"/>
+        <TextBlock Text="へ空きを探します。" VerticalAlignment="Center" Margin="4,0"/>
        </WrapPanel>
 
 
@@ -143,8 +154,6 @@
 
 
 
-       <TextBlock Text="塞がっていれば、選んだ方向へそのまま空きを探します。" Opacity="0.72" Margin="0,-3,0,5"/>
-
        <Expander x:Name="RelationAdvanced" Header="細かく調整" Margin="0,4">
         <StackPanel Margin="8,5">
        <StackPanel x:Name="FixedDurationPanel">
@@ -162,7 +171,7 @@
           <TextBox x:Name="MaximumGapBox" Text="{Binding MaximumGap,UpdateSourceTrigger=PropertyChanged}"/>
          </StackPanel>
          <WrapPanel><TextBlock Text="開始をずらす" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding StartOffset,UpdateSourceTrigger=PropertyChanged}" Width="72"/><TextBlock Text="終了をずらす" VerticalAlignment="Center" Margin="12,0,8,0"/><TextBox Text="{Binding EndOffset,UpdateSourceTrigger=PropertyChanged}" Width="72"/></WrapPanel>
-         <WrapPanel><TextBlock Text="対象から何段離すか" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding LayerOffset,UpdateSourceTrigger=PropertyChanged}" Width="64"/></WrapPanel>
+         <WrapPanel x:Name="RelativeLayerOffsetRow" Visibility="{Binding ShowRelativeLayerPlacement,Converter={StaticResource VisibleWhen}}"><TextBlock Text="対象から何段離すか" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding LayerOffset,UpdateSourceTrigger=PropertyChanged}" Width="64"/></WrapPanel>
          <WrapPanel><TextBlock Text="探索するレイヤー番号" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding LayerMinimum,UpdateSourceTrigger=PropertyChanged}" Width="64"/><TextBlock Text=" ～ " VerticalAlignment="Center"/><TextBox Text="{Binding LayerMaximum,UpdateSourceTrigger=PropertyChanged}" Width="64"/></WrapPanel>
         </StackPanel>
        </Expander>
