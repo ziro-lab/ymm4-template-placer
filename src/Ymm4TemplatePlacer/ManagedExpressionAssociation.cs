@@ -6,7 +6,8 @@ namespace Ymm4TemplatePlacer;
 internal enum ManagedExpressionSourceKind
 {
     Template,
-    TachiePreset
+    TachiePreset,
+    RegisteredTachiePreset
 }
 
 internal sealed record ManagedExpressionSourceDescriptor
@@ -14,36 +15,68 @@ internal sealed record ManagedExpressionSourceDescriptor
     public ManagedExpressionSourceKind Kind { get; }
     public IntentAssociationTag? Template { get; }
     public TachiePresetAssociationTag? TachiePreset { get; }
+    public TachiePresetSourceAssociationTag? RegisteredTachiePreset { get; }
 
     private ManagedExpressionSourceDescriptor(
         ManagedExpressionSourceKind kind,
         IntentAssociationTag? template,
-        TachiePresetAssociationTag? tachiePreset)
+        TachiePresetAssociationTag? tachiePreset,
+        TachiePresetSourceAssociationTag? registeredTachiePreset)
     {
         Kind = kind;
         Template = template;
         TachiePreset = tachiePreset;
+        RegisteredTachiePreset = registeredTachiePreset;
     }
 
-    public Guid Group => Kind == ManagedExpressionSourceKind.Template ? Template!.Group : TachiePreset!.Group;
-    public int Index => Kind == ManagedExpressionSourceKind.Template ? Template!.Index : TachiePreset!.Index;
-    public int Count => Kind == ManagedExpressionSourceKind.Template ? Template!.Count : TachiePreset!.Count;
+    public Guid Group => Kind switch
+    {
+        ManagedExpressionSourceKind.Template => Template!.Group,
+        ManagedExpressionSourceKind.TachiePreset => TachiePreset!.Group,
+        ManagedExpressionSourceKind.RegisteredTachiePreset => RegisteredTachiePreset!.Group,
+        _ => throw new InvalidOperationException("管理対象表情Sourceの種類が不正です。")
+    };
+
+    public int Index => Kind switch
+    {
+        ManagedExpressionSourceKind.Template => Template!.Index,
+        ManagedExpressionSourceKind.TachiePreset => TachiePreset!.Index,
+        ManagedExpressionSourceKind.RegisteredTachiePreset => RegisteredTachiePreset!.Index,
+        _ => throw new InvalidOperationException("管理対象表情Sourceの種類が不正です。")
+    };
+
+    public int Count => Kind switch
+    {
+        ManagedExpressionSourceKind.Template => Template!.Count,
+        ManagedExpressionSourceKind.TachiePreset => TachiePreset!.Count,
+        ManagedExpressionSourceKind.RegisteredTachiePreset => RegisteredTachiePreset!.Count,
+        _ => throw new InvalidOperationException("管理対象表情Sourceの種類が不正です。")
+    };
 
     public static ManagedExpressionSourceDescriptor FromTemplate(IntentAssociationTag value) =>
-        new(ManagedExpressionSourceKind.Template, value ?? throw new ArgumentNullException(nameof(value)), null);
+        new(ManagedExpressionSourceKind.Template, value ?? throw new ArgumentNullException(nameof(value)), null, null);
 
     public static ManagedExpressionSourceDescriptor FromTachiePreset(TachiePresetAssociationTag value) =>
-        new(ManagedExpressionSourceKind.TachiePreset, null, value ?? throw new ArgumentNullException(nameof(value)));
+        new(ManagedExpressionSourceKind.TachiePreset, null, value ?? throw new ArgumentNullException(nameof(value)), null);
+
+    public static ManagedExpressionSourceDescriptor FromRegisteredTachiePreset(TachiePresetSourceAssociationTag value) =>
+        new(ManagedExpressionSourceKind.RegisteredTachiePreset, null, null, value ?? throw new ArgumentNullException(nameof(value)));
 
     public static AssociationTagState Read(string? remark, out ManagedExpressionSourceDescriptor? descriptor)
     {
         descriptor = null;
         var templateState = IntentAssociationTag.Read(remark, out var template);
         var presetState = TachiePresetAssociationTag.Read(remark, out var preset);
-        if (templateState == AssociationTagState.Invalid || presetState == AssociationTagState.Invalid)
+        var registeredState = TachiePresetSourceAssociationTag.Read(remark, out var registered);
+        if (templateState == AssociationTagState.Invalid ||
+            presetState == AssociationTagState.Invalid ||
+            registeredState == AssociationTagState.Invalid)
             return AssociationTagState.Invalid;
-        if (templateState == AssociationTagState.Valid && presetState == AssociationTagState.Valid)
-            return AssociationTagState.Invalid;
+
+        var valid = (templateState == AssociationTagState.Valid ? 1 : 0) +
+            (presetState == AssociationTagState.Valid ? 1 : 0) +
+            (registeredState == AssociationTagState.Valid ? 1 : 0);
+        if (valid > 1) return AssociationTagState.Invalid;
         if (templateState == AssociationTagState.Valid)
         {
             descriptor = FromTemplate(template!);
@@ -54,15 +87,24 @@ internal sealed record ManagedExpressionSourceDescriptor
             descriptor = FromTachiePreset(preset!);
             return AssociationTagState.Valid;
         }
+        if (registeredState == AssociationTagState.Valid)
+        {
+            descriptor = FromRegisteredTachiePreset(registered!);
+            return AssociationTagState.Valid;
+        }
         return AssociationTagState.None;
     }
 
     public bool SameGroup(ManagedExpressionSourceDescriptor other)
     {
         if (Kind != other.Kind) return false;
-        return Kind == ManagedExpressionSourceKind.Template
-            ? Template!.SameGroup(other.Template!)
-            : TachiePreset!.SameGroup(other.TachiePreset!);
+        return Kind switch
+        {
+            ManagedExpressionSourceKind.Template => Template!.SameGroup(other.Template!),
+            ManagedExpressionSourceKind.TachiePreset => TachiePreset!.SameGroup(other.TachiePreset!),
+            ManagedExpressionSourceKind.RegisteredTachiePreset => RegisteredTachiePreset!.SameGroup(other.RegisteredTachiePreset!),
+            _ => false
+        };
     }
 }
 
@@ -145,15 +187,21 @@ internal static class ManagedExpressionSafety
 
     internal static void ValidatePresetState(ManagedExpressionBundle? bundle, CancellationToken token = default)
     {
-        if (bundle?.Descriptor is not
-            { Kind: ManagedExpressionSourceKind.TachiePreset, TachiePreset: { } descriptor }) return;
+        if (bundle == null) return;
+        var expectedState = bundle.Descriptor.Kind switch
+        {
+            ManagedExpressionSourceKind.TachiePreset => bundle.Descriptor.TachiePreset!.StateHash,
+            ManagedExpressionSourceKind.RegisteredTachiePreset => bundle.Descriptor.RegisteredTachiePreset!.StateHash,
+            _ => null
+        };
+        if (expectedState == null) return;
         if (bundle.Members.Count != 1 ||
             bundle.Members[0] is not TachieFaceItem face ||
             face.TachieFaceParameter == null)
             throw new InvalidOperationException(
                 "現在の立ち絵プリセット表情を安全に一意確認できません。変更していません。");
         var current = TachiePresetPublicState.TryHash(face.TachieFaceParameter, token);
-        if (current == null || current != descriptor.StateHash)
+        if (current == null || current != expectedState)
             throw new InvalidOperationException(
                 "現在の立ち絵プリセット表情は配置後に変更されています。自動置換せず停止しました。");
     }
