@@ -27,7 +27,7 @@
  </UserControl.Resources>
  <Grid Margin="6">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-  <StackPanel Grid.Row="0">
+  <StackPanel x:Name="SettingsHeader" Grid.Row="0">
    <StackPanel x:Name="ItemFirstContextPanel">
     <ItemsControl x:Name="SettingsTargetButtons" ItemsSource="{Binding IntentSettings.DirectItemContexts}" AutomationProperties.Name="Setを使う対象">
      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -47,40 +47,34 @@
     <TextBlock Text="セット" Grid.Column="0" VerticalAlignment="Center"/>
     <WrapPanel Grid.Column="2" VerticalAlignment="Top">
      <Button x:Name="NewPaletteButton" Style="{StaticResource SetPickerButtonStyle}" Content="＋" Command="{Binding CreateIntentPaletteCommand}" ToolTip="このアイテムで使うセットを作る" AutomationProperties.Name="このアイテムのセットを作成"/>
-     <Button x:Name="DirectDeletePaletteButton" Style="{StaticResource SetPickerButtonStyle}" Content="削除" Command="{Binding DeleteIntentPaletteCommand}" ToolTip="現在選択しているセットを削除" AutomationProperties.Name="現在のセットを削除"/>
     </WrapPanel>
     <ComboBox Grid.Column="1" x:Name="PalettePicker" Style="{StaticResource SetPickerComboStyle}" ItemsSource="{Binding IntentSettings.VisiblePalettes}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedPalette,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集するセット"/>
     <ComboBox Grid.Column="1" x:Name="GenericPalettePicker" Style="{StaticResource SetPickerComboStyle}" ItemsSource="{Binding IntentSettings.GenericSets}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedGenericSet,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集する汎用セット"/>
    </Grid>
-   <TextBlock Text="{Binding IntentSettings.ContextNotice}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Opacity="0.72"/>
+   <TextBlock x:Name="ContextNoticeText" Text="{Binding IntentSettings.ContextNotice}" TextWrapping="Wrap" Opacity="0.72"/>
 
   </StackPanel>
   <ScrollViewer x:Name="SettingsScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
    <StackPanel>
-   <WrapPanel x:Name="SetShapeButtons" Visibility="{Binding IntentSettings.HasSelectedSet,Converter={StaticResource VisibleWhen}}" Margin="0,2,0,4">
-    <TextBlock Text="このセットの形" VerticalAlignment="Center" Margin="0,0,8,0"/>
-    <Button Content="角丸" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Rounded}"/>
-    <Button Content="四角" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Square}"/>
-    <Button Content="丸" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Circle}"/>
-   </WrapPanel>
    <StackPanel x:Name="SetManagement" Margin="0,0,0,4" Visibility="{Binding IntentSettings.HasSelectedSet,Converter={StaticResource VisibleWhen}}">
     <TextBlock Text="セットの管理" Style="{StaticResource SettingsSectionHeader}"/>
-    <StackPanel Margin="8,0,0,0">
-     <WrapPanel>
+    <WrapPanel x:Name="SetManagementFlow" Margin="8,0,0,0">
+     <WrapPanel Margin="0,0,18,4" VerticalAlignment="Top">
       <Button x:Name="DuplicateButton" Content="複製" Command="{Binding DuplicateIntentPaletteCommand}"/>
       <Button Content="↑" ToolTip="このアイテム内でSetを前へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="-1"/>
       <Button Content="↓" ToolTip="このアイテム内でSetを後へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="1"/>
-      <Button Content="削除" Command="{Binding DeleteIntentPaletteCommand}"/>
+      <Button x:Name="ManageDeletePaletteButton" Content="削除" Command="{Binding DeleteIntentPaletteCommand}" ToolTip="現在選択しているセットを削除"/>
      </WrapPanel>
-     <StackPanel x:Name="CopySetToItemPanel" Margin="0,5,0,0" Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}">
-      <TextBlock Text="他のアイテムへコピー" FontWeight="SemiBold"/>
-      <TextBlock Text="現在のSetをその時点の設定で複製します。コピー後は元と別々に編集できます。" Opacity="0.72" Margin="0,1,0,3"/>
+     <StackPanel x:Name="CopySetToItemPanel" Margin="0,0,0,4" VerticalAlignment="Top"
+                 ToolTip="現在のSetをその時点の設定で複製します。コピー後は元と別々に編集できます。"
+                 Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}">
+      <TextBlock Text="他のアイテムへコピー" FontWeight="SemiBold" Margin="0,0,0,2"/>
       <WrapPanel>
-       <ComboBox x:Name="CopyDestinationPicker" ItemsSource="{Binding IntentSettings.CopyDestinations}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedCopyDestination,Mode=TwoWay}" MinWidth="150" AutomationProperties.Name="Setのコピー先アイテム"/>
+       <ComboBox x:Name="CopyDestinationPicker" ItemsSource="{Binding IntentSettings.CopyDestinations}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedCopyDestination,Mode=TwoWay}" MinWidth="150" MaxWidth="220" AutomationProperties.Name="Setのコピー先アイテム"/>
        <Button x:Name="CopyToItemButton" Content="コピー" Command="{Binding CopyIntentPaletteToItemCommand}"/>
       </WrapPanel>
      </StackPanel>
-    </StackPanel>
+    </WrapPanel>
    </StackPanel>
     <local:GenericSetSettingsPanel x:Name="GenericSettingsSurface" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}"/>
     <StackPanel DataContext="{Binding IntentSettings.SelectedPalette}">
@@ -198,7 +192,7 @@
      <StackPanel x:Name="EntryEditor" Margin="0,4">
       <TextBlock Text="演出と並び順" Style="{StaticResource SettingsSectionHeader}"/>
       <StackPanel Margin="8,0,0,0">
-       <ListBox x:Name="EntryList" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry,Mode=TwoWay}" MinHeight="80" MaxHeight="220" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+       <ListBox x:Name="EntryList" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry,Mode=TwoWay}" MinHeight="80" MaxHeight="220" Margin="16,0,6,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
         <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" ToolTip="{Binding SourceDetail}" Padding="5,4"/></DataTemplate></ListBox.ItemTemplate>
        </ListBox>
        <WrapPanel>
@@ -239,6 +233,12 @@
      </StackPanel>
     </StackPanel>
     <local:PalettePresentationPanel x:Name="PresentationSettingsSurface" Margin="0,6,0,0"/>
+    <WrapPanel x:Name="SetShapeButtons" Visibility="{Binding IntentSettings.HasSelectedSet,Converter={StaticResource VisibleWhen}}" Margin="8,8,0,4">
+     <TextBlock Text="このセットの形" VerticalAlignment="Center" Margin="0,0,8,0"/>
+     <Button Content="角丸" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Rounded}"/>
+     <Button Content="四角" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Square}"/>
+     <Button Content="丸" Command="{Binding SetSettingsShapeCommand}" CommandParameter="{x:Static local:IntentTileShape.Circle}"/>
+    </WrapPanel>
    </StackPanel>
   </ScrollViewer>
   <StackPanel Grid.Row="2" Margin="0,6,0,0">
