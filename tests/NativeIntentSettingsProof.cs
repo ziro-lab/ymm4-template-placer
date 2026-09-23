@@ -188,6 +188,15 @@ internal static partial class NativeProof
                 var copyActionsY = panel.CopySetActions.TranslatePoint(new Point(), panel).Y;
                 Assert(Math.Abs(manageTop - copyTop) <= 1 && Math.Abs(manageActionsY - copyActionsY) <= 1,
                     "COMPACT_SETTINGS P6 normal-width Set management and cross-Item copy align heading-to-heading and action-row-to-action-row");
+                var copyHeadingLeft = panel.CopySetHeading.TranslatePoint(new Point(), panel).X;
+                var copyPickerLeft = panel.CopyDestinationPicker.TranslatePoint(new Point(), panel).X;
+                var copyButtonRight = panel.CopyToItemButton.TranslatePoint(new Point(panel.CopyToItemButton.ActualWidth, 0), panel).X;
+                var copyBlockRight = panel.CopySetToItemPanel.TranslatePoint(new Point(panel.CopySetToItemPanel.ActualWidth, 0), panel).X;
+                Assert(Math.Abs(copyHeadingLeft - copyPickerLeft) <= 1 &&
+                    Math.Abs(copyButtonRight - copyBlockRight) <= 1 &&
+                    panel.CopyDestinationPicker.ActualWidth >= 170 &&
+                    Math.Abs(panel.CopyDestinationPicker.ActualHeight - panel.CopyToItemButton.ActualHeight) <= 1,
+                    "COMPACT_SETTINGS P7 copy block uses a wide destination picker aligned to its heading, with equal-height copy action at the block right edge");
                 var entryActionsLeft = panel.EntryListActions.TranslatePoint(new Point(), panel).X;
                 var sourceActionsLeft = panel.SourceListActions.TranslatePoint(new Point(), panel).X;
                 Assert(Math.Abs(entryActionsLeft - entryLeft) <= 1 && Math.Abs(sourceActionsLeft - sourceListLeft) <= 1 &&
@@ -200,6 +209,7 @@ internal static partial class NativeProof
                 Log("COMPACT_SETTINGS_P4=PASS");
                 Log("COMPACT_SETTINGS_P5=PASS");
                 Log("COMPACT_SETTINGS_P6=PASS");
+                Log("COMPACT_SETTINGS_P7=PASS");
             }
             finally { view.Width = width; view.Height = height; panel.SettingsScroll.ScrollToHome(); await Idle(); }
             await InvokeSelectionButton(panel.RollbackButton);
