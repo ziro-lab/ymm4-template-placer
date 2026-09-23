@@ -1,6 +1,8 @@
 # Placement Source Unification Design
 
-Status: **FROZEN DESIGN CANDIDATE — implementation not started**
+Status: **ACCEPTED — RELEASE #615 GREEN**
+
+Accepted implementation: PR #28. Exact product/test/package source `7ffe3b2c690a57850c77821f7b4c3eeb6517b3dc` passed Release #615 (`35834323751`). A later closeout commit may change documentation only; it does not supersede that exact Release source.
 
 This document defines the post-v0.5 design for converging YMM4 Template sources and Tachie Preset sources behind one placement model without pretending that a Tachie Preset is an ItemTemplate.
 

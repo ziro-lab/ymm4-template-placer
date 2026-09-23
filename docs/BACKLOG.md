@@ -6,9 +6,9 @@ Being listed here is not implementation approval or priority commitment.
 
 ## Active
 
-## Placement Source unification — active
+## Placement Source unification — complete
 
-Status: **P0-P7 IMPLEMENTED / NATIVE GREEN — P8 FINAL RELEASE**
+Status: **COMPLETE / RELEASE GREEN — PR #28**
 
 Goal:
 
@@ -28,7 +28,7 @@ Primary product result:
 - existing v0.5 settings/tags remain compatible and fail closed;
 - no generated FaceParameter/TachieFaceItem body is persisted as a fake Template.
 
-This phase comes before Preview/Checklist and before broader Placement Recipe expansion.
+This phase is complete. Product sequencing continues in `PRODUCT_ROADMAP.md`; Preview/Checklist and broader Placement Recipe work remain later phases.
 
 
 Implementation state:
@@ -41,9 +41,9 @@ Implementation state:
 - P5 association v2 / exact cross-source replacement: GREEN;
 - P6 Set-owned preset geometry Resync: GREEN;
 - P7 explicit registration + source-aware Settings/UX: GREEN;
-- P8 final exact Release: next gate.
+- P8 exact Release / closeout: GREEN.
 
-Release #606 passed 1,763 Native assertions plus full regression, exact DLL smoke and verified packaging before final explanatory P7 text cleanup.
+Release #615 (`35834323751`) at exact product/test/package source `7ffe3b2c690a57850c77821f7b4c3eeb6517b3dc` passed **1,763 Native assertions**, `PLACEMENT_SOURCE_P0=PASS` through `PLACEMENT_SOURCE_P7=PASS`, full retained regression/evidence guards, exact distribution-DLL native smoke and verified v0.5.0 `.ymme` / source / provenance packaging. Artifact `10739180157` (`native-yymm4-release`) is the final P8 evidence.
 
 ## Portable settings storage
 

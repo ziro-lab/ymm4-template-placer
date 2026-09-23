@@ -1,10 +1,12 @@
 # Placement Source Unification Acceptance
 
-Status: **FROZEN ACCEPTANCE CANDIDATE**
+Status: **ACCEPTED — RELEASE #615 GREEN**
 
 This acceptance applies to the design in `PLACEMENT_SOURCE_UNIFICATION_DESIGN.md`.
 
-The feature is not complete until the exact Release build satisfies the requirements below on native YMM4.
+Release #615 (`35834323751`) at exact product/test/package source `7ffe3b2c690a57850c77821f7b4c3eeb6517b3dc` is the accepted closeout gate for this phase. It passed **1,763 Native assertions**, the retained Hands-on/UI evidence chain, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging.
+
+The requirements below remain the compatibility/acceptance contract for future changes.
 
 ## A1 — Existing settings compatibility
 

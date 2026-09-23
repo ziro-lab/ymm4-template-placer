@@ -1,6 +1,6 @@
 # Placement Source Unification Workplan
 
-Status: **P0-P7 IMPLEMENTED / NATIVE GREEN — P8 FINAL RELEASE**
+Status: **COMPLETE / RELEASE GREEN — PR #28 MERGE READY**
 
 Authority:
 
@@ -14,17 +14,18 @@ Do not redesign the feature while implementing these slices. If a required host 
 
 ## Current implementation status
 
-P0-P7 are implemented on PR #28.
+P0-P8 are complete on PR #28.
 
-Release #606 (`35819073910`) at source `a65e8177a7ab21dfc9f442d364a3cc018fb6e483` passed:
+Final Release #615 (`35834323751`) ran from `work/v0.5-native-validation` at exact source `7ffe3b2c690a57850c77821f7b4c3eeb6517b3dc`, identical to PR run #614's product/test source, and passed:
 
 - **1,763 Native assertions**;
 - `PLACEMENT_SOURCE_P0=PASS` through `PLACEMENT_SOURCE_P7=PASS`;
-- retained WUX3/WUX4 and full semantic regression/evidence guards;
-- exact distribution DLL native smoke;
-- verified v0.5.0 `.ymme` / source / provenance packaging.
+- retained WUX/Hands-on/performance and full semantic regression/evidence guards;
+- exact distribution DLL native smoke (`ff352d56739fc3eac150c7650506b99882e52a92961d728c4f5a7e639a025189`);
+- verified v0.5.0 `.ymme` stable install root / source / provenance packaging;
+- Release artifact `10739180157` (`native-yymm4-release`), uploaded artifact ZIP SHA256 `449fe9f5e366a89da7fb4218b55d87943bc753ddc145f542b6c0c70efb179ddc`.
 
-Two later product-only commits clarify the final P7 UX text without changing placement semantics. P8 must run Release at the exact final source after this document/status closeout.
+Any commit after that exact Release source is closeout documentation only and must not change product, tests, project files, packaging inputs or workflow semantics.
 
 Frozen P7 UX decisions:
 

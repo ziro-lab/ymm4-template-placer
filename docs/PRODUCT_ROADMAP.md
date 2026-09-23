@@ -60,9 +60,9 @@ Accepted behavior:
 - real `.ymme` update preservation is backed by public Lab/native evidence;
 - Release/native regression is GREEN.
 
-### 2. Expression Source / Placement Model unification — FINAL RELEASE
+### 2. Expression Source / Placement Model unification — COMPLETE
 
-**Current product phase. P0-P7 are implemented; P8 exact Release is the remaining gate before this phase is accepted.**
+**Accepted product phase. P0-P8 are complete; Release #615 is GREEN at the exact product/test/package source.**
 
 v0.5.0 proved both Template expressions and Tachie Presets as usable content sources, but they still enter placement through different product paths.
 
@@ -133,7 +133,7 @@ Implemented candidate:
 - Template/TachiePreset source mode remains a visibility/filter choice;
 - the old standalone `ExpressionPreset` path remains only for unregistered direct preset placement compatibility.
 
-Release #606 passed P0-P7 with 1,763 Native assertions and full retained regression. P8 reruns the exact final source after closeout text/UI clarification.
+Release #615 (`35834323751`) at `7ffe3b2c690a57850c77821f7b4c3eeb6517b3dc` passed **1,763 Native assertions**, P0-P7 source gates, full retained semantic/evidence regression, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Phase 2 is complete.
 
 Exit:
 
@@ -143,7 +143,7 @@ Exit:
 - existing v0.5 settings/tags stay safe and readable;
 - full Native/Release acceptance is GREEN.
 
-### 3. Placement rule inventory / bounded model completion
+### 3. Placement rule inventory / bounded model completion — NEXT
 
 Before implementing a visual behavior preview, decide whether the near-term placement vocabulary is complete enough to explain.
 
