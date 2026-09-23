@@ -51,6 +51,7 @@ internal static partial class NativeProof
             draft.Anchor = IntentAnchor.SelectedCenter; draft.Duration = IntentDuration.Fixed; draft.FixedDuration = "30"; draft.Alignment = IntentAlignment.CenterAtAnchor;
             Assert(draft.Summary.Contains("演出の中央", StringComparison.Ordinal) && draft.Summary.Contains("選択アイテムの中央", StringComparison.Ordinal),
                 "PLACEMENT_RULE P1 human-readable Set summary truthfully describes center alignment");
+            Log("PLACEMENT_RULE_P1=PASS");
             draft.Alignment = IntentAlignment.StartAtAnchor; draft.Duration = IntentDuration.TargetSpan;
             Assert(vm.IntentLayerModes.Select(x => x.Value).SequenceEqual([LayerPlacementMode.RelativeToTarget, LayerPlacementMode.Absolute]),
                 "PLACEMENT_RULE P2 Settings exposes target-relative then absolute layer modes");
