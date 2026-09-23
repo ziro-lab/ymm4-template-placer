@@ -421,6 +421,93 @@ Safety / implementation gate:
 - first keep Preset/UI work and the existing placement architecture stable;
 - before implementation, define the finite supported command set and native-test command availability / focus behavior.
 
+## Item Action / Transformer candidates — collect before implementation
+
+Status: **COLLECTING / PRODUCT-BOUNDARY CANDIDATES**
+
+User problem:
+
+Some useful editing intents are awkward to express with one ordinary YMM4 shortcut because they require reading the selected Item state, calculating a relative position, or performing several bounded mutations as one meaningful operation.
+
+Candidate-selection rule:
+
+> Prefer Item Actions where one shortcut command is not enough to directly express the user's intent.
+
+A plain standard command that becomes convenient merely by assigning a key should usually remain a YMM4 command/shortcut rather than becoming a dedicated Template Placer transformation.
+
+### Proportional split
+
+Candidate:
+
+- split the selected Item at 1/2 of its current span;
+- if hands-on use justifies it, finite additional ratios such as 1/3 or 2/3.
+
+Why it qualifies:
+
+- ordinary split is playhead-position based;
+- proportional split requires reading the selected Item's Frame/Length and deriving a split point;
+- prefer YMM4's native split route after calculating the point rather than manually cloning/retiming both halves.
+
+Open detail:
+
+- define deterministic odd-frame rounding before implementation.
+
+### Effect Template apply
+
+Candidates:
+
+- append one registered Video Effect Template to the selected compatible Item;
+- append one registered Audio Effect Template to the selected compatible Item;
+- replace the selected Item's complete relevant VideoEffects or AudioEffects collection from one registered Effect Template;
+- optionally consider a bounded "clear relevant effects" action alongside the same executor if hands-on use proves useful.
+
+Why it qualifies:
+
+- the user intent is a reusable effect-chain operation rather than one standard command;
+- append/replace can require resolving a live YMM4 Effect Template, cloning its effects and applying them atomically;
+- Effect Template bodies should remain owned by YMM4; Template Placer should prefer thin live references rather than storing a second effect body.
+
+Architecture boundary:
+
+- this is **not** a Placement Source;
+- do not force effect application through Frame/Length/Layer geometry;
+- if implemented, use a separate bounded Item Action / Effect executor behind the shared tile/action surface;
+- normal Placement remains add-only and does not gain permission to mutate existing Item effects.
+
+### Fixed-gap multi-Item arrangement
+
+Candidate:
+
+- arrange an explicit selected Item set with one finite gap such as 0f / 6f / 15f / 30f or another user-chosen bounded value.
+
+Why it qualifies:
+
+- one shortcut cannot express the complete intent;
+- execution requires reading an explicit selected set and computing multiple resulting Frames;
+- all affected Items should be preflighted and committed as one native Undo operation.
+
+Boundary:
+
+- this is a stronger multi-Item transformation than the single-Item candidates above;
+- do not infer unselected Items or automatically choose a range;
+- keep it lower priority until the single-Item Action boundary is proven.
+
+### Lower-value command-like candidates
+
+Operations such as ordinary split, delete, play/pause, clipping toggle, Undo/Redo or a standard length-reset command may still be useful on the tile surface, but they normally belong under **YMM4 standard command tiles** because assigning/calling one standard command already expresses the operation.
+
+Do not use Item Action support as a reason to recreate the whole YMM4 command/shortcut system.
+
+Shared safety direction for any future Item Action:
+
+- explicit selected target(s) only;
+- finite action kinds, no general property editor or scripting layer;
+- complete preflight before mutation where the operation has multiple writes;
+- one native YMM4 Undo unit;
+- failure before commit means zero mutation;
+- prefer an existing YMM4 standard/native operation route when it can preserve host semantics;
+- keep Placement, Effect mutation and broader Item transformation as distinct execution responsibilities even if they share the same tile UI.
+
 ## Deferred / out of scope
 
 ### Existing-item transformation
