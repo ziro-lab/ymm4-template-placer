@@ -208,8 +208,7 @@ A Step must not consume the result of a previous Step.
 
 Allowed future placement axes include finite additions such as:
 
-- Template Pivot;
-- Absolute Layer;
+- a separate arbitrary source pivot only if start/center/end alignment plus offsets prove insufficient;
 - Composite Placement Steps;
 - stronger finite Target conditions;
 - Fan-out over explicit selected targets/boundaries;
@@ -226,7 +225,7 @@ This does **not** authorize:
 
 ## Current post-v0.5 baseline
 
-The accepted product baseline is v0.5.0 plus the completed Portable Settings and Placement Source unification work. Placement Source unification was proven at exact product/test/package source `7ffe3b2c690a57850c77821f7b4c3eeb6517b3dc` by Release #615 (`35834323751`) with **1,763 Native assertions** and verified distribution/package gates.
+The accepted product baseline is v0.5.0 plus completed Portable Settings, Placement Source unification and bounded Placement Rule completion. Placement Source unification was proven by Release #615. The current placement vocabulary was promoted at exact product/test/package source `5bfbccb5dd81071662ba756ec27591519ff98e19` by Release #629 (`35857198385`) with **1,787 Native assertions** and verified distribution/package gates.
 
 The baseline includes:
 
@@ -236,6 +235,8 @@ The baseline includes:
 - explicit Placement Sources with existing Template Library entries and thin Character-bound registered Tachie Preset locators kept as separate source kinds;
 - one bounded SourceId namespace across Template and registered Tachie Preset sources without rewriting existing serialized Template IDs;
 - fresh source-specific materialization followed by one authoritative Set-owned `IntentRelation` geometry path;
+- target Anchor timing alignment through additive start / center / end `IntentAlignment`, with existing offsets applied after alignment;
+- targeted Set layer reference through existing target-relative placement or explicit Absolute Layer, preserving normalized multi-item offsets and bounded one-direction collision search;
 - ordinary applicable targeted Sets able to place registered Tachie Preset tiles beside Template tiles;
 - ExpressionCandidates Sets able to mix Template and registered Tachie Preset sources;
 - Template/TachiePreset source mode retained as visibility/filter UX only, not as a placement-engine switch;
@@ -261,7 +262,7 @@ The accepted preset/source performance boundary remains:
 
 Built-in preset discovery/loading is functionally accepted but has a deferred performance-polish item. Measure the real cost before changing the discovery/cache architecture.
 
-The Placement Source design/acceptance/workplan documents are retained as accepted implementation and compatibility authority, not as a future implementation gate.
+The Placement Source and Placement Rule completion design/acceptance/workplan documents are retained as accepted implementation and compatibility authority, not as future implementation gates.
 
 ## Validation
 
@@ -280,7 +281,7 @@ For current work, prefer documents in this order:
 1. this file;
 2. `docs/GLOSSARY.md`;
 3. `docs/VALIDATION_STRATEGY.md`;
-4. current accepted feature authorities, including the Placement Source unification design/acceptance/workplan, `docs/FINAL_HANDS_ON_POLISH.md` and the expression-performance design/acceptance documents;
+4. current accepted feature authorities, including the Placement Source and Placement Rule completion design/acceptance/workplans, `docs/FINAL_HANDS_ON_POLISH.md` and the expression-performance design/acceptance documents;
 5. the next active feature's frozen design/acceptance/workplan documents, once that phase intentionally starts;
 6. `docs/BACKLOG.md`;
 7. historical Round/W documents when reconstructing rationale.

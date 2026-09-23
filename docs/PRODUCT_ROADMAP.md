@@ -143,7 +143,7 @@ Exit:
 - existing v0.5 settings/tags stay safe and readable;
 - full Native/Release acceptance is GREEN.
 
-### 3. Placement rule inventory / bounded model completion — ACTIVE
+### 3. Placement rule inventory / bounded model completion — COMPLETE
 
 Before implementing a visual behavior preview, decide whether the near-term placement vocabulary is complete enough to explain.
 
@@ -157,7 +157,7 @@ Inventory result:
 - current previous/next same-type / same-Character Neighbor selectors are already sufficient before Preview; arbitrary/typed neighbor grammar is deferred;
 - Composite Placement Steps and Fan-out are deferred because they change output multiplicity and deserve a separate design after the one-source Preview model is understood.
 
-Authorities for this active phase:
+Accepted authorities:
 
 - `PLACEMENT_RULE_COMPLETION_DESIGN.md`;
 - `PLACEMENT_RULE_COMPLETION_ACCEPTANCE.md`;
@@ -169,6 +169,8 @@ Rule:
 
 Also use this phase to finish the Expression Source decision from Phase 2. A Preview should not be built against a placement model that is already expected to be reorganized immediately afterward.
 
+Release #629 (`35857198385`) at exact source `5bfbccb5dd81071662ba756ec27591519ff98e19` passed **1,787 Native assertions**, P1-P3 explicit gates, full retained regression, exact distribution-DLL smoke and verified packaging. Phase 3 is complete.
+
 Exit:
 
 - the near-term placement vocabulary is explicitly listed as implemented now / implement before Preview / defer;
@@ -176,7 +178,7 @@ Exit:
 - any pre-Preview placement additions are Native GREEN;
 - the Preview/Checklist can consume one authoritative placement-description model without source-specific geometry forks.
 
-### 4. Compact Settings friction / discoverability pass
+### 4. Compact Settings friction / discoverability pass — NEXT
 
 Improve the existing Settings surface after the source/placement model is understood, but before introducing a separate large workspace.
 

@@ -69,9 +69,7 @@ Examples:
 
 The finite rule used to choose Layer.
 
-Current examples include template-relative/target-relative behavior and Generic numeric target with bounded one-direction search.
-
-Future proposed addition: Absolute Layer.
+Current examples include targeted Set `RelativeToTarget`, targeted Set `Absolute`, and Generic numeric target with bounded collision behavior. In targeted Absolute mode, normalized source layer 0 begins at explicit Layer N and collision escape searches only the saved direction within saved bounds.
 
 ### Placement Plan
 
@@ -148,22 +146,7 @@ Every Step reads the same immutable operation-start Context. A Step cannot use a
 
 ### Template Pivot
 
-The point inside the cloned Template/Bundle aligned to the target Anchor.
-
-Proposed finite values:
-
-- start;
-- center;
-- end;
-- explicit offset from Template/Bundle start.
-
-For a Bundle, the natural proposed span is from minimum member Frame to maximum member end.
-
-### Absolute Layer
-
-A future Layer Policy whose base target is explicit Layer N instead of template/target-relative placement.
-
-Collision behavior may still use the existing finite do-not-place / one-direction search semantics.
+The generalized point inside cloned content aligned to the target Anchor. The current product deliberately does **not** persist a separate Pivot object: start / center / end are represented by `IntentAlignment`, and bounded explicit shifts use the existing offsets. A future separate arbitrary pivot is only justified by a concrete editing case not expressible by those axes.
 
 ### Composite Placement Steps
 

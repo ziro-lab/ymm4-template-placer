@@ -1,6 +1,6 @@
 # Placement Rule Completion Workplan
 
-Status: **P0 INVENTORY FROZEN — P1/P2 IMPLEMENTATION NEXT**
+Status: **COMPLETE / RELEASE GREEN — PR #30 MERGE READY**
 
 Authorities:
 
@@ -8,6 +8,21 @@ Authorities:
 - `PLACEMENT_RULE_COMPLETION_ACCEPTANCE.md`
 - `CURRENT_ARCHITECTURE.md`
 - `VALIDATION_STRATEGY.md`
+
+## Current implementation status
+
+P0-P4 are complete on PR #30.
+
+Release #629 (`35857198385`) at exact source `5bfbccb5dd81071662ba756ec27591519ff98e19` passed:
+
+- **1,787 Native assertions**;
+- `PLACEMENT_RULE_P1=PASS`, `PLACEMENT_RULE_P2=PASS`, `PLACEMENT_RULE_P3=PASS`;
+- retained Placement Source, Hands-on, performance and full semantic/evidence regression gates;
+- exact distribution DLL native smoke, SHA256 `02388fd77990650fa5df5af6405e4cfd64a49e00e5b9f665fee771ce0aad0a1c`;
+- verified v0.5.0 `.ymme` stable install root / source / provenance packaging;
+- Release artifact `10748078586` (`native-yymm4-release`), artifact ZIP SHA256 `e349bff0d59a10d147ef5592d3dae5f341c56285b8459f222705743f5d9fc61b`.
+
+Accepted scope is intentionally narrow: `CenterAtAnchor` and Absolute Layer are complete; stronger Target/Neighbor grammar, Composite Steps, Fan-out and a separate arbitrary Pivot model remain deferred.
 
 ## P0 — inventory / scope freeze
 

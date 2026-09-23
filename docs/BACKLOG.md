@@ -334,17 +334,15 @@ Architecture boundary is defined in `docs/CURRENT_ARCHITECTURE.md`.
 
 ### 1. Source-side alignment
 
-Status: **ACTIVE / NARROWED FOR PHASE 3**
+Status: **COMPLETE / CENTER ALIGNMENT ACCEPTED**
 
-The existing model already has start-at-anchor and end-at-anchor. Phase 3 adds only the missing common `CenterAtAnchor` value.
-
-A separate arbitrary Source Pivot field is deferred: it would overlap existing alignment plus start/end offsets without a proved normal-editing need.
+The existing start/end alignment now also includes `CenterAtAnchor`, accepted by Release #629. A separate arbitrary Source Pivot field remains deferred because it overlaps existing alignment plus start/end offsets without a proved normal-editing need.
 
 ### 2. Absolute Layer
 
-Status: **ACTIVE / IMPLEMENT BEFORE PREVIEW**
+Status: **COMPLETE / RELEASE #629 GREEN**
 
-Add an explicit Layer N base policy while preserving the existing target-relative mode.
+Targeted Sets now support an explicit Layer N base policy while preserving the existing target-relative mode.
 
 Reuse existing finite collision behavior where possible:
 

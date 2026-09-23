@@ -1,6 +1,8 @@
 # Placement Rule Completion Design
 
-Status: **FROZEN DESIGN CANDIDATE — IMPLEMENTATION MAY PROCEED ONLY WITHIN THIS SCOPE**
+Status: **ACCEPTED — RELEASE #629 GREEN**
+
+Accepted implementation: PR #30. Exact product/test/package source `5bfbccb5dd81071662ba756ec27591519ff98e19` passed Release #629 (`35857198385`). Any later closeout commit is documentation-only and does not supersede that exact Release source.
 
 Authority:
 

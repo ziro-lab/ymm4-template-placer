@@ -1,6 +1,8 @@
 # Placement Rule Completion Acceptance
 
-Status: **FROZEN ACCEPTANCE CANDIDATE**
+Status: **ACCEPTED — RELEASE #629 GREEN**
+
+Release #629 (`35857198385`) at exact source `5bfbccb5dd81071662ba756ec27591519ff98e19` passed **1,787 Native assertions**, `PLACEMENT_RULE_P1=PASS` through `PLACEMENT_RULE_P3=PASS`, full retained semantic/evidence regression, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. The requirements below remain the compatibility contract.
 
 This acceptance applies to `PLACEMENT_RULE_COMPLETION_DESIGN.md`.
 

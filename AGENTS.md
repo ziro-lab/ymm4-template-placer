@@ -8,7 +8,7 @@
 
 ## Current revision and Git authority
 
-v0.5.0 is the integrated release baseline. Portable Settings storage is complete on main, and Placement Source unification is accepted at exact Release source `7ffe3b2c690a57850c77821f7b4c3eeb6517b3dc` (Release #615).
+v0.5.0 is the integrated release baseline. Portable Settings storage and Placement Source unification are complete on main. The bounded Placement Rule model is accepted at exact product/test/package source `5bfbccb5dd81071662ba756ec27591519ff98e19` by Release #629 (`35857198385`), with **1,787 Native assertions PASS**.
 
 The current product architecture retains the accepted v0.4.2 Hands-on/performance guarantees and includes:
 
@@ -22,15 +22,17 @@ The current product architecture retains the accepted v0.4.2 Hands-on/performanc
 - registered-preset geometry Resync that never silently reapplies edited preset content;
 - persisted Template/TachiePreset source-mode selection as visibility/filter UX rather than a placement-engine switch;
 - the old standalone `ExpressionPreset` path retained only for unregistered direct-preset compatibility;
+- source/output timing alignment with start / center / end at the chosen Anchor through the existing `IntentAlignment` model;
+- targeted Set layer placement with existing target-relative mode or explicit Absolute Layer, both using the shared bounded one-direction collision planner;
 - retained Template-mode performance and protected Settings guarantees.
 
-Known deferred items include placement-rule inventory/completion, compact/Full Settings UX improvements, Preview/Checklist work and measured built-in Tachie Preset loading optimization. Do not reopen completed Portable Settings or Placement Source architecture while addressing those items.
+Known deferred items include compact/Full Settings UX improvements, Preview/Checklist work, Composite/Fan-out placement, stronger Target/Neighbor grammar and measured built-in Tachie Preset loading optimization. Do not reopen completed Portable Settings, Placement Source or bounded Placement Rule architecture while addressing those items.
 
 Read in this order:
 
 1. `docs/CURRENT_ARCHITECTURE.md`
 2. `docs/PRODUCT_ROADMAP.md` for current product sequencing
-3. `docs/PLACEMENT_RULE_COMPLETION_DESIGN.md` for the active bounded placement-rule phase
+3. `docs/PLACEMENT_RULE_COMPLETION_DESIGN.md` for the accepted bounded placement-rule model
 4. `docs/PLACEMENT_RULE_COMPLETION_ACCEPTANCE.md`
 5. `docs/PLACEMENT_RULE_COMPLETION_WORKPLAN.md`
 6. `docs/PLACEMENT_SOURCE_UNIFICATION_DESIGN.md` for the accepted Source/Placement model
@@ -47,7 +49,7 @@ Read in this order:
 17. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
 18. historical Round/W documents only when current authority points to them or when reconstructing rationale
 
-Do not reimplement completed v0.5.0, Portable Settings or Placement Source work. Preserve the Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary, source-specific materialization / Set-owned geometry split and validation tiers.
+Do not reimplement completed v0.5.0, Portable Settings, Placement Source or bounded Placement Rule work. Preserve the Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary, source-specific materialization / Set-owned geometry split, start/center/end alignment, target-relative/absolute layer modes and validation tiers.
 
 ## Product boundary
 
