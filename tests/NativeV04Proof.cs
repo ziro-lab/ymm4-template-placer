@@ -12,6 +12,7 @@ internal static partial class NativeProof
         await VerifyPlacementSourcePresetMaterialization(timeline);
         await VerifyPlacementSourceNormalTiles(timeline, undo);
         await VerifyPlacementSourceExpressions(timeline, undo);
+        await VerifyPlacementSourceResync(timeline, undo);
         var settingsField = typeof(PlacerViewModel).GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic)!;
         var bootstrapped = (PlacerSettings)settingsField.GetValue(ViewModel!)!;
         Assert(bootstrapped.Palettes.Count == 0 && bootstrapped.Library.All(x => bootstrapped.ImportedExpressionSources.Contains(x.Source)),
