@@ -1,6 +1,7 @@
 using System.IO;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Input;
 using System.Text.Json;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
@@ -128,6 +129,12 @@ internal static partial class NativeProof
             var presentationY = panel.PresentationSettingsSurface.TranslatePoint(new Point(0, 0), panel.SettingsScroll).Y;
             Assert(presentationY > sourceY,
                 "COMPACT_SETTINGS P1 global presentation controls are lower than the current Set/source editing flow");
+            var shapeY = panel.SetShapeButtons.TranslatePoint(new Point(0, 0), panel.SettingsScroll).Y;
+            Assert(shapeY > presentationY,
+                "COMPACT_SETTINGS P4 Set shape remains available but moves below global presentation as a secondary full-Settings route");
+            Assert(panel.FindName("DirectDeletePaletteButton") == null && panel.ManageDeletePaletteButton.IsVisible &&
+                ReferenceEquals(panel.ManageDeletePaletteButton.Command, vm.DeleteIntentPaletteCommand),
+                "COMPACT_SETTINGS P4 compact Settings has one visible destructive Set-delete route under Set management");
 
             var width = view.Width; var height = view.Height;
             try
@@ -140,13 +147,26 @@ internal static partial class NativeProof
                     panel.SourceList.ActualWidth < panel.SourceEditor.ActualWidth &&
                     panel.SourceList.ActualWidth >= panel.SourceEditor.ActualWidth * 0.70,
                     "COMPACT_SETTINGS P2 narrow bulk-source list leaves wider left outer-scroll escape space without aggressively shrinking the list");
-                Assert(Math.Abs(panel.PalettePicker.ActualHeight - panel.NewPaletteButton.ActualHeight) <= 4 &&
-                    Math.Abs(panel.PalettePicker.ActualHeight - panel.DirectDeletePaletteButton.ActualHeight) <= 4,
-                    "COMPACT_SETTINGS P3 targeted Set picker, plus and delete controls have comparable native heights");
+                Assert(Math.Abs(panel.PalettePicker.ActualHeight - panel.NewPaletteButton.ActualHeight) <= 4,
+                    "COMPACT_SETTINGS P3 targeted Set picker and plus control have comparable native heights after duplicate delete removal");
+                var entryLeft = panel.EntryList.TranslatePoint(new Point(0, 0), panel).X;
+                var sourceListLeft = panel.SourceList.TranslatePoint(new Point(0, 0), panel).X;
+                Assert(Math.Abs(entryLeft - sourceListLeft) <= 1,
+                    "COMPACT_SETTINGS P4 entry and Template source lists share one visual content lane");
                 Assert(panel.RollbackButton.IsVisible && panel.RollbackButton.ActualWidth > 0 && panel.ActualWidth <= 360 &&
                     panel.SettingsScroll.ExtentWidth <= panel.SettingsScroll.ViewportWidth + 1,
                     "COMPACT_SETTINGS P2 narrow Settings keeps rollback accessible and introduces no horizontal width overflow");
+                Assert(panel.ContextNoticeText.TextWrapping == TextWrapping.Wrap,
+                    "COMPACT_SETTINGS P4 narrow contextual text wraps instead of being horizontally clipped");
                 SaveNamedView(view, "compact-settings-narrow-top.png");
+                panel.SettingsScroll.ScrollToEnd(); await Idle(); panel.UpdateLayout();
+                var gutterPoint = panel.SourceList.TranslatePoint(new Point(-8, Math.Max(1, panel.SourceList.ActualHeight / 2)), panel.SettingsScroll);
+                var gutterHit = NestedWheelRouting.ResolveCurrentSource(panel.SettingsScroll, gutterPoint);
+                var gutterBefore = panel.SettingsScroll.VerticalOffset;
+                var gutterAccepted = gutterHit != null && NestedWheelRouting.TryScroll(panel.SettingsScroll, gutterHit, 120, ModifierKeys.None);
+                panel.SettingsScroll.UpdateLayout();
+                Assert(gutterAccepted && panel.SettingsScroll.VerticalOffset < gutterBefore,
+                    "COMPACT_SETTINGS P5 left source-list gutter is real outer-scroll space, not a wheel dead zone");
                 panel.SettingsScroll.ScrollToEnd(); await Idle();
                 SaveNamedView(view, "compact-settings-narrow-source.png");
 
@@ -161,6 +181,8 @@ internal static partial class NativeProof
                 Log("COMPACT_SETTINGS_P1=PASS");
                 Log("COMPACT_SETTINGS_P2=PASS");
                 Log("COMPACT_SETTINGS_P3=PASS");
+                Log("COMPACT_SETTINGS_P4=PASS");
+                Log("COMPACT_SETTINGS_P5=PASS");
             }
             finally { view.Width = width; view.Height = height; panel.SettingsScroll.ScrollToHome(); await Idle(); }
             await InvokeSelectionButton(panel.RollbackButton);
