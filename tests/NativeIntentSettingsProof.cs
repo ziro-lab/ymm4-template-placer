@@ -72,7 +72,9 @@ internal static partial class NativeProof
             session.SourceSearch = "R11/Bundle";
             Assert(session.Sources.Count(x => x.Selected) == 2 && session.VisibleSources.Cast<object>().Count() == 1,
                 "R11 filtering preserves checked sources across a bulk registration draft");
-            panel.SourceEditor.IsExpanded = true; await Idle();
+            Assert(panel.SourceEditor.IsVisible,
+                "COMPACT_SETTINGS P1 bulk Template addition is a visible first-level section without a disclosure click");
+            await Idle();
             await InvokeSelectionButton(panel.AddSourcesButton);
             Assert(draft.Entries.Count == 2 && draft.Entries.Single(x => x.Name == "Bundle").UseTemplateDuration,
                 "R11 one bulk action includes singleton and multi-item templates with bundle duration preserved");
@@ -115,14 +117,51 @@ internal static partial class NativeProof
             session.ImportNewExpressions();
             Assert(!session.Palettes.Single(x => x.Id == draft.Id).Entries.Any(x => x.LibraryEntryId == removed.LibraryEntryId),
                 "R11 explicit new-expression import does not resurrect a user-removed manual registration");
+            Assert(panel.SetManagement.IsVisible && panel.TargetEditor.IsVisible && panel.RelationEditor.IsVisible &&
+                panel.EntryEditor.IsVisible && panel.SourceEditor.IsVisible &&
+                !panel.TargetAdvanced.IsExpanded && !panel.RelationAdvanced.IsExpanded &&
+                !panel.PresentationSettingsSurface.PresentationExpander.IsExpanded,
+                "COMPACT_SETTINGS P1 ordinary Set sections are first-level visible while detailed/global disclosure stays folded");
+
+            var sourceY = panel.SourceEditor.TranslatePoint(new Point(0, 0), panel.SettingsScroll).Y;
+            var presentationY = panel.PresentationSettingsSurface.TranslatePoint(new Point(0, 0), panel.SettingsScroll).Y;
+            Assert(presentationY > sourceY,
+                "COMPACT_SETTINGS P1 global presentation controls are lower than the current Set/source editing flow");
+
             var width = view.Width; var height = view.Height;
             try
             {
-                view.Width = 360; view.Height = 400; await Idle(); SaveNamedView(view, "r11-settings-narrow.png");
-                Assert(panel.RollbackButton.IsVisible && panel.RollbackButton.ActualWidth > 0 && panel.ActualWidth <= 360,
-                    "R11 narrow native settings keeps the session rollback action accessible outside the scrollable editor");
+                view.Width = 360; view.Height = 400; await Idle(); panel.UpdateLayout();
+                var sourceLeft = panel.SourceList.TranslatePoint(new Point(0, 0), panel.SourceEditor).X;
+                var sourceRight = panel.SourceEditor.ActualWidth -
+                    panel.SourceList.TranslatePoint(new Point(panel.SourceList.ActualWidth, 0), panel.SourceEditor).X;
+                Assert(sourceLeft > sourceRight && sourceRight > 0 && panel.SourceList.ActualWidth > 0 &&
+                    panel.SourceList.ActualWidth < panel.SourceEditor.ActualWidth &&
+                    panel.SourceList.ActualWidth >= panel.SourceEditor.ActualWidth * 0.70,
+                    "COMPACT_SETTINGS P2 narrow bulk-source list leaves wider left outer-scroll escape space without aggressively shrinking the list");
+                Assert(Math.Abs(panel.PalettePicker.ActualHeight - panel.NewPaletteButton.ActualHeight) <= 4 &&
+                    Math.Abs(panel.PalettePicker.ActualHeight - panel.DirectDeletePaletteButton.ActualHeight) <= 4,
+                    "COMPACT_SETTINGS P3 targeted Set picker, plus and delete controls have comparable native heights");
+                Assert(panel.RollbackButton.IsVisible && panel.RollbackButton.ActualWidth > 0 && panel.ActualWidth <= 360 &&
+                    panel.SettingsScroll.ExtentWidth <= panel.SettingsScroll.ViewportWidth + 1,
+                    "COMPACT_SETTINGS P2 narrow Settings keeps rollback accessible and introduces no horizontal width overflow");
+                SaveNamedView(view, "compact-settings-narrow-top.png");
+                panel.SettingsScroll.ScrollToEnd(); await Idle();
+                SaveNamedView(view, "compact-settings-narrow-source.png");
+
+                view.Width = 520; view.Height = 520; await Idle(); panel.SettingsScroll.ScrollToEnd(); panel.UpdateLayout();
+                var normalLeft = panel.SourceList.TranslatePoint(new Point(0, 0), panel.SourceEditor).X;
+                var normalRight = panel.SourceEditor.ActualWidth -
+                    panel.SourceList.TranslatePoint(new Point(panel.SourceList.ActualWidth, 0), panel.SourceEditor).X;
+                Assert(normalLeft > normalRight && normalRight > 0 &&
+                    panel.SettingsScroll.ExtentWidth <= panel.SettingsScroll.ViewportWidth + 1,
+                    "COMPACT_SETTINGS P2 normal-width source list retains asymmetric outer-scroll escape space without horizontal overflow");
+                SaveNamedView(view, "compact-settings-normal-source.png");
+                Log("COMPACT_SETTINGS_P1=PASS");
+                Log("COMPACT_SETTINGS_P2=PASS");
+                Log("COMPACT_SETTINGS_P3=PASS");
             }
-            finally { view.Width = width; view.Height = height; await Idle(); }
+            finally { view.Width = width; view.Height = height; panel.SettingsScroll.ScrollToHome(); await Idle(); }
             await InvokeSelectionButton(panel.RollbackButton);
             Assert(vm.IntentSettings!.Palettes.Count == 0 && !vm.IntentSettings.HasChanges && JsonSerializer.Serialize(fixture) == baseline && Signature(timeline) == signature,
                 "R11/R4 session rollback restores opening settings and a clean draft without Timeline writes");
