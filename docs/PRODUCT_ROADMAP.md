@@ -143,20 +143,25 @@ Exit:
 - existing v0.5 settings/tags stay safe and readable;
 - full Native/Release acceptance is GREEN.
 
-### 3. Placement rule inventory / bounded model completion — NEXT
+### 3. Placement rule inventory / bounded model completion — ACTIVE
 
 Before implementing a visual behavior preview, decide whether the near-term placement vocabulary is complete enough to explain.
 
 Review the current model and the Backlog together.
 
-Likely high-value candidates include:
+Inventory result:
 
-- Template Pivot / source-side alignment;
-- Absolute Layer;
-- finite stronger Target conditions;
-- finite stronger Neighbor selectors.
+- implement the missing **center alignment** by extending the existing `IntentAlignment`; do not add a duplicate general Source Pivot model;
+- implement **Absolute Layer** as an additive mode on the existing bounded layer policy;
+- current Target contracts are already sufficient before Preview; stronger target grammar is deferred;
+- current previous/next same-type / same-Character Neighbor selectors are already sufficient before Preview; arbitrary/typed neighbor grammar is deferred;
+- Composite Placement Steps and Fan-out are deferred because they change output multiplicity and deserve a separate design after the one-source Preview model is understood.
 
-Larger multiplicity changes such as Composite Placement Steps and Fan-out require a separate decision because they change what one tile/rule can produce and therefore materially change Preview structure.
+Authorities for this active phase:
+
+- `PLACEMENT_RULE_COMPLETION_DESIGN.md`;
+- `PLACEMENT_RULE_COMPLETION_ACCEPTANCE.md`;
+- `PLACEMENT_RULE_COMPLETION_WORKPLAN.md`.
 
 Rule:
 

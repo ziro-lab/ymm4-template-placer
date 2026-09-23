@@ -332,19 +332,19 @@ Status: **COLLECTING**
 
 Architecture boundary is defined in `docs/CURRENT_ARCHITECTURE.md`.
 
-### 1. Template Pivot
+### 1. Source-side alignment
 
-Priority: **very high**
+Status: **ACTIVE / NARROWED FOR PHASE 3**
 
-Align Template/Bundle start / center / end / explicit internal offset to the chosen target Anchor.
+The existing model already has start-at-anchor and end-at-anchor. Phase 3 adds only the missing common `CenterAtAnchor` value.
 
-High value because current target Anchors are already rich, while the source-side alignment point is comparatively limited.
+A separate arbitrary Source Pivot field is deferred: it would overlap existing alignment plus start/end offsets without a proved normal-editing need.
 
 ### 2. Absolute Layer
 
-Priority: **very high**
+Status: **ACTIVE / IMPLEMENT BEFORE PREVIEW**
 
-Add an explicit Layer N base policy.
+Add an explicit Layer N base policy while preserving the existing target-relative mode.
 
 Reuse existing finite collision behavior where possible:
 
@@ -354,7 +354,7 @@ Reuse existing finite collision behavior where possible:
 
 ### 3. Composite Placement Steps
 
-Priority: **high**
+Status: **DEFERRED / SEPARATE MULTIPLICITY DESIGN**
 
 One tile/Recipe may place several independent sources with different finite rules.
 
@@ -383,7 +383,7 @@ All Steps preflight together; any required failure means zero write; success com
 
 ### 4. Stronger Target conditions
 
-Priority: **medium**
+Status: **DEFERRED — CURRENT TARGET MODEL SUFFICIENT BEFORE PREVIEW**
 
 Possible finite conditions:
 
@@ -396,7 +396,7 @@ Do not add arbitrary boolean trees, regex predicates or a generic rule language.
 
 ### 5. Fan-out
 
-Priority: **medium**
+Status: **DEFERRED / SEPARATE MULTIPLICITY DESIGN**
 
 Possible explicit scopes:
 
@@ -409,7 +409,7 @@ Deduplication of identical generated anchors must be specified before implementa
 
 ### 6. Stronger Neighbor selectors
 
-Priority: **medium**
+Status: **DEFERRED — CURRENT NEIGHBOR MODEL SUFFICIENT BEFORE PREVIEW**
 
 Finite additions may include:
 

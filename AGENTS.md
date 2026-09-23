@@ -30,19 +30,22 @@ Read in this order:
 
 1. `docs/CURRENT_ARCHITECTURE.md`
 2. `docs/PRODUCT_ROADMAP.md` for current product sequencing
-3. `docs/PLACEMENT_SOURCE_UNIFICATION_DESIGN.md` for the accepted Source/Placement model
-4. `docs/PLACEMENT_SOURCE_UNIFICATION_ACCEPTANCE.md`
-5. `docs/PLACEMENT_SOURCE_UNIFICATION_WORKPLAN.md`
-6. `docs/GLOSSARY.md`
-7. `docs/VALIDATION_STRATEGY.md`
-8. `docs/TACHIE_PRESET_DESIGN.md`
-9. `docs/TACHIE_PRESET_ACCEPTANCE.md`
-10. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
-11. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
-12. `docs/FINAL_HANDS_ON_POLISH.md`
-13. `docs/BACKLOG.md` only for scope/detail
-14. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
-15. historical Round/W documents only when current authority points to them or when reconstructing rationale
+3. `docs/PLACEMENT_RULE_COMPLETION_DESIGN.md` for the active bounded placement-rule phase
+4. `docs/PLACEMENT_RULE_COMPLETION_ACCEPTANCE.md`
+5. `docs/PLACEMENT_RULE_COMPLETION_WORKPLAN.md`
+6. `docs/PLACEMENT_SOURCE_UNIFICATION_DESIGN.md` for the accepted Source/Placement model
+7. `docs/PLACEMENT_SOURCE_UNIFICATION_ACCEPTANCE.md`
+8. `docs/PLACEMENT_SOURCE_UNIFICATION_WORKPLAN.md`
+9. `docs/GLOSSARY.md`
+10. `docs/VALIDATION_STRATEGY.md`
+11. `docs/TACHIE_PRESET_DESIGN.md`
+12. `docs/TACHIE_PRESET_ACCEPTANCE.md`
+13. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
+14. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
+15. `docs/FINAL_HANDS_ON_POLISH.md`
+16. `docs/BACKLOG.md` only for scope/detail
+17. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
+18. historical Round/W documents only when current authority points to them or when reconstructing rationale
 
 Do not reimplement completed v0.5.0, Portable Settings or Placement Source work. Preserve the Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary, source-specific materialization / Set-owned geometry split and validation tiers.
 
