@@ -46,20 +46,20 @@ internal static partial class NativeProof
         var session = vm.IntentSettings ?? throw new InvalidOperationException("Final polish Settings session missing.");
         session.SelectedItemContext = session.ItemContexts.Single(x => x.IsRealItemType && x.Key == voiceKey);
         await Idle();
-        Assert(panel.DirectDeletePaletteButton.IsVisible &&
-            ReferenceEquals(panel.DirectDeletePaletteButton.Command, vm.DeleteIntentPaletteCommand) &&
-            panel.DirectDeletePaletteButton.IsEnabled,
-            "FINAL H1: selected Item-owned Set exposes direct delete beside the Set picker");
+        Assert(panel.FindName("DirectDeletePaletteButton") == null && panel.ManageDeletePaletteButton.IsVisible &&
+            ReferenceEquals(panel.ManageDeletePaletteButton.Command, vm.DeleteIntentPaletteCommand) &&
+            panel.ManageDeletePaletteButton.IsEnabled,
+            "FINAL H1: selected Item-owned Set exposes one protected delete route under Set management");
 
         session.SelectedItemContext = session.ItemContexts.Single(x => x.IsGeneric);
         await Idle();
-        Assert(panel.DirectDeletePaletteButton.IsVisible &&
-            ReferenceEquals(panel.DirectDeletePaletteButton.Command, vm.DeleteIntentPaletteCommand) &&
-            panel.DirectDeletePaletteButton.IsEnabled,
-            "FINAL H1: Generic Set uses the same directly visible protected delete command");
+        Assert(panel.FindName("DirectDeletePaletteButton") == null && panel.ManageDeletePaletteButton.IsVisible &&
+            ReferenceEquals(panel.ManageDeletePaletteButton.Command, vm.DeleteIntentPaletteCommand) &&
+            panel.ManageDeletePaletteButton.IsEnabled,
+            "FINAL H1: Generic Set uses the same single protected Set-management delete command");
 
-        // Exercise deletion semantics without driving the confirmation dialog: the UI button
-        // above is the authoritative command, while the detached session proves the mutation
+        // Exercise deletion semantics without driving the confirmation dialog: the Set-management
+        // button above is the authoritative command, while the detached session proves the mutation
         // remains settings-only and never touches source templates or Timeline.
         var detached = new IntentSettingsSession(fixture, new[] { typeof(VoiceItem) });
         var beforeTimeline = Signature(timeline);
