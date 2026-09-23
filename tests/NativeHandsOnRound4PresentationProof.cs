@@ -179,9 +179,12 @@ internal static partial class NativeProof
                 "B9", "one tile still overrides its own shape after a Set-wide change");
             vm.BeginIntentSettings(); view.SelectionTab.IsSelected = true; await Idle();
             var settingsSurface = view.RelativeSettingsSurface;
-            Round4Assert(!settingsSurface.SettingsScroll.IsAncestorOf(settingsSurface.PresentationSettingsSurface) &&
-                ((Expander)settingsSurface.PresentationSettingsSurface.Content).Header?.ToString() == "全体の表示・操作",
-                "B10", "full Settings still keeps global presentation outside the selected-Set editor");
+            var sourceSettingsY = settingsSurface.SourceEditor.TranslatePoint(new Point(), settingsSurface.SettingsScroll).Y;
+            var presentationSettingsY = settingsSurface.PresentationSettingsSurface.TranslatePoint(new Point(), settingsSurface.SettingsScroll).Y;
+            Round4Assert(settingsSurface.SettingsScroll.IsAncestorOf(settingsSurface.PresentationSettingsSurface) &&
+                ((Expander)settingsSurface.PresentationSettingsSurface.Content).Header?.ToString() == "全体の表示・操作" &&
+                presentationSettingsY > sourceSettingsY,
+                "B10", "full Settings keeps global presentation separate from Set editing but lower in the shared outer scroll");
             view.PaletteTab.IsSelected = true; await Idle();
 
             view.Width = 720; await Idle(); palette.UpdateLayout();
