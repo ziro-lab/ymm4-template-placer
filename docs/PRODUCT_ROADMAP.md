@@ -269,66 +269,95 @@ Current maintenance result:
 - validation volume is down from 1,822 at the accepted Phase 4 baseline by about **34.2%**;
 - Phase 4.5 is complete.
 
-### 5A. Behavior preview — ACTIVE
+### 5A. Behavior preview — COMPLETE
 
-Add a reusable read-only Settings-assistance surface. Preview is implemented and accepted **before** the editing checklist so the visual/meaning vocabulary can stabilize first.
+Behavior Preview v2 is implemented, Release GREEN and owner hands-on accepted.
 
-Active authorities:
+Accepted product result:
+
+- one shared `PlacementBehaviorDescription` feeds the existing `このセットの動き` text and the read-only visual projection;
+- applicable Targeted Sets show a compact Timeline-like relationship diagram;
+- block position/length communicates target span, independent duration, related-start/end boundaries and start/center/end alignment;
+- target-relative Up/Down is visible through vertical block order;
+- Absolute Layer is shown truthfully as an explicit layer hint rather than a fabricated target-relative distance;
+- Generic Sets do not force a redundant full diagram;
+- Preview reads the staged Draft and performs zero Timeline/Settings mutation;
+- PairBoundary and Settings spacing were simplified through the final hands-on correction pass.
+
+Final tested code/package source: `6ed136abcb9b6a3346e32d1b0661c5aed98d69b3`.
+
+Release #747: **1,254 Native assertions PASS / 0 FAIL**, exact distribution-DLL smoke and verified packaging GREEN.
+
+Authorities:
 
 - `BEHAVIOR_PREVIEW_DESIGN.md`;
 - `BEHAVIOR_PREVIEW_ACCEPTANCE.md`;
 - `BEHAVIOR_PREVIEW_WORKPLAN.md`.
 
-P0 first extracts one typed `PlacementBehaviorDescription` from the current staged Draft. The existing `このセットの動き` text and the visual Preview must consume that same projection.
+The Preview materially reduces the need for a second “explain the settings” workflow. Therefore the old automatic sequence **Preview -> checklist -> Full Settings Workspace** is retired.
 
-#### Behavior preview
+### 5B. Native Undo / Redo surface — NEXT
 
-Show the configured **placement result relationship** as a small Timeline-like diagram.
+Primary goal:
 
-The Preview should visually answer:
+> Make the normal “place -> inspect -> undo -> try another placement” loop available without leaving Template Placer.
 
-- where the placed Item starts;
-- where it ends / what determines its length;
-- whether it aligns to target start / center / end;
-- whether a related Item supplies the start/end boundary;
-- whether the placed Item is above or below the target in relative-layer terms.
+Direction:
 
-Examples include:
+- expose **YMM4-native Undo / Redo**, never a Template-Placer-only history;
+- prefer two compact persistent controls in the existing top context/Set strip;
+- do **not** increase the strip height merely to fit them;
+- enabled/disabled state must follow the real native command state;
+- invoking Undo may revert an intervening non-Template-Placer edit when that is the actual native top Undo unit; do not disguise this;
+- do not search backward for “the last Template Placer placement” and delete it;
+- do not add a custom undo stack.
 
-```text
-[配置アイテム]
-[対象アイテム]
-```
+Before product implementation, prove the supported native command route and enabled-state behavior in the pinned real YMM4 host or canonical Lab evidence.
 
-```text
-[対象アイテム]        [周辺アイテム]
-[配置アイテム────────────]
-```
+Exit:
 
-The Preview must distinguish target-same-length, Template/fixed length, related-Item-start boundary and related-Item-end boundary by block geometry.
+- native Undo and Redo can be invoked from the Template Placer surface through a supported/proved host route;
+- availability state is truthful;
+- no header-height growth is required at the normal Tool size;
+- existing PlacementPlan/native Undo semantics remain authoritative.
 
-Generic Sets do not require the full diagram; show only a compact layer result/hint when useful.
+### 5C. Placement quick settings — INVESTIGATE AFTER / ALONGSIDE 5B
 
-Initial scope remains a **read-only projection**, not another placement engine, dry-run simulator or direct-manipulation editor.
+Primary question:
 
-The existing textual `このセットの動き` summary and the visual Preview consume the same Settings Draft / `PlacementBehaviorDescription`. Do not duplicate placement semantics inside the Preview.
+> Which small subset of placement settings is changed often enough during editing that it deserves a fast path beside the normal tile workflow?
 
-### 5B. “What I want” checklist — AFTER PREVIEW
+This is **not** a second Settings mode.
 
-Start only after the read-only Preview vocabulary is accepted.
+Direction:
 
-Provide an alternate way to construct the same Settings by describing the intended outcome, for example:
+- edit the same staged Settings Draft used by Compact Settings;
+- reuse the accepted Behavior Preview for immediate read-only feedback;
+- expose only high-frequency placement axes proven useful by hands-on use;
+- candidate axes may include anchor/alignment, duration relation and layer relation/direction, but the final subset is intentionally not frozen yet;
+- keep detailed applicability, source management, bounds/fallback and Set management in normal Settings unless use proves they belong in the quick surface;
+- avoid duplicating validation, persistence or placement semantics.
 
-- what is the target/context;
-- what source/content should be placed;
-- where should placement start/end;
-- what duration should be used;
-- above/below/absolute layer and how far;
-- what should happen when the destination is occupied or a required neighbor is missing.
+The design should optimize “small correction before the next placement”, not reproduce the full Settings screen in miniature.
 
-The checklist is an **editing projection of the existing Settings Draft**, not a second configuration model.
+Exit:
 
-Safe interaction model:
+- a bounded quick-setting vocabulary is chosen from actual repeated edits;
+- every quick control maps directly to an existing Draft field/finite option;
+- Preview updates from the same Draft;
+- Compact Settings remains the complete ordinary configuration surface.
+
+### 5D. “What I want” checklist — DEFERRED / RE-EVALUATE
+
+The checklist is no longer the automatic next phase.
+
+Reason:
+
+- Behavior Preview now explains placement combinations much better than the original pre-Preview plan assumed;
+- placement quick settings may solve the remaining frequent-edit problem with much less UI and state;
+- a second outcome-oriented editing workflow would add meaningful interaction/state complexity.
+
+Keep the prior safe concept only as a fallback:
 
 ```text
 current Settings Draft
@@ -338,58 +367,22 @@ current Settings Draft
 -> current Settings Draft
 ```
 
-Cancel must leave the current Settings Draft unchanged.
+If later hands-on evidence shows a real unresolved comprehension/input problem, the checklist may return as an editing projection of the same Draft. Cancel must remain zero-change and no second schema/persistence route may appear.
 
-Start from the currently edited Draft, not from only the last persisted Settings.
+### 6. Full Settings Workspace (“Settings mode”) — DEFERRED / NEED-DRIVEN
 
-Initial preview should remain read-only. Do not add preview drag/edit gestures in the first implementation.
+Do not build a separate large Settings workspace merely because it was on the old sequence.
 
-The exact layout (text above preview vs. beside it, vertical vs. horizontal composition) should be decided by Hands-on use rather than frozen prematurely.
+Re-evaluate only when real usage shows that many Sets/tiles make Compact Settings plus existing filtering/search materially difficult to manage.
 
-Exit:
+If that threshold is reached:
 
-- textual summary and visual preview are projections of the same authoritative Draft;
-- Checklist Apply produces the same Draft shape as direct Settings editing;
-- Checklist Cancel is zero-change;
-- Template and TachiePreset sources use the same placement-description path where Phase 2 decided they should;
-- no placement semantics are reimplemented in the preview layer.
+- edit the same model, staged Draft and protected persistence route as Compact Settings;
+- reuse Behavior Preview and any accepted quick-setting vocabulary;
+- solve large-scale navigation/comparison/management rather than recreating normal Settings;
+- do not introduce a second schema, source model, placement engine or persistence route.
 
-### 6. Full Settings Workspace (“Settings mode”)
-
-After the compact surface and reusable assistance components are understood, create a larger settings-only workspace for managing growing Sets and tiles.
-
-This is not a second Settings system.
-
-It must edit the same model, same staged Draft and same protected persistence route as Compact Settings.
-
-Current candidate spatial structure:
-
-```text
-left navigation        center structure         right inspector
-Item type          ->  Sets / tiles         ->  selected settings
-```
-
-Primary purpose:
-
-- make Settings location spatially predictable;
-- make Sets/tiles easier to compare and manage at scale;
-- provide enough space to expose capabilities without relying on first-level hiding.
-
-Reuse rather than recreate:
-
-- `このセットの動き` summary;
-- behavior preview;
-- “what I want” checklist;
-- existing Set/tile/source editors and validation semantics where practical.
-
-Compact Settings remains useful for ordinary quick edits. Both entry points must converge on the same authoritative Settings state.
-
-Exit:
-
-- Compact and Full Settings edit the same authoritative Draft;
-- both surfaces observe the same validation/auto-commit/conflict/rollback semantics;
-- Preview/Checklist are reused rather than reimplemented;
-- no second schema, source model, placement engine or persistence route exists.
+Until then, Compact Settings remains the complete configuration surface and the larger workspace is parked.
 
 ## Items that do not automatically interrupt this sequence
 
