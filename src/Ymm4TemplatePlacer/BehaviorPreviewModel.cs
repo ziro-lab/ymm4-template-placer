@@ -136,7 +136,6 @@ public sealed record BehaviorPreviewModel(
         if (needsNeighbor) notes.Add(PlacementBehaviorText.Neighbor(d));
         if (multiple && !pair) notes.Add("選択範囲の例");
         if (pair) notes.Add("2アイテムが接する境界の例");
-        if (absolute) notes.Add("参照側のレイヤー位置は省略");
         if (duration == IntentDuration.Fixed) notes.Add("対象・周辺の長さは例");
         var meaningful = double.IsFinite(from) && to > from;
         if (meaningful) blocks.Add(new(PreviewBlockKind.Placed, "配置アイテム", from, to, outputRow));

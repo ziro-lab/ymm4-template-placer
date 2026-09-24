@@ -81,12 +81,12 @@ public partial class PlacementBehaviorPreview : UserControl
             Line(0, 56, width, 56, false);
         }
         foreach (var guide in model.Guides)
-            Line(X(guide), 18, X(guide), 99, true);
+            Line(X(guide), 23, X(guide), 99, true);
         // A small anchor marker connects start/center/end alignment to the reference.
         if (model.Guides.Count > 0)
         {
             var x = X(model.Guides[0]);
-            var marker = new Polygon { Points = new PointCollection([new(x - 4, 13), new(x + 4, 13), new(x, 18)]) };
+            var marker = new Polygon { Points = new PointCollection([new(x - 4, 18), new(x + 4, 18), new(x, 23)]) };
             marker.SetResourceReference(Shape.FillProperty, SystemColors.ControlTextBrushKey);
             DiagramCanvas.Children.Add(marker);
         }

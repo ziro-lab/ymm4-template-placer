@@ -107,6 +107,7 @@ internal static partial class NativeProof
         {
             var cases = new[] { ("same-up", same), ("same-down", down), ("neighbor-head", head), ("neighbor-end", tail),
                 ("center", center), ("end", end), ("previous", before), ("pair", pair), ("range", range),
+                ("one-frame", Draft(new() { Duration = IntentDuration.Fixed, FixedDuration = 1 }).BehaviorDiagram),
                 ("absolute", Draft(new() { Layer = new() { Mode = LayerPlacementMode.Absolute, AbsoluteLayer = 42 } }).BehaviorDiagram) };
             window.Show();
             foreach (var (name, model) in cases)
@@ -116,8 +117,13 @@ internal static partial class NativeProof
                 var border = new Border { Child = preview, Padding = new(10), Background = SystemColors.WindowBrush, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
                 window.Content = border; await Idle(); window.UpdateLayout();
                 var bars = preview.DiagramCanvas.Children.OfType<Border>().ToArray();
-                Assert(bars.Length == model.Blocks.Count && bars.All(x => Canvas.GetLeft(x) >= 0 && Canvas.GetLeft(x) + x.Width <= preview.DiagramCanvas.ActualWidth + .1) && !preview.IsHitTestVisible,
-                    $"BEHAVIOR_PREVIEW v2 {name}/{width}: real WPF bars fit without horizontal clipping and are non-interactive");
+                double Pixel(double value) => 4 + (value - model.Minimum) / (model.Maximum - model.Minimum) * (preview.DiagramCanvas.ActualWidth - 8);
+                Assert(bars.Length == model.Blocks.Count && bars.All(x => x.Tag is PreviewBlock b &&
+                    Math.Abs(Canvas.GetLeft(x) - Pixel(b.Start)) < .1 &&
+                    Math.Abs(x.Width - Math.Max(1, Pixel(b.End) - Pixel(b.Start))) < .1 &&
+                    Canvas.GetTop(x) == (b.Row == 0 ? 23 : 68) &&
+                    Canvas.GetLeft(x) >= 0 && Canvas.GetLeft(x) + x.Width <= preview.DiagramCanvas.ActualWidth + .1) && !preview.IsHitTestVisible,
+                    $"BEHAVIOR_PREVIEW v2 {name}/{width}: actual WPF start/end and row positions preserve the model without clipping or interaction");
                 var image = new RenderTargetBitmap((int)Math.Ceiling(border.ActualWidth), (int)Math.Ceiling(border.ActualHeight), 96, 96, PixelFormats.Pbgra32);
                 image.Render(border); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
                 using var file = File.Create(Path.Combine(output, $"behavior-preview-v2-{name}-{width}.png")); encoder.Save(file);
