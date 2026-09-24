@@ -26,37 +26,40 @@ The current product architecture retains the accepted v0.4.2 Hands-on/performanc
 - targeted Set layer placement with existing target-relative mode or explicit Absolute Layer, both using the shared bounded one-direction collision planner;
 - retained Template-mode performance and protected Settings guarantees.
 
-Compact Settings friction/discoverability is accepted at exact product/test/package source `05285a7bae1eb59b4b588c565aa46e29bdea795c` by Release #654 (`35897405826`), with **1,822 Native assertions PASS**, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Baseline simplification / compatibility cleanup is complete on main merge `af6a667e401a99311ef58293c750ac51b9145f54`; main Release #708 (`35983059810`) is GREEN with **1,198 Native assertions PASS / 0 FAIL**, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Behavior Preview v2 is owner hands-on accepted at final tested source `6ed136abcb9b6a3346e32d1b0661c5aed98d69b3`; Release #747 is GREEN with **1,254 Native assertions PASS / 0 FAIL**, exact distribution-DLL smoke and verified packaging. Compact YMM4-native Undo/Redo is accepted at exact tested source `d12b4057e8d4cd1b79f009804cd280d96c38c148`; Release #760 / run `36068432875` is GREEN with **1,263 ASSERT PASS / 0 FAIL**, exact distribution-DLL smoke and verified packaging. The next product phase is placement quick-settings investigation using the same Settings Draft and accepted Preview. The “what I want” checklist and Full Settings Workspace are deferred for need-based re-evaluation rather than automatic sequencing. Known later items also include Composite/Fan-out placement, stronger Target/Neighbor grammar and measured built-in Tachie Preset loading optimization. Do not reopen completed Portable Settings, Placement Source, bounded Placement Rule, Compact Settings, Behavior Preview or native Undo/Redo architecture while addressing those items.
+Compact Settings friction/discoverability is accepted at exact product/test/package source `05285a7bae1eb59b4b588c565aa46e29bdea795c` by Release #654 (`35897405826`), with **1,822 Native assertions PASS**, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Baseline simplification / compatibility cleanup is complete on main merge `af6a667e401a99311ef58293c750ac51b9145f54`; main Release #708 (`35983059810`) is GREEN with **1,198 Native assertions PASS / 0 FAIL**, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Behavior Preview v2 is owner hands-on accepted at final tested source `6ed136abcb9b6a3346e32d1b0661c5aed98d69b3`; Release #747 is GREEN with **1,254 Native assertions PASS / 0 FAIL**, exact distribution-DLL smoke and verified packaging. Compact YMM4-native Undo/Redo is accepted at exact tested source `d12b4057e8d4cd1b79f009804cd280d96c38c148`; Release #760 / run `36068432875` is GREEN with **1,263 ASSERT PASS / 0 FAIL**, exact distribution-DLL smoke and verified packaging. Placement Quick Settings is the active product phase, using the same Settings Draft, existing protected Settings transaction and accepted Preview. The “what I want” checklist and Full Settings Workspace are deferred for need-based re-evaluation rather than automatic sequencing. Known later items also include Composite/Fan-out placement, stronger Target/Neighbor grammar and measured built-in Tachie Preset loading optimization. Do not reopen completed Portable Settings, Placement Source, bounded Placement Rule, Compact Settings, Behavior Preview or native Undo/Redo architecture while addressing those items.
 
 Read in this order:
 
 1. `docs/CURRENT_ARCHITECTURE.md`
 2. `docs/PRODUCT_ROADMAP.md` for current product sequencing
-3. `docs/BEHAVIOR_PREVIEW_DESIGN.md` for the active Preview phase
-4. `docs/BEHAVIOR_PREVIEW_ACCEPTANCE.md`
-5. `docs/BEHAVIOR_PREVIEW_WORKPLAN.md`
-6. `docs/BASELINE_SIMPLIFICATION_DESIGN.md` for the accepted pre-Preview maintenance boundary
-7. `docs/BASELINE_SIMPLIFICATION_ACCEPTANCE.md`
-8. `docs/BASELINE_SIMPLIFICATION_WORKPLAN.md`
-9. `docs/COMPACT_SETTINGS_FRICTION_DESIGN.md` for the accepted compact-Settings friction baseline
-10. `docs/COMPACT_SETTINGS_FRICTION_ACCEPTANCE.md`
-11. `docs/COMPACT_SETTINGS_FRICTION_WORKPLAN.md`
-12. `docs/PLACEMENT_RULE_COMPLETION_DESIGN.md` for the accepted bounded placement-rule model
-13. `docs/PLACEMENT_RULE_COMPLETION_ACCEPTANCE.md`
-14. `docs/PLACEMENT_RULE_COMPLETION_WORKPLAN.md`
-15. `docs/PLACEMENT_SOURCE_UNIFICATION_DESIGN.md` for the accepted Source/Placement model
-16. `docs/PLACEMENT_SOURCE_UNIFICATION_ACCEPTANCE.md`
-17. `docs/PLACEMENT_SOURCE_UNIFICATION_WORKPLAN.md`
-18. `docs/GLOSSARY.md`
-19. `docs/VALIDATION_STRATEGY.md`
-20. `docs/TACHIE_PRESET_DESIGN.md`
-21. `docs/TACHIE_PRESET_ACCEPTANCE.md`
-22. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
-23. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
-24. `docs/FINAL_HANDS_ON_POLISH.md`
-25. `docs/BACKLOG.md` only for scope/detail
-26. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
-27. historical Round/W documents only when current authority points to them or when reconstructing rationale
+3. `docs/PLACEMENT_QUICK_SETTINGS_DESIGN.md` for the active quick-settings phase
+4. `docs/PLACEMENT_QUICK_SETTINGS_ACCEPTANCE.md`
+5. `docs/PLACEMENT_QUICK_SETTINGS_WORKPLAN.md`
+6. `docs/BEHAVIOR_PREVIEW_DESIGN.md` for the accepted Preview phase
+10. `docs/BEHAVIOR_PREVIEW_ACCEPTANCE.md`
+11. `docs/BEHAVIOR_PREVIEW_WORKPLAN.md`
+12. `docs/BASELINE_SIMPLIFICATION_DESIGN.md` for the accepted pre-Preview maintenance boundary
+10. `docs/BASELINE_SIMPLIFICATION_ACCEPTANCE.md`
+11. `docs/BASELINE_SIMPLIFICATION_WORKPLAN.md`
+12. `docs/COMPACT_SETTINGS_FRICTION_DESIGN.md` for the accepted compact-Settings friction baseline
+13. `docs/COMPACT_SETTINGS_FRICTION_ACCEPTANCE.md`
+14. `docs/COMPACT_SETTINGS_FRICTION_WORKPLAN.md`
+15. `docs/PLACEMENT_RULE_COMPLETION_DESIGN.md` for the accepted bounded placement-rule model
+16. `docs/PLACEMENT_RULE_COMPLETION_ACCEPTANCE.md`
+17. `docs/PLACEMENT_RULE_COMPLETION_WORKPLAN.md`
+18. `docs/PLACEMENT_SOURCE_UNIFICATION_DESIGN.md` for the accepted Source/Placement model
+19. `docs/PLACEMENT_SOURCE_UNIFICATION_ACCEPTANCE.md`
+20. `docs/PLACEMENT_SOURCE_UNIFICATION_WORKPLAN.md`
+21. `docs/GLOSSARY.md`
+22. `docs/VALIDATION_STRATEGY.md`
+23. `docs/TACHIE_PRESET_DESIGN.md`
+24. `docs/TACHIE_PRESET_ACCEPTANCE.md`
+25. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
+26. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
+27. `docs/FINAL_HANDS_ON_POLISH.md`
+28. `docs/BACKLOG.md` only for scope/detail
+29. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
+30. historical Round/W documents only when current authority points to them or when reconstructing rationale
 
 Do not reimplement completed v0.5.0, Portable Settings, Placement Source, bounded Placement Rule or Baseline Simplification work. Preserve the Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary, source-specific materialization / Set-owned geometry split, start/center/end alignment, target-relative/absolute layer modes and validation tiers.
 
