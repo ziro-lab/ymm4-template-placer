@@ -55,7 +55,7 @@ Read in this order:
 23. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
 24. historical Round/W documents only when current authority points to them or when reconstructing rationale
 
-Do not reimplement completed v0.5.0, Portable Settings, Placement Source or bounded Placement Rule work. Preserve the Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary, source-specific materialization / Set-owned geometry split, start/center/end alignment, target-relative/absolute layer modes and validation tiers.
+Do not reimplement completed v0.5.0, Portable Settings, Placement Source, bounded Placement Rule or Baseline Simplification work. Preserve the Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary, source-specific materialization / Set-owned geometry split, start/center/end alignment, target-relative/absolute layer modes and validation tiers.
 
 ## Product boundary
 
@@ -110,7 +110,7 @@ Run heavy native/build/package work in the existing Windows Actions lane, not th
 
 - Work through a main-based branch/PR. Preserve accepted baseline identity and history. Never force-push or reroute a write rejected by a safety check; report the exact failure and last successful checkpoint.
 - Use small auditable changes. Documentation-only commits must not launch native builds; source/project/XAML/tests/fixtures/workflow changes require the Windows lane before promotion.
-- Retain P1-P9, W3-W12, WUX1-WUX13, R1-R14, TEMPLATE_FIDELITY, RELATIVE_UIUX, HANDS_ON_UX_POLISH, HANDS_ON_ROUND2, HANDS_ON_ROUND3 and current acceptance assets. Follow `docs/VALIDATION_STRATEGY.md`: Focused runs a compact stable core for ordinary Draft edits; Checkpoint/Release retain the complete historical semantic ladder and evidence-negative fixtures.
+- Retain the current stable-core safety boundaries, exact association/native Undo, Settings conflict protection, source identity, Template fidelity, current UX invariants and evidence guards. Historical W/WUX stages are not mandatory merely by label; consolidate or retire them only under `docs/VALIDATION_STRATEGY.md`. Focused remains the compact Draft lane; Checkpoint/Release validate the current required semantic/evidence contracts.
 - Release/Proof builds require zero compiler warnings/errors. Exact distribution-DLL smoke, final package/provenance and stable `Ymm4TemplatePlacer/` root are Release gates rather than a tax on every Focused edit. Record source/checkout/run/attempt/provenance and final hashes at Release.
 - Label DONE/PARTIAL/FUTURE/BLOCKED accurately. Native PASS is not human acceptance. Update usage documentation only after the new implemented UI is native-green, not speculatively during partial work.
 

@@ -64,7 +64,7 @@ This is authoritative promotion/release evidence.
 
 ## Historical tests
 
-Historical Round 2/3 checks remain source-controlled and still execute at Checkpoint/Release. They should not be copied into new tests merely because a new round exists.
+Historical Round/W checks remain source-controlled when they retain trace/evidence value, but they are not automatically mandatory at Checkpoint/Release. Baseline Simplification retired the old WUX8-WUX12 workspace-specific ladder from mandatory execution after WUX13/current named invariants covered the surviving failure classes. Historical tests should not be copied into new tests merely because a new round exists.
 
 New acceptance should prefer current invariants over repeating old round labels. Reuse an existing test when it already protects the same invariant.
 
