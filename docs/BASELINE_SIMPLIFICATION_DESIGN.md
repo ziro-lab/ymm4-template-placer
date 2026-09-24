@@ -1,6 +1,6 @@
 # Baseline Simplification Design
 
-Status: **ACTIVE — P0 SCOPE FROZEN / P1 LEGACY WORKSPACE REMOVAL NEXT**
+Status: **RELEASE CANDIDATE — P1-P4 COMPLETE / P5 PROMOTION ACTIVE**
 
 ## Goal
 
@@ -71,7 +71,7 @@ After LegacyWorkspace removal is GREEN, audit:
 - multi-step revision migrations that can be collapsed to current-only validation or one dedicated importer;
 - Round2/3/4 and older UX tests that protect the same current invariant.
 
-## P1 — LegacyWorkspace removal
+## P1 — LegacyWorkspace removal — COMPLETE
 
 Remove the old workspace as an executable product path.
 
@@ -85,7 +85,7 @@ Required result:
 - old JSON containing `LegacyWorkspace` is accepted as an unknown field by the current serializer and naturally disappears on a subsequent save;
 - no Timeline mutation semantics change.
 
-## P2 — executable legacy UI audit
+## P2 — executable legacy UI audit — COMPLETE
 
 After P1:
 
@@ -96,7 +96,7 @@ After P1:
 
 Likely candidates include legacy Selection and Palette UI families. `QuickDropPlanner` is not presumed removable because current Generic placement reuses it.
 
-## P3 — migration-chain simplification
+## P3 — migration-chain simplification — COMPLETE
 
 After current runtime paths are singular:
 
@@ -105,7 +105,7 @@ After current runtime paths are singular:
 - prefer one bounded old->current conversion over permanent v0->v1->v2->... logic;
 - once a format is intentionally unsupported, fail closed with the original file untouched.
 
-## P4 — validation consolidation
+## P4 — validation consolidation — COMPLETE
 
 Consolidate historical UI/Round proofs into current invariant tests where the repository's retirement rules allow it.
 
@@ -117,6 +117,16 @@ Primary targets:
 - repeated current-vs-legacy UI visibility checks;
 - historical Hands-on tests whose only surviving contract is now a current invariant;
 - repeated zero-Timeline-mutation checks for the same Settings operation.
+
+## Implemented maintenance result
+
+The current distribution has one normal product runtime path. `LegacyWorkspace` is no longer a persisted or executable product mode, while old Timeline association/source identity and protected Settings compatibility remain bounded current responsibilities.
+
+The legacy-family audit intentionally did **not** turn into a filename purge. Selection/Palette/QuickDrop/ExpressionPreset pieces remain only where current reuse, secondary behavior, migration/association compatibility or historical proof still gives them a concrete responsibility.
+
+Validation consolidation replaces mandatory historical workspace-specific UX ladders with current named invariants. Checkpoint #691 at candidate `d227e4c0fcb502e5a3abc970527ce447d0926ae5` passed **1,198 Native assertions / 0 failures**, down from the 1,822-assertion accepted Phase 4 baseline (~34.2% reduction).
+
+Release promotion remains the final gate before Behavior Preview.
 
 ## Explicit non-goals
 
