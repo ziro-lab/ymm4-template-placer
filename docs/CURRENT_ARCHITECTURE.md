@@ -94,6 +94,18 @@ Current global presentation state is shared across Sets:
 
 These are not Set-local settings.
 
+## Single current workspace
+
+The product has one normal executable workspace path.
+
+`LegacyWorkspace` is not a persisted Settings field and there is no product command/session switch that returns the Tool to the old Palette / Selection workspace. Placement, Settings and expression operation use the current Context -> Set -> tile / current Settings / current expression surfaces unconditionally.
+
+Historical JSON may still contain an unknown property named `LegacyWorkspace`; it does not reactivate old behavior and naturally disappears when current Settings are written again.
+
+`LegacyProofShims.cs` is compiled only for the proof build while historical tests are consolidated. It is not part of the distributable runtime contract.
+
+Legacy-looking class/file names do not by themselves mean a second product mode still exists. Some older Palette/Selection/QuickDrop/ExpressionPreset pieces remain where current reuse, secondary behavior or bounded compatibility still gives them a concrete responsibility.
+
 ## Generic placement
 
 Generic/time-position placement uses Timeline.CurrentFrame as the time context.
