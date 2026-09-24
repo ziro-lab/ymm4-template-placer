@@ -99,6 +99,20 @@ internal static partial class NativeProof
                 Signature(timeline) == beforeTimeline,
                 "PLACEMENT_QUICK_SETTINGS P1 Preview and saved relation come from the same Draft with zero Timeline mutation");
 
+            var quickDraftBeforePresentationReset = vm.PlacementQuickDraft;
+            Assert(vm.ShapeCurrentIntentSetCommand.CanExecute(IntentTileShape.Square),
+                "PLACEMENT_QUICK_SETTINGS P1 existing presentation quick action is admitted after placement commit");
+            vm.ShapeCurrentIntentSetCommand.Execute(IntentTileShape.Square);
+            await Idle();
+            Assert(vm.PlacementQuickDraft != null &&
+                !ReferenceEquals(vm.PlacementQuickDraft, quickDraftBeforePresentationReset) &&
+                ReferenceEquals(vm.PlacementQuickDraft, vm.IntentSettings?.SelectedPalette) &&
+                vm.PlacementQuickDraft.Id == set.Id &&
+                vm.PlacementQuickDraft.Duration == IntentDuration.Template &&
+                vm.PlacementQuickDraft.Anchor == IntentAnchor.SelectedCenter &&
+                vm.PlacementQuickDraft.Direction == RelativeLayerDirection.Up,
+                "PLACEMENT_QUICK_SETTINGS P1 presentation-side Settings rebuild rebinds placement quick controls to the new authoritative Draft");
+
             var tile = vm.IntentTiles.Single();
             Assert(vm.ExecuteIntentTileCommand.CanExecute(tile),
                 "PLACEMENT_QUICK_SETTINGS P1 successful protected commit admits the next placement");
