@@ -11,7 +11,7 @@ on:
           - release
         default: checkpoint
   push:
-    branches: [main, 'work/v0.4-native-validation', 'work/v0.5-native-validation']
+    branches: [main]
     paths: ['src/**/*.cs', 'src/**/*.csproj', 'src/**/*.xaml', 'tests/**/*.cs', 'tests/**/*.csproj', 'tests/**/*.ps1', 'fixtures/**/*.json', 'fixtures/**/*.ymmp', 'fixtures/**/*.png', 'fixtures/**/*.xlsx', '.github/workflows/native-yymm4-proof.yml']
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
