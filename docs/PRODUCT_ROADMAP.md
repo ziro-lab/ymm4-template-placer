@@ -238,7 +238,7 @@ Final Phase 4 result:
 
 Phase 4 is complete. Phase 5 is the next product phase.
 
-### 4.5. Baseline simplification / compatibility cleanup — RELEASE PROMOTION
+### 4.5. Baseline simplification / compatibility cleanup — MAIN PROMOTION
 
 Before adding Behavior Preview, simplify the pre-publication baseline while there is only one known user and no announced compatibility commitment.
 
@@ -264,8 +264,9 @@ Current maintenance result:
 - current placement, Settings and expression surfaces are unconditional;
 - compatibility retained is bounded to current data/Timeline/source/Settings responsibilities rather than a second product mode;
 - historical workflow validation is consolidated behind current named invariants;
-- Checkpoint #691 at candidate `d227e4c0fcb502e5a3abc970527ce447d0926ae5` is GREEN with **1,198 Native assertions / 0 failures**, down from 1,822 at the accepted Phase 4 baseline;
-- Release candidate + main promotion remain before Phase 4.5 becomes COMPLETE.
+- Checkpoint #691 is GREEN with **1,198 Native assertions / 0 failures**, down from 1,822 at the accepted Phase 4 baseline;
+- Release #707 (`35982411699`) at exact source `800b9bd261180f016ab3c1f26e67df1b55fd1eda` is GREEN, including exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging;
+- main merge + main Release remain before Phase 4.5 becomes COMPLETE.
 
 ### 5. Behavior preview + “what I want” checklist — BLOCKED BY 4.5
 

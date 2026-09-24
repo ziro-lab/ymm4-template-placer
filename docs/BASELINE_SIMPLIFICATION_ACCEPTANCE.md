@@ -1,6 +1,6 @@
 # Baseline Simplification Acceptance
 
-Status: **P1-P4 CHECKPOINT ACCEPTED — RELEASE PROMOTION PENDING**
+Status: **RELEASE ACCEPTED — MAIN PROMOTION PENDING**
 
 ## B1 — current runtime is singular
 
@@ -57,6 +57,8 @@ The pre-Preview maintenance candidate is accepted at Checkpoint when all of the 
 - workflow evidence is validated by schema + required current native stages, not by a historical fixed check count;
 - the full current Checkpoint has zero Native assertion failures.
 
-Candidate `d227e4c0fcb502e5a3abc970527ce447d0926ae5` satisfies the Checkpoint gate through run #691: **1,198 assertions PASS / 0 FAIL**.
+Checkpoint #691 satisfies the semantic gate with **1,198 assertions PASS / 0 FAIL**.
 
-Release DLL identity smoke, verified packaging and main promotion remain required before Baseline Simplification is marked complete.
+Release #707 (`35982411699`) at exact source `800b9bd261180f016ab3c1f26e67df1b55fd1eda` satisfies the Release gate: **1,198 PASS / 0 FAIL**, exact distribution-DLL identity smoke PASS, and verified `.ymme` / source / provenance packaging PASS. Release artifact SHA256 is `5391a61783b4333b2abd7e419cb895e622b14fb47e997bb222ed16a05a32943b`.
+
+Main merge and main Release remain required before Baseline Simplification is marked complete.

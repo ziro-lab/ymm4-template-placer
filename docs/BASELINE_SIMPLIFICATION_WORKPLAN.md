@@ -1,6 +1,6 @@
 # Baseline Simplification Workplan
 
-Status: **P1-P4 COMPLETE — P5 RELEASE PROMOTION ACTIVE**
+Status: **P1-P4 COMPLETE — P5 MAIN PROMOTION ACTIVE**
 
 Authorities:
 
@@ -13,9 +13,13 @@ Authorities:
 Current candidate:
 
 - PR: #32 (`work/v0.5-baseline-simplification`);
-- candidate source: `d227e4c0fcb502e5a3abc970527ce447d0926ae5`;
+- Release candidate source: `800b9bd261180f016ab3c1f26e67df1b55fd1eda`;
 - Checkpoint #691: SUCCESS;
+- Release #707 (`35982411699`): SUCCESS;
 - Native assertions: **1,198 PASS / 0 FAIL**;
+- exact distribution-DLL smoke: PASS;
+- verified `.ymme` / source / provenance packaging: PASS;
+- Release artifact SHA256: `5391a61783b4333b2abd7e419cb895e622b14fb47e997bb222ed16a05a32943b`;
 - previous accepted Phase 4 baseline: 1,822 assertions;
 - reduction: about **34.2%** while retaining current Set/Settings, association, native Undo, source identity and expression-performance boundaries.
 
@@ -91,16 +95,16 @@ Measured result:
 
 This is validation-history consolidation, not risk-boundary deletion.
 
-## P5 — final baseline promotion — ACTIVE
+## P5 — final baseline promotion — MAIN PROMOTION ACTIVE
 
 Promotion sequence:
 
 1. Checkpoint — **GREEN (#691)**;
-2. current-workflow hands-on only if a new current UI reachability difference is discovered; this cleanup intentionally removes a superseded compatibility mode rather than changing the accepted current workflow;
-3. Release candidate on `work/v0.5-native-validation`;
-4. record exact Release evidence;
-5. merge PR #32 to main;
-6. main Release;
+2. no extra current-workflow hands-on was required: this cleanup removes a superseded compatibility mode rather than changing the accepted current workflow;
+3. Release candidate — **GREEN (#707)** at exact source `800b9bd261180f016ab3c1f26e67df1b55fd1eda`;
+4. exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging — **GREEN**;
+5. merge PR #32 to main — **NEXT**;
+6. main Release — pending;
 7. mark Baseline Simplification complete and unblock Behavior Preview.
 
-Do not start Behavior Preview implementation until Release/main promotion is complete.
+Do not start Behavior Preview implementation until main promotion is complete.
