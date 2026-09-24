@@ -1,6 +1,6 @@
 # Behavior Preview Acceptance
 
-Status: **P0 ACTIVE**
+Status: **P0 ACCEPTED / P1 CHECKPOINT GREEN / P2 HANDS-ON NEXT**
 
 ## P0 — Description Projection
 
@@ -37,3 +37,7 @@ Before moving to the checklist:
 - decide final placement above/beside/below Summary from Hands-on evidence rather than pre-freezing layout.
 
 The checklist starts only after the read-only Preview vocabulary is accepted.
+
+## Checkpoint evidence
+
+PR #36 Checkpoint #720 (`35996576943`) passed **1,207 Native assertions / 0 failures**. The shared description projection, standalone read-only schematic, Targeted compact-Settings binding and Generic compact-Settings binding are native-green. Visual comprehension/layout remains a human hands-on gate.
