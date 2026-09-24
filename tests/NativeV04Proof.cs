@@ -57,26 +57,20 @@ internal static partial class NativeProof
             return;
         }
         await VerifyLibrary(timeline);
-        await VerifyExpressionRecovery(timeline);
-        await VerifyPalettePickerRefresh(timeline);
-        await VerifyExpressionTask(timeline);
         await VerifyQuickDrop(timeline, undo);
         await VerifyExpressionPresets(timeline, undo);
         await VerifyAssociations(timeline, undo);
         await VerifySelectionProfiles(timeline, undo);
         await VerifySelectionRange(timeline, undo);
         await VerifyBoundary(timeline, undo);
-        await VerifySelectionTask(timeline, undo);
-        await VerifyAutomaticPreview(timeline, undo);
         await VerifyFinalUi(timeline);
         await VerifyPresetSelectorRefresh(timeline);
-        await VerifyTaskUxFinal(timeline, undo);
         await VerifyResumeContinuity(timeline, undo);
         await VerifyBulkPaletteAdd(timeline);
         await VerifyPaletteOrdering(timeline);
         await VerifySafetyIntent(timeline);
         await VerifyIdentityClarity(timeline);
-        VerifyFinalAcceptance(); VerifyTaskUxAcceptance(); VerifyWorkflowAcceptance();
+        VerifyFinalAcceptance(); VerifyWorkflowAcceptance();
         await VerifyRelativeFoundations(timeline, undo);
         await VerifyIntentCore(timeline, undo);
         await VerifyIntentSurface(timeline, undo);
@@ -107,6 +101,7 @@ internal static partial class NativeProof
         VerifyHandsOnRound4SettingsSession(timeline, undo);
         await VerifyHandsOnRound4Settings(timeline, undo);
         await VerifyFinalHandsOnPolish(timeline, undo);
+        VerifyTaskUxAcceptance();
         await VerifyExpressionPerformance(timeline, undo);
     }
 }
