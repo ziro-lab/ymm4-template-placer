@@ -143,10 +143,11 @@ internal static partial class NativeProof
                 var sourceLeft = panel.SourceList.TranslatePoint(new Point(0, 0), panel.SourceEditor).X;
                 var sourceRight = panel.SourceEditor.ActualWidth -
                     panel.SourceList.TranslatePoint(new Point(panel.SourceList.ActualWidth, 0), panel.SourceEditor).X;
-                Assert(sourceLeft > sourceRight && sourceRight > 0 && panel.SourceList.ActualWidth > 0 &&
+                Assert(sourceLeft > 0 && sourceRight >= 0 && panel.SourceList.ActualWidth > 0 &&
                     panel.SourceList.ActualWidth < panel.SourceEditor.ActualWidth &&
-                    panel.SourceList.ActualWidth >= panel.SourceEditor.ActualWidth * 0.70,
-                    "COMPACT_SETTINGS P2 narrow bulk-source list leaves wider left outer-scroll escape space without aggressively shrinking the list");
+                    panel.SourceList.ActualWidth >= panel.SourceEditor.ActualWidth * 0.70 &&
+                    panel.SettingsScrollContent.Margin.Right == 8,
+                    "COMPACT_SETTINGS P2 narrow bulk-source list keeps the left outer-scroll escape while shared content gutter owns scrollbar spacing");
                 Assert(Math.Abs(panel.PalettePicker.ActualHeight - panel.NewPaletteButton.ActualHeight) <= 4,
                     "COMPACT_SETTINGS P3 targeted Set picker and plus control have comparable native heights after duplicate delete removal");
                 var entryLeft = panel.EntryList.TranslatePoint(new Point(0, 0), panel).X;
@@ -178,9 +179,10 @@ internal static partial class NativeProof
                 var normalLeft = panel.SourceList.TranslatePoint(new Point(0, 0), panel.SourceEditor).X;
                 var normalRight = panel.SourceEditor.ActualWidth -
                     panel.SourceList.TranslatePoint(new Point(panel.SourceList.ActualWidth, 0), panel.SourceEditor).X;
-                Assert(normalLeft > normalRight && normalRight > 0 &&
+                Assert(normalLeft > 0 && normalRight >= 0 &&
+                    panel.SettingsScrollContent.Margin.Right == 8 &&
                     panel.SettingsScroll.ExtentWidth <= panel.SettingsScroll.ViewportWidth + 1,
-                    "COMPACT_SETTINGS P2 normal-width source list retains asymmetric outer-scroll escape space without horizontal overflow");
+                    "COMPACT_SETTINGS P2 normal-width source list keeps left outer-scroll escape while shared right gutter prevents scrollbar crowding");
                 panel.SetManagement.BringIntoView(); await Idle(); panel.UpdateLayout();
                 var manageTop = panel.SetManagementBlock.TranslatePoint(new Point(), panel).Y;
                 var copyTop = panel.CopySetToItemPanel.TranslatePoint(new Point(), panel).Y;
