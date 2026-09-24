@@ -141,7 +141,7 @@ $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | Conv
 if ($acceptance.version -ne '0.5.0' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.5.0 core acceptance evidence' }
 $ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-Json
 if ($ux.version -ne '0.4.0' -or $ux.result -ne 'PASS' -or @($ux.checks).Count -ne 12 -or @($ux.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete retained Task UX acceptance evidence' }
-$workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
+# Validate the current workflow contract by schema + named native invariants, not a historical check count.`n$workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
 $requiredWorkflowStages=@(
  'V04=PASS',
  'UX_ACCEPTANCE=PASS',
