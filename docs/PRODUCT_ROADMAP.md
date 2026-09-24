@@ -238,7 +238,7 @@ Final Phase 4 result:
 
 Phase 4 is complete. Phase 5 is the next product phase.
 
-### 4.5. Baseline simplification / compatibility cleanup — RELEASE PROMOTION
+### 4.5. Baseline simplification / compatibility cleanup — COMPLETE
 
 Before adding Behavior Preview, simplify the pre-publication baseline while there is only one known user and no announced compatibility commitment.
 
@@ -264,10 +264,12 @@ Current maintenance result:
 - current placement, Settings and expression surfaces are unconditional;
 - compatibility retained is bounded to current data/Timeline/source/Settings responsibilities rather than a second product mode;
 - historical workflow validation is consolidated behind current named invariants;
-- Checkpoint #691 at candidate `d227e4c0fcb502e5a3abc970527ce447d0926ae5` is GREEN with **1,198 Native assertions / 0 failures**, down from 1,822 at the accepted Phase 4 baseline;
-- Release candidate + main promotion remain before Phase 4.5 becomes COMPLETE.
+- Checkpoint #691, Release candidate #707 at exact source `800b9bd261180f016ab3c1f26e67df1b55fd1eda`, and main Release #708 at merge `af6a667e401a99311ef58293c750ac51b9145f54` are GREEN with **1,198 Native assertions / 0 failures**;
+- exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging are GREEN;
+- validation volume is down from 1,822 at the accepted Phase 4 baseline by about **34.2%**;
+- Phase 4.5 is complete.
 
-### 5. Behavior preview + “what I want” checklist — BLOCKED BY 4.5
+### 5. Behavior preview + “what I want” checklist — NEXT
 
 Add a reusable Settings-assistance surface that can be opened from both Compact Settings and the later Full Settings Workspace.
 

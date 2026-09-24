@@ -1,6 +1,6 @@
 # Baseline Simplification Workplan
 
-Status: **P1-P4 COMPLETE — P5 RELEASE PROMOTION ACTIVE**
+Status: **COMPLETE — MAIN RELEASE GREEN / BEHAVIOR PREVIEW NEXT**
 
 Authorities:
 
@@ -10,12 +10,17 @@ Authorities:
 - `VALIDATION_STRATEGY.md`
 - `LEGACY_COMPATIBILITY_MAP.md`
 
-Current candidate:
+Accepted promotion:
 
-- PR: #32 (`work/v0.5-baseline-simplification`);
-- candidate source: `d227e4c0fcb502e5a3abc970527ce447d0926ae5`;
-- Checkpoint #691: SUCCESS;
+- PR #32: merged;
+- Release candidate source: `800b9bd261180f016ab3c1f26e67df1b55fd1eda`;
+- Release #707 (`35982411699`): SUCCESS;
+- main merge: `af6a667e401a99311ef58293c750ac51b9145f54`;
+- main Release #708 (`35983059810`): SUCCESS;
 - Native assertions: **1,198 PASS / 0 FAIL**;
+- exact distribution-DLL smoke: PASS;
+- verified `.ymme` / source / provenance packaging: PASS;
+- main Release artifact SHA256: `0d851406b667e4143d84b88ce28d9b8cab48b798d68c600c3c1b29247f5dfa29`;
 - previous accepted Phase 4 baseline: 1,822 assertions;
 - reduction: about **34.2%** while retaining current Set/Settings, association, native Undo, source identity and expression-performance boundaries.
 
@@ -91,16 +96,16 @@ Measured result:
 
 This is validation-history consolidation, not risk-boundary deletion.
 
-## P5 — final baseline promotion — ACTIVE
+## P5 — final baseline promotion — COMPLETE
 
-Promotion sequence:
+Promotion result:
 
 1. Checkpoint — **GREEN (#691)**;
-2. current-workflow hands-on only if a new current UI reachability difference is discovered; this cleanup intentionally removes a superseded compatibility mode rather than changing the accepted current workflow;
-3. Release candidate on `work/v0.5-native-validation`;
-4. record exact Release evidence;
-5. merge PR #32 to main;
-6. main Release;
-7. mark Baseline Simplification complete and unblock Behavior Preview.
+2. no extra current-workflow hands-on was required because the accepted current workflow itself was not changed;
+3. Release candidate — **GREEN (#707)** at exact source `800b9bd261180f016ab3c1f26e67df1b55fd1eda`;
+4. exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging — **GREEN**;
+5. PR #32 merged to main at `af6a667e401a99311ef58293c750ac51b9145f54`;
+6. main Release — **GREEN (#708)** with **1,198 PASS / 0 FAIL**;
+7. Baseline Simplification is complete.
 
-Do not start Behavior Preview implementation until Release/main promotion is complete.
+Behavior Preview + checklist is now the next product phase.
