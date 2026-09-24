@@ -127,6 +127,9 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     }
     private void Change(IntentPalette value, [CallerMemberName] string name = "")
     {
+        // ComboBox ItemsSource/SelectedValue can feed the current enum value back
+        // while WPF is rebuilding the selector. Same-value feedback must be a no-op.
+        if (model == value) return;
         model = value; Notify(name); RaiseUiState();
     }
     private void RaiseUiState()
