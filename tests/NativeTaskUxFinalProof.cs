@@ -161,7 +161,7 @@ internal static partial class NativeProof
     private static void VerifyTaskUxAcceptance()
     {
         var lines = File.ReadAllLines(Path.Combine(output, "proof-log.txt"));
-        foreach (var required in Enumerable.Range(2, 6).Select(x => $"WUX{x}=PASS")
+        foreach (var required in Enumerable.Range(3, 5).Select(x => $"WUX{x}=PASS")
             .Append("V04=PASS").Append("PLACEMENT_SOURCE_P7=PASS").Append("R11=PASS"))
             Assert(lines.Contains(required, StringComparer.Ordinal), "UX acceptance requires current native evidence " + required);
         Assert(!nativeFaultOccurred, "UX acceptance rejects any captured unhandled native fault");
@@ -169,9 +169,9 @@ internal static partial class NativeProof
         {
             "Current Set source registration, exact reference reuse and zero-write ambiguity rejection: PLACEMENT_SOURCE_P7/R11",
             "Management is a secondary task with draft-preserving Back: WUX3",
-            "Unified Palette picker; optional Character derives stored kind: WUX2",
+            "Current Item-owned Set navigation and explicit Generic Set context replace the legacy Palette picker: R11/current Set proofs",
             "Missing expression candidate opens exact-Character recovery: WUX3/WUX4",
-            "Normal status hidden; broken/ambiguous/mismatch actionable: WUX2/WUX7",
+            "Broken/ambiguous source state remains fail-closed and actionable in current Set/Source flows: PLACEMENT_SOURCE_P7/R11",
             "Resync scoped to Expression and actual associated Timeline selection: WUX4",
             "Four-column expression task, readable Serif/Template at 360px: WUX4/WUX7",
             "Default range without mandatory Preset concept; custom selector retained: WUX4",

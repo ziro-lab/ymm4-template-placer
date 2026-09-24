@@ -57,7 +57,6 @@ internal static partial class NativeProof
             return;
         }
         await VerifyLibrary(timeline);
-        await VerifyPaletteTask(timeline);
         await VerifyExpressionRecovery(timeline);
         await VerifyPalettePickerRefresh(timeline);
         await VerifyExpressionTask(timeline);
