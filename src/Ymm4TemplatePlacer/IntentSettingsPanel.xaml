@@ -68,7 +68,7 @@
 
   </StackPanel>
   <ScrollViewer x:Name="SettingsScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-   <StackPanel>
+   <StackPanel x:Name="SettingsScrollContent" Margin="0,0,8,0">
    <StackPanel x:Name="SetManagement" Margin="0,0,0,4" Visibility="{Binding IntentSettings.HasSelectedSet,Converter={StaticResource VisibleWhen}}">
     <WrapPanel x:Name="SetManagementFlow" Margin="8,6,0,0">
      <StackPanel x:Name="SetManagementBlock" Margin="0,0,24,4" VerticalAlignment="Top">
@@ -221,10 +221,10 @@
      <StackPanel x:Name="EntryEditor" Margin="0,4">
       <TextBlock Text="演出と並び順" Style="{StaticResource SettingsSectionHeader}"/>
       <StackPanel Margin="8,0,0,0">
-       <ListBox x:Name="EntryList" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry,Mode=TwoWay}" MinHeight="80" MaxHeight="220" Margin="16,0,6,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
+       <ListBox x:Name="EntryList" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry,Mode=TwoWay}" MinHeight="80" MaxHeight="220" Margin="16,0,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
         <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" ToolTip="{Binding SourceDetail}" Padding="5,4"/></DataTemplate></ListBox.ItemTemplate>
        </ListBox>
-       <WrapPanel x:Name="EntryListActions" Margin="16,0,6,0">
+       <WrapPanel x:Name="EntryListActions" Margin="16,0,0,0">
         <Button Content="↑ 上へ" Command="{Binding DataContext.MoveIntentEntryCommand,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" CommandParameter="-1"/>
         <Button Content="↓ 下へ" Command="{Binding DataContext.MoveIntentEntryCommand,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" CommandParameter="1"/>
         <Button Content="セットから外す" Command="{Binding DataContext.RemoveIntentEntryCommand,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}"/>
@@ -254,10 +254,10 @@
      <TextBlock Text="テンプレートをまとめて追加" Style="{StaticResource SettingsSectionHeader}"/>
      <StackPanel Margin="8,0,0,0">
       <TextBox Text="{Binding IntentSettings.SourceSearch,UpdateSourceTrigger=PropertyChanged}" ToolTip="元テンプレート名で検索"/>
-      <ListBox x:Name="SourceList" ItemsSource="{Binding IntentSettings.VisibleSources}" MaxHeight="240" MinHeight="80" Margin="16,0,6,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
+      <ListBox x:Name="SourceList" ItemsSource="{Binding IntentSettings.VisibleSources}" MaxHeight="240" MinHeight="80" Margin="16,0,0,0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
        <ListBox.ItemTemplate><DataTemplate><CheckBox IsChecked="{Binding Selected,Mode=TwoWay}" Margin="2,4"><TextBlock Text="{Binding Label}" TextWrapping="Wrap"/></CheckBox></DataTemplate></ListBox.ItemTemplate>
       </ListBox>
-      <StackPanel x:Name="SourceListActions" Margin="16,0,6,0" HorizontalAlignment="Left">
+      <StackPanel x:Name="SourceListActions" Margin="16,0,0,0" HorizontalAlignment="Left">
        <Button x:Name="AddSourcesButton" Content="チェックしたテンプレートを追加" Command="{Binding AddIntentSourcesCommand}" HorizontalAlignment="Left"/>
        <Button Content="新しい表情を取り込む" Command="{Binding RescanIntentExpressionsCommand}" HorizontalAlignment="Left"/>
       </StackPanel>
