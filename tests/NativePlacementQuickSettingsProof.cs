@@ -119,11 +119,18 @@ internal static partial class NativeProof
             quick.SelectDefaultPage();
             await Idle();
 
-            // A close immediately after a finite action must synchronously settle the
-            // queued edit before an owner-window click could continue into placement.
-            new ButtonAutomationPeer(quick.QuickAlignEnd).Invoke();
+            // Enter the exact pre-dispatch pending state synchronously. A WPF
+            // AutomationPeer Invoke is itself dispatcher-scheduled, which would race
+            // this assertion with both the edit and its Background auto-commit.
+            Assert(vm.ApplyPlacementQuickActionCommand.CanExecute(PlacementQuickAction.AlignEnd),
+                "PLACEMENT_QUICK_SETTINGS P2 finite end-alignment action is admitted on the live quick Draft");
+            vm.ApplyPlacementQuickActionCommand.Execute(PlacementQuickAction.AlignEnd);
             Assert(!vm.ExecuteIntentTileCommand.CanExecute(vm.IntentTiles.Single()),
                 "PLACEMENT_QUICK_SETTINGS P2 pending quick edit blocks placement from using the older saved relation");
+
+            // This is the same ordering used by the real owner-window outside-click
+            // handler: settle the Settings session first, then let Popup close.
+            vm.EndPanelQuickSettings();
             paletteSurface.PanelQuickSettingsButton.IsChecked = false;
             await Idle();
 
