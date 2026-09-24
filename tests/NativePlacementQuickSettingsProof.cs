@@ -53,11 +53,13 @@ internal static partial class NativeProof
 
         var beforeTimeline = Signature(timeline);
         var beforeSettings = JsonSerializer.Serialize(scope.Current);
-        var quick = view.RelativePaletteSurface.PanelQuickSettingsSurface;
+        var paletteSurface = view.RelativePaletteSurface;
+        var quick = paletteSurface.PanelQuickSettingsSurface;
 
         try
         {
-            vm.BeginPanelQuickSettings();
+            paletteSurface.PanelQuickSettingsButton.IsChecked = true;
+            await Idle();
             quick.SelectDefaultPage();
             await Idle();
 
@@ -65,7 +67,8 @@ internal static partial class NativeProof
                 ReferenceEquals(vm.PlacementQuickDraft, vm.IntentSettings?.SelectedPalette) &&
                 vm.PlacementQuickDraft?.Id == set.Id,
                 "PLACEMENT_QUICK_SETTINGS P0 quick surface reuses the exact existing IntentSettingsSession/IntentPaletteDraft");
-            Assert(ReferenceEquals(quick.QuickSettingsTabs.SelectedItem, quick.PlacementQuickTab) &&
+            Assert(paletteSurface.PanelQuickSettingsPopup.IsOpen &&
+                ReferenceEquals(quick.QuickSettingsTabs.SelectedItem, quick.PlacementQuickTab) &&
                 quick.PlacementQuickTab.IsVisible &&
                 quick.QuickBehaviorPreview.Diagram is { HasDiagram: true },
                 "PLACEMENT_QUICK_SETTINGS P0 targeted Set opens the placement page with the shared read-only Preview");
@@ -109,14 +112,19 @@ internal static partial class NativeProof
             Assert(Signature(timeline) == beforeTimeline,
                 "PLACEMENT_QUICK_SETTINGS P1 resulting placement remains one exact native Undo");
 
+            paletteSurface.PanelQuickSettingsButton.IsChecked = false;
+            await Idle();
+            paletteSurface.PanelQuickSettingsButton.IsChecked = true;
+            await Idle();
+            quick.SelectDefaultPage();
+            await Idle();
+
             // A close immediately after a finite action must synchronously settle the
             // queued edit before an owner-window click could continue into placement.
-            vm.BeginPanelQuickSettings();
-            quick.SelectDefaultPage();
             new ButtonAutomationPeer(quick.QuickAlignEnd).Invoke();
             Assert(!vm.ExecuteIntentTileCommand.CanExecute(vm.IntentTiles.Single()),
                 "PLACEMENT_QUICK_SETTINGS P2 pending quick edit blocks placement from using the older saved relation");
-            vm.EndPanelQuickSettings();
+            paletteSurface.PanelQuickSettingsButton.IsChecked = false;
             await Idle();
 
             var closedSaved = scope.Current.IntentPalettes.Single(x => x.Id == set.Id).Relation;
@@ -131,6 +139,7 @@ internal static partial class NativeProof
         }
         finally
         {
+            paletteSurface.PanelQuickSettingsButton.IsChecked = false;
             vm.EndPanelQuickSettings();
         }
     }
