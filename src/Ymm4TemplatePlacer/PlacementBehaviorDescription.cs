@@ -247,8 +247,17 @@ internal static class PlacementBehaviorText
         var layer = description.LayerMode == LayerPlacementMode.Absolute
             ? $"レイヤー{absoluteLayer}を基準に配置します。塞がっていればさらに{direction}へ探します。"
             : $"対象より{direction}の空いているレイヤーへ配置します。塞がっていればさらに{direction}へ探します。";
-        var fallback = Fallback(description);
-        return $"{Target(description)}を選んだとき、{timing}、{layer}{(fallback.Length == 0 ? "" : " " + fallback + "。")}".Trim();
+        var needsNeighbor = description.Duration == IntentDuration.UntilRelated ||
+            description.Anchor is IntentAnchor.RelatedStart or IntentAnchor.RelatedEnd;
+        var fallback = needsNeighbor && description.Neighbor != IntentNeighbor.None ? description.Fallback switch
+        {
+            IntentFallback.CurrentTargetEnd => " 見つからなければ現在の対象の終了までにします。",
+            IntentFallback.TargetSpan => " 見つからなければ現在の対象と同じ範囲にします。",
+            IntentFallback.FixedDuration => $" 見つからなければ{FixedDuration(description)}で配置します。",
+            IntentFallback.DoNotPlace => " 見つからなければ配置しません。",
+            _ => ""
+        } : "";
+        return $"{Target(description)}を選んだとき、{timing}、{layer}{fallback}".Trim();
     }
 
     internal static string Generic(GenericPlacementBehaviorDescription description) =>
