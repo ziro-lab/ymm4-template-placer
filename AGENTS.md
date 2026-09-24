@@ -38,25 +38,25 @@ Read in this order:
 6. `docs/BASELINE_SIMPLIFICATION_DESIGN.md` for the accepted pre-Preview maintenance boundary
 7. `docs/BASELINE_SIMPLIFICATION_ACCEPTANCE.md`
 8. `docs/BASELINE_SIMPLIFICATION_WORKPLAN.md`
-6. `docs/COMPACT_SETTINGS_FRICTION_DESIGN.md` for the accepted compact-Settings friction baseline
-7. `docs/COMPACT_SETTINGS_FRICTION_ACCEPTANCE.md`
-8. `docs/COMPACT_SETTINGS_FRICTION_WORKPLAN.md`
-9. `docs/PLACEMENT_RULE_COMPLETION_DESIGN.md` for the accepted bounded placement-rule model
-10. `docs/PLACEMENT_RULE_COMPLETION_ACCEPTANCE.md`
-11. `docs/PLACEMENT_RULE_COMPLETION_WORKPLAN.md`
-12. `docs/PLACEMENT_SOURCE_UNIFICATION_DESIGN.md` for the accepted Source/Placement model
-13. `docs/PLACEMENT_SOURCE_UNIFICATION_ACCEPTANCE.md`
-14. `docs/PLACEMENT_SOURCE_UNIFICATION_WORKPLAN.md`
-15. `docs/GLOSSARY.md`
-16. `docs/VALIDATION_STRATEGY.md`
-17. `docs/TACHIE_PRESET_DESIGN.md`
-18. `docs/TACHIE_PRESET_ACCEPTANCE.md`
-19. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
-20. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
-21. `docs/FINAL_HANDS_ON_POLISH.md`
-22. `docs/BACKLOG.md` only for scope/detail
-23. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
-24. historical Round/W documents only when current authority points to them or when reconstructing rationale
+9. `docs/COMPACT_SETTINGS_FRICTION_DESIGN.md` for the accepted compact-Settings friction baseline
+10. `docs/COMPACT_SETTINGS_FRICTION_ACCEPTANCE.md`
+11. `docs/COMPACT_SETTINGS_FRICTION_WORKPLAN.md`
+12. `docs/PLACEMENT_RULE_COMPLETION_DESIGN.md` for the accepted bounded placement-rule model
+13. `docs/PLACEMENT_RULE_COMPLETION_ACCEPTANCE.md`
+14. `docs/PLACEMENT_RULE_COMPLETION_WORKPLAN.md`
+15. `docs/PLACEMENT_SOURCE_UNIFICATION_DESIGN.md` for the accepted Source/Placement model
+16. `docs/PLACEMENT_SOURCE_UNIFICATION_ACCEPTANCE.md`
+17. `docs/PLACEMENT_SOURCE_UNIFICATION_WORKPLAN.md`
+18. `docs/GLOSSARY.md`
+19. `docs/VALIDATION_STRATEGY.md`
+20. `docs/TACHIE_PRESET_DESIGN.md`
+21. `docs/TACHIE_PRESET_ACCEPTANCE.md`
+22. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
+23. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
+24. `docs/FINAL_HANDS_ON_POLISH.md`
+25. `docs/BACKLOG.md` only for scope/detail
+26. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
+27. historical Round/W documents only when current authority points to them or when reconstructing rationale
 
 Do not reimplement completed v0.5.0, Portable Settings, Placement Source, bounded Placement Rule or Baseline Simplification work. Preserve the Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary, source-specific materialization / Set-owned geometry split, start/center/end alignment, target-relative/absolute layer modes and validation tiers.
 
