@@ -12,6 +12,7 @@ internal static partial class NativeProof
         {
             case "palette": view.PaletteTab.IsSelected = true; break;
             case "expression": view.ExpressionTab.IsSelected = true; break;
+            case "settings":
             case "selection": view.SelectionTab.IsSelected = true; break;
             default: throw new ArgumentOutOfRangeException(nameof(task));
         }
@@ -21,6 +22,7 @@ internal static partial class NativeProof
         "library" => view.LibraryTaskSurface.IsVisible && !view.MainTabs.IsVisible,
         "palette" => view.MainTabs.IsVisible && view.PaletteTab.IsSelected,
         "expression" => view.MainTabs.IsVisible && view.ExpressionTab.IsSelected,
+        "settings" => view.MainTabs.IsVisible && view.SelectionTab.IsSelected,
         "selection" => view.MainTabs.IsVisible && view.SelectionTab.IsSelected,
         _ => false
     };
