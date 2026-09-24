@@ -103,7 +103,7 @@ public sealed partial class PlacerViewModel
 
     internal void EndPlacementQuickSettings()
     {
-        if (placementQuickSettingsOpen && placementQuickSettingsDirty)
+        if (placementQuickSettingsOpen)
             FinishSettingsSession();
 
         placementQuickSettingsOpen = false;
