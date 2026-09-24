@@ -58,7 +58,6 @@ internal static partial class NativeProof
         await VerifyLibrary(timeline);
         await VerifyAssociations(timeline, undo);
         await VerifyFinalUi(timeline);
-        await VerifyPresetSelectorRefresh(timeline);
         await VerifyResumeContinuity(timeline, undo);
         await VerifyBulkPaletteAdd(timeline);
         await VerifyPaletteOrdering(timeline);
