@@ -10,7 +10,6 @@ public sealed partial class PlacerViewModel
 {
     private UndoRedoManager? nativeHistoryManager;
     private EventHandler? nativeHistoryChangedHandler;
-    private EventHandler? nativeHistoryRequeryHandler;
 
     public ActionCommand NativeUndoCommand { get; private set; } = null!;
     public ActionCommand NativeRedoCommand { get; private set; } = null!;
@@ -25,8 +24,6 @@ public sealed partial class PlacerViewModel
             _ => Guard(() => ExecuteNativeHistory(CommandType.Redo)));
 
         nativeHistoryChangedHandler = (_, _) => RaiseNativeHistoryCommandState();
-        nativeHistoryRequeryHandler = (_, _) => RaiseNativeHistoryCommandState();
-        CommandManager.RequerySuggested += nativeHistoryRequeryHandler;
     }
 
     private void BindNativeHistoryCommands(UndoRedoManager? manager)
@@ -97,9 +94,6 @@ public sealed partial class PlacerViewModel
     private void DisposeNativeHistoryCommands()
     {
         BindNativeHistoryCommands(null);
-        if (nativeHistoryRequeryHandler != null)
-            CommandManager.RequerySuggested -= nativeHistoryRequeryHandler;
-        nativeHistoryRequeryHandler = null;
         nativeHistoryChangedHandler = null;
     }
 }
