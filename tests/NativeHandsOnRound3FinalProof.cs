@@ -22,17 +22,19 @@ internal static partial class NativeProof
             fixture.Palettes = [new(Guid.NewGuid(), PaletteKind.Style, "旧設定", null, [source.Id])
                 { Layer = new() { UseTemplateLayer = false, Minimum = 4, Maximum = 12, Preferred = 8 } }];
             fixture.ManualStylePaletteId = fixture.Palettes[0].Id; fixture.ManualCharacterPaletteId = null;
-            fixture.LegacyWorkspace = true; fixture.ExpressionBootstrapComplete = true;
+            fixture.ExpressionBootstrapComplete = true;
             var oldJson = JsonSerializer.SerializeToNode(fixture)!.AsObject(); oldJson.Remove("Presentation");
+            oldJson["LegacyWorkspace"] = true;
             foreach (var palette in oldJson["Palettes"]!.AsArray()) palette!["Layer"]!.AsObject().Remove("SearchMode");
             var path = Path.Combine(output, "round3-missing-fields.json"); File.WriteAllText(path, oldJson.ToJsonString());
             var bytes = File.ReadAllBytes(path); var loaded = new PlacerSettingsStore(path).Load();
             Assert(loaded.Presentation.LayoutMode == PaletteLayoutMode.Auto && loaded.Presentation.FixedColumns == 4 &&
                 !loaded.Presentation.ShortcutsEnabled && loaded.Presentation.PositionShortcuts.Count == 0 &&
                 loaded.Presentation.ViewportFollow == ExpressionViewportFollow.WhenOutside &&
-                loaded.Palettes.Single().Layer.SearchMode == LayerSearchMode.Legacy && loaded.LegacyWorkspace &&
+                loaded.Palettes.Single().Layer.SearchMode == LayerSearchMode.Legacy &&
+                !JsonSerializer.Serialize(loaded).Contains("LegacyWorkspace", StringComparison.Ordinal) &&
                 File.ReadAllBytes(path).SequenceEqual(bytes),
-                "R3-G old JSON without any Round 3 fields loads Auto/four columns/shortcuts OFF/WhenOutside and the original legacy layer semantics without rewriting bytes");
+                "R3-G old JSON with a historical LegacyWorkspace field loads current defaults and original layer semantics without reviving that runtime flag or rewriting bytes");
             scope.Apply(loaded, [], []); vm.BeginIntentSettings(); view.SelectionTab.IsSelected = true; await Idle();
             var surface = view.RelativeSettingsSurface.PresentationSettingsSurface;
             var expander = (Expander)surface.Content; expander.IsExpanded = true; await Idle();
