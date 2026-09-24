@@ -36,9 +36,9 @@ Read in this order:
 4. `docs/PLACEMENT_QUICK_SETTINGS_ACCEPTANCE.md`
 5. `docs/PLACEMENT_QUICK_SETTINGS_WORKPLAN.md`
 6. `docs/BEHAVIOR_PREVIEW_DESIGN.md` for the accepted Preview phase
-10. `docs/BEHAVIOR_PREVIEW_ACCEPTANCE.md`
-11. `docs/BEHAVIOR_PREVIEW_WORKPLAN.md`
-12. `docs/BASELINE_SIMPLIFICATION_DESIGN.md` for the accepted pre-Preview maintenance boundary
+7. `docs/BEHAVIOR_PREVIEW_ACCEPTANCE.md`
+8. `docs/BEHAVIOR_PREVIEW_WORKPLAN.md`
+9. `docs/BASELINE_SIMPLIFICATION_DESIGN.md` for the accepted pre-Preview maintenance boundary
 10. `docs/BASELINE_SIMPLIFICATION_ACCEPTANCE.md`
 11. `docs/BASELINE_SIMPLIFICATION_WORKPLAN.md`
 12. `docs/COMPACT_SETTINGS_FRICTION_DESIGN.md` for the accepted compact-Settings friction baseline
