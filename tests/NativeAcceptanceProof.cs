@@ -10,15 +10,16 @@ internal static partial class NativeProof
         Assert(typeof(PlacerViewModel).Assembly.GetName().Version == new Version(0, 5, 0, 0), "W12 native plugin assembly is version 0.5.0.0");
         var lines = File.ReadAllLines(Path.Combine(output, "proof-log.txt"));
         var stages = Enumerable.Range(1, 9).Select(x => $"P{x}=PASS")
-            .Concat(Enumerable.Range(3, 9).Select(x => $"W{x}=PASS")).Append("W12_UI=PASS").ToArray();
+            .Concat(new[] { "W3=PASS", "W5=PASS", "W6=PASS", "W7=PASS", "W8=PASS", "W9=PASS", "W10=PASS", "W11=PASS", "PLACEMENT_SOURCE_P3=PASS" })
+            .Append("W12_UI=PASS").ToArray();
         foreach (var required in stages) Assert(lines.Contains(required, StringComparer.Ordinal), "W12 integrated lane includes completed native stage " + required);
         var requirements = new (string Requirement, string Evidence)[]
         {
             ("v0.3.1 regression, Voice/Excel/Safety/Undo and tool hide/reopen", "P1-P9; NativeProof.cs; GoldenPathProof.cs; NativeUiProof.cs"),
             ("Library display name is independent of host Template name", "W3; NativeLibraryProof.cs"),
-            ("one Library entry belongs to multiple palettes", "W4; NativePaletteProof.cs"),
+            ("current Set/Source placement uses stable explicit source identity without legacy Character Palette switching", "PLACEMENT_SOURCE_P3; NativePlacementSourceNormalTileProof.cs"),
             ("missing/ambiguous Template refs require explicit relink", "W3; NativeLibraryProof.cs"),
-            ("Voice/Face context is temporary and restores manual palette", "W4; NativePaletteProof.cs"),
+            ("current Timeline context selects applicable Item-owned Sets without persisting transient context", "R11/current Intent context proofs"),
             ("Quick Drop uses CurrentFrame and intrinsic Length", "W5; NativeQuickDropProof.cs"),
             ("Quick Drop never creates or inherits association", "W5/W8; NativeQuickDropProof.cs; NativeAssociationProof.cs"),
             ("Front/Back use same-Character Layer ordering", "W6; NativeQuickDropProof.cs"),
