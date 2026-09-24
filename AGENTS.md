@@ -26,15 +26,18 @@ The current product architecture retains the accepted v0.4.2 Hands-on/performanc
 - targeted Set layer placement with existing target-relative mode or explicit Absolute Layer, both using the shared bounded one-direction collision planner;
 - retained Template-mode performance and protected Settings guarantees.
 
-Compact Settings friction/discoverability is accepted at exact product/test/package source `05285a7bae1eb59b4b588c565aa46e29bdea795c` by Release #654 (`35897405826`), with **1,822 Native assertions PASS**, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Baseline simplification / compatibility cleanup is complete on main merge `af6a667e401a99311ef58293c750ac51b9145f54`; main Release #708 (`35983059810`) is GREEN with **1,198 Native assertions PASS / 0 FAIL**, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Behavior Preview + checklist is now the next product phase. Known later items include Full Settings UX, Composite/Fan-out placement, stronger Target/Neighbor grammar and measured built-in Tachie Preset loading optimization. Do not reopen completed Portable Settings, Placement Source, bounded Placement Rule or Compact Settings architecture while addressing those items.
+Compact Settings friction/discoverability is accepted at exact product/test/package source `05285a7bae1eb59b4b588c565aa46e29bdea795c` by Release #654 (`35897405826`), with **1,822 Native assertions PASS**, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Baseline simplification / compatibility cleanup is complete on main merge `af6a667e401a99311ef58293c750ac51b9145f54`; main Release #708 (`35983059810`) is GREEN with **1,198 Native assertions PASS / 0 FAIL**, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Behavior Preview is the active product phase. P0 extracts one shared PlacementBehaviorDescription before any schematic UI; the “what I want” checklist follows only after the read-only Preview vocabulary is accepted. Known later items include Full Settings UX, Composite/Fan-out placement, stronger Target/Neighbor grammar and measured built-in Tachie Preset loading optimization. Do not reopen completed Portable Settings, Placement Source, bounded Placement Rule or Compact Settings architecture while addressing those items.
 
 Read in this order:
 
 1. `docs/CURRENT_ARCHITECTURE.md`
 2. `docs/PRODUCT_ROADMAP.md` for current product sequencing
-3. `docs/BASELINE_SIMPLIFICATION_DESIGN.md` for the accepted pre-Preview maintenance boundary
-4. `docs/BASELINE_SIMPLIFICATION_ACCEPTANCE.md`
-5. `docs/BASELINE_SIMPLIFICATION_WORKPLAN.md`
+3. `docs/BEHAVIOR_PREVIEW_DESIGN.md` for the active Preview phase
+4. `docs/BEHAVIOR_PREVIEW_ACCEPTANCE.md`
+5. `docs/BEHAVIOR_PREVIEW_WORKPLAN.md`
+6. `docs/BASELINE_SIMPLIFICATION_DESIGN.md` for the accepted pre-Preview maintenance boundary
+7. `docs/BASELINE_SIMPLIFICATION_ACCEPTANCE.md`
+8. `docs/BASELINE_SIMPLIFICATION_WORKPLAN.md`
 6. `docs/COMPACT_SETTINGS_FRICTION_DESIGN.md` for the accepted compact-Settings friction baseline
 7. `docs/COMPACT_SETTINGS_FRICTION_ACCEPTANCE.md`
 8. `docs/COMPACT_SETTINGS_FRICTION_WORKPLAN.md`
