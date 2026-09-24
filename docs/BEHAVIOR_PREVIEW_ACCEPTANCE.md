@@ -1,6 +1,6 @@
 # Behavior Preview Acceptance
 
-Status: **P0 ACCEPTED / P1 v2 REDESIGN ACTIVE**
+Status: **P0 / P1 v2 / P2 OWNER HANDS-ON ACCEPTED — COMPLETE**
 
 ## P0 — Description Projection — ACCEPTED
 
@@ -57,19 +57,22 @@ For applicable Targeted Sets:
 24. Preview has no drag/edit gestures;
 25. real placement remains owned by the existing resolver / geometry / PlacementPlan path.
 
-## P2 — Hands-on acceptance
+## P2 — Hands-on acceptance — ACCEPTED
 
-Before moving to the checklist, real YMM4 hands-on must answer:
+Owner hands-on accepted the v2 placement-result Preview after the final compactness/clarity corrections.
 
-- Can the user tell **how the item will actually be placed** without reading documentation?
-- Can the user distinguish “対象と同じ長さ”, “周辺の頭まで”, and “周辺の終了まで” at a glance?
-- Can the user distinguish target-relative Up vs Down at a glance?
-- Do start / center / end alignment changes visibly move the placed block in the expected way?
-- Is the Preview compact enough that it does not crowd ordinary Settings work?
-- Does the text Summary remain useful without duplicating so much information that the UI becomes noisy?
-- Are there configurations where the Preview adds no value and should simply be hidden/minimized?
+Accepted result:
 
-The checklist starts only after this placement-result visual vocabulary is accepted.
+- placement start/end and vertical relation are understandable from the diagram without reconstructing the rule from prose;
+- target-span, related-start and related-end cases are visually distinguishable;
+- target-relative Up/Down and start/center/end alignment communicate through block geometry;
+- the final PairBoundary presentation uses the separator line itself without duplicate separator text;
+- one shared Settings right gutter keeps the Preview/settings area from crowding the scrollbar;
+- the read-only Preview is sufficiently useful that the previously planned checklist is **no longer an automatic next phase**.
+
+This acceptance closes Behavior Preview itself. It does **not** claim that every first-time user will need no explanation, and it does not turn the Preview into an editor.
+
+Post-Preview sequencing is controlled by `PRODUCT_ROADMAP.md`: native Undo/Redo surface first, then placement quick-settings investigation. The “what I want” checklist is deferred for re-evaluation after those faster editing paths are understood.
 
 ## Historical v1 evidence
 
