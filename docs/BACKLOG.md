@@ -444,6 +444,64 @@ No fuzzy “nearest suitable thing” behavior.
 
 Status: **COLLECTING**
 
+### Tile-surface / shortcut research notes
+
+Status: **IDEA MEMO / RESEARCH BEFORE IMPLEMENTATION**
+
+These ideas are intentionally recorded before broader external-tool research. They are not implementation approval and should not interrupt the current roadmap sequence.
+
+#### Highest-priority candidate: persistent Undo / Redo in the top context strip
+
+Current hypothesis:
+
+> Native Undo / Redo may be the strongest always-available shortcut for Template Placer because it directly supports the normal try -> inspect -> revert -> try another tile loop.
+
+Desired UI direction:
+
+- keep `Undo` / `Redo` permanently available in the existing top context/Set strip;
+- **do not increase the height of the top strip** to add them;
+- prefer two compact fixed-position controls at the right side of the strip;
+- preserve useful width for current context / selected Item information and Set selection;
+- disabled state should reflect when native Undo / Redo is unavailable;
+- tooltip/text may explain the native command, but the visible controls should remain compact.
+
+Product / safety boundary:
+
+- this is **YMM4 native Undo / Redo**, not a Template-Placer-only history;
+- do not search backward for "the last Template Placer item" and delete it;
+- do not introduce a custom undo stack;
+- Undo may revert an intervening non-Template-Placer edit when that is the actual top native Undo unit;
+- the useful "pseudo-delete" behavior comes from immediately undoing a just-tried placement, not from destructive item deletion;
+- before implementation, prove the supported native command route and enabled-state behavior in real YMM4.
+
+Priority: **first shortcut/UI candidate to evaluate** once this area is intentionally started.
+
+#### Next shortcut candidates to compare
+
+These are research candidates, not current priorities:
+
+- **previous / next relevant Item selection** — potentially strong because changing the selected Item also changes Template Placer context; verify whether the YMM4 native selection command flows through the same context route as ordinary Timeline selection;
+- **repeat last Template Placer action** — potentially useful for applying the same intent to successive contexts, but only if the current context can resolve the action strictly; do not force stale Source/Set identity across incompatible contexts;
+- **play / pause** — useful for placement -> preview loops, but may add less value because the native shortcut is already extremely easy to reach;
+- **split** — good candidate for an optional Action Tile rather than a permanent top-strip control;
+- **delete** — lower priority than Undo for the normal Template Placer flow because it is destructive and depends on current selection;
+- **copy / paste and similar standard commands** — keep as optional finite Action Tile candidates only when hands-on use proves they belong beside placement.
+
+Do not expand the permanent top strip merely to fit more buttons. A candidate should beat the cost of consuming persistent header space.
+
+#### Interaction-surface ideas worth researching
+
+These are separate from the permanent Undo / Redo candidate and should reuse existing tile execution rather than invent new placement semantics:
+
+- **Quick Palette** — show the current applicable tile set temporarily near the pointer / editing location, then execute the same tile command path;
+- **tile/action search** — search only commands currently exposed by Template Placer and execute the same underlying tile/action path;
+- **visual grouping / separators** — improve scanability without consuming executable shortcut slots or breaking position-shortcut semantics;
+- **Action Tiles** — finite YMM4 commands beside placement tiles, with ToolBox-style general launching, external apps, arbitrary scripts and macros remaining out of scope.
+
+Common rule:
+
+> Prefer interaction ideas that shorten access to existing Template Placer intent without broadening it into a general launcher or automation engine.
+
 ### YMM4 standard command tiles
 
 User problem:
