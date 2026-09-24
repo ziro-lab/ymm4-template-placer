@@ -1,6 +1,6 @@
 # Baseline Simplification Workplan
 
-Status: **P0 COMPLETE — P1 LEGACY WORKSPACE REMOVAL NEXT**
+Status: **P1-P4 COMPLETE — P5 RELEASE PROMOTION ACTIVE**
 
 Authorities:
 
@@ -10,17 +10,26 @@ Authorities:
 - `VALIDATION_STRATEGY.md`
 - `LEGACY_COMPATIBILITY_MAP.md`
 
+Current candidate:
+
+- PR: #32 (`work/v0.5-baseline-simplification`);
+- candidate source: `d227e4c0fcb502e5a3abc970527ce447d0926ae5`;
+- Checkpoint #691: SUCCESS;
+- Native assertions: **1,198 PASS / 0 FAIL**;
+- previous accepted Phase 4 baseline: 1,822 assertions;
+- reduction: about **34.2%** while retaining current Set/Settings, association, native Undo, source identity and expression-performance boundaries.
+
 ## P0 — scope / cut-line freeze — COMPLETE
 
 Frozen policy:
 
 - old data readability and old executable product paths are separate concerns;
 - association readers and settings safety remain protected;
-- `LegacyWorkspace` is the first executable compatibility path to remove;
-- P2 audits legacy UI families after P1 is Native GREEN;
-- validation consolidation follows architecture simplification rather than guessing which tests are obsolete first.
+- executable `LegacyWorkspace` is removed rather than kept as a second product mode;
+- legacy Selection/Palette/ExpressionPreset families are judged by current reachability and data value, not by filename;
+- validation consolidation follows architecture simplification and keeps unique safety/host boundaries.
 
-Baseline:
+Baseline before cleanup:
 
 - main merge commit: `5a44e45f7ac1966c51e5bb41125d086f18119c54`;
 - main Release #657: SUCCESS;
@@ -28,79 +37,70 @@ Baseline:
 - previous validation-strategy review baseline: 1,428 assertions;
 - growth: ~27.6%, crossing the documented 25-30% review threshold.
 
-## P1 — remove LegacyWorkspace runtime path — NEXT
+## P1 — remove LegacyWorkspace runtime path — COMPLETE
 
-Production changes:
+Production result:
 
-1. remove serialized `PlacerSettings.LegacyWorkspace`;
-2. remove `UseLegacyWorkspace`, `SetLegacyWorkspace`, legacy open/close commands and mode-change branching;
-3. make current placement/settings/expression surfaces unconditional;
-4. remove transient-work mode identity and deferred-expression mode comparison;
-5. simplify Generic placement, position shortcuts, pointer routing and Settings auto-commit admission by removing legacy checks;
-6. keep current Tachie Preset source-mode behavior intact.
+1. serialized `PlacerSettings.LegacyWorkspace` is absent from distribution builds;
+2. `UseLegacyWorkspace`, workspace switching commands and mode-change branches are gone from the product runtime;
+3. Placement / Settings / expression surfaces are the current surfaces unconditionally;
+4. transient expression work no longer carries a legacy-workspace identity or deferred mode switch;
+5. Generic placement, position shortcuts, pointer routing and Settings auto-commit no longer branch on legacy mode;
+6. old JSON containing an extra `LegacyWorkspace` property cannot reactivate the old UI and is naturally dropped on a later current save.
 
-Validation changes:
+A bounded `YMM4_PROOF`-only shim remains only so historical proof code can be consolidated without reintroducing the path into the distributable.
 
-- replace legacy-switch tests with a current invariant: old JSON cannot reactivate legacy UI;
-- preserve current input, Settings, expression and placement regression;
-- retire tests whose only contract is switching in/out of LegacyWorkspace when an equal-or-stronger invariant exists.
+## P2 — unreachable legacy UI/code audit — COMPLETE
 
-Gate:
+Audit result:
 
-- Checkpoint GREEN;
-- then Release GREEN before P2.
+- the old Palette / Selection workspace is no longer a selectable product mode;
+- legacy-looking Selection / Palette / QuickDrop classes are **not** blanket-deleted when current code, secondary workflows or retained compatibility still reuse them;
+- standalone `ExpressionPreset` compatibility remains where current unregistered direct-preset behavior still depends on it;
+- historical UI/proof source may remain for traceability without becoming a runtime compatibility promise.
 
-## P2 — unreachable legacy UI/code audit
+Future deletion still requires concrete reachability / serialization / migration evidence. The maintenance goal is one current executable product path, not cosmetic filename cleanup.
 
-Audit current reachability after P1.
+## P3 — settings compatibility cut — COMPLETE
 
-Candidate families:
+Supported pre-publication boundary:
 
-- `SelectionPanel`, `SelectionViewModel`, SelectionPreset editor/runtime;
-- legacy `PalettePanel` and legacy-only Palette editor/runtime;
-- QuickDrop UI/ViewModel pieces, while retaining reusable current planners/models;
-- old ExpressionPreset editor/runtime portions not used by current Tachie Preset compatibility.
+- Portable `Data/settings-v04.json` remains the authoritative current settings file;
+- the bounded one-way LocalAppData -> Portable migration remains because it protects real retained user data;
+- the removed `LegacyWorkspace` property no longer has a current serialized/runtime meaning;
+- association readers, current source identity compatibility and Settings corruption/conflict safety remain;
+- no second old UI/runtime is retained merely to read historical settings.
 
-For every removal candidate record:
+No broader migration-chain rewrite is required for this maintenance cut.
 
-- production call sites;
-- serialized fields;
-- migration use;
-- current reuse;
-- unique Native safety boundary.
+## P4 — validation consolidation — COMPLETE
 
-## P3 — settings compatibility cut
+Result:
 
-Choose a pre-publication supported settings baseline.
+- historical WUX8-WUX12 workspace-specific acceptance is no longer a mandatory runtime contract;
+- current workflow acceptance is represented by WUX13 plus named current native invariants;
+- `RunNative.ps1` validates the workflow evidence schema, required current native stages and PASS results instead of a historical fixed check count;
+- current association / Undo / Settings conflict / source identity / expression performance boundaries remain mandatory.
 
-Prefer:
+Measured result:
 
-- current settings only;
-- plus one bounded migration for the current user's realistically retained previous file/backups if needed.
+- Phase 4 baseline: 1,822 assertions;
+- current Checkpoint #691: 1,198 assertions;
+- reduction: ~34.2%;
+- assertion failures: 0.
 
-Do not keep incremental revisions indefinitely.
+This is validation-history consolidation, not risk-boundary deletion.
 
-## P4 — validation consolidation
+## P5 — final baseline promotion — ACTIVE
 
-Use `VALIDATION_STRATEGY.md` retirement rules.
+Promotion sequence:
 
-Targets:
+1. Checkpoint — **GREEN (#691)**;
+2. current-workflow hands-on only if a new current UI reachability difference is discovered; this cleanup intentionally removes a superseded compatibility mode rather than changing the accepted current workflow;
+3. Release candidate on `work/v0.5-native-validation`;
+4. record exact Release evidence;
+5. merge PR #32 to main;
+6. main Release;
+7. mark Baseline Simplification complete and unblock Behavior Preview.
 
-- LegacyWorkspace switching tests;
-- superseded Round-labeled UI structure proofs;
-- duplicate no-Timeline-write tests;
-- duplicate navigation/visibility proofs.
-
-Retain strong unique boundaries such as association identity, Undo, Template fidelity and settings conflict safety.
-
-## P5 — final baseline promotion
-
-Run:
-
-1. Checkpoint;
-2. user hands-on of current workflows if UI reachability changed;
-3. Release;
-4. main merge;
-5. main Release.
-
-Then mark Behavior Preview as NEXT again.
+Do not start Behavior Preview implementation until Release/main promotion is complete.
