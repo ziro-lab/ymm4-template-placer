@@ -70,6 +70,7 @@ public sealed partial class PlacerViewModel
     private void IntentSettingsEdited(object? sender, EventArgs e)
     {
         if (!ReferenceEquals(sender, IntentSettings)) return;
+        ObservePlacementQuickSettingsEdited();
         UpdateIntentSettingsCommands(); RequestSettingsAutoCommit();
     }
     public void ResetIntentSettings()
