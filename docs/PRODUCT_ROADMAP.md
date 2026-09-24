@@ -325,11 +325,19 @@ Release #760 / run `36068432875`:
 
 Docs-only closeout commits after the tested source do not constitute a newer tested product build.
 
-### 5C. Placement quick settings — NEXT
+### 5C. Placement quick settings — ACTIVE
 
 Primary question:
 
 > Which small subset of placement settings is changed often enough during editing that it deserves a fast path beside the normal tile workflow?
+
+Active authorities:
+
+- `PLACEMENT_QUICK_SETTINGS_DESIGN.md`;
+- `PLACEMENT_QUICK_SETTINGS_ACCEPTANCE.md`;
+- `PLACEMENT_QUICK_SETTINGS_WORKPLAN.md`.
+
+The first design candidate reuses the existing `⚙ 簡易設定` Popup, edits the same `IntentSettingsSession / IntentPaletteDraft`, and limits the first slice to finite valid result-oriented actions plus the accepted read-only Preview.
 
 This is **not** a second Settings mode.
 
