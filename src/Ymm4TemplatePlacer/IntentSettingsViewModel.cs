@@ -79,6 +79,7 @@ public sealed partial class PlacerViewModel
         var types = (timeline?.Items.Select(x => x.GetType()) ?? []).Concat(ItemSettings.Default.Templates.SelectMany(x => x.Items).Select(x => x.GetType()));
         IntentSettings = new(settings, types, timeline?.SelectedItems.ToArray() ?? []); IntentSettings.Edited += IntentSettingsEdited;
         ResetSettingsTransaction();
+        RebindPlacementQuickDraftAfterSettingsReset();
     }
     public void SaveIntentSettings()
     {
