@@ -1,6 +1,6 @@
 # Behavior Preview Workplan
 
-Status: **P0 ACTIVE**
+Status: **P0 COMPLETE — P1 CHECKPOINT GREEN — P2 HANDS-ON NEXT**
 
 ## P0 — common meaning projection
 
@@ -10,7 +10,7 @@ Status: **P0 ACTIVE**
 - prove incomplete numeric Draft behavior;
 - add `BEHAVIOR_PREVIEW_P0=PASS` to all validation tiers.
 
-Gate: Checkpoint GREEN.
+Gate: **GREEN — Checkpoint #712 / P0 native proof.**
 
 ## P1 — Preview model + schematic
 
@@ -21,7 +21,7 @@ Gate: Checkpoint GREEN.
 - cover Generic current-frame/layer behavior;
 - no mutation / no live placement planning.
 
-Gate: Checkpoint GREEN.
+Gate: **GREEN — Checkpoint #720, 1,207 PASS / 0 FAIL.**
 
 ## P2 — layout / hands-on
 
