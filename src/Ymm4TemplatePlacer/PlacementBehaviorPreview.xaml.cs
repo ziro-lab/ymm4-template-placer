@@ -4,6 +4,7 @@ using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace Ymm4TemplatePlacer;
 
@@ -14,19 +15,24 @@ public partial class PlacementBehaviorPreview : UserControl
     private IntentPaletteDraft? observed;
     private BehaviorPreviewModel? drawn;
     private double drawnWidth = -1;
+    private DispatcherOperation? refreshOperation;
+    private long refreshEpoch;
     public PlacementBehaviorPreview()
     {
         InitializeComponent();
         DataContextChanged += (_, _) => BindDraft();
         Loaded += (_, _) => BindDraft();
         Unloaded += (_, _) => UnbindDraft();
-        DiagramCanvas.SizeChanged += (_, _) => RefreshDiagram();
+        DiagramCanvas.SizeChanged += (_, _) => ScheduleRefresh(false);
     }
 
     private void UnbindDraft()
     {
         if (observed != null) observed.PropertyChanged -= DraftChanged;
         observed = null;
+        refreshEpoch++;
+        refreshOperation?.Abort();
+        refreshOperation = null;
     }
     private void BindDraft()
     {
@@ -36,22 +42,40 @@ public partial class PlacementBehaviorPreview : UserControl
             observed = draft;
             observed.PropertyChanged += DraftChanged;
         }
-        ReadDraft();
+        ScheduleRefresh(true);
     }
     private void DraftChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(IntentPaletteDraft.BehaviorDescription) or nameof(IntentPaletteDraft.SelectedEntry) or nameof(IntentPaletteDraft.Entries) or null or "")
-            ReadDraft();
+            ScheduleRefresh(true);
     }
-    private void ReadDraft()
+    private void ScheduleRefresh(bool rereadDraft)
     {
-        Diagram = DataContext switch
+        if (!IsLoaded && DataContext is not BehaviorPreviewModel) return;
+        var epoch = ++refreshEpoch;
+        // Never rebuild Canvas children synchronously inside ComboBox/binding
+        // PropertyChanged callbacks. Coalesce the edit burst and redraw once
+        // WPF has settled SelectedValue, ItemsSource and visibility bindings.
+        if (refreshOperation is { Status: DispatcherOperationStatus.Pending }) return;
+        refreshOperation = Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
         {
-            IntentPaletteDraft draft => draft.BehaviorDiagram,
-            BehaviorPreviewModel model => model,
-            _ => null
-        };
-        RefreshDiagram();
+            refreshOperation = null;
+            if (epoch != refreshEpoch)
+            {
+                ScheduleRefresh(rereadDraft);
+                return;
+            }
+            if (rereadDraft)
+            {
+                Diagram = DataContext switch
+                {
+                    IntentPaletteDraft draft => draft.BehaviorDiagram,
+                    BehaviorPreviewModel model => model,
+                    _ => null
+                };
+            }
+            RefreshDiagram();
+        }));
     }
     private void RefreshDiagram()
     {
