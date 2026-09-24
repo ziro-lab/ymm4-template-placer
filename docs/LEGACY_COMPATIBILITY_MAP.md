@@ -86,7 +86,7 @@ Families include:
 - older saved Preset/Expression models such as `PresetDraft.cs`, `PresetViewModel.cs`, `ExpressionPreset.cs`;
 - Workbook/Excel bridge `Workbook*`;
 - explicit Resync compatibility paths;
-- old settings migration/legacy workspace data.
+- bounded LocalAppData -> Portable settings migration and other still-supported serialized data compatibility.
 
 Some files in these families may still be reused by current code. Classification is by responsibility, not filename.
 
@@ -97,6 +97,16 @@ Rules:
 - preserve secondary workflows still exposed/used;
 - do not delete or rewrite a family without proving reachability and migration consequences;
 - a hidden legacy UI is not permission to discard its data model.
+
+## Removed executable compatibility
+
+`LegacyWorkspace` is no longer a product runtime or persisted Settings contract.
+
+The old Palette / Selection workspace is not a selectable Tool mode. Historical JSON containing a `LegacyWorkspace` property cannot enable it.
+
+A proof-only shim may expose legacy-shaped members under `YMM4_PROOF` so retained historical tests can be consolidated safely. That shim is excluded from the distribution build and must not be treated as product compatibility.
+
+Legacy Palette / Selection / QuickDrop / ExpressionPreset families that remain in source are classified by their **current concrete responsibility** (reuse, secondary workflow, migration/association compatibility, or trace evidence), not as evidence that the old workspace still exists.
 
 ## Proof / test-only architecture
 
