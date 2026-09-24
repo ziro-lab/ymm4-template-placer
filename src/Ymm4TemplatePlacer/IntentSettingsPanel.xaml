@@ -99,8 +99,8 @@
      <Border Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Padding="9" Margin="0,2,0,8" CornerRadius="3">
       <StackPanel>
        <TextBlock Text="このセットの動き" FontWeight="SemiBold" Margin="0,0,0,3"/>
+       <local:PlacementBehaviorPreview x:Name="BehaviorPreview" DataContext="{Binding}" Margin="0,4,0,6"/>
        <TextBlock x:Name="RelationSummaryText" Text="{Binding Summary}"/>
-       <local:PlacementBehaviorPreview x:Name="BehaviorPreview" DataContext="{Binding BehaviorDescription}" Margin="0,7,0,0"/>
       </StackPanel>
      </Border>
 

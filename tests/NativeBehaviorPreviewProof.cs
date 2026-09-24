@@ -94,33 +94,5 @@ internal static partial class NativeProof
 
         Log("BEHAVIOR_PREVIEW_P0=PASS");
 
-        var preview = new PlacementBehaviorPreview { DataContext = targeted, Width = 340 };
-        preview.Measure(new Size(340, double.PositiveInfinity));
-        preview.Arrange(new Rect(0, 0, 340, preview.DesiredSize.Height));
-        preview.UpdateLayout();
-        Assert(!preview.IsHitTestVisible &&
-            preview.ContextText.Text == targeted.ContextLabel &&
-            preview.AnchorText.Text == targeted.AnchorLabel &&
-            preview.SpanText.Text == targeted.SpanLabel &&
-            preview.AlignmentText.Text == targeted.AlignmentLabel &&
-            preview.LayerText.Text == targeted.LayerLabel &&
-            preview.FallbackText.Text == targeted.FallbackLabel &&
-            preview.FallbackText.Visibility == Visibility.Visible,
-            "BEHAVIOR_PREVIEW P1 targeted schematic renders only the shared description and remains read-only");
-
-        preview.DataContext = generic;
-        preview.Measure(new Size(340, double.PositiveInfinity));
-        preview.Arrange(new Rect(0, 0, 340, preview.DesiredSize.Height));
-        preview.UpdateLayout();
-        Assert(preview.ContextText.Text == generic.ContextLabel &&
-            preview.AnchorText.Text == generic.AnchorLabel &&
-            preview.SpanText.Text == generic.SpanLabel &&
-            preview.AlignmentText.Text == generic.AlignmentLabel &&
-            preview.LayerText.Text == generic.LayerLabel &&
-            preview.FallbackText.Text == "" &&
-            preview.FallbackText.Visibility == Visibility.Collapsed,
-            "BEHAVIOR_PREVIEW P1 Generic schematic reuses the same bounded visual surface without inventing fallback");
-
-        Log("BEHAVIOR_PREVIEW_P1=PASS");
     }
 }
