@@ -1,6 +1,6 @@
 # Behavior Preview Design
 
-Status: **ACTIVE — P0 DESCRIPTION PROJECTION**
+Status: **ACTIVE — P0 COMPLETE / P1 CHECKPOINT GREEN / P2 HANDS-ON NEXT**
 
 ## Goal
 
@@ -70,3 +70,7 @@ For incomplete/invalid numeric text, keep the editor text intact, do not persist
 ## Non-goals
 
 This phase does not implement Preview drag editing, a second placement resolver, Full Settings Workspace, Undo/Redo shortcut tiles, Composite Steps/Fan-out/stronger Target grammar, or Item Action/Transformer execution.
+
+## Current candidate evidence
+
+Checkpoint #720 (`35996576943`) at the current PR #36 candidate is GREEN with **1,207 Native assertions / 0 failures**. `BEHAVIOR_PREVIEW_P0=PASS` and `BEHAVIOR_PREVIEW_P1=PASS` are both present. P2 is now a real-YMM4 hands-on/layout decision, not a request for more automatic placement semantics.
