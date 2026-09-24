@@ -56,6 +56,12 @@ internal static partial class NativeProof
             Assert(draft.Duration == IntentDuration.UntilRelated && draft.Neighbor != IntentNeighbor.None && draft.Alignment == IntentAlignment.StartAtAnchor &&
                 panel.RelationSummaryText.Text.Contains("まで", StringComparison.Ordinal) && Signature(timeline) == signature,
                 "R2-C D1/D3 sentence selector updates the existing finite fields and live summary, without Timeline mutation");
+            Assert(panel.BehaviorPreview.IsVisible &&
+                panel.BehaviorPreview.DataContext is TargetedPlacementBehaviorDescription targetedPreview &&
+                panel.BehaviorPreview.ContextText.Text == targetedPreview.ContextLabel &&
+                panel.BehaviorPreview.SpanText.Text == targetedPreview.SpanLabel &&
+                Signature(timeline) == signature,
+                "BEHAVIOR_PREVIEW P1 targeted compact Settings binds the live Draft description with zero Timeline mutation");
             draft.FixedDuration = "not an integer"; draft.Duration = IntentDuration.TargetSpan;
             var hidden = session.Build().IntentPalettes.Single(x => x.Id == first.Id);
             Assert(hidden.Relation == (oldRelation with { Neighbor = draft.Neighbor }) && hidden.Intent == first.Intent && draft.FixedDuration == "not an integer",
@@ -69,6 +75,12 @@ internal static partial class NativeProof
             Assert(session.IsGenericContext && session.SelectedPalette == null && session.SelectedGenericSet?.Id == style.Id &&
                 panel.GenericPalettePicker.IsVisible && !panel.PalettePicker.IsVisible && !session.HasChanges,
                 "R2-C C1/C9 native Generic target selects staged Style Sets on the same Settings surface without a write");
+            Assert(panel.GenericSettingsSurface.GenericBehaviorPreview.IsVisible &&
+                panel.GenericSettingsSurface.GenericBehaviorPreview.DataContext is GenericPlacementBehaviorDescription genericPreview &&
+                panel.GenericSettingsSurface.GenericBehaviorPreview.ContextText.Text == genericPreview.ContextLabel &&
+                panel.GenericSettingsSurface.GenericBehaviorPreview.LayerText.Text == genericPreview.LayerLabel &&
+                Signature(timeline) == signature,
+                "BEHAVIOR_PREVIEW P1 Generic compact Settings binds the same read-only Preview surface with zero Timeline mutation");
             var generic = session.SelectedGenericSet!; generic.UseTemplateLayer = false; generic.Minimum = "4"; generic.Maximum = "12"; generic.Preferred = "8";
             var built = session.Build(); var genericModel = built.Palettes.Single(x => x.Id == style.Id);
             Assert(genericModel.Kind == PaletteKind.Style && genericModel.Layer == new LayerPolicy { UseTemplateLayer = false, Minimum = 4, Maximum = 12, Preferred = 8 } &&
