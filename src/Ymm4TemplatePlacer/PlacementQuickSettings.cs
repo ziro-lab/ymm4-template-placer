@@ -112,6 +112,22 @@ public sealed partial class PlacerViewModel
         RefreshPlacementQuickSettingsAdmission();
     }
 
+    private void RebindPlacementQuickDraftAfterSettingsReset()
+    {
+        if (!placementQuickSettingsOpen || selectedIntentSet is not { Targeted: not null } current)
+            return;
+
+        SelectSettingsForSet(current);
+        PlacementQuickDraft = IntentSettings?.SelectedPalette;
+        if (PlacementQuickDraft?.Id != current.Id)
+        {
+            PlacementQuickDraft = null;
+            placementQuickSettingsBlockedByExistingDraft = true;
+            PlacementQuickSettingsNotice = "現在のSetの設定を再接続できません。クイック設定を開き直してください。";
+        }
+        RefreshPlacementQuickSettingsAdmission();
+    }
+
     private void ApplyPlacementQuickAction(PlacementQuickAction action)
     {
         if (!CanEditPlacementQuickSettings || PlacementQuickDraft is not { } draft)
