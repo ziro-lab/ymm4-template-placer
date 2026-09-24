@@ -55,7 +55,7 @@ This is authoritative promotion/release evidence.
 
 - Draft PR ordinary src change -> Focused.
 - PR change touching tests/, fixtures/ or the native workflow -> Checkpoint.
-- PR ready_for_review -> Checkpoint.
+- PR ready_for_review -> Release. Marking a Draft PR Ready is the explicit promotion gate for exact distribution-DLL smoke and verified packaging.
 - push to `work/v0.4-native-validation` -> Release candidate validation.
 - other non-main validation-branch push -> Checkpoint.
 - main push -> Release.
