@@ -167,7 +167,6 @@ try {
 } | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'package-checks.json')
 Get-FileHash (Join-Path $OutputDir 'Ymm4TemplatePlacer*') -Algorithm SHA256 | Select-Object @{Name='File';Expression={Split-Path $_.Path -Leaf}},Hash | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'SHA256.json')
 Write-Host "Verified v0.5.0 .ymme stable install folder '$installFolder' / source / provenance packaging: PASS"
-,'' }) | Select-Object -Unique)
 foreach ($stage in $stages) {
  if ($log -cnotcontains "$stage=PASS") { throw "Missing current native success stage: $stage" }
 }
