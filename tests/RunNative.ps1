@@ -97,6 +97,9 @@ if (-not (Select-String -Path $log -Pattern '^PLACEMENT_RULE_P3=PASS$')) { throw
 if (-not (Select-String -Path $log -Pattern '^BEHAVIOR_PREVIEW_P0=PASS$')) { throw 'Behavior Preview P0 description projection proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^BEHAVIOR_PREVIEW_P1=PASS$')) { throw 'Behavior Preview P1 read-only schematic proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^NATIVE_UNDO_REDO_P0=PASS$')) { throw 'Native Undo/Redo P0 command surface proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^PLACEMENT_QUICK_SETTINGS_P0=PASS$')) { throw 'Placement Quick Settings P0 shared-draft proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^PLACEMENT_QUICK_SETTINGS_P1=PASS$')) { throw 'Placement Quick Settings P1 finite-action proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^PLACEMENT_QUICK_SETTINGS_P2=PASS$')) { throw 'Placement Quick Settings P2 commit-order proof is incomplete' }
 
 $presetProofs=@(
  @{File='tachie-preset-capability.json'; Schema='YMM4-Template-Placer-Tachie-Preset-Capability/1'; Marker='TACHIE_PRESET_CAPABILITY_P3=PASS'},
