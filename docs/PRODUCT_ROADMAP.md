@@ -283,24 +283,35 @@ P0 first extracts one typed `PlacementBehaviorDescription` from the current stag
 
 #### Behavior preview
 
-Show the meaning of the current Settings as a small schematic timeline/placement diagram.
+Show the configured **placement result relationship** as a small Timeline-like diagram.
 
-Initial scope should be a **read-only projection**, not another placement engine and not a direct-manipulation editor.
+The Preview should visually answer:
 
-Examples of useful visible meaning:
+- where the placed Item starts;
+- where it ends / what determines its length;
+- whether it aligns to target start / center / end;
+- whether a related Item supplies the start/end boundary;
+- whether the placed Item is above or below the target in relative-layer terms.
 
-- selected/Voice target and anchor;
-- source pivot/alignment when applicable;
-- start/end/center relationship;
-- duration relationship;
-- relative or absolute layer behavior;
-- bounded collision-search direction;
-- next-related-Voice behavior when applicable;
-- source kind only where it materially affects availability, not placement geometry.
+Examples include:
 
-The existing textual `このセットの動き` summary and the visual preview should describe the same Settings Draft.
+```text
+[配置アイテム]
+[対象アイテム]
+```
 
-Do not duplicate placement semantics inside the preview. Derive a bounded Preview Model from the authoritative source/placement Settings model.
+```text
+[対象アイテム]        [周辺アイテム]
+[配置アイテム────────────]
+```
+
+The Preview must distinguish target-same-length, Template/fixed length, related-Item-start boundary and related-Item-end boundary by block geometry.
+
+Generic Sets do not require the full diagram; show only a compact layer result/hint when useful.
+
+Initial scope remains a **read-only projection**, not another placement engine, dry-run simulator or direct-manipulation editor.
+
+The existing textual `このセットの動き` summary and the visual Preview consume the same Settings Draft / `PlacementBehaviorDescription`. Do not duplicate placement semantics inside the Preview.
 
 ### 5B. “What I want” checklist — AFTER PREVIEW
 
