@@ -1,6 +1,6 @@
 # Baseline Simplification Acceptance
 
-Status: **ACTIVE — P1 ACCEPTANCE FROZEN**
+Status: **P1-P4 CHECKPOINT ACCEPTED — RELEASE PROMOTION PENDING**
 
 ## B1 — current runtime is singular
 
@@ -43,3 +43,20 @@ Checkpoint must pass after P1. Release is required before P1 is promoted as the 
 ## B10 — further deletion is evidence-driven
 
 Legacy Selection/Palette/ExpressionPreset families are not removed merely by name. P2 must prove current reachability and data consequences first.
+
+
+## Consolidation acceptance — current candidate
+
+The pre-Preview maintenance candidate is accepted at Checkpoint when all of the following hold:
+
+- distribution builds contain no serialized or executable `LegacyWorkspace` product path;
+- an old JSON `LegacyWorkspace` property cannot reactivate old behavior;
+- current Context -> Set -> tile / Settings / expression routes remain authoritative;
+- retained association/source identity and Settings safety compatibility remain intact;
+- historical workspace-specific UX contracts may retire only when equal-or-stronger current named invariants remain;
+- workflow evidence is validated by schema + required current native stages, not by a historical fixed check count;
+- the full current Checkpoint has zero Native assertion failures.
+
+Candidate `d227e4c0fcb502e5a3abc970527ce447d0926ae5` satisfies the Checkpoint gate through run #691: **1,198 assertions PASS / 0 FAIL**.
+
+Release DLL identity smoke, verified packaging and main promotion remain required before Baseline Simplification is marked complete.
