@@ -40,7 +40,8 @@ if (-not [string]::IsNullOrWhiteSpace($requested)) {
  $level='checkpoint'
 } elseif ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
  if ($event.action -eq 'ready_for_review') {
-  $level='checkpoint'
+  # Ready means this PR is being promoted as a release candidate.
+  $level='release'
  } else {
   $base=if($event.action -eq 'synchronize') {[string]$event.before} else {[string]$event.pull_request.base.sha}
   $head=[string]$event.pull_request.head.sha
