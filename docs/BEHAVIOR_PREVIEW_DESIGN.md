@@ -1,6 +1,6 @@
 # Behavior Preview Design
 
-Status: **ACTIVE — P0 COMPLETE / P1 v2 REDESIGN ACTIVE**
+Status: **ACCEPTED / COMPLETE — v2 OWNER HANDS-ON ACCEPTED**
 
 ## Goal
 
@@ -12,12 +12,11 @@ It is not another textual explanation panel and not a Timeline simulator.
 
 The Preview must communicate the **resulting placement relationship by shape and position**, before the user actually places anything.
 
-The phase remains intentionally split:
+The accepted phase is intentionally **read-only**: Behavior Preview explains the current Settings Draft without becoming another editor.
 
-1. **Behavior Preview** first: read-only visual explanation of the current Settings Draft;
-2. **“What I want” checklist** afterward: an editing projection that writes back to the same Draft.
+The originally planned automatic follow-up — a “What I want” checklist — is no longer part of this phase and is no longer automatically next. Hands-on use showed that the v2 visual Preview already solves much of the comprehension problem the checklist was expected to address.
 
-Undo/Redo shortcut work remains after Preview/Checklist; it is not a Preview prerequisite.
+Post-Preview sequencing now lives in `PRODUCT_ROADMAP.md`: compact YMM4-native Undo/Redo is next, followed by placement quick-settings investigation. The checklist is deferred for re-evaluation only if a concrete problem remains.
 
 ## Core architecture
 
