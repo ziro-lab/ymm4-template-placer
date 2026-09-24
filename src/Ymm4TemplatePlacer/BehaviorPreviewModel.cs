@@ -8,7 +8,7 @@ public sealed record PreviewBlock(PreviewBlockKind Kind, string Label, double St
 /// <summary>Illustrative coordinates only. No Timeline, source lookup, occupancy, or writes.</summary>
 public sealed record BehaviorPreviewModel(
     IReadOnlyList<PreviewBlock> Blocks, IReadOnlyList<double> Guides,
-    string Caption, string Scope, string LayerHint, string FallbackHint, string Notice,
+    string Caption, string Scope, string LayerHint, string FallbackHint, string Notice, string AnchorHint,
     bool AbsoluteLayer, bool HasDiagram, double Minimum, double Maximum)
 {
     // Example spans, never Frame values from the user's project. One shared affine
@@ -16,13 +16,13 @@ public sealed record BehaviorPreviewModel(
     internal const double TargetStart = 200;
     internal const double TargetLength = 120;
     internal const double SourceLength = 72;
-    public string AccessibleText => string.Join("。", new[] { Scope, Caption, LayerHint, FallbackHint, Notice }.Where(x => x.Length > 0));
+    public string AccessibleText => string.Join("。", new[] { Scope, Caption, AnchorHint, LayerHint, FallbackHint, Notice }.Where(x => x.Length > 0));
 
     public static BehaviorPreviewModel Create(TargetedPlacementBehaviorDescription d, IntentEntryDraft? entry = null)
     {
         var scope = entry == null ? "セットの基本配置" : "選択タイルの配置";
         var fallback = "";
-        BehaviorPreviewModel Unclear(string reason) => new([], [], "配置イメージ", scope, "", "", reason, false, false, 0, 1);
+        BehaviorPreviewModel Unclear(string reason) => new([], [], "配置イメージ", scope, "", "", reason, "", false, false, 0, 1);
         var startDelta = d.StartOffset;
         var endDelta = d.EndOffset;
         var duration = d.Duration;
@@ -128,14 +128,14 @@ public sealed record BehaviorPreviewModel(
             IntentDuration.UntilRelated => $"{(previous ? "前" : "次")}のアイテムの{(d.NeighborEdge == IntentNeighborEdge.Start ? "開始まで" : "終了まで")}",
             _ => "配置イメージ"
         };
-        if (multiple && duration == IntentDuration.TargetSpan) caption = "選択範囲と同じ長さ";
+        if (multiple && duration == IntentDuration.TargetSpan) caption = "対象範囲と同じ長さ";
         if (startDelta != 0 || endDelta != 0) caption += " ＋ ずらし";
         var notes = new List<string>();
         if (startDelta != 0) notes.Add($"開始 {startDelta:+0;-0;0}f");
         if (endDelta != 0) notes.Add($"終了 {endDelta:+0;-0;0}f");
         if (needsNeighbor) notes.Add(PlacementBehaviorText.Neighbor(d));
-        if (multiple && !pair) notes.Add("選択範囲の例");
-        if (pair) notes.Add("2アイテムが接する境界の例");
+        if (multiple && !pair) notes.Add("対象範囲の例");
+        if (pair) notes.Add("2件の間の区切り線を基準");
         if (duration == IntentDuration.Fixed) notes.Add("対象・周辺の長さは例");
         var meaningful = double.IsFinite(from) && to > from;
         if (meaningful) blocks.Add(new(PreviewBlockKind.Placed, "配置アイテム", from, to, outputRow));
@@ -150,7 +150,7 @@ public sealed record BehaviorPreviewModel(
         return new(blocks.AsReadOnly(), guides.Distinct().ToArray(), caption, scope,
             absolute ? $"配置先：レイヤー {d.AbsoluteLayer}（空きは{(d.LayerDirection == RelativeLayerDirection.Up ? "上" : "下")}へ）"
                 : $"{(d.LayerDirection == RelativeLayerDirection.Up ? "↑" : "↓")} 対象より{d.LayerOffset}段{(d.LayerDirection == RelativeLayerDirection.Up ? "上" : "下")} ・ 空きは{(d.LayerDirection == RelativeLayerDirection.Up ? "上" : "下")}へ",
-            fallback, string.Join(" ・ ", notes), absolute, true, left - padding, right + padding);
+            fallback, string.Join(" ・ ", notes), pair ? "区切り線" : "", absolute, true, left - padding, right + padding);
     }
     private static bool Integer(string value, out int result) => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out result);
 }
