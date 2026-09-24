@@ -296,32 +296,36 @@ Authorities:
 
 The Preview materially reduces the need for a second “explain the settings” workflow. Therefore the old automatic sequence **Preview -> checklist -> Full Settings Workspace** is retired.
 
-### 5B. Native Undo / Redo surface — NEXT
+### 5B. Native Undo / Redo surface — COMPLETE
 
-Primary goal:
+The placement surface now exposes compact persistent **YMM4-native Undo / Redo** controls.
 
-> Make the normal “place -> inspect -> undo -> try another placement” loop available without leaving Template Placer.
+Implemented result:
 
-Direction:
+- two 30x26 controls live in the existing placement context header without adding a new header row;
+- commands resolve through `CommandSettings.Default[CommandType.Undo/Redo]` and execute against the YMM4 main window;
+- enabled state follows the real routed-command availability;
+- `TimelineToolInfo.UndoRedoManager.Recorded / Undoed / Redoed` refreshes the product command state;
+- there is no Template-Placer-only history, synthetic Ctrl+Z/Ctrl+Y input or “delete the last placement” behavior;
+- PlacementPlan/native Undo remains the only placement history authority.
 
-- expose **YMM4-native Undo / Redo**, never a Template-Placer-only history;
-- prefer two compact persistent controls in the existing top context/Set strip;
-- do **not** increase the strip height merely to fit them;
-- enabled/disabled state must follow the real native command state;
-- invoking Undo may revert an intervening non-Template-Placer edit when that is the actual native top Undo unit; do not disguise this;
-- do not search backward for “the last Template Placer placement” and delete it;
-- do not add a custom undo stack.
+Canonical host evidence already existed in Lab PR #139 for the YMM4 standard-command route on 4.55.1.1 Lite and 4.56.1.0 Lite. Product Release #760 then verified the integrated surface at exact tested source `d12b4057e8d4cd1b79f009804cd280d96c38c148`.
 
-Before product implementation, prove the supported native command route and enabled-state behavior in the pinned real YMM4 host or canonical Lab evidence.
+Release #760 / run `36068432875`:
 
-Exit:
+- **1,263 ASSERT PASS / 0 FAIL**;
+- `NATIVE_UNDO_REDO_P0=PASS`;
+- `NATIVE_UNDO_REDO_P1=PASS`;
+- real placement -> header Undo -> header Redo -> header Undo roundtrip preserves the exact expected Timeline states;
+- distribution build and proof build: **0 warnings / 0 errors**;
+- exact distribution-DLL smoke PASS;
+- PackageVerified PASS;
+- Release artifact `10836644101`, uploaded artifact SHA256 `97543721d72828330e459a78015ec8a712087e0e32596a32dae1509e2fb5a1a7`;
+- distribution DLL SHA256 `185ff470679328526fec84355b66174c4d4c0d6e9736ea3a7cb3be7405cc0fa7`.
 
-- native Undo and Redo can be invoked from the Template Placer surface through a supported/proved host route;
-- availability state is truthful;
-- no header-height growth is required at the normal Tool size;
-- existing PlacementPlan/native Undo semantics remain authoritative.
+Docs-only closeout commits after the tested source do not constitute a newer tested product build.
 
-### 5C. Placement quick settings — INVESTIGATE AFTER / ALONGSIDE 5B
+### 5C. Placement quick settings — NEXT
 
 Primary question:
 
