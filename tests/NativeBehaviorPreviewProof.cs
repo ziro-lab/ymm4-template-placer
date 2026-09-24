@@ -105,7 +105,7 @@ internal static partial class NativeProof
             preview.AlignmentText.Text == targeted.AlignmentLabel &&
             preview.LayerText.Text == targeted.LayerLabel &&
             preview.FallbackText.Text == targeted.FallbackLabel &&
-            preview.FallbackText.IsVisible,
+            preview.FallbackText.Visibility == Visibility.Visible,
             "BEHAVIOR_PREVIEW P1 targeted schematic renders only the shared description and remains read-only");
 
         preview.DataContext = generic;
@@ -118,7 +118,7 @@ internal static partial class NativeProof
             preview.AlignmentText.Text == generic.AlignmentLabel &&
             preview.LayerText.Text == generic.LayerLabel &&
             preview.FallbackText.Text == "" &&
-            !preview.FallbackText.IsVisible,
+            preview.FallbackText.Visibility == Visibility.Collapsed,
             "BEHAVIOR_PREVIEW P1 Generic schematic reuses the same bounded visual surface without inventing fallback");
 
         Log("BEHAVIOR_PREVIEW_P1=PASS");
