@@ -51,6 +51,50 @@ internal static partial class NativeProof
             Assert(draft.SentenceAnchors.Single(x => x.Value == IntentAnchor.PairBoundary).Available == false &&
                 draft.SentenceNeighbors.All(x => x.Value != IntentNeighbor.None),
                 "R2-C D2/D4 invalid single-target boundary and required-neighbor None choices are not selectable");
+
+            // Hands-on regression: changing placement position from the real ComboBoxes
+            // must not re-enter WPF binding/Preview rendering or terminate the host.
+            var previewSignature = Signature(timeline);
+            var behaviorNotifications = 0;
+            draft.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(IntentPaletteDraft.BehaviorDescription)) behaviorNotifications++; };
+            var beforeSameValue = behaviorNotifications;
+            draft.Anchor = draft.Anchor;
+            draft.Direction = draft.Direction;
+            Assert(behaviorNotifications == beforeSameValue,
+                "BEHAVIOR_PREVIEW crash guard same-value ComboBox feedback is idempotent");
+
+            foreach (var anchor in new[] { IntentAnchor.SelectedStart, IntentAnchor.SelectedCenter, IntentAnchor.SelectedEnd })
+            {
+                panel.AnchorBox.IsDropDownOpen = true; await Idle();
+                panel.AnchorBox.SelectedValue = anchor;
+                panel.AnchorBox.IsDropDownOpen = false; await Idle();
+                Assert(draft.Anchor == anchor && panel.BehaviorPreview.Diagram is { HasDiagram: true } &&
+                    Signature(timeline) == previewSignature,
+                    $"BEHAVIOR_PREVIEW crash guard live AnchorBox change survives: {anchor}");
+            }
+            foreach (var alignment in Enum.GetValues<IntentAlignment>())
+            {
+                panel.AlignmentBox.IsDropDownOpen = true; await Idle();
+                panel.AlignmentBox.SelectedValue = alignment;
+                panel.AlignmentBox.IsDropDownOpen = false; await Idle();
+                Assert(draft.Alignment == alignment && panel.BehaviorPreview.Diagram is { HasDiagram: true } &&
+                    Signature(timeline) == previewSignature,
+                    $"BEHAVIOR_PREVIEW crash guard live AlignmentBox change survives: {alignment}");
+            }
+            foreach (var direction in Enum.GetValues<RelativeLayerDirection>())
+            {
+                panel.DirectionBox.IsDropDownOpen = true; await Idle();
+                panel.DirectionBox.SelectedValue = direction;
+                panel.DirectionBox.IsDropDownOpen = false; await Idle();
+                Assert(draft.Direction == direction && panel.BehaviorPreview.Diagram is { HasDiagram: true } &&
+                    Signature(timeline) == previewSignature,
+                    $"BEHAVIOR_PREVIEW crash guard live DirectionBox change survives: {direction}");
+            }
+            panel.AnchorBox.SelectedValue = IntentAnchor.SelectedStart;
+            panel.AlignmentBox.SelectedValue = IntentAlignment.StartAtAnchor;
+            panel.DirectionBox.SelectedValue = RelativeLayerDirection.Up;
+            await Idle();
+
             var oldRelation = first.Relation;
             panel.DurationBox.SelectedValue = IntentDuration.UntilRelated; await Idle();
             Assert(draft.Duration == IntentDuration.UntilRelated && draft.Neighbor != IntentNeighbor.None && draft.Alignment == IntentAlignment.StartAtAnchor &&
