@@ -53,10 +53,14 @@ internal static partial class NativeProof
         }
         var lines = File.ReadAllLines(Path.Combine(output, "proof-log.txt"));
         bool Has(string marker) => lines.Count(x => x == marker) == 1;
-        var retained = new[] { "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W12", "W12_UI", "W12_SELECTORS", "V04" }
-            .Concat(Enumerable.Range(1, 13).Select(x => "WUX" + x))
-            .Concat(new[] { "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9_CORE", "R9_UI", "R10", "R11", "R12", "R13", "R14_NATIVE", "V042_ACCEPTANCE",
-                "UX_ACCEPTANCE", "UX_WORKFLOW_ACCEPTANCE", "TEMPLATE_FIDELITY", "RELATIVE_UIUX", "HANDS_ON_UX_POLISH", "HANDS_ON_ROUND2" })
+        var retained = new[] { "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "W3", "W8", "W12", "W12_UI", "V04",
+                "PORTABLE_SETTINGS", "PLACEMENT_SOURCE_P0", "PLACEMENT_SOURCE_P1", "PLACEMENT_SOURCE_P2", "PLACEMENT_SOURCE_P3",
+                "PLACEMENT_SOURCE_P4", "PLACEMENT_SOURCE_P5", "PLACEMENT_SOURCE_P6", "PLACEMENT_SOURCE_P7",
+                "PLACEMENT_RULE_P1", "PLACEMENT_RULE_P2", "PLACEMENT_RULE_P3",
+                "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9_CORE", "R9_UI", "R10", "R11", "R12", "R13", "R14_NATIVE",
+                "V042_ACCEPTANCE", "TEMPLATE_FIDELITY", "RELATIVE_UIUX", "HANDS_ON_UX_POLISH",
+                "HANDS_ON_ROUND2_A", "HANDS_ON_ROUND2_B", "HANDS_ON_ROUND2_C", "HANDS_ON_ROUND2_D", "HANDS_ON_ROUND2_E", "HANDS_ON_ROUND2",
+                "HANDS_ON_ROUND3_A", "HANDS_ON_ROUND3_B", "HANDS_ON_ROUND3_C", "HANDS_ON_ROUND3_D", "HANDS_ON_ROUND3_E", "HANDS_ON_ROUND3_F" }
             .Select(x => x + "=PASS").ToArray();
         Round3Assert(Has("R9_CORE=PASS") && Has("R9_UI=PASS") && round3Checks.ContainsKey("D8"), "G1", "retained targeted add-only and Generic original-item preservation gates passed on this native run");
         Round3Assert(Has("R13=PASS") && Has("HANDS_ON_H3_H4_H5=PASS"), "G2", "exact-association whole-bundle replacement/removal regressions passed");
@@ -71,7 +75,7 @@ internal static partial class NativeProof
             ExpressionNavigationHost.FromKnownInstances(null, host.ViewportOwner).CanFollow && round3Checks.ContainsKey("F6") && round3Checks.ContainsKey("F12"),
             "G7", "unavailable pointer dependencies do not govern Preview/viewport adapters and their two degraded native paths passed independently");
         Round3Assert(retained.All(Has) && !lines.Any(x => x.StartsWith("ASSERT FAIL:", StringComparison.Ordinal) || x.StartsWith("FAIL ", StringComparison.Ordinal)),
-            "G8", "all retained P/W/WUX/R/fidelity/UIUX/Round2 native gates passed with no failed assertion");
+            "G8", "all current core/source/rule/Round2/Round3/fidelity/UIUX native gates available at this point passed with no failed assertion");
         var phases = new[] { ("A", 10, "appearance"), ("B", 15, "shortcuts"), ("C", 8, "settings"), ("D", 11, "layer"), ("E", 10, "freshness"), ("F", 15, "navigation") };
         var expected = phases.SelectMany(x => Enumerable.Range(1, x.Item2).Select(n => x.Item1 + n)).Concat(Enumerable.Range(1, 9).Select(x => "G" + x)).ToArray();
         var phaseFiles = new List<object>();
