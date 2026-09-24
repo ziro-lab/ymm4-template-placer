@@ -92,7 +92,7 @@ public sealed partial class PlacerViewModel
         if (!IsCurrentIntentTile(tile)) throw new InvalidOperationException("表示中のSetが変わりました。タイルを選び直してください。");
         OpenSettingsForSet(selectedIntentSet!, tile.LibraryEntryId);
     }
-    private void OpenSettingsForSet(IntentSetChoice selected, Guid? entryId = null)
+    private void SelectSettingsForSet(IntentSetChoice selected, Guid? entryId = null)
     {
         BeginIntentSettings(); var session = IntentSettings!;
         if (selected.Generic != null)
@@ -108,6 +108,10 @@ public sealed partial class PlacerViewModel
             session.SelectedPalette = set;
             set.SelectedEntry = set.Entries.SingleOrDefault(x => x.LibraryEntryId == entryId);
         }
+    }
+    private void OpenSettingsForSet(IntentSetChoice selected, Guid? entryId = null)
+    {
+        SelectSettingsForSet(selected, entryId);
         IntentSettingsRequested?.Invoke(this, EventArgs.Empty);
     }
 }
