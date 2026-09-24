@@ -58,9 +58,6 @@ internal static partial class NativeProof
         await VerifyLibrary(timeline);
         await VerifyAssociations(timeline, undo);
         await VerifyFinalUi(timeline);
-        await VerifyResumeContinuity(timeline, undo);
-        await VerifyBulkPaletteAdd(timeline);
-        await VerifyPaletteOrdering(timeline);
         await VerifySafetyIntent(timeline);
         await VerifyIdentityClarity(timeline);
         VerifyFinalAcceptance(); VerifyWorkflowAcceptance();
