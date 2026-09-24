@@ -48,7 +48,12 @@ $currentNativeStages=@(
  'TEMPLATE_FIDELITY','HANDS_ON_UX_POLISH','HANDS_ON_ROUND2','HANDS_ON_ROUND3',
  'FINAL_HANDS_ON_POLISH','EXPRESSION_PERFORMANCE'
 )
-$stages=@($currentNativeStages + ($workflowStages | ForEach-Object { $_ -replace '=PASS
+$workflowStageNames=@($workflowStages | ForEach-Object { ([string]$_).Replace('=PASS','') })
+$stages=@($currentNativeStages + $workflowStageNames)
+$stages=@($stages | Select-Object -Unique)
+foreach ($stage in $stages) {
+ if ($log -cnotcontains "$stage=PASS") { throw "Missing current native success stage: $stage" }
+}
 $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
 if ($acceptance.schema -ne 'YMM4-Template-Placer-Acceptance/1' -or $acceptance.version -ne $version -or $acceptance.result -ne 'PASS' -or
     $acceptance.profile_families -ne 5 -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count -ne 0) { throw 'Incomplete v0.5.0 core acceptance manifest' }
