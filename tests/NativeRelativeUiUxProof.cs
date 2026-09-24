@@ -19,7 +19,7 @@ internal static partial class NativeProof
         var store = (PlacerSettingsStore)typeof(PlacerViewModel).GetField("settingsStore", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!;
         var disk = File.Exists(PlacerSettingsStore.DefaultPath) ? File.ReadAllBytes(PlacerSettingsStore.DefaultPath) : null;
         var original = (PlacerSettings)field.GetValue(vm)!; var items = timeline.Items; var selection = timeline.SelectedItems;
-        var mode = vm.UseLegacyWorkspace; var width = view.Width; var height = view.Height;
+        var width = view.Width; var height = view.Height;
         var character = new Character { Name = "UX Character" };
         var voice = new VoiceItem(character) { Frame = 100, Length = 60, Layer = 20, Serif = "今日もやっていきましょう" };
         var next = new VoiceItem(character) { Frame = 220, Length = 30, Layer = 20, Serif = "次のセリフ" };
@@ -47,9 +47,9 @@ internal static partial class NativeProof
             var second = first with { Id = Guid.NewGuid(), Name = "別セット", Entries = [new IntentEntry(refs[1].Id)] };
             var reaction = first with { Id = Guid.NewGuid(), Name = "リアクション", Intent = "リアクション", Relation = new(), Entries = [new IntentEntry(refs[2].Id)], ExpressionCandidates = false };
             var fixture = PlacerSettingsStore.Copy(original); fixture.IntentPaletteRevision = 1; fixture.ExpressionBootstrapComplete = true;
-            fixture.Library = [.. refs]; fixture.IntentPalettes = [first, second, reaction]; fixture.LegacyWorkspace = false;
+            fixture.Library = [.. refs]; fixture.IntentPalettes = [first, second, reaction];
             field.SetValue(vm, fixture); timeline.Items = [voice, next, text]; timeline.SelectedItems = [voice]; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
-            vm.ActivateIntentWorkspace(); vm.SetLegacyWorkspace(false); vm.Refresh(); view.PaletteTab.IsSelected = true; await Idle();
+            vm.ActivateIntentWorkspace(); vm.Refresh(); view.PaletteTab.IsSelected = true; await Idle();
             var surface = view.RelativePaletteSurface;
 
             Assert(view.PaletteTab.Header?.ToString() == "配置" && view.ExpressionTab.Header?.ToString() == "表情をまとめて" && view.SelectionTab.Header?.ToString() == "設定",
@@ -93,9 +93,13 @@ internal static partial class NativeProof
             Assert(vm.IntentSets.Count == 0 && vm.IntentTiles.Count == 0 && vm.ShowIntentEmptyAction && surface.IntentEmptyActionButton.IsVisible &&
                 surface.IntentEmptyActionButton.Content?.ToString() == "新しく設定する" && vm.IntentNotice.Contains("まだありません", StringComparison.Ordinal),
                 "UIUX an unsupported selected Item gives an actionable empty state rather than an unrelated Library");
-            var emptySignature = Signature(timeline); await InvokeSelectionButton(surface.IntentEmptyActionButton);
-            Assert(view.SelectionTab.IsSelected && ReferenceEquals(view.SelectionTab.Content, view.RelativeSettingsSurface) && Signature(timeline) == emptySignature,
-                "UIUX empty-state recovery opens Settings without mutating Timeline");
+            var emptySignature = Signature(timeline); await InvokeSelectionButton(surface.IntentEmptyActionButton); await Idle();
+            Assert(view.SelectionTab.IsSelected,
+                "UIUX empty-state recovery selects the current Settings tab");
+            Assert(ReferenceEquals(view.SelectionTab.Content, view.RelativeSettingsSurface),
+                "UIUX empty-state recovery uses the accepted current Settings surface");
+            Assert(Signature(timeline) == emptySignature,
+                "UIUX empty-state recovery does not mutate Timeline");
             var emptyPanel = view.RelativeSettingsSurface; await InvokeSelectionButton(emptyPanel.NewPaletteButton);
             var createdForText = vm.IntentSettings!.SelectedPalette!;
             Assert(createdForText.TypeChoices.Single(x => x.Selected).Key == IntentSelectionContext.TypeKey(typeof(TextItem)) && createdForText.MinimumCount == "1" &&
@@ -170,7 +174,7 @@ internal static partial class NativeProof
             store.Load();
             foreach (var source in sources) ItemSettings.Default.Templates.Remove(source);
             field.SetValue(vm, original); timeline.Items = items; timeline.SelectedItems = selection; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
-            view.Width = width; view.Height = height; vm.SetLegacyWorkspace(mode); vm.Refresh(); vm.ResetIntentSettings();
+            view.Width = width; view.Height = height; vm.Refresh(); vm.ResetIntentSettings();
         }
     }
 }
