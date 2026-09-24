@@ -114,6 +114,14 @@ public partial class PlacementBehaviorPreview : UserControl
             var marker = new Polygon { Points = new PointCollection([new(x - 4, 18), new(x + 4, 18), new(x, 23)]) };
             marker.SetResourceReference(Shape.FillProperty, SystemColors.ControlTextBrushKey);
             DiagramCanvas.Children.Add(marker);
+            if (!string.IsNullOrEmpty(model.AnchorHint))
+            {
+                Line(x, 23, x, 99, false);
+                var anchorLabel = Label(model.AnchorHint, 10);
+                anchorLabel.FontWeight = FontWeights.SemiBold;
+                anchorLabel.Width = Math.Min(64, width);
+                Add(anchorLabel, Math.Clamp(x + 4, 0, Math.Max(0, width - anchorLabel.Width)), 2);
+            }
         }
         foreach (var block in model.Blocks)
         {
