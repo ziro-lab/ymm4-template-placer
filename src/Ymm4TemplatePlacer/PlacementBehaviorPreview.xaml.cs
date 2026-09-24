@@ -17,6 +17,7 @@ public partial class PlacementBehaviorPreview : UserControl
     private double drawnWidth = -1;
     private DispatcherOperation? refreshOperation;
     private long refreshEpoch;
+    private bool refreshNeedsRead;
     public PlacementBehaviorPreview()
     {
         InitializeComponent();
@@ -33,6 +34,7 @@ public partial class PlacementBehaviorPreview : UserControl
         refreshEpoch++;
         refreshOperation?.Abort();
         refreshOperation = null;
+        refreshNeedsRead = false;
     }
     private void BindDraft()
     {
@@ -52,20 +54,19 @@ public partial class PlacementBehaviorPreview : UserControl
     private void ScheduleRefresh(bool rereadDraft)
     {
         if (!IsLoaded && DataContext is not BehaviorPreviewModel) return;
-        var epoch = ++refreshEpoch;
+        refreshNeedsRead |= rereadDraft;
+        if (refreshOperation is { Status: DispatcherOperationStatus.Pending }) return;
+        var epoch = refreshEpoch;
         // Never rebuild Canvas children synchronously inside ComboBox/binding
         // PropertyChanged callbacks. Coalesce the edit burst and redraw once
         // WPF has settled SelectedValue, ItemsSource and visibility bindings.
-        if (refreshOperation is { Status: DispatcherOperationStatus.Pending }) return;
         refreshOperation = Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
         {
             refreshOperation = null;
-            if (epoch != refreshEpoch)
-            {
-                ScheduleRefresh(rereadDraft);
-                return;
-            }
-            if (rereadDraft)
+            if (epoch != refreshEpoch) return;
+            var read = refreshNeedsRead;
+            refreshNeedsRead = false;
+            if (read)
             {
                 Diagram = DataContext switch
                 {
