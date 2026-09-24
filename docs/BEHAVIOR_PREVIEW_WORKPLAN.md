@@ -1,6 +1,8 @@
 # Behavior Preview Workplan
 
-Status: **P0 COMPLETE — P1 v2 CHECKPOINT GREEN — RELEASE / USER HANDS-ON PENDING**
+Status: **P0 COMPLETE — P1 v2 RELEASE GREEN — P2 OWNER HANDS-ON PENDING**
+
+This workplan records current implementation state. The DESIGN and ACCEPTANCE v2 documents define the required UX, not a claim that the owner has accepted it.
 
 ## P0 — common meaning projection — COMPLETE
 
@@ -8,44 +10,62 @@ Status: **P0 COMPLETE — P1 v2 CHECKPOINT GREEN — RELEASE / USER HANDS-ON PEN
 
 Historical evidence: Checkpoint #712, #720 and Release #724.
 
-## P1a / P1b — v2 placement-result diagram — IMPLEMENTED
+## P1a / P1b — v2 placement-result diagram — IMPLEMENTED / NATIVE GREEN
 
 The v1 label cards have been replaced with Timeline-like blocks:
 
-- common horizontal coordinates preserve start/end coincidence, equal lengths and alignment;
+- shared horizontal coordinates preserve start/end coincidence, equal lengths and alignment;
 - target-relative Up/Down changes actual block row order;
 - neighbor-start and neighbor-end align to different visible boundaries;
-- anchor and placement alignment are interpreted as separate settings;
+- anchor and placement alignment remain separate settings;
 - previous-neighbor examples are not blindly mirrored into a false valid interval;
 - target span, fixed/source-owned duration, pair boundary and selection range are supported;
-- selected-tile duration precedence and edge deltas are reflected without building/saving the Draft;
-- incomplete active numeric settings show a bounded notice rather than a made-up diagram;
+- selected-tile duration precedence and edge deltas update without building/saving the Draft;
+- incomplete active numeric settings show a notice, not made-up geometry;
 - Generic full Preview is removed;
-- Absolute Layer labels distinguish the reference band from a real relative layer position.
+- Absolute Layer labels separate the reference band from an actual relative layer position.
 
 Production Preview has no Timeline/source/occupancy dependency and performs no mutation. The renderer maps illustrative coordinates to pixels only. Template duration and reference spans are examples, not live project measurements. Collision results, source availability and real-context applicability remain the responsibility of the existing placement path.
 
-### Checkpoint evidence
+### Validation evidence
 
-Exact source `3d087ec00a69104ecc62311e127477377cc71a33` passed Checkpoint #728 (`36004405144`): **1,237 Native assertions PASS / 0 FAIL**.
+Initial v2 source `3d087ec00a69104ecc62311e127477377cc71a33` passed Checkpoint #728 (`36004405144`): **1,237 Native assertions PASS / 0 FAIL**.
 
-Coverage includes 32 differential comparisons against the existing pure resolver using isolated synthetic host fixtures, plus actual WPF controls rendered at 260 and 360 DIP widths. `BEHAVIOR_PREVIEW_V2=PASS` and the current `BEHAVIOR_PREVIEW_P1=PASS` are emitted only after v2 checks pass. Old v1 card assertions are superseded, not counted as v2 evidence.
+Final code/package source `878ab0e3decf0f5ab9cecdb8467f9f2e4e71cd02` passed Release #730 (`36006445462`, attempt 1):
 
-Screenshot review of that checkpoint covered Up/Down, neighbor head/end, center/end, previous neighbor, pair/range and Absolute Layer. The release candidate additionally moves the anchor marker clear of header text, removes a duplicate Absolute Layer note and checks one-frame bars and actual rendered pixel coordinates. These refinements require a fresh Release; #728 is not evidence for later bytes.
+- **1,239 Native assertions PASS / 0 FAIL**;
+- `BEHAVIOR_PREVIEW_P0=PASS`, `BEHAVIOR_PREVIEW_V2=PASS`, current `BEHAVIOR_PREVIEW_P1=PASS`;
+- 32 differential comparisons with the existing pure resolver, using isolated synthetic host fixtures;
+- 22 native WPF captures: 11 cases at 260/360 DIP, including a one-frame bar;
+- actual rendered bar x/width/row geometry checked against the diagram model;
+- current compact Settings integration and absence of Generic diagram;
+- rendering zero-write checks;
+- exact distribution-DLL identity smoke and verified `.ymme` / source / provenance packaging.
 
-## P2 — final package / human hands-on — PENDING
+Artifact: `10810538400`, `native-yymm4-release`.
 
-- Run Release against the exact final source and verify the distribution DLL, `.ymme` and provenance.
-- Inspect the final native-generated screenshots.
-- Deliver the actual `.ymme` for the owner to try; keep PR #36 Draft afterward.
-- Do not merge or claim first-time-user comprehension from automated PASS alone.
+Artifact SHA256: `5bb92732e01cd1568f30c3b71d28c422008c8a87df2fcde2edfa414a2d828029`.
+
+`.ymme` SHA256: `d667276734149682f290ae51cc368139898a3890d651febc9682a9c7d4c10eac`.
+
+Distribution DLL SHA256: `06decfe40c4fb40d8f97ae6d5278a06516b06bf2b494124bcf5d566a06d43ab1`.
+
+The final package was extracted unchanged from the Release artifact. Its embedded provenance/source identity and DLL digest were cross-checked. Native screenshot review covered alignment, neighbor edges, Up/Down and narrow rendering; final marker clearance, Absolute Layer caption and one-frame label were also inspected.
+
+Docs-only evidence updates after that source do not constitute a newer tested product build.
+
+## P2 — owner hands-on — PENDING
+
+PR #36 remains open/Draft. Main is unchanged. Do not merge or claim first-time-user comprehension from automated PASS alone.
 
 Hands-on questions:
 
 - Are placement start, end and vertical relation recognizable without reading the Summary?
 - Are “対象と同じ長さ”, “周辺の開始まで” and “周辺の終了まで” immediately distinguishable?
-- Does the compact Settings surface retain enough working space at the owner's normal Tool size?
-- Are any additional hints redundant?
+- Does compact Settings retain enough working space at the owner's normal Tool size?
+- Are any remaining hints redundant?
+
+The delivered `.ymme` is the Release #730 candidate, not the superseded card Preview.
 
 ## P3 — checklist handoff — AFTER PREVIEW ACCEPTANCE
 
