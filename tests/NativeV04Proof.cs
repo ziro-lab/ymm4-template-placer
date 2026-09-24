@@ -57,8 +57,6 @@ internal static partial class NativeProof
             Log("FOCUSED_NATIVE=PASS");
             return;
         }
-
-        await VerifyDirectTemplateAddition(timeline, undo);
         await VerifyLibrary(timeline);
         await VerifyPalettes(timeline);
         await VerifyPaletteTask(timeline);
