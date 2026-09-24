@@ -55,7 +55,7 @@ public partial class PlacerView : UserControl
     }
     private void OnPlacerPreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (e.Handled || observedViewModel == null || observedViewModel.UseLegacyWorkspace ||
+        if (e.Handled || observedViewModel == null ||
             observedViewModel.IsAddingTemplate || observedViewModel.IsManagingTemplates ||
             !SelectionTab.IsSelected || !ReferenceEquals(SelectionTab.Content, RelativeSettingsSurface))
             return;
@@ -225,19 +225,18 @@ public partial class PlacerView : UserControl
     private void OpenIntentSettings(object? sender, EventArgs e) { observedViewModel?.BeginIntentSettings(); SelectionTab.IsSelected = true; }
     private void RefreshWorkspaceSurface()
     {
-        var legacy = observedViewModel?.UseLegacyWorkspace == true;
-        PaletteTab.Content = legacy ? PaletteSurface : RelativePaletteSurface;
-        SelectionTab.Content = legacy ? SelectionSurface : RelativeSettingsSurface;
-        PaletteTab.Header = legacy ? "パレット" : "配置";
-        ExpressionTab.Header = legacy ? "表情一覧" : "表情をまとめて";
-        SelectionTab.Header = legacy ? "選択配置" : "設定";
+        PaletteTab.Content = RelativePaletteSurface;
+        SelectionTab.Content = RelativeSettingsSurface;
+        PaletteTab.Header = "配置";
+        ExpressionTab.Header = "表情をまとめて";
+        SelectionTab.Header = "設定";
         RefreshExpressionSourceSurface();
         SynchronizeTask();
     }
     private void RefreshExpressionSourceSurface()
     {
         var vm = observedViewModel;
-        PresetSurface.Visibility = vm?.UseLegacyWorkspace == true || vm?.IsTachiePresetExpressionSource == true ? Visibility.Visible : Visibility.Collapsed;
+        PresetSurface.Visibility = vm?.IsTachiePresetExpressionSource == true ? Visibility.Visible : Visibility.Collapsed;
         VoiceGrid.Columns[3].Header = vm?.ExpressionChoiceColumnTitle ?? "テンプレート";
         RefreshExpressionDetail();
     }
@@ -245,7 +244,6 @@ public partial class PlacerView : UserControl
     {
         if (e.PropertyName is nameof(PlacerViewModel.IsTachiePresetExpressionSource) or nameof(PlacerViewModel.ExpressionRowsMatchSource)) RefreshExpressionSourceSurface();
         if (e.PropertyName == nameof(PlacerViewModel.SceneName)) SynchronizeTask();
-        if (e.PropertyName == nameof(PlacerViewModel.UseLegacyWorkspace)) RefreshWorkspaceSurface();
         if (e.PropertyName is nameof(PlacerViewModel.IsAddingTemplate) or nameof(PlacerViewModel.IsManagingTemplates)) SynchronizeTask();
     }
     private void SynchronizeTask()
@@ -253,10 +251,10 @@ public partial class PlacerView : UserControl
         var vm = observedViewModel;
         if (vm == null) { PointerRouter.Detach(); ShortcutRouter.Detach(); return; }
         if (IsLoaded && IsVisible) vm.ActivateIntentWorkspace(); else vm.DeactivateIntentWorkspace();
-        if (IsLoaded && IsVisible && vm.HasIntentTimeline && !vm.UseLegacyWorkspace) PointerRouter.Attach(); else PointerRouter.Detach();
-        if (IsLoaded && IsVisible && vm.HasIntentTimeline && !vm.UseLegacyWorkspace && PaletteTab.IsSelected && !vm.IsAddingTemplate && !vm.IsManagingTemplates) ShortcutRouter.Attach(); else ShortcutRouter.Detach();
+        if (IsLoaded && IsVisible && vm.HasIntentTimeline) PointerRouter.Attach(); else PointerRouter.Detach();
+        if (IsLoaded && IsVisible && vm.HasIntentTimeline && PaletteTab.IsSelected && !vm.IsAddingTemplate && !vm.IsManagingTemplates) ShortcutRouter.Attach(); else ShortcutRouter.Detach();
         vm.SetActiveTask(!IsLoaded || !IsVisible ? "" : vm.IsManagingTemplates ? "library" : vm.IsAddingTemplate ? "adding" :
-            SelectionTab.IsSelected ? vm.UseLegacyWorkspace ? "selection" : "intent-settings" : ExpressionTab.IsSelected ? "expression" : "palette");
+            SelectionTab.IsSelected ? "intent-settings" : ExpressionTab.IsSelected ? "expression" : "palette");
     }
     private void RefreshExpressionDetail()
     {

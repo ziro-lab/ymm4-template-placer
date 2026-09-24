@@ -409,7 +409,7 @@ public sealed partial class IntentSettingsSession : IntentEditable
     {
         var next = PlacerSettingsStore.Copy(working); next.IntentPalettes = Palettes.Select(x => x.Build()).ToList();
         ApplyGenericSets(next); next.Presentation = Presentation.Build();
-        next.LegacyWorkspace = false; IntentPaletteSettings.Upgrade(next); PlacerSettingsStore.Validate(next); return next;
+        IntentPaletteSettings.Upgrade(next); PlacerSettingsStore.Validate(next); return next;
     }
     // Retained compatibility entry points now obey the Item-owned normal Set model.
     public void Create(IReadOnlyList<IItem> selection) => CreateSingleOwner(selection);

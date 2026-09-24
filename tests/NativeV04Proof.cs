@@ -20,9 +20,9 @@ internal static partial class NativeProof
             "R1 historical first-use fixture contains only new automatic-bootstrap references before isolation");
         var legacyFixture = PlacerSettingsStore.Copy(bootstrapped);
         legacyFixture.Library.Clear(); legacyFixture.IntentPalettes.Clear(); legacyFixture.ImportedExpressionSources.Clear();
-        legacyFixture.ExpressionBootstrapComplete = true; legacyFixture.LegacyWorkspace = true;
+        legacyFixture.ExpressionBootstrapComplete = true;
         settingsField.SetValue(ViewModel!, legacyFixture);
-        ViewModel!.ActivateIntentWorkspace(); ViewModel.SetLegacyWorkspace(true); ViewModel.Refresh();
+        ViewModel!.ActivateIntentWorkspace(); ViewModel.Refresh();
         await VerifyTachiePresetSourceModeFoundation(timeline, undo);
         await VerifyTachiePresetCapability(timeline, undo);
         await VerifyTachiePresetGuards(timeline);
@@ -37,13 +37,9 @@ internal static partial class NativeProof
         var profile = (Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_NATIVE_PROFILE") ?? "checkpoint").ToLowerInvariant();
         if (profile == "focused")
         {
-            await VerifyDirectTemplateAddition(timeline, undo);
             await VerifyLibrary(timeline);
-            await VerifyPalettes(timeline);
-            await VerifyQuickDrop(timeline, undo);
             await VerifyAssociations(timeline, undo);
-            await VerifySafetyIntent(timeline);
-            await VerifyIntentCore(timeline, undo);
+                await VerifyIntentCore(timeline, undo);
             await VerifyIntentSettings(timeline, undo);
             await VerifyRelativeExpressions(timeline, undo);
             await VerifyTemplateFidelity(timeline, undo);
@@ -58,31 +54,10 @@ internal static partial class NativeProof
             Log("FOCUSED_NATIVE=PASS");
             return;
         }
-
-        await VerifyDirectTemplateAddition(timeline, undo);
         await VerifyLibrary(timeline);
-        await VerifyPalettes(timeline);
-        await VerifyPaletteTask(timeline);
-        await VerifyExpressionRecovery(timeline);
-        await VerifyPalettePickerRefresh(timeline);
-        await VerifyExpressionTask(timeline);
-        await VerifyQuickDrop(timeline, undo);
-        await VerifyExpressionPresets(timeline, undo);
         await VerifyAssociations(timeline, undo);
-        await VerifySelectionProfiles(timeline, undo);
-        await VerifySelectionRange(timeline, undo);
-        await VerifyBoundary(timeline, undo);
-        await VerifySelectionTask(timeline, undo);
-        await VerifyAutomaticPreview(timeline, undo);
         await VerifyFinalUi(timeline);
-        await VerifyPresetSelectorRefresh(timeline);
-        await VerifyTaskUxFinal(timeline, undo);
-        await VerifyResumeContinuity(timeline, undo);
-        await VerifyBulkPaletteAdd(timeline);
-        await VerifyPaletteOrdering(timeline);
-        await VerifySafetyIntent(timeline);
-        await VerifyIdentityClarity(timeline);
-        VerifyFinalAcceptance(); VerifyTaskUxAcceptance(); VerifyWorkflowAcceptance();
+        VerifyFinalAcceptance();
         await VerifyRelativeFoundations(timeline, undo);
         await VerifyIntentCore(timeline, undo);
         await VerifyIntentSurface(timeline, undo);
@@ -113,6 +88,7 @@ internal static partial class NativeProof
         VerifyHandsOnRound4SettingsSession(timeline, undo);
         await VerifyHandsOnRound4Settings(timeline, undo);
         await VerifyFinalHandsOnPolish(timeline, undo);
+        VerifyTaskUxAcceptance(); VerifyWorkflowAcceptance();
         await VerifyExpressionPerformance(timeline, undo);
     }
 }

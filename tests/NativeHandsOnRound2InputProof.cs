@@ -173,8 +173,6 @@ internal static partial class NativeProof
             Assert(!view.PointerRouter.IsAttached && !vm.HasIntentTimeline, "R2-A DataContext removal detaches input and Timeline handlers");
             view.DataContext = vm; await Idle();
             Assert(view.PointerRouter.IsAttached && vm.HasIntentTimeline, "R2-A DataContext reattachment restores one input/Timeline route");
-            vm.SetLegacyWorkspace(true); await Idle(); Assert(!view.PointerRouter.IsAttached, "R2-A legacy workspace detaches common input router");
-            vm.SetLegacyWorkspace(false); await Idle(); Assert(view.PointerRouter.IsAttached, "R2-A returning to common workspace attaches input router");
             Assert(Signature(timeline) == signature, "R2-A actual host context input and lifecycle leave all Timeline items unchanged");
             File.WriteAllText(Path.Combine(output, "hands-on-round2-input.json"), JsonSerializer.Serialize(new {
                 schema = "YMM4-Template-Placer-Round2-Input/1", host = "YMM4 4.55.1.1 Lite", result = "PASS", trace
@@ -189,7 +187,7 @@ internal static partial class NativeProof
             vm.EndTimelinePointer(); timeline.Items = items; timeline.SelectedItems = selection; timeline.CurrentFrame = frame;
             timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record(); view.Visibility = visibility;
             host.WindowState = WindowState.Normal; host.Width = width; host.Height = height; host.Left = left; host.Top = top; host.WindowState = windowState;
-            vm.SetLegacyWorkspace(legacy); vm.Refresh();
+            vm.Refresh();
         }
     }
 }

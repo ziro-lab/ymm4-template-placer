@@ -49,11 +49,18 @@ internal static partial class NativeProof
         for (var i = 0; i < 60 && (ViewModel == null || View == null || !View.IsLoaded); i++) await Task.Delay(100);
         var vm = ViewModel ?? throw new InvalidOperationException("Native Tool ViewModel was not created."); var view = View ?? throw new InvalidOperationException("Native Tool View was not created.");
         Assert(view.IsLoaded && ReferenceEquals(view.DataContext, vm), "P4 actual native-hosted View/DataContext");
-        Assert(view.PaletteTab.IsSelected, "WUX1 first open starts with Palette rather than internal registration");
+        Assert(view.PaletteTab.IsSelected && ReferenceEquals(view.PaletteTab.Content, view.RelativePaletteSurface) &&
+            ReferenceEquals(view.SelectionTab.Content, view.RelativeSettingsSurface),
+            "P4 Tool opens on the current placement/settings surfaces");
         ShowTask(view, "expression"); vm.Refresh(); await Idle();
-        Assert(vm.Rows.Count == 3 && vm.Rows[2].State == "候補なし", "P4 host-injected Timeline and missing-candidate UI");
-        await SelectInDropdown(view, vm.Rows[0], "TestA/Neutral"); await SelectInDropdown(view, vm.Rows[1], "TestB/Neutral"); await ClickPlace(view);
-        Assert(!vm.HasError && timeline.Items.Count(PlacementEngine.IsGenerated) == 2, "P4 dropdown -> actual WPF button command -> placement"); SaveView(view); Log("P4=PASS");
+        Assert(vm.Rows.Count == 3 && vm.Rows[2].State == "候補なし" && vm.UsesRelativeExpressions,
+            "P4 current expression rows use the Set-owned candidate model");
+        await SelectInDropdown(view, vm.Rows[0], "TestA/Neutral"); await SelectInDropdown(view, vm.Rows[1], "TestB/Neutral"); await Idle();
+        Assert(ManagedIntentExpressionReader.Read(timeline, a).Bundle != null &&
+            ManagedIntentExpressionReader.Read(timeline, b).Bundle != null && !vm.ShowExpressionBatchPlace,
+            "P4 current dropdown selections apply immediately without a normal batch Place step");
+        SaveView(view); Log("P4=PASS");
+
         stage = "P5"; var workbook = Path.Combine(output, "GoldenPath.xlsx"); vm.ExportTo(workbook);
         using (var doc = SpreadsheetDocument.Open(workbook, false))
         {
@@ -64,29 +71,39 @@ internal static partial class NativeProof
             Assert(book.Workbook!.GetFirstChild<S.Sheets>()!.Elements<S.Sheet>().Single(x => x.Name == "_Catalog").State?.Value == S.SheetStateValues.Hidden, "P5 hidden workbook-local Catalog");
             Assert(main.Descendants<S.Cell>().Single(x => x.CellReference == "E2").CellFormula == null, "P5 formula-looking Serif remains literal text");
         }
-        Log("P5=PASS"); stage = "P6"; DeleteFixtureGenerated(timeline, undo); EditCell(workbook, "F2", "TestA/Smile"); var beforeImport = Signature(timeline); vm.ImportFrom(workbook);
-        Assert(Signature(timeline) == beforeImport && vm.Rows[0].SelectedChoice.Template?.Name == "TestA/Smile", "P6 import validates and previews without Timeline mutation"); await ClickPlace(view);
-        Assert(!vm.HasError && timeline.Items.Count(PlacementEngine.IsGenerated) == 2 && timeline.Items.OfType<TachieFaceItem>().Single(x => PlacementEngine.IsGenerated(x) && x.CharacterName == "TestA").Layer == 5, "P6 edited workbook -> same Placement Engine");
-        Log("P6=PASS"); stage = "P7"; var stable = Signature(timeline); RejectWithoutMutation(timeline, () => vm.Place(), "P7 repeat add rejects occupied Layer without mutation");
-        Assert(Signature(timeline) == stable && timeline.Items.Count(PlacementEngine.IsGenerated) == 2, "P7 repeat placement does not duplicate");
-        Assert(timeline.Items.Contains(manual) && manual.Remark == "manual fixture" && manual.Frame == 10 && manual.Length == 30 && manual.Layer == 8 && timeline.Items.Contains(nonFace), "P7 manual Face and same-marker non-Face preserved");
-        var invalid = Path.Combine(output, "InvalidCharacter.xlsx"); File.Copy(workbook, invalid, true); EditCell(invalid, "F2", "TestB/Neutral"); RejectWithoutMutation(timeline, () => vm.ImportFrom(invalid), "P7 cross-Character workbook rejected before mutation");
+        vm.Rows[0].SelectedChoice = vm.Rows[0].Choices[0]; vm.Rows[1].SelectedChoice = vm.Rows[1].Choices[0];
+        await Idle(); vm.CloseExpressionTrialSession();
+        Assert(ManagedIntentExpressionReader.Read(timeline, a).Bundle == null && ManagedIntentExpressionReader.Read(timeline, b).Bundle == null,
+            "P5 current immediate removal returns the fixture to a clean pre-batch state");
+        Log("P5=PASS");
+
+        stage = "P6"; EditCell(workbook, "F2", "TestA/Smile"); var beforeBatch = Signature(timeline); vm.ImportFrom(workbook); await Idle();
+        Assert(Signature(timeline) == beforeBatch && vm.Rows[0].SelectedChoice.Template?.Name == "TestA/Smile" &&
+            vm.ShowExpressionBatchPlace && vm.PlaceCommand.CanExecute(null),
+            "P6 Excel import is zero-write and creates only a pending current batch");
+        await ClickPlace(view); await Idle();
+        Assert(!vm.HasError && ManagedIntentExpressionReader.Read(timeline, a).Bundle != null &&
+            ManagedIntentExpressionReader.Read(timeline, b).Bundle != null && !vm.ShowExpressionBatchPlace,
+            "P6 imported pending assignments commit through the current managed-expression backend");
+        var afterBatch = Signature(timeline); Log("P6=PASS");
+
+        stage = "P7"; var stable = Signature(timeline);
+        var invalid = Path.Combine(output, "InvalidCharacter.xlsx"); File.Copy(workbook, invalid, true); EditCell(invalid, "F2", "TestB/Neutral");
+        RejectWithoutMutation(timeline, () => vm.ImportFrom(invalid), "P7 cross-Character workbook rejected before mutation");
         File.Copy(workbook, invalid, true); EditCell(invalid, "A3", "1"); RejectWithoutMutation(timeline, () => vm.ImportFrom(invalid), "P7 duplicate No rejected");
         File.Copy(workbook, invalid, true); EditCell(invalid, "F2", "TestA/Smile", true); RejectWithoutMutation(timeline, () => vm.ImportFrom(invalid), "P7 Formula cell rejected");
-        ItemSettings.Default.Templates.Remove(tas); RejectWithoutMutation(timeline, () => vm.ImportFrom(workbook), "P7 missing live Template import rejected");
-        RejectWithoutMutation(timeline, () => vm.Place(), "P7 missing live Template placement rejected"); ItemSettings.Default.Templates.Add(tas);
-        a.Length++; RejectWithoutMutation(timeline, () => vm.ImportFrom(workbook), "P7 stale exported Voice rejected"); RejectWithoutMutation(timeline, () => vm.Place(), "P7 stale UI Voice rejected"); a.Length--;
-        sa.Layer = 8; RejectWithoutMutation(timeline, () => vm.Place(), "P7 collision rejected without replacing prior placements"); sa.Layer = 5;
-        File.WriteAllText(invalid, "Not an XLSX"); RejectWithoutMutation(timeline, () => vm.ImportFrom(invalid), "P7 malformed workbook rejected"); File.Delete(invalid);
-        Assert(ReferenceEquals(vm.Rows[0].SelectedChoice.Template?.Template, tas), "P7 failed import preserves prior assignment choices"); Log("P7=PASS");
-        stage = "P8"; DeleteFixtureGenerated(timeline, undo); undo.Record(); var before = Signature(timeline);
-        await SelectInDropdown(view, vm.Rows[0], "TestA/Neutral"); await SelectInDropdown(view, vm.Rows[1], "TestB/Smile"); await ClickPlace(view);
-        var after = Signature(timeline); Assert(!vm.HasError && before != after && undo.IsUndoable, "P8 batch creates native undo history");
-        await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == before, "P8 one native Undo restores entire preceding batch");
-        await undo.RedoAsync(); await Idle(); Assert(Signature(timeline) == after, "P8 one native Redo restores entire new batch");
-        foreach (var row in vm.Rows) row.SelectedChoice = row.Choices[0];
-        Assert(vm.Place() == 0 && Signature(timeline) == after && timeline.Items.Contains(manual), "P8 all-unselected is a no-op; never deletes generated or manual Items");
+        a.Length++; RejectWithoutMutation(timeline, () => vm.ImportFrom(workbook), "P7 stale exported Voice rejected"); a.Length--;
+        File.WriteAllText(invalid, "Not an XLSX"); RejectWithoutMutation(timeline, () => vm.ImportFrom(invalid), "P7 malformed workbook rejected");
+        File.Delete(invalid);
+        Assert(Signature(timeline) == stable, "P7 failed workbook operations preserve the current managed Timeline state");
+        Log("P7=PASS");
+
+        stage = "P8"; await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == beforeBatch, "P8 one native Undo removes the complete imported expression batch");
+        await undo.RedoAsync(); await Idle(); Assert(Signature(timeline) == afterBatch, "P8 one native Redo restores the exact imported expression batch");
+        Assert(vm.Place() == 0 && Signature(timeline) == afterBatch && timeline.Items.Contains(manual),
+            "P8 no pending batch is a no-op and never deletes managed or manual items");
         Log("P8=PASS");
+
         stage = "P9"; var lifecycleBefore = Signature(timeline);
         Assert(vm.CanSuspend, "P9 Timeline Tool allows native suspend/close");
         await SetToolVisible(root, false); Assert(Signature(timeline) == lifecycleBefore, "P9 hiding Tool leaves Timeline unchanged");

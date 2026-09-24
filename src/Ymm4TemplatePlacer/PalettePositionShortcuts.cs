@@ -13,7 +13,7 @@ public sealed partial class PlacerViewModel
     internal bool TryExecutePositionShortcut(Key key, ModifierKeys modifiers)
     {
         var presentation = settings.Presentation;
-        if (activeTask != "palette" || !HasIntentTimeline || !ReferenceEquals(intentTimeline, timeline) || UseLegacyWorkspace ||
+        if (activeTask != "palette" || !HasIntentTimeline || !ReferenceEquals(intentTimeline, timeline) ||
             !presentation.ShortcutsEnabled || presentation.LayoutMode != PaletteLayoutMode.Fixed) return false;
         var binding = presentation.PositionShortcuts.SingleOrDefault(x => x.Key == key && x.Modifiers == modifiers);
         if (binding == null || binding.SlotIndex < 0 || binding.SlotIndex >= IntentTiles.Count) return false;

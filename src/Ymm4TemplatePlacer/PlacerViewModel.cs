@@ -26,7 +26,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public ActionCommand PlaceCommand { get; }
     public ActionCommand ExportCommand { get; }
     public ActionCommand ImportCommand { get; }
-    public bool UsesRelativeExpressions => intentInitialized && !UseLegacyWorkspace;
+    public bool UsesRelativeExpressions => intentInitialized;
     public bool ShowExpressionBatchPlace => IsTemplateExpressionSource && (!UsesRelativeExpressions || PendingRelativeExpressionCount > 0);
 
     public PlacerViewModel()
@@ -57,7 +57,6 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         InitializeV04();
         RestoreExpressionSourceModePreference();
         InitializeExpressionImmediate();
-        PropertyChanged += ExpressionModeChanged;
 #if YMM4_PROOF
         NativeProof.ViewModel = this;
 #endif
@@ -71,7 +70,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     {
         var changed = !ReferenceEquals(timeline, info.Timeline);
         var preservePending = changed && HasProtectedPendingVoiceWork();
-        if (changed) { CancelTachiePresetApply(); CancelTachiePresetCalibration(); CancelExpressionLoad(); ClearPresetContextWatchers(); CancelExpressionNavigation(); CloseExpressionTrialSession(); DetachTimelineV04(); DeactivateIntentWorkspace(); deferredExpressionResume = null; }
+        if (changed) { CancelTachiePresetApply(); CancelTachiePresetCalibration(); CancelExpressionLoad(); ClearPresetContextWatchers(); CancelExpressionNavigation(); CloseExpressionTrialSession(); DetachTimelineV04(); DeactivateIntentWorkspace(); }
         timeline = info.Timeline; undo = info.UndoRedoManager;
         if (changed)
         {
@@ -89,15 +88,6 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         TryRestoreTransientWork(); UpdateCommands();
     }
     private IReadOnlyList<FaceTemplate> ExpressionCatalog() => UsesRelativeExpressions ? IntentExpressionCatalog.Read(settings) : TemplateCatalog.Read();
-    private void ExpressionModeChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName != nameof(UseLegacyWorkspace)) return;
-        expressionCandidateDirty = true; expressionCacheDirty = true;
-        SetVoiceFreshnessActive(activeTask == "expression");
-        if (activeTask == "expression" && UsesRelativeExpressions) RequestExpressionLoad(true, true);
-        else if (activeTask == "expression") Refresh();
-        TryRestoreDeferredExpressionWork(); OnPropertyChanged(nameof(UsesRelativeExpressions)); UpdateCommands();
-    }
     public void RefreshExpressionVocabulary()
     {
         if (IsTachiePresetExpressionSource)
@@ -222,7 +212,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public void Dispose()
     {
         DisposeAutomaticSettingsSession();
-        disposedTransientWork ??= CaptureTransientWork(); PropertyChanged -= ExpressionModeChanged;
+        disposedTransientWork ??= CaptureTransientWork();
         CancelExpressionNavigation(true); CancelTachiePresetApply(); CancelTachiePresetCalibration(); DisposeVoiceFreshness(); DisposePresetDiscovery();
         CloseExpressionTrialSession(); expressionTrialSession.Dispose();
         DeactivateIntentWorkspace(); DetachTimelineV04(); DisposeV04();

@@ -21,7 +21,7 @@ internal static partial class NativeProof
         var field = typeof(PlacerViewModel).GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic)!;
         var store = (PlacerSettingsStore)typeof(PlacerViewModel).GetField("settingsStore", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!;
         var original = (PlacerSettings)field.GetValue(vm)!; var items = timeline.Items; var selection = timeline.SelectedItems;
-        var mode = vm.UseLegacyWorkspace; var width = view.Width; var height = view.Height;
+        var width = view.Width; var height = view.Height;
         var character = new Character { Name = "R14 Character" };
         var voice = new VoiceItem(character) { Frame = 100, Length = 60, Layer = 20 };
         var next = new VoiceItem(character) { Frame = 220, Length = 20, Layer = 20 };
@@ -31,7 +31,8 @@ internal static partial class NativeProof
         try
         {
             var node = JsonSerializer.SerializeToNode(original)!.AsObject();
-            foreach (var name in new[] { "IntentPaletteRevision", "IntentPalettes", "ExpressionBootstrapComplete", "ImportedExpressionSources", "LegacyWorkspace" }) node.Remove(name);
+            foreach (var name in new[] { "IntentPaletteRevision", "IntentPalettes", "ExpressionBootstrapComplete", "ImportedExpressionSources" }) node.Remove(name);
+            node["LegacyWorkspace"] = true; // historical extra field must be ignored by the current model
             var migrationPath = Path.Combine(output, "r14-old-settings.json");
             File.WriteAllText(migrationPath, node.ToJsonString()); var oldBytes = File.ReadAllBytes(migrationPath);
             var migrated = new PlacerSettingsStore(migrationPath).Load();
@@ -50,9 +51,9 @@ internal static partial class NativeProof
             var mixed = uniform with { Id = Guid.NewGuid(), Intent = "組み合わせ用", Target = new() { TypeMatch = IntentTypeMatch.ExactMixedTypes,
                 ItemTypeKeys = [IntentSelectionContext.TypeKey(typeof(VoiceItem)), IntentSelectionContext.TypeKey(typeof(TextItem))], MinimumCount = 2, MaximumCount = 2 } };
             var fixture = PlacerSettingsStore.Copy(original); fixture.IntentPaletteRevision = 1; fixture.ExpressionBootstrapComplete = true;
-            fixture.Library = references; fixture.IntentPalettes = [palette, uniform, mixed]; fixture.LegacyWorkspace = false;
+            fixture.Library = references; fixture.IntentPalettes = [palette, uniform, mixed];
             field.SetValue(vm, fixture); timeline.Items = [voice, next, text]; timeline.SelectedItems = [voice]; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
-            vm.ActivateIntentWorkspace(); vm.SetLegacyWorkspace(false); vm.Refresh(); vm.ResetIntentSettings();
+            vm.ActivateIntentWorkspace(); vm.Refresh(); vm.ResetIntentSettings();
             vm.OpenIntentSettingsCommand.Execute(null); await Idle();
             var panel = view.RelativeSettingsSurface;
             Assert(panel.RollbackButton.Command == vm.RollbackIntentSettingsCommand && panel.NewPaletteButton.Command == vm.CreateIntentPaletteCommand,
@@ -107,7 +108,7 @@ internal static partial class NativeProof
             foreach (var source in sources) ItemSettings.Default.Templates.Remove(source);
             store.Load(); store.Save(original); field.SetValue(vm, original);
             timeline.Items = items; timeline.SelectedItems = selection; timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record();
-            view.Width = width; view.Height = height; vm.SetLegacyWorkspace(mode); vm.Refresh(); vm.ResetIntentSettings();
+            view.Width = width; view.Height = height; vm.Refresh(); vm.ResetIntentSettings();
         }
     }
     private static IEnumerable<DependencyObject> RelativeVisuals(DependencyObject root)
@@ -121,7 +122,7 @@ internal static partial class NativeProof
     private static void VerifyRelativeAcceptance()
     {
         var lines = File.ReadAllLines(Path.Combine(output, "proof-log.txt"));
-        var required = Enumerable.Range(1, 8).Select(x => $"R{x}=PASS").Concat(new[] { "R9_CORE=PASS", "R9_UI=PASS", "R10=PASS", "R11=PASS", "R12=PASS", "R13=PASS", "TEMPLATE_FIDELITY=PASS", "RELATIVE_UIUX=PASS", "R14_NATIVE=PASS", "V04=PASS", "UX_ACCEPTANCE=PASS", "UX_WORKFLOW_ACCEPTANCE=PASS" }).ToArray();
+        var required = Enumerable.Range(1, 8).Select(x => $"R{x}=PASS").Concat(new[] { "R9_CORE=PASS", "R9_UI=PASS", "R10=PASS", "R11=PASS", "R12=PASS", "R13=PASS", "TEMPLATE_FIDELITY=PASS", "RELATIVE_UIUX=PASS", "R14_NATIVE=PASS", "V04=PASS" }).ToArray();
         foreach (var marker in required) Assert(lines.Contains(marker, StringComparer.Ordinal), "R14 final acceptance requires completed native stage " + marker);
         Assert(!nativeFaultOccurred, "R14 no swallowed or unhandled native fault is accepted");
         var checks = new (string Requirement, string Evidence)[] {
@@ -144,8 +145,8 @@ internal static partial class NativeProof
             ("Expression-list Template fidelity rebinds detached same-name Face clones to the target Voice Character while preserving cloned effect identity/value and source Template", "TEMPLATE_FIDELITY; NativeTemplateFidelityProof"),
             ("Weak bundle associations; selected non-Face member/Voice scope; whole-bundle manual Resync and native Undo", "R13; NativeRelativeExpressionProof"),
             ("Missing/copied/source-changed bundle refuses reconstruction; legacy Resync cannot mutate one relative member", "R13; NativeRelativeExpressionProof"),
-            ("Old Library/Character-Style palettes/Expression-Selection presets remain readable without load-time writes", "R14 migration proof; old meanings retained in explicit compatibility workspace"),
-            ("Original safety, association, Excel, Tool lifecycle and task UX regression ladders retained", "P1-P9/V04/UX_ACCEPTANCE/UX_WORKFLOW_ACCEPTANCE")
+            ("Historical settings with the removed LegacyWorkspace field load through the current model without load-time writes or reviving a legacy runtime", "R14 migration proof"),
+            ("Core safety, association, Excel and Tool lifecycle invariants remain covered by the current native ladder", "P1-P9/V04/current R1-R14 evidence")
         };
         File.WriteAllText(Path.Combine(output, "v042-acceptance.json"), JsonSerializer.Serialize(new {
             schema = "YMM4-Template-Placer-Relative-Acceptance/1", version = "0.5.0", result = "PASS", host = "YMM4 4.55.1.1 Lite",

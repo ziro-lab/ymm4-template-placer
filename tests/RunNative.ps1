@@ -141,6 +141,27 @@ $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | Conv
 if ($acceptance.version -ne '0.5.0' -or $acceptance.result -ne 'PASS' -or @($acceptance.checks).Count -ne 18 -or @($acceptance.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.5.0 core acceptance evidence' }
 $ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-Json
 if ($ux.version -ne '0.4.0' -or $ux.result -ne 'PASS' -or @($ux.checks).Count -ne 12 -or @($ux.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete retained Task UX acceptance evidence' }
+# Validate the current workflow contract by schema + named native invariants, not a historical check count.
 $workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
-if ($workflow.version -ne '0.5.0' -or $workflow.result -ne 'PASS' -or @($workflow.checks).Count -ne 10 -or @($workflow.checks | Where-Object { $_.result -ne 'PASS' }).Count) { throw 'Incomplete v0.5.0 UX workflow acceptance evidence' }
+$requiredWorkflowStages=@(
+ 'V04=PASS',
+ 'UX_ACCEPTANCE=PASS',
+ 'PLACEMENT_SOURCE_P7=PASS',
+ 'R11=PASS',
+ 'HANDS_ON_ROUND2_E=PASS',
+ 'HANDS_ON_ROUND3_E=PASS',
+ 'COMPACT_SETTINGS_P7=PASS',
+ 'FINAL_HANDS_ON_POLISH=PASS'
+)
+$workflowStages=@($workflow.required_native_stages | ForEach-Object { [string]$_ })
+$missingWorkflowStages=@($requiredWorkflowStages | Where-Object { $workflowStages -notcontains $_ })
+$workflowChecks=@($workflow.checks)
+if ($workflow.schema -cne 'YMM4-Template-Placer-UX-Workflow/1' -or
+    $workflow.version -cne '0.5.0' -or
+    $workflow.result -cne 'PASS' -or
+    $workflowChecks.Count -eq 0 -or
+    @($workflowChecks | Where-Object { $_.result -cne 'PASS' }).Count -ne 0 -or
+    $missingWorkflowStages.Count -ne 0) {
+ throw 'Incomplete v0.5.0 UX workflow acceptance evidence'
+}
 Write-Host 'Checkpoint native validation: full semantic regression and evidence guards PASS'

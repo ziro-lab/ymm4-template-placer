@@ -53,13 +53,13 @@ internal static partial class NativeProof
         foreach (var item in items) if (item != null && Visit(item, 0) is { } found) return found;
         return null;
     }
-    private static (PlacerViewModel? Root, bool Legacy)? suspendedToolFixture;
+    private static PlacerViewModel? suspendedToolRoot;
     private static async Task SetToolVisible(object main, bool visible)
     {
         var area = FindToolArea(main) ?? throw new InvalidOperationException("YMM4 Template Placer ToolArea was not found.");
         var type = area.GetType();
         var isVisible = type.GetProperty("IsVisible") ?? throw new InvalidOperationException("ToolArea IsVisible was not found.");
-        if (!visible) suspendedToolFixture = (ViewModel, ViewModel?.UseLegacyWorkspace == true);
+        if (!visible) suspendedToolRoot = ViewModel;
         isVisible.SetValue(area, visible);
         if (visible)
         {
@@ -68,18 +68,12 @@ internal static partial class NativeProof
         }
         await Idle(); await Task.Delay(100); await Idle();
         Assert(Equals(isVisible.GetValue(area), visible), visible ? "native ToolArea can reopen" : "native ToolArea can hide");
-        if (visible && suspendedToolFixture is { } fixture && ViewModel is { } reopened)
+        if (visible && suspendedToolRoot is { } previous && ViewModel is { } reopened)
         {
-            suspendedToolFixture = null;
-            if (!ReferenceEquals(fixture.Root, reopened))
-                Assert(!reopened.UseLegacyWorkspace, "R3 native new Tool root starts in current workspace without restoring the hidden legacy flag");
-            // Test fixture only: the historical ladder explicitly drives the retained
-            // compatibility UI after proving the new normal startup. Product does not.
-            if (fixture.Legacy)
-            {
-                reopened.SetLegacyWorkspace(true); await Idle();
-                Log("Historical native regression fixture explicitly re-entered compatibility workspace after the R3 startup assertion.");
-            }
+            suspendedToolRoot = null;
+            if (!ReferenceEquals(previous, reopened))
+                Assert(View?.PaletteTab.Content is IntentPalettePanel && View?.SelectionTab.Content is IntentSettingsPanel,
+                    "native new Tool root reopens on the current placement/settings surfaces");
         }
     }
     private static bool OpenTool(object main)

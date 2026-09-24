@@ -50,8 +50,6 @@ internal sealed record TransientWorkSnapshot(
     bool AddingTemplate,
     bool ManagingTemplates)
 {
-    public bool LegacyWorkspace { get; init; }
-    public ExpressionResumeWork? DeferredExpressions { get; init; }
     public PendingVoiceRowsWork? PendingVoiceRows { get; init; }
 }
 
@@ -149,7 +147,7 @@ public sealed partial class PlacerViewModel
         return new TransientWorkSnapshot(timeline, assignments, expression, selection,
             selectionEntry?.Id, selectionEntry, palette?.Id, SelectedPaletteEntry?.LibraryEntryId,
             layer, paletteName, creating, addition, libraryEdit, IsAddingTemplate, IsManagingTemplates)
-        { LegacyWorkspace = UseLegacyWorkspace, DeferredExpressions = deferredExpressionResume, PendingVoiceRows = CapturePendingVoiceRows() };
+        { PendingVoiceRows = CapturePendingVoiceRows() };
     }
 
     private static bool SameVoice(VoiceSnapshot left, VoiceSnapshot leftOther) => ReferenceEquals(left.Voice, leftOther.Voice) &&
@@ -249,11 +247,6 @@ public sealed partial class PlacerViewModel
         {
             HasError = false;
             Status = $"途中作業の一部を復元できませんでした（{skipped}件）。変更された対象は推測せず復元していません。";
-            keepPartialStatus = true;
-        }
-        else if (deferredExpressionResume != null)
-        {
-            Status = "旧workspaceの未配置選択を保持しています。現在の配置へ自動変換していません。";
             keepPartialStatus = true;
         }
     }

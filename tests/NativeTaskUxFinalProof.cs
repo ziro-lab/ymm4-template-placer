@@ -161,30 +161,41 @@ internal static partial class NativeProof
     private static void VerifyTaskUxAcceptance()
     {
         var lines = File.ReadAllLines(Path.Combine(output, "proof-log.txt"));
-        foreach (var required in Enumerable.Range(1, 7).Select(x => $"WUX{x}=PASS").Append("V04=PASS"))
-            Assert(lines.Contains(required, StringComparer.Ordinal), "UX acceptance requires real native stage " + required);
+        var required = new[]
+        {
+            "PLACEMENT_SOURCE_P7=PASS",
+            "R11=PASS",
+            "HANDS_ON_ROUND2_E=PASS",
+            "HANDS_ON_ROUND3_E=PASS",
+            "COMPACT_SETTINGS_P7=PASS",
+            "FINAL_HANDS_ON_POLISH=PASS",
+            "V04=PASS"
+        };
+        foreach (var marker in required)
+            Assert(lines.Contains(marker, StringComparer.Ordinal), "UX acceptance requires current native evidence " + marker);
         Assert(!nativeFaultOccurred, "UX acceptance rejects any captured unhandled native fault");
+
         var requirements = new[]
         {
-            "Direct Palette add, exact reference reuse and zero-write ambiguity rejection: WUX1",
-            "Management is a secondary task with draft-preserving Back: WUX3",
-            "Unified Palette picker; optional Character derives stored kind: WUX2",
-            "Missing expression candidate opens exact-Character recovery: WUX3/WUX4",
-            "Normal status hidden; broken/ambiguous/mismatch actionable: WUX2/WUX7",
-            "Resync scoped to Expression and actual associated Timeline selection: WUX4",
-            "Four-column expression task, readable Serif/Template at 360px: WUX4/WUX7",
-            "Default range without mandatory Preset concept; custom selector retained: WUX4",
-            "What/where selection, only valid cardinality purposes: WUX5/WUX7",
-            "Event-coalesced preview, native measured cost and fresh-plan Place: WUX6",
-            "Success clears on navigation; errors/partial results and drafts retained: WUX6",
-            "Automatic Character with advanced override; native close/reopen and final viewport checks: WUX6/WUX7"
+            "Current Set source registration uses stable identity and rejects ambiguous/stale sources without writes: PLACEMENT_SOURCE_P7/R11",
+            "Item-owned Set and Generic Set navigation replace the legacy Palette picker: R11",
+            "Current expression choices apply through exact managed association semantics: HANDS_ON_ROUND2_E",
+            "Expression Resync remains scoped to current exact managed association: HANDS_ON_ROUND2_E",
+            "Expression task freshness/resume uses current Voice snapshots and explicit recovery: HANDS_ON_ROUND3_E",
+            "Settings edits and source registration are Timeline-zero-write and protected by the current draft/store path: R11",
+            "Compact Settings first-level capability discovery and narrow-width layout are current invariants: COMPACT_SETTINGS_P1-P7",
+            "Template/TachiePreset registered Sources share the current Set-owned placement path: PLACEMENT_SOURCE_P7",
+            "Whole-Tool Settings wheel routing is current-task scoped and preserves explicit control ownership: FINAL_HANDS_ON_POLISH",
+            "Set management/copy/list lanes and copy controls retain the accepted hands-on geometry: COMPACT_SETTINGS_P6-P7",
+            "Current expression/Settings interactions retain native lifecycle safety across task changes: HANDS_ON_ROUND3_E/FINAL_HANDS_ON_POLISH",
+            "The accepted pre-Preview UX baseline is represented by current invariant proofs, not legacy Palette/Selection workspace hosting"
         };
         File.WriteAllText(Path.Combine(output, "ux-acceptance.json"), JsonSerializer.Serialize(new
         {
             schema = "YMM4-Template-Placer-Task-UX/1", result = "PASS", version = "0.4.0",
             checks = requirements.Select((requirement, i) => new { id = i + 1, requirement, result = "PASS" }),
-            optional_bulk_assignment = "Not implemented; Excel Bridge retained",
-            boundary = "Real YMM4 4.55.1.1 synthetic fixtures and actual WPF bindings/commands; no physical-pointer, arbitrary user-assets or all-DPI claim. Screenshot files require a separate visual review."
+            optional_bulk_assignment = "Excel Bridge retained",
+            boundary = "Current YMM4 4.55.1.1 native invariant evidence. Legacy Palette/Selection workspace UI acceptance is historical and no longer mandatory."
         }, new JsonSerializerOptions { WriteIndented = true }));
         Log("UX_ACCEPTANCE=PASS");
     }

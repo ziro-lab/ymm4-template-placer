@@ -74,7 +74,7 @@ public sealed partial class PlacerViewModel
     }
     private void UpdateGenericLayerTarget(bool force = false)
     {
-        var palette = !UseLegacyWorkspace && PlacementContext == PlacementContext.Generic ? selectedIntentSet?.Generic : null;
+        var palette = PlacementContext == PlacementContext.Generic ? selectedIntentSet?.Generic : null;
         if (!force && GenericLayerTarget?.SetId == palette?.Id && GenericLayerTarget?.Saved == palette?.Layer) return;
         if (GenericLayerTarget != null) GenericLayerTarget.Edited -= GenericLayerTargetEdited;
         GenericLayerTarget = palette == null ? null : new(palette.Id, palette.Layer);

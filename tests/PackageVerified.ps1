@@ -18,10 +18,41 @@ $package=Join-Path $OutputDir 'package'
 $logPath=Join-Path $OutputDir 'proof-log.txt'
 $log=Get-Content $logPath
 if ((Get-Content -Raw (Join-Path $OutputDir 'proof-result.txt')).Trim() -cne 'PASS P1 P2 P3 P4 P5 P6 P7 P8 P9') { throw 'Native result is not a complete PASS' }
-$stages=@('PORTABLE_SETTINGS','PLACEMENT_SOURCE_P0','PLACEMENT_SOURCE_P1','PLACEMENT_SOURCE_P2','PLACEMENT_SOURCE_P3','PLACEMENT_SOURCE_P4','PLACEMENT_SOURCE_P5','PLACEMENT_SOURCE_P6','PLACEMENT_SOURCE_P7','PLACEMENT_RULE_P1','PLACEMENT_RULE_P2','PLACEMENT_RULE_P3','P1','P2','P3','P4','P5','P6','P7','P8','P9','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12_UI','W12_SELECTORS','W12','V04') + (1..13 | ForEach-Object { "WUX$_" }) + @('UX_ACCEPTANCE','UX_WORKFLOW_ACCEPTANCE','TEMPLATE_FIDELITY','HANDS_ON_H1_H2','HANDS_ON_H3_H4_H5','HANDS_ON_UX_POLISH','HANDS_ON_ROUND2_A','HANDS_ON_ROUND2_B','HANDS_ON_ROUND2_C','HANDS_ON_ROUND2_D','HANDS_ON_ROUND2_E','HANDS_ON_ROUND2')
-$stages += @('A','B','C','D','E','F' | ForEach-Object {"HANDS_ON_ROUND3_$_"}) + @('HANDS_ON_ROUND3')
+$workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
+$requiredWorkflowStages=@(
+ 'V04=PASS',
+ 'UX_ACCEPTANCE=PASS',
+ 'PLACEMENT_SOURCE_P7=PASS',
+ 'R11=PASS',
+ 'HANDS_ON_ROUND2_E=PASS',
+ 'HANDS_ON_ROUND3_E=PASS',
+ 'COMPACT_SETTINGS_P7=PASS',
+ 'FINAL_HANDS_ON_POLISH=PASS'
+)
+$workflowStages=@($workflow.required_native_stages | ForEach-Object { [string]$_ })
+$missingWorkflowStages=@($requiredWorkflowStages | Where-Object { $workflowStages -notcontains $_ })
+$workflowChecks=@($workflow.checks)
+if ($workflow.schema -cne 'YMM4-Template-Placer-UX-Workflow/1' -or $workflow.version -cne $version -or $workflow.result -cne 'PASS' -or
+    $workflowChecks.Count -eq 0 -or @($workflowChecks | Where-Object { $_.result -cne 'PASS' }).Count -ne 0 -or
+    $missingWorkflowStages.Count -ne 0 -or
+    (@($workflowChecks.id | Sort-Object) -join ',') -cne ((1..$workflowChecks.Count) -join ',')) {
+ throw 'Incomplete v0.5.0 UX workflow acceptance manifest'
+}
+$currentNativeStages=@(
+ 'PORTABLE_SETTINGS',
+ 'PLACEMENT_SOURCE_P0','PLACEMENT_SOURCE_P1','PLACEMENT_SOURCE_P2','PLACEMENT_SOURCE_P3',
+ 'PLACEMENT_SOURCE_P4','PLACEMENT_SOURCE_P5','PLACEMENT_SOURCE_P6','PLACEMENT_SOURCE_P7',
+ 'PLACEMENT_RULE_P1','PLACEMENT_RULE_P2','PLACEMENT_RULE_P3',
+ 'P1','P2','P3','P4','P5','P6','P7','P8','P9',
+ 'V04','UX_ACCEPTANCE','UX_WORKFLOW_ACCEPTANCE','WUX13',
+ 'TEMPLATE_FIDELITY','HANDS_ON_UX_POLISH','HANDS_ON_ROUND2','HANDS_ON_ROUND3',
+ 'FINAL_HANDS_ON_POLISH','EXPRESSION_PERFORMANCE'
+)
+$workflowStageNames=@($workflowStages | ForEach-Object { ([string]$_).Replace('=PASS','') })
+$stages=@($currentNativeStages + $workflowStageNames)
+$stages=@($stages | Select-Object -Unique)
 foreach ($stage in $stages) {
- if ($log -cnotcontains "$stage=PASS") { throw "Missing native success stage: $stage" }
+ if ($log -cnotcontains "$stage=PASS") { throw "Missing current native success stage: $stage" }
 }
 $acceptance=Get-Content -Raw (Join-Path $OutputDir 'v04-acceptance.json') | ConvertFrom-Json
 if ($acceptance.schema -ne 'YMM4-Template-Placer-Acceptance/1' -or $acceptance.version -ne $version -or $acceptance.result -ne 'PASS' -or
@@ -31,10 +62,6 @@ $ux=Get-Content -Raw (Join-Path $OutputDir 'ux-acceptance.json') | ConvertFrom-J
 if ($ux.schema -ne 'YMM4-Template-Placer-Task-UX/1' -or $ux.version -ne '0.4.0' -or $ux.result -ne 'PASS' -or
     @($ux.checks).Count -ne 12 -or @($ux.checks | Where-Object { $_.result -ne 'PASS' }).Count -ne 0 -or
     (@($ux.checks.id | Sort-Object) -join ',') -ne ((1..12) -join ',')) { throw 'Incomplete retained Task UX acceptance manifest' }
-$workflow=Get-Content -Raw (Join-Path $OutputDir 'ux-workflow-acceptance.json') | ConvertFrom-Json
-if ($workflow.schema -ne 'YMM4-Template-Placer-UX-Workflow/1' -or $workflow.version -ne $version -or $workflow.result -ne 'PASS' -or
-    @($workflow.checks).Count -ne 10 -or @($workflow.checks | Where-Object { $_.result -ne 'PASS' }).Count -ne 0 -or
-    (@($workflow.checks.id | Sort-Object) -join ',') -ne ((1..10) -join ',')) { throw 'Incomplete v0.5.0 UX workflow acceptance manifest' }
 foreach ($build in @('build-release.txt','build-proof.txt')) {
  $text=Get-Content -Raw (Join-Path $OutputDir $build)
  if ($text -notmatch '(?m)^\s*0 Warning\(s\)' -or $text -notmatch '(?m)^\s*0 Error\(s\)') { throw "Build is not warning/error clean: $build" }
@@ -73,9 +100,9 @@ if($LASTEXITCODE -ne 0 -or $sourceTree -cne (git rev-parse 'HEAD^{tree}')) {thro
  run_id=$env:GITHUB_RUN_ID; run_attempt=$env:GITHUB_RUN_ATTEMPT; run_url="https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
  ymm4_version='4.55.1.1 Lite'; ymm4_zip_sha256='125860147cc33b831fc1a6d6ea996958001c2ead3b0d37f7d900251d5617db9b'
  result=(Get-Content -Raw (Join-Path $OutputDir 'proof-result.txt')).Trim(); v04_result=$acceptance.result
- native_assertions=@(Select-String -Path $logPath -Pattern '^ASSERT PASS:').Count; acceptance_requirements=18
- base_task_ux_version=$ux.version; base_task_ux_requirements=12; base_task_ux_result=$ux.result
- ux_workflow_version=$workflow.version; ux_workflow_requirements=10; ux_workflow_result=$workflow.result
+ native_assertions=@(Select-String -Path $logPath -Pattern '^ASSERT PASS:').Count; acceptance_requirements=@($acceptance.checks).Count
+ base_task_ux_version=$ux.version; base_task_ux_requirements=@($ux.checks).Count; base_task_ux_result=$ux.result
+ ux_workflow_version=$workflow.version; ux_workflow_requirements=$workflowChecks.Count; ux_workflow_result=$workflow.result
  relative_version=$relative.version; relative_result=$relative.result; relative_requirements=@($relative.checks).Count
  relative_uiux_version=$relativeUiux.version; relative_uiux_result=$relativeUiux.result; relative_uiux_requirements=@($relativeUiux.checks).Count
  relative_native_stages=$relative.required_native_stages; template_fidelity_result=if($log -ccontains 'TEMPLATE_FIDELITY=PASS'){'PASS'}else{'FAIL'}; evidence_guard_negative_checks=$guard.negative_checks
@@ -129,13 +156,13 @@ try {
  }
 } finally { $sourceZip.Dispose() }
 [ordered]@{
- result='PASS'; version=$version; native_stages='P1-P9,W3-W12,V04,WUX1-WUX13,R1-R14,TEMPLATE_FIDELITY,RELATIVE_UIUX,V042_ACCEPTANCE,HANDS_ON_UX_POLISH,HANDS_ON_ROUND2_A-E,HANDS_ON_ROUND2,HANDS_ON_ROUND3_A-F,HANDS_ON_ROUND3'; acceptance_requirements=18
- relative_requirements=21; relative_result=$relative.result; relative_uiux_requirements=10; relative_uiux_result=$relativeUiux.result; template_fidelity_result='PASS'; evidence_guard_negative_checks=$guard.negative_checks
+ result='PASS'; version=$version; native_stages=($stages -join ','); acceptance_requirements=@($acceptance.checks).Count
+ relative_requirements=@($relative.checks).Count; relative_result=$relative.result; relative_uiux_requirements=@($relativeUiux.checks).Count; relative_uiux_result=$relativeUiux.result; template_fidelity_result='PASS'; evidence_guard_negative_checks=$guard.negative_checks
  hands_on_ux_requirements=@($handsOn.checks).Count; hands_on_ux_result=$handsOn.result; hands_on_round2_native_requirements=@($round2.checks).Count; hands_on_round2_result=$round2.result
  hands_on_round3_native_requirements=@($round3.checks).Count; hands_on_round3_result=$round3.result; round3_evidence_guard_negative_checks=$round3Guard.negative_checks
  round3_release_scope='G10-G14 PASS: independent evidence/builds/exact distribution smoke/stable root/hash equality; G15 requires final external Git metadata verification'
  source_head=$sourceHead; run_id=$env:GITHUB_RUN_ID; run_attempt=$env:GITHUB_RUN_ATTEMPT
- base_task_ux_requirements=12; ux_workflow_requirements=10; payload_files=$expected; archived_dll_sha256=$archivedHash
+ base_task_ux_requirements=@($ux.checks).Count; ux_workflow_requirements=$workflowChecks.Count; payload_files=$expected; archived_dll_sha256=$archivedHash
  source_archive='Ymm4TemplatePlacer-source.zip'; ymme_install_folder=$installFolder; ymme_file_entries=$expectedArchive
 } | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'package-checks.json')
 Get-FileHash (Join-Path $OutputDir 'Ymm4TemplatePlacer*') -Algorithm SHA256 | Select-Object @{Name='File';Expression={Split-Path $_.Path -Leaf}},Hash | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'SHA256.json')

@@ -238,7 +238,36 @@ Final Phase 4 result:
 
 Phase 4 is complete. Phase 5 is the next product phase.
 
-### 5. Behavior preview + “what I want” checklist — NEXT
+### 4.5. Baseline simplification / compatibility cleanup — RELEASE PROMOTION
+
+Before adding Behavior Preview, simplify the pre-publication baseline while there is only one known user and no announced compatibility commitment.
+
+Primary goals:
+
+- remove executable legacy product paths, starting with `LegacyWorkspace`;
+- keep old-data migration separate from old-UI/runtime preservation;
+- retain association/source/settings safety compatibility;
+- audit legacy Selection/Palette/ExpressionPreset families for current reachability;
+- consolidate historical Native tests now that assertion growth crossed the validation strategy's review threshold.
+
+Authorities:
+
+- `BASELINE_SIMPLIFICATION_DESIGN.md`;
+- `BASELINE_SIMPLIFICATION_ACCEPTANCE.md`;
+- `BASELINE_SIMPLIFICATION_WORKPLAN.md`.
+
+Behavior Preview remains sequenced after this maintenance phase so new UI does not build on top of known legacy runtime branches.
+
+Current maintenance result:
+
+- executable `LegacyWorkspace` persistence/switching is removed from distribution/runtime;
+- current placement, Settings and expression surfaces are unconditional;
+- compatibility retained is bounded to current data/Timeline/source/Settings responsibilities rather than a second product mode;
+- historical workflow validation is consolidated behind current named invariants;
+- Checkpoint #691 at candidate `d227e4c0fcb502e5a3abc970527ce447d0926ae5` is GREEN with **1,198 Native assertions / 0 failures**, down from 1,822 at the accepted Phase 4 baseline;
+- Release candidate + main promotion remain before Phase 4.5 becomes COMPLETE.
+
+### 5. Behavior preview + “what I want” checklist — BLOCKED BY 4.5
 
 Add a reusable Settings-assistance surface that can be opened from both Compact Settings and the later Full Settings Workspace.
 

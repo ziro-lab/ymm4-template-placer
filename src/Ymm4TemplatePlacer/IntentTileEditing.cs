@@ -16,7 +16,7 @@ public sealed partial class PlacerViewModel
     public ActionCommand OpenTileSettingsCommand { get; private set; } = null!;
     public string IntentTileEditNotice => IntentSettings?.HasChanges == true
         ? "設定に未保存の変更があります。保存・破棄してからタイルを編集してください。" : "右クリックで表示名・色・形を変更できます。";
-    private bool IsCurrentIntentTile(IntentTileChoice tile) => intentTimeline != null && ReferenceEquals(intentTimeline, timeline) && !UseLegacyWorkspace && selectedIntentSet?.Id == tile.PaletteId &&
+    private bool IsCurrentIntentTile(IntentTileChoice tile) => intentTimeline != null && ReferenceEquals(intentTimeline, timeline) && selectedIntentSet?.Id == tile.PaletteId &&
         (selectedIntentSet.Generic != null) == tile.IsGeneric && IntentTiles.Any(x => ReferenceEquals(x, tile));
     private bool CanEditIntentTile(IntentTileChoice tile) => settingsAvailable && !intentExecuting &&
         tileEditState == IntentTileEditState.Idle && IntentSettings?.HasChanges != true && IsCurrentIntentTile(tile);

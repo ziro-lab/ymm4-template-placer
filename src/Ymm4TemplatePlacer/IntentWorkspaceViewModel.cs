@@ -9,13 +9,12 @@ namespace Ymm4TemplatePlacer;
 public sealed partial class PlacerViewModel
 {
     private Timeline? intentTimeline;
-    private bool intentInitialized, refreshingIntent, intentExecuting, useLegacyWorkspace;
+    private bool intentInitialized, refreshingIntent, intentExecuting;
     private string intentNotice = "", intentContextKey = "", intentContextTitle = "", intentContextDetail = "", intentEmptyActionLabel = "新しく設定する";
     private IntentSetChoice? selectedIntentSet;
     private readonly Dictionary<string, Guid> lastIntentSets = new(StringComparer.Ordinal);
     public ObservableCollection<IntentSetChoice> IntentSets { get; } = [];
     public ObservableCollection<IntentTileChoice> IntentTiles { get; } = [];
-    public bool UseLegacyWorkspace => useLegacyWorkspace;
     public bool HasIntentSets => IntentSets.Count > 1;
     public bool ShowSingleSetName => IntentSets.Count == 1;
     public bool UseSegmentedIntentSets => IntentSets.Count is > 1 and <= 4;
@@ -36,8 +35,6 @@ public sealed partial class PlacerViewModel
     }
     public ActionCommand ExecuteIntentTileCommand { get; private set; } = null!;
     public ActionCommand OpenIntentSettingsCommand { get; private set; } = null!;
-    public ActionCommand OpenLegacyWorkspaceCommand { get; private set; } = null!;
-    public ActionCommand CloseLegacyWorkspaceCommand { get; private set; } = null!;
     public ActionCommand ImportNewExpressionsCommand { get; private set; } = null!;
     public event EventHandler? IntentSettingsRequested;
 
@@ -48,15 +45,14 @@ public sealed partial class PlacerViewModel
         {
             intentInitialized = true;
             InitializeIntentTileOrdering(); InitializeIntentTileEditing(); InitializeGenericLayerTarget();
-            // Preserve the compatibility flag as data; hidden legacy UI is never the normal startup.
-            useLegacyWorkspace = false;
             ExecuteIntentTileCommand = new ActionCommand(x => !intentExecuting && tileEditState == IntentTileEditState.Idle && settingsAvailable && undo != null &&
                 x is IntentTileChoice tile && tile.Available && (!tile.IsGeneric || GenericLayerReadyForExecution) && IntentTiles.Any(x => ReferenceEquals(x, tile)),
                 x => ExecuteIntentTileFromCommand((IntentTileChoice)x!));
             OpenIntentSettingsCommand = new ActionCommand(_ => true, _ => IntentSettingsRequested?.Invoke(this, EventArgs.Empty));
-            OpenLegacyWorkspaceCommand = new ActionCommand(_ => true, _ => SetLegacyWorkspace(true));
-            CloseLegacyWorkspaceCommand = new ActionCommand(_ => true, _ => SetLegacyWorkspace(false));
             ImportNewExpressionsCommand = new ActionCommand(_ => settingsAvailable, _ => Guard(ImportNewIntentExpressions));
+            OnPropertyChanged(nameof(ExecuteIntentTileCommand));
+            OnPropertyChanged(nameof(OpenIntentSettingsCommand));
+            OnPropertyChanged(nameof(ImportNewExpressionsCommand));
         }
         if (!ReferenceEquals(intentTimeline, timeline))
         {
@@ -70,15 +66,6 @@ public sealed partial class PlacerViewModel
         if (intentTimeline != null) intentTimeline.PropertyChanged -= IntentTimelineChanged;
         intentTimeline = null; EndTimelinePointer();
         IntentWorkspaceDeactivated?.Invoke(this, EventArgs.Empty);
-    }
-    public void SetLegacyWorkspace(bool value)
-    {
-        if (useLegacyWorkspace == value) return;
-        CloseExpressionTrialSession();
-        EndTimelinePointer();
-        useLegacyWorkspace = value; OnPropertyChanged(nameof(UseLegacyWorkspace));
-        // Workspace navigation is session-only. Switching tabs/modes must not save settings or mutate Timeline.
-        RefreshIntentWorkspace();
     }
     private void IntentTimelineChanged(object? sender, PropertyChangedEventArgs e)
     {
