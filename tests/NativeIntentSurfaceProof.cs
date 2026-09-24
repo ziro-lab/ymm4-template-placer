@@ -69,7 +69,23 @@ internal static partial class NativeProof
             var added = timeline.Items.Except(new IItem[] { voice }).ToArray();
             Assert(added.Length == 1 && added[0].Frame == 100 && added[0].Length == 40 && added[0].Layer == 19,
                 "R7 native one-click tile invokes saved relative span/up relation without profile/layer input");
-            await undo.UndoAsync(); await Idle(); Assert(Signature(timeline) == signature, "R7 one native Undo restores a complete tile action");
+            var placedSignature = Signature(timeline);
+            Assert(view.RelativePaletteSurface.NativeUndoButton.IsEnabled,
+                "NATIVE_UNDO_REDO P1 placement makes the persistent native Undo control available");
+            new System.Windows.Automation.Peers.ButtonAutomationPeer(view.RelativePaletteSurface.NativeUndoButton).Invoke(); await Idle();
+            Assert(Signature(timeline) == signature,
+                "NATIVE_UNDO_REDO P1 placement-header Undo executes YMM4 native history and restores the complete tile action");
+            Assert(view.RelativePaletteSurface.NativeRedoButton.IsEnabled,
+                "NATIVE_UNDO_REDO P1 native Undo makes the persistent Redo control available");
+            new System.Windows.Automation.Peers.ButtonAutomationPeer(view.RelativePaletteSurface.NativeRedoButton).Invoke(); await Idle();
+            Assert(Signature(timeline) == placedSignature,
+                "NATIVE_UNDO_REDO P1 placement-header Redo restores the exact native placement result");
+            Assert(view.RelativePaletteSurface.NativeUndoButton.IsEnabled,
+                "NATIVE_UNDO_REDO P1 Redo returns Undo to the available state");
+            new System.Windows.Automation.Peers.ButtonAutomationPeer(view.RelativePaletteSurface.NativeUndoButton).Invoke(); await Idle();
+            Assert(Signature(timeline) == signature,
+                "NATIVE_UNDO_REDO P1 final native Undo returns the fixture to its pre-placement state");
+            Log("NATIVE_UNDO_REDO_P1=PASS");
             timeline.Items = timeline.Items.Add(face); timeline.SelectedItems = [face]; await Idle();
             Assert(vm.IntentSets.Count == 1 && vm.IntentSets[0].Targeted?.Intent == "装飾", "R7/R2-B changing runtime type replaces applicable Sets without showing unrelated actions");
             timeline.SelectedItems = [voice, face]; await Idle();

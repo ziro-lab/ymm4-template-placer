@@ -96,6 +96,7 @@ if (-not (Select-String -Path $log -Pattern '^PLACEMENT_RULE_P2=PASS$')) { throw
 if (-not (Select-String -Path $log -Pattern '^PLACEMENT_RULE_P3=PASS$')) { throw 'Placement Rule P3 proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^BEHAVIOR_PREVIEW_P0=PASS$')) { throw 'Behavior Preview P0 description projection proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^BEHAVIOR_PREVIEW_P1=PASS$')) { throw 'Behavior Preview P1 read-only schematic proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^NATIVE_UNDO_REDO_P0=PASS$')) { throw 'Native Undo/Redo P0 command surface proof is incomplete' }
 
 $presetProofs=@(
  @{File='tachie-preset-capability.json'; Schema='YMM4-Template-Placer-Tachie-Preset-Capability/1'; Marker='TACHIE_PRESET_CAPABILITY_P3=PASS'},
@@ -123,6 +124,7 @@ if ($Profile -eq 'focused') {
  return
 }
 
+if (-not (Select-String -Path $log -Pattern '^NATIVE_UNDO_REDO_P1=PASS$')) { throw 'Native Undo/Redo P1 placement roundtrip proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^V04=PASS$')) { throw 'Integrated v0.4 native proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^UX_ACCEPTANCE=PASS$')) { throw 'Task UX acceptance is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^UX_WORKFLOW_ACCEPTANCE=PASS$') -or -not (Select-String -Path $log -Pattern '^WUX13=PASS$')) { throw 'v0.5.0 UX workflow acceptance is incomplete' }

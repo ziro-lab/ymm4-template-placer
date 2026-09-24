@@ -54,6 +54,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
             var dialog = new OpenFileDialog { Filter = "Excelブック (*.xlsx)|*.xlsx", CheckFileExists = true, Title = "割り当てをExcelから読み込み" };
             if (dialog.ShowDialog() == true) ImportFrom(dialog.FileName);
         }));
+        InitializeNativeHistoryCommands();
         InitializeV04();
         RestoreExpressionSourceModePreference();
         InitializeExpressionImmediate();
@@ -72,6 +73,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         var preservePending = changed && HasProtectedPendingVoiceWork();
         if (changed) { CancelTachiePresetApply(); CancelTachiePresetCalibration(); CancelExpressionLoad(); ClearPresetContextWatchers(); CancelExpressionNavigation(); CloseExpressionTrialSession(); DetachTimelineV04(); DeactivateIntentWorkspace(); }
         timeline = info.Timeline; undo = info.UndoRedoManager;
+        BindNativeHistoryCommands(undo);
         if (changed)
         {
             AttachTimelineV04();
@@ -200,6 +202,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         ExportCommand?.RaiseCanExecuteChanged(); ImportCommand?.RaiseCanExecuteChanged(); resyncCommand?.RaiseCanExecuteChanged();
         NavigateExpressionRowCommand?.RaiseCanExecuteChanged();
         TachiePresetCalibrationCommand?.RaiseCanExecuteChanged();
+        RaiseNativeHistoryCommandState();
     }
     private void Guard(Action action)
     {
@@ -218,6 +221,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
         DeactivateIntentWorkspace(); DetachTimelineV04(); DisposeV04();
         if (intentSettings != null) intentSettings.Edited -= IntentSettingsEdited;
         foreach (var row in Rows) row.PropertyChanged -= RowChanged;
+        DisposeNativeHistoryCommands();
         Rows.Clear(); timeline = null; undo = null;
     }
 }

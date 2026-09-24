@@ -15,7 +15,13 @@
      <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding PlacementContextCompatibilityNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
     </TextBlock>
    </StackPanel>
-   <local:GenericLayerTargetPanel x:Name="GenericLayerSurface" Grid.Column="1" Width="134" VerticalAlignment="Top" Margin="6,0,0,0"/>
+   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="6,0,0,0">
+    <Button x:Name="NativeUndoButton" Content="↶" Command="{Binding NativeUndoCommand}" Width="30" Height="26" Padding="0"
+     ToolTip="戻す（YMM4の元に戻す）" ToolTipService.ShowOnDisabled="True" AutomationProperties.Name="戻す"/>
+    <Button x:Name="NativeRedoButton" Content="↷" Command="{Binding NativeRedoCommand}" Width="30" Height="26" Padding="0" Margin="4,0,0,0"
+     ToolTip="やり直す（YMM4のやり直し）" ToolTipService.ShowOnDisabled="True" AutomationProperties.Name="やり直す"/>
+    <local:GenericLayerTargetPanel x:Name="GenericLayerSurface" Width="134" VerticalAlignment="Top" Margin="6,0,0,0"/>
+   </StackPanel>
   </Grid>
 
   <TextBlock x:Name="SingleSetTitleText" Grid.Row="1" Text="{Binding SelectedIntentSet.Label}" FontWeight="SemiBold" Margin="4,0,4,6">
