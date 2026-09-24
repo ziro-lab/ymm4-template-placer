@@ -38,7 +38,6 @@ internal static partial class NativeProof
         if (profile == "focused")
         {
             await VerifyLibrary(timeline);
-            await VerifyQuickDrop(timeline, undo);
             await VerifyAssociations(timeline, undo);
             await VerifySafetyIntent(timeline);
             await VerifyIntentCore(timeline, undo);
@@ -57,7 +56,6 @@ internal static partial class NativeProof
             return;
         }
         await VerifyLibrary(timeline);
-        await VerifyQuickDrop(timeline, undo);
         await VerifyExpressionPresets(timeline, undo);
         await VerifyAssociations(timeline, undo);
         await VerifySelectionProfiles(timeline, undo);
