@@ -4,7 +4,7 @@ This is the collection point for **unimplemented or deferred product ideas**.
 
 Being listed here is not implementation approval or priority commitment. Current implementation order is controlled by `docs/PRODUCT_ROADMAP.md`.
 
-Current roadmap state: **Behavior Preview + “what I want” checklist is NEXT.** Do not use this Backlog to silently jump ahead of that phase.
+Current roadmap state: **Behavior Preview is accepted; native Undo/Redo is NEXT, followed by placement quick-settings investigation.** The “what I want” checklist and Full Settings Workspace are deferred for need-based re-evaluation. Do not use this Backlog to silently reorder those phases.
 
 ## Performance polish
 
@@ -26,7 +26,7 @@ This is performance polish, not a reason to reopen the accepted Placement Source
 
 ## Full Settings Workspace
 
-Status: **PLANNED / AFTER PREVIEW**
+Status: **DEFERRED / NEED-DRIVEN AFTER QUICK-SETTINGS EVIDENCE**
 
 The compact Settings surface remains the ordinary quick-edit surface. A later larger workspace should edit the **same Settings Draft, same schema and same protected persistence path**.
 
@@ -100,13 +100,13 @@ No fuzzy “nearest suitable thing” behavior.
 
 ## Action Tile / shortcut candidates
 
-Status: **COLLECTING / RESEARCH BEFORE IMPLEMENTATION**
+Status: **PARTLY PROMOTED — NATIVE UNDO/REDO IS ROADMAP NEXT; OTHER IDEAS REMAIN COLLECTING**
 
 These ideas were previously parked in Draft PR #33 and are incorporated here so they do not need a long-lived stale PR.
 
-### Highest-priority shortcut candidate: native Undo / Redo
+### Native Undo / Redo — PROMOTED TO ROADMAP PHASE 5B
 
-Current hypothesis:
+Current accepted hypothesis:
 
 > Native Undo / Redo may be the strongest always-available shortcut for Template Placer because it supports the normal try -> inspect -> revert -> try another tile loop.
 
@@ -137,6 +137,18 @@ Compare, but do not automatically promote:
 - copy / paste.
 
 Ordinary one-command operations should remain YMM4 command/action candidates rather than bespoke transformation engines.
+
+### Placement quick settings — PROMOTED TO ROADMAP PHASE 5C
+
+Investigate a compact fast path for the small placement axes that are repeatedly adjusted during normal editing.
+
+Boundary:
+
+- edit the existing staged Settings Draft directly;
+- use the accepted Behavior Preview as immediate read-only feedback;
+- do not reproduce the complete Settings surface;
+- do not add a second configuration model, validation path or persistence route;
+- choose the final finite control set from hands-on frequency rather than from all available placement options.
 
 ### Interaction-surface candidates
 
