@@ -161,12 +161,13 @@ internal static partial class NativeProof
     private static void VerifyTaskUxAcceptance()
     {
         var lines = File.ReadAllLines(Path.Combine(output, "proof-log.txt"));
-        foreach (var required in Enumerable.Range(1, 7).Select(x => $"WUX{x}=PASS").Append("V04=PASS"))
-            Assert(lines.Contains(required, StringComparer.Ordinal), "UX acceptance requires real native stage " + required);
+        foreach (var required in Enumerable.Range(2, 6).Select(x => $"WUX{x}=PASS")
+            .Append("V04=PASS").Append("PLACEMENT_SOURCE_P7=PASS").Append("R11=PASS"))
+            Assert(lines.Contains(required, StringComparer.Ordinal), "UX acceptance requires current native evidence " + required);
         Assert(!nativeFaultOccurred, "UX acceptance rejects any captured unhandled native fault");
         var requirements = new[]
         {
-            "Direct Palette add, exact reference reuse and zero-write ambiguity rejection: WUX1",
+            "Current Set source registration, exact reference reuse and zero-write ambiguity rejection: PLACEMENT_SOURCE_P7/R11",
             "Management is a secondary task with draft-preserving Back: WUX3",
             "Unified Palette picker; optional Character derives stored kind: WUX2",
             "Missing expression candidate opens exact-Character recovery: WUX3/WUX4",

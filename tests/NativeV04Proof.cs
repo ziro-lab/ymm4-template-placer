@@ -37,7 +37,6 @@ internal static partial class NativeProof
         var profile = (Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_NATIVE_PROFILE") ?? "checkpoint").ToLowerInvariant();
         if (profile == "focused")
         {
-            await VerifyDirectTemplateAddition(timeline, undo);
             await VerifyLibrary(timeline);
             await VerifyPalettes(timeline);
             await VerifyQuickDrop(timeline, undo);
