@@ -97,7 +97,8 @@ internal static partial class NativeProof
             var settingsRequested = 0;
             EventHandler settingsRequestedProbe = (_, _) => settingsRequested++;
             vm.IntentSettingsRequested += settingsRequestedProbe;
-            Log($"UIUX empty-state before click: loaded={view.IsLoaded}; visible={view.IsVisible}; currentStaticView={ReferenceEquals(View, view)}; currentStaticVm={ReferenceEquals(ViewModel, vm)}; dataContext={ReferenceEquals(view.DataContext, vm)}; paletteSelected={view.PaletteTab.IsSelected}; settingsSelected={view.SelectionTab.IsSelected}; intentSettings={(vm.IntentSettings != null)}");
+            var emptyCommand = surface.IntentEmptyActionButton.Command;
+            Log($"UIUX empty-state before click: loaded={view.IsLoaded}; visible={view.IsVisible}; currentStaticView={ReferenceEquals(View, view)}; currentStaticVm={ReferenceEquals(ViewModel, vm)}; dataContext={ReferenceEquals(view.DataContext, vm)}; paletteSelected={view.PaletteTab.IsSelected}; settingsSelected={view.SelectionTab.IsSelected}; intentSettings={(vm.IntentSettings != null)}; commandNull={(emptyCommand == null)}; commandSame={ReferenceEquals(emptyCommand, vm.OpenIntentSettingsCommand)}; commandCanExecute={(emptyCommand?.CanExecute(surface.IntentEmptyActionButton.CommandParameter) ?? false)}");
             await InvokeSelectionButton(surface.IntentEmptyActionButton); await Idle();
             vm.IntentSettingsRequested -= settingsRequestedProbe;
             Log($"UIUX empty-state after click: eventCount={settingsRequested}; currentStaticView={ReferenceEquals(View, view)}; currentStaticVm={ReferenceEquals(ViewModel, vm)}; dataContext={ReferenceEquals(view.DataContext, vm)}; paletteSelected={view.PaletteTab.IsSelected}; settingsSelected={view.SelectionTab.IsSelected}; selectedIndex={view.MainTabs.SelectedIndex}; intentSettings={(vm.IntentSettings != null)}");
