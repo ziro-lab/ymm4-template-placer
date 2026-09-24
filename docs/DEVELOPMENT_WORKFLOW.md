@@ -1,52 +1,81 @@
 # Main-based development workflow
 
-Effective 2026-09-20, explicitly approved by the repository owner.
+Effective 2026-09-24. This is the current Git / promotion workflow.
 
 ## Current baseline
 
-Round 4 A/B/C was accepted by the owner and merged through PR #16.
+The accepted product/test/package baseline is the Baseline Simplification main promotion:
 
-- merge commit: `7dc30dcb887a0d57f3079d72ffe89dc62bedd9fa`
-- main Release run #227: `35508468265`
-- full native regression / exact distribution DLL smoke / verified package: PASS
+- product merge: `af6a667e401a99311ef58293c750ac51b9145f54`;
+- main Release #708: `35983059810`;
+- Native: **1,198 PASS / 0 FAIL**;
+- exact distribution-DLL identity smoke: PASS;
+- verified `.ymme` / source / provenance packaging: PASS.
 
-The current priority is a separate UI Micro Polish pass. Experimental Tachie Preset work remains in paused Draft PR #19 and resumes after the UI pass merges.
+Documentation-only authority commits may follow that product merge without changing the accepted runtime/package bytes.
 
-Current architecture authority is `docs/CURRENT_ARCHITECTURE.md`.
+Current architecture and sequencing authorities are:
 
-## Superseded temporary Git rules
+1. `docs/CURRENT_ARCHITECTURE.md`;
+2. `docs/PRODUCT_ROADMAP.md`;
+3. the active phase's DESIGN / ACCEPTANCE / WORKPLAN documents;
+4. `docs/BACKLOG.md` only for collected/deferred ideas.
 
-Historical documents and PR descriptions said to keep main unchanged and PR #6/#11/#13/#14/#15 Draft/open/unmerged. Those were temporary rules for the stacked-candidate stage and are superseded by this owner-approved transition. They remain in historical evidence as descriptions of that time, not as instructions for current work.
+Baseline Simplification is complete. Behavior Preview + checklist is the next product phase.
 
-- PR #17 incorporated the cumulative Round 3 work with a normal merge commit, retaining ancestry.
-- GitHub automatically recognized main-targeting ancestor PR #6 as merged.
-- PR #11/#13/#14/#15 were closed as incorporated/superseded, not merged into their historical feature bases.
-- Historical branches, commits, comments and evidence are retained. No force-push or branch deletion was needed.
-- PR #16 is merged and preserved as the accepted Round 4 A/B/C history. Current work uses fresh main-based branches.
+## Normal development
 
-## Ongoing development
+Use:
 
-Use `main -> focused work branch -> Draft PR -> validation and hands-on acceptance -> approved merge`.
+```text
+main
+-> focused work branch
+-> Draft PR
+-> Focused / Checkpoint feedback as appropriate
+-> mark Ready when the candidate is actually promotable
+-> Release validation
+-> approved merge
+-> main Release
+```
 
-Round numbers are work checkpoints, not a requirement to keep stacking unmerged PRs or hold a version number forever. Choose and verify the next package version when a release candidate is ready. Do not change the pinned host version merely because Git workflow has changed.
+Keep a working PR Draft while implementation or acceptance is incomplete.
 
-Keep the current working PR Draft while incomplete. Promotion of this baseline is not advance authorization to merge untested future work. Do not force-push, delete history, bypass a rejected write or weaken a check to achieve a merge.
+Do not force-push, bypass rejected writes, weaken validation, or merge merely to make CI green. Historical branches and PRs may remain as evidence; they are not current execution authority.
 
-## Unchanged quality gates
+## Validation routing
 
-Preserve the WPF/MVVM root ownership and the shared PlacementPlan/native Undo architecture. Preserve strict Template identity/fidelity, complete preflight, exact managed-expression association, add-only normal placement and settings atomic-write/digest protection.
+Validation is tiered; `docs/VALIDATION_STRATEGY.md` is authoritative.
 
-Heavy builds, native YMM4 proofs, release-DLL smoke and packaging run in the existing Windows Actions lane. Documentation-only commits must not download/build/launch YMM4. Source/XAML/test/workflow changes need actual native results before promotion.
+- ordinary Draft-PR product-source edits -> **Focused**;
+- changes under `tests/`, `fixtures/`, or the native workflow -> **Checkpoint** while the PR remains Draft;
+- marking a PR **Ready for review** -> **Release**;
+- push to `main` -> **Release**;
+- explicit `workflow_dispatch` -> requested Focused / Checkpoint / Release;
+- documentation-only PR changes -> no YMM4 native run.
 
-Keep all historical semantic regression gates and independent evidence-negative fixtures. A superseded UI entry may be tested through its approved replacement, but its underlying safety/behavior coverage must not be removed. Add new checkpoint evidence without claiming the entire round passed prematurely.
+Ready-for-review is therefore a promotion signal, not just a request for a larger Checkpoint run.
 
-The `.ymme` root remains `Ymm4TemplatePlacer/`. Record exact source, checkout tree, run/attempt, artifact and package/DLL/source hashes. Native PASS and human acceptance are different claims.
+Dedicated versioned native-validation branches are no longer part of the normal promotion route. Old validation branches may remain as historical refs, but they have no special Release semantics.
 
+## Quality gates
 
-## Tiered validation
+Preserve the current architecture and safety boundaries:
 
-Validation is tiered; see `docs/VALIDATION_STRATEGY.md`.
+- WPF/MVVM root ownership;
+- shared PlacementPlan / native Undo;
+- strict Template/source identity and fidelity;
+- complete preflight before mutation;
+- add-only normal placement;
+- exact managed-expression replacement/removal only;
+- protected Settings validation / atomic replace / digest conflict / cross-instance lock;
+- bounded current compatibility rather than reintroducing superseded runtime modes.
 
-Ordinary Draft-PR product edits use Focused native validation. Changes to tests/fixtures/workflow, PR Ready transitions and explicit checkpoint runs use the full semantic Checkpoint lane. Main pushes use Release, which adds exact distribution-DLL smoke and verified packaging.
+Historical tests are not permanent because of their age or Round label. They may remain as trace evidence, but Checkpoint/Release requirements should be current named invariants plus unique safety/host boundaries as defined by `docs/VALIDATION_STRATEGY.md`.
 
-Historical gates remain required at Checkpoint/Release. They are no longer required after every small Focused edit. This is an execution-cost change, not permission to delete safety coverage or weaken final promotion evidence.
+The `.ymme` install root remains:
+
+```text
+Ymm4TemplatePlacer/
+```
+
+Release evidence records exact source/checkout identity, native result, distribution DLL hash and package/provenance output. Native PASS and human hands-on acceptance are separate claims.

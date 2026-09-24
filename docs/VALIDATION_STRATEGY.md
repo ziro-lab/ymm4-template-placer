@@ -1,6 +1,6 @@
 # Validation strategy
 
-Effective after the Round 4 C checkpoint.
+Current policy after Baseline Simplification. Historical Round 4 measurements are retained below as rollout evidence.
 
 This changes when existing tests run. It does not delete historical tests or weaken final release acceptance.
 
@@ -32,7 +32,7 @@ A Focused PASS is development feedback, not release evidence.
 
 ## Checkpoint
 
-Use when a feature/checkpoint is complete, when tests/fixtures/workflow change, when a PR is marked Ready, or by explicit workflow dispatch.
+Use when a feature/checkpoint is complete, when tests/fixtures/workflow change, or by explicit Checkpoint workflow dispatch. A PR Ready transition is a Release promotion signal, not a Checkpoint signal.
 
 Checkpoint runs the complete historical semantic native ladder and current checkpoint evidence, including the independent negative-evidence guards.
 
@@ -40,7 +40,7 @@ It intentionally skips release-DLL smoke and final packaging.
 
 ## Release
 
-Use on push to main, push to the dedicated `work/v0.4-native-validation` release-candidate branch, or explicit Release workflow dispatch.
+Use when a PR is marked Ready for review, on push to `main`, or by explicit Release workflow dispatch.
 
 Release runs everything Checkpoint runs, then also:
 
@@ -56,8 +56,7 @@ This is authoritative promotion/release evidence.
 - Draft PR ordinary src change -> Focused.
 - PR change touching tests/, fixtures/ or the native workflow -> Checkpoint.
 - PR ready_for_review -> Release. Marking a Draft PR Ready is the explicit promotion gate for exact distribution-DLL smoke and verified packaging.
-- push to `work/v0.4-native-validation` -> Release candidate validation.
-- other non-main validation-branch push -> Checkpoint.
+- dedicated versioned native-validation branches have no special Release semantics; historical refs may remain, but normal promotion uses PR Ready + main.
 - main push -> Release.
 - workflow_dispatch -> explicit Focused / Checkpoint / Release choice.
 - documentation-only synchronize events still avoid YMM4 entirely.
@@ -76,13 +75,13 @@ Visual polish, superseded UI routes, provenance formatting and evidence-parser a
 
 ## Preset work
 
-The experimental preset feature starts from this tiered model:
+The preset/source work established the same tiering precedent used by current features:
 
 - ordinary implementation iterations use Focused;
-- completion of capability/placement checkpoints uses Checkpoint;
-- package/release proof waits until the whole candidate is ready.
+- feature/checkpoint completion uses Checkpoint;
+- package/release proof waits until the whole candidate is ready and the PR is promoted to Ready.
 
-This avoids turning the upcoming D/E acceptance set into a permanent 40+ check tax on every edit.
+The point is to keep ordinary feedback bounded without weakening final promotion evidence.
 
 
 ## Rollout measurement
