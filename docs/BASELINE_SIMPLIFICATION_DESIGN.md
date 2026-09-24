@@ -1,6 +1,6 @@
 # Baseline Simplification Design
 
-Status: **RELEASE CANDIDATE — P1-P4 COMPLETE / P5 PROMOTION ACTIVE**
+Status: **COMPLETE — MAIN RELEASE #708 GREEN**
 
 ## Goal
 
@@ -124,9 +124,9 @@ The current distribution has one normal product runtime path. `LegacyWorkspace` 
 
 The legacy-family audit intentionally did **not** turn into a filename purge. Selection/Palette/QuickDrop/ExpressionPreset pieces remain only where current reuse, secondary behavior, migration/association compatibility or historical proof still gives them a concrete responsibility.
 
-Validation consolidation replaces mandatory historical workspace-specific UX ladders with current named invariants. Checkpoint #691 at candidate `d227e4c0fcb502e5a3abc970527ce447d0926ae5` passed **1,198 Native assertions / 0 failures**, down from the 1,822-assertion accepted Phase 4 baseline (~34.2% reduction).
+Validation consolidation replaces mandatory historical workspace-specific UX ladders with current named invariants. Release candidate #707 at exact source `800b9bd261180f016ab3c1f26e67df1b55fd1eda` and main Release #708 at merge `af6a667e401a99311ef58293c750ac51b9145f54` both passed **1,198 Native assertions / 0 failures**, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. This is down from the 1,822-assertion accepted Phase 4 baseline (~34.2% reduction).
 
-Release promotion remains the final gate before Behavior Preview.
+Baseline Simplification is complete. Behavior Preview is the next product phase.
 
 ## Explicit non-goals
 

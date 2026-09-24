@@ -256,7 +256,9 @@ This does **not** authorize:
 
 ## Current post-v0.5 baseline
 
-The accepted product baseline is v0.5.0 plus completed Portable Settings, Placement Source unification and bounded Placement Rule completion. Placement Source unification was proven by Release #615. The current placement vocabulary was promoted at exact product/test/package source `5bfbccb5dd81071662ba756ec27591519ff98e19` by Release #629 (`35857198385`) with **1,787 Native assertions** and verified distribution/package gates.
+The accepted product baseline is v0.5.0 plus completed Portable Settings, Placement Source unification, bounded Placement Rule completion, Compact Settings friction cleanup and Baseline Simplification. Placement Source unification was proven by Release #615. The placement vocabulary was promoted at exact product/test/package source `5bfbccb5dd81071662ba756ec27591519ff98e19` by Release #629 (`35857198385`) with **1,787 Native assertions** and verified distribution/package gates. Baseline Simplification was promoted on main at merge `af6a667e401a99311ef58293c750ac51b9145f54`; main Release #708 (`35983059810`) passed **1,198 Native assertions / 0 failures**, exact distribution-DLL identity smoke and verified `.ymme` / source / provenance packaging.
+
+The normal product runtime is singular: the superseded `LegacyWorkspace` persisted/session switch is removed from distribution/runtime. Historical legacy-shaped members may remain only in proof builds or in code with a concrete current compatibility/reuse responsibility; they are not a second product mode.
 
 The baseline includes:
 
