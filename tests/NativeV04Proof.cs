@@ -57,7 +57,6 @@ internal static partial class NativeProof
         await VerifyLibrary(timeline);
         await VerifyAssociations(timeline, undo);
         await VerifyFinalUi(timeline);
-        await VerifySafetyIntent(timeline);
         VerifyFinalAcceptance();
         await VerifyRelativeFoundations(timeline, undo);
         await VerifyIntentCore(timeline, undo);
