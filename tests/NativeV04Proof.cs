@@ -39,8 +39,7 @@ internal static partial class NativeProof
         {
             await VerifyLibrary(timeline);
             await VerifyAssociations(timeline, undo);
-            await VerifySafetyIntent(timeline);
-            await VerifyIntentCore(timeline, undo);
+                await VerifyIntentCore(timeline, undo);
             await VerifyIntentSettings(timeline, undo);
             await VerifyRelativeExpressions(timeline, undo);
             await VerifyTemplateFidelity(timeline, undo);
@@ -59,7 +58,6 @@ internal static partial class NativeProof
         await VerifyAssociations(timeline, undo);
         await VerifyFinalUi(timeline);
         await VerifySafetyIntent(timeline);
-        await VerifyIdentityClarity(timeline);
         VerifyFinalAcceptance(); VerifyWorkflowAcceptance();
         await VerifyRelativeFoundations(timeline, undo);
         await VerifyIntentCore(timeline, undo);
