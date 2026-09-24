@@ -51,6 +51,20 @@ internal static partial class NativeProof
             Assert(draft.SentenceAnchors.Single(x => x.Value == IntentAnchor.PairBoundary).Available == false &&
                 draft.SentenceNeighbors.All(x => x.Value != IntentNeighbor.None),
                 "R2-C D2/D4 invalid single-target boundary and required-neighbor None choices are not selectable");
+            var anchorPresentation = draft.SentenceAnchors.ToDictionary(x => x.Value);
+            Assert(anchorPresentation[IntentAnchor.SelectionRangeStart].Name == "対象範囲の開始" &&
+                anchorPresentation[IntentAnchor.SelectionRangeEnd].Name == "対象範囲の終了" &&
+                anchorPresentation[IntentAnchor.PairBoundary].Name == "2件の間の区切り線" &&
+                anchorPresentation[IntentAnchor.SelectionRangeStart].StartsGroup &&
+                anchorPresentation[IntentAnchor.PairBoundary].StartsGroup &&
+                anchorPresentation[IntentAnchor.RelatedStart].StartsGroup,
+                "BEHAVIOR_PREVIEW UX anchor display language uses target-range/separator wording with bounded visual groups");
+            panel.AnchorBox.IsDropDownOpen = true; await Idle();
+            var rangeItem = panel.AnchorBox.Items.Cast<IntentSentenceOption<IntentAnchor>>().Single(x => x.Value == IntentAnchor.SelectionRangeStart);
+            var rangeContainer = (ComboBoxItem?)panel.AnchorBox.ItemContainerGenerator.ContainerFromItem(rangeItem);
+            Assert(rangeContainer != null && rangeContainer.BorderThickness.Top == 1 && rangeContainer.Margin.Top >= 5,
+                "BEHAVIOR_PREVIEW UX AnchorBox renders a visible category divider before target-range anchors");
+            panel.AnchorBox.IsDropDownOpen = false; await Idle();
 
             // Hands-on regression: changing placement position from the real ComboBoxes
             // must not re-enter WPF binding/Preview rendering or terminate the host.
@@ -105,6 +119,11 @@ internal static partial class NativeProof
                 targetedPreview.Blocks.Any(x => x.Kind == PreviewBlockKind.Placed) &&
                 Signature(timeline) == signature,
                 "BEHAVIOR_PREVIEW v2 compact Settings updates diagram from the live Draft without Timeline writes");
+            double Top(FrameworkElement element) => element.TranslatePoint(new Point(0, 0), panel).Y;
+            Assert(Top(panel.SetNameBox) < Top(panel.TargetEditor) &&
+                Top(panel.TargetEditor) < Top(panel.BehaviorPreviewCard) &&
+                Top(panel.BehaviorPreviewCard) < Top(panel.RelationEditor),
+                "BEHAVIOR_PREVIEW UX targeted Settings reads Set name -> target -> Preview -> placement controls");
             draft.FixedDuration = "not an integer"; draft.Duration = IntentDuration.TargetSpan;
             var hidden = session.Build().IntentPalettes.Single(x => x.Id == first.Id);
             Assert(hidden.Relation == (oldRelation with { Neighbor = draft.Neighbor }) && hidden.Intent == first.Intent && draft.FixedDuration == "not an integer",
