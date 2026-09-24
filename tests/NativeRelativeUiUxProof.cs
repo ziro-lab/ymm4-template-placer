@@ -93,7 +93,14 @@ internal static partial class NativeProof
             Assert(vm.IntentSets.Count == 0 && vm.IntentTiles.Count == 0 && vm.ShowIntentEmptyAction && surface.IntentEmptyActionButton.IsVisible &&
                 surface.IntentEmptyActionButton.Content?.ToString() == "新しく設定する" && vm.IntentNotice.Contains("まだありません", StringComparison.Ordinal),
                 "UIUX an unsupported selected Item gives an actionable empty state rather than an unrelated Library");
-            var emptySignature = Signature(timeline); await InvokeSelectionButton(surface.IntentEmptyActionButton); await Idle();
+            var emptySignature = Signature(timeline);
+            var settingsRequested = 0;
+            EventHandler settingsRequestedProbe = (_, _) => settingsRequested++;
+            vm.IntentSettingsRequested += settingsRequestedProbe;
+            Log($"UIUX empty-state before click: loaded={view.IsLoaded}; visible={view.IsVisible}; currentStaticView={ReferenceEquals(View, view)}; currentStaticVm={ReferenceEquals(ViewModel, vm)}; dataContext={ReferenceEquals(view.DataContext, vm)}; paletteSelected={view.PaletteTab.IsSelected}; settingsSelected={view.SelectionTab.IsSelected}; intentSettings={(vm.IntentSettings != null)}");
+            await InvokeSelectionButton(surface.IntentEmptyActionButton); await Idle();
+            vm.IntentSettingsRequested -= settingsRequestedProbe;
+            Log($"UIUX empty-state after click: eventCount={settingsRequested}; currentStaticView={ReferenceEquals(View, view)}; currentStaticVm={ReferenceEquals(ViewModel, vm)}; dataContext={ReferenceEquals(view.DataContext, vm)}; paletteSelected={view.PaletteTab.IsSelected}; settingsSelected={view.SelectionTab.IsSelected}; selectedIndex={view.MainTabs.SelectedIndex}; intentSettings={(vm.IntentSettings != null)}");
             Assert(view.SelectionTab.IsSelected,
                 "UIUX empty-state recovery selects the current Settings tab");
             Assert(ReferenceEquals(view.SelectionTab.Content, view.RelativeSettingsSurface),
