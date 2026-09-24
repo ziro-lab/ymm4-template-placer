@@ -3,7 +3,7 @@ using System.Windows.Data;
 
 namespace Ymm4TemplatePlacer;
 
-public sealed record IntentSentenceOption<T>(T Value, string Name, bool Available = true);
+public sealed record IntentSentenceOption<T>(T Value, string Name, bool Available = true, bool StartsGroup = false);
 public sealed class SettingsContextMatchConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) => values.Length == 2 && values[0] is IntentSettingsItemContext choice && values[1] is IntentSettingsItemContext active &&
@@ -24,10 +24,14 @@ public sealed partial class IntentPaletteDraft
     };
     public IReadOnlyList<IntentSentenceOption<IntentAnchor>> SentenceAnchors =>
     [
-        new(IntentAnchor.SelectedStart, "選択アイテムの開始", SingleTarget), new(IntentAnchor.SelectedEnd, "選択アイテムの終了", SingleTarget),
-        new(IntentAnchor.SelectedCenter, "選択アイテムの中央", SingleTarget), new(IntentAnchor.SelectionRangeStart, "選択範囲の開始"),
-        new(IntentAnchor.SelectionRangeEnd, "選択範囲の終了"), new(IntentAnchor.PairBoundary, "選択した2件の境界", MinimumCount == "2" && MaximumCount == "2"),
-        new(IntentAnchor.RelatedStart, "周囲アイテムの開始"), new(IntentAnchor.RelatedEnd, "周囲アイテムの終了")
+        new(IntentAnchor.SelectedStart, "選択アイテムの開始", SingleTarget),
+        new(IntentAnchor.SelectedCenter, "選択アイテムの中央", SingleTarget),
+        new(IntentAnchor.SelectedEnd, "選択アイテムの終了", SingleTarget),
+        new(IntentAnchor.SelectionRangeStart, "対象範囲の開始", StartsGroup: true),
+        new(IntentAnchor.SelectionRangeEnd, "対象範囲の終了"),
+        new(IntentAnchor.PairBoundary, "2件の間の区切り線", MinimumCount == "2" && MaximumCount == "2", StartsGroup: true),
+        new(IntentAnchor.RelatedStart, "周囲アイテムの開始", StartsGroup: true),
+        new(IntentAnchor.RelatedEnd, "周囲アイテムの終了")
     ];
     // None is never offered for a relation that requires a neighbor. Opening an editor does not normalize saved data.
     public IReadOnlyList<IntentOption<IntentNeighbor>> SentenceNeighbors { get; } =
