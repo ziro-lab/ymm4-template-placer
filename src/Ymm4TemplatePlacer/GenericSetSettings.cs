@@ -15,22 +15,20 @@ public sealed class GenericSetDraft : IntentEditable
     public Guid Id => original.Id;
     public string Name { get => name; set { if (name == value) return; name = value; Notify(); Raise(nameof(Label)); } }
     public string Label => Name;
-    public bool UseTemplateLayer { get => useTemplateLayer; set { if (useTemplateLayer == value) return; useTemplateLayer = value; Notify(); Raise(nameof(UseSavedRange)); Raise(nameof(Summary)); } }
+    public bool UseTemplateLayer { get => useTemplateLayer; set { if (useTemplateLayer == value) return; useTemplateLayer = value; Notify(); Raise(nameof(UseSavedRange)); RaiseDescription(); } }
     public bool UseSavedRange => !UseTemplateLayer;
     public IReadOnlyList<IntentOption<LayerSearchMode>> OccupiedBehaviors => GenericLayerTargetDraft.Behaviors;
     public LayerSearchMode? OccupiedBehavior
     {
         get => searchMode == LayerSearchMode.Legacy ? null : searchMode;
-        set { if (value == null || value == searchMode) return; searchMode = value.Value; Notify(); Raise(nameof(Summary)); }
+        set { if (value == null || value == searchMode) return; searchMode = value.Value; Notify(); RaiseDescription(); }
     }
-    public string Minimum { get => minimum; set { minimum = value; Notify(); Raise(nameof(Summary)); } }
-    public string Maximum { get => maximum; set { maximum = value; Notify(); Raise(nameof(Summary)); } }
-    public string Preferred { get => preferred; set { preferred = value; Notify(); Raise(nameof(Summary)); } }
-    public string Summary => UseTemplateLayer
-        ? "現在の再生位置から、テンプレートの長さ・レイヤーで配置します。選択アイテムには関連付けません。"
-        : searchMode == LayerSearchMode.Legacy
-            ? $"現在の再生位置から、テンプレートの長さで配置します。レイヤー{Minimum}〜{Maximum}の空きから{Preferred}を優先します。選択アイテムには関連付けません。"
-            : $"現在の再生位置から、テンプレートの長さでレイヤー{Preferred}へ配置します。塞がっていれば{(searchMode == LayerSearchMode.DoNotPlace ? "配置しません" : searchMode == LayerSearchMode.SearchUp ? "上（小さい番号）の空きを探します" : "下（大きい番号）の空きを探します")}。範囲は{Minimum}〜{Maximum}です。";
+    public string Minimum { get => minimum; set { minimum = value; Notify(); RaiseDescription(); } }
+    public string Maximum { get => maximum; set { maximum = value; Notify(); RaiseDescription(); } }
+    public string Preferred { get => preferred; set { preferred = value; Notify(); RaiseDescription(); } }
+    public GenericPlacementBehaviorDescription BehaviorDescription => PlacementBehaviorProjection.Describe(this);
+    public string Summary => BehaviorDescription.Summary;
+    private void RaiseDescription() { Raise(nameof(BehaviorDescription)); Raise(nameof(Summary)); }
     public ObservableCollection<IntentEntryDraft> Entries { get; } = [];
     public IntentEntryDraft? SelectedEntry { get => selectedEntry; set { if (selectedEntry == value) return; selectedEntry = value; Raise(); } }
     public GenericSetDraft(PaletteDefinition source, IReadOnlyList<LibraryEntry> library)

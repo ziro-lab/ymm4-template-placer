@@ -127,11 +127,14 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     }
     private void Change(IntentPalette value, [CallerMemberName] string name = "")
     {
+        // ComboBox ItemsSource/SelectedValue can feed the current enum value back
+        // while WPF is rebuilding the selector. Same-value feedback must be a no-op.
+        if (model == value) return;
         model = value; Notify(name); RaiseUiState();
     }
     private void RaiseUiState()
     {
-        Raise(nameof(Summary)); Raise(nameof(ShowTypeMatch)); Raise(nameof(ShowFixedDuration)); Raise(nameof(ShowNeighborSettings));
+        Raise(nameof(BehaviorDescription)); Raise(nameof(Summary)); Raise(nameof(ShowTypeMatch)); Raise(nameof(ShowFixedDuration)); Raise(nameof(ShowNeighborSettings));
         Raise(nameof(ShowNeighborEdge)); Raise(nameof(ShowNeighborFallback)); Raise(nameof(ShowMaximumGap)); Raise(nameof(ShowBoundaryTolerance));
         Raise(nameof(ShowAlignment)); Raise(nameof(ShowCharacterName)); Raise(nameof(CharacterRestrictionLabel));
         Raise(nameof(ShowRelativeLayerPlacement)); Raise(nameof(ShowAbsoluteLayerPlacement));
@@ -213,7 +216,8 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     public ObservableCollection<IntentTypeOption> TypeChoices { get; } = [];
     public ObservableCollection<IntentEntryDraft> Entries { get; } = [];
     public IntentEntryDraft? SelectedEntry { get => selectedEntry; set { if (selectedEntry == value) return; selectedEntry = value; Raise(); } }
-    public string Summary => BuildSummary();
+    public TargetedPlacementBehaviorDescription BehaviorDescription => PlacementBehaviorProjection.Describe(this);
+    public string Summary => BehaviorDescription.Summary;
 
     public IntentPaletteDraft(IntentPalette source, IReadOnlyList<LibraryEntry> library, IReadOnlyDictionary<string, string> types)
         : this(source, LegacySettings(library), types)
@@ -250,64 +254,6 @@ public sealed partial class IntentPaletteDraft : IntentEditable
         new() { Library = library.ToList() };
 
     private IntentNeighbor DefaultNeighbor() => CharacterRestricted ? IntentNeighbor.NextSameTypeAndCharacter : IntentNeighbor.NextSameType;
-    private string BuildSummary()
-    {
-        var selectedTypes = TypeChoices.Where(x => x.Selected).Select(x => x.Name).ToArray();
-        var target = selectedTypes.Length switch { 0 => "対象アイテム", 1 => selectedTypes[0], _ => string.Join("・", selectedTypes) };
-        if (CharacterRestricted && !string.IsNullOrWhiteSpace(CharacterName)) target = $"{CharacterName.Trim()}の{target}";
-        var anchor = Anchor switch
-        {
-            IntentAnchor.SelectedStart => "選択アイテムの開始",
-            IntentAnchor.SelectedEnd => "選択アイテムの終了",
-            IntentAnchor.SelectedCenter => "選択アイテムの中央",
-            IntentAnchor.SelectionRangeStart => "選択範囲の開始",
-            IntentAnchor.SelectionRangeEnd => "選択範囲の終了",
-            IntentAnchor.PairBoundary => "選択した2アイテムの境界",
-            IntentAnchor.RelatedStart => NeighborPhrase() + "の開始",
-            IntentAnchor.RelatedEnd => NeighborPhrase() + "の終了",
-            _ => "選択位置"
-        };
-        string Aligned(string length) => Alignment switch
-        {
-            IntentAlignment.StartAtAnchor => $"{anchor}から{length}で",
-            IntentAlignment.CenterAtAnchor => $"演出の中央を{anchor}に合わせて{length}で",
-            IntentAlignment.EndAtAnchor => $"{anchor}で終わるように{length}で",
-            _ => $"{anchor}から{length}で"
-        };
-        var timing = Duration switch
-        {
-            IntentDuration.Template => Aligned("テンプレートの長さ"),
-            IntentDuration.TargetSpan => Aligned("選択対象と同じ長さ"),
-            IntentDuration.Fixed => Aligned(ReadableFixedDuration()),
-            IntentDuration.UntilRelated => $"{anchor}から{NeighborPhrase()}の{(NeighborEdge == IntentNeighborEdge.Start ? "開始" : "終了")}まで",
-            _ => anchor
-        };
-        var direction = Direction == RelativeLayerDirection.Up ? "上" : "下";
-        var layer = LayerMode == LayerPlacementMode.Absolute
-            ? $"レイヤー{ReadableAbsoluteLayer()}を基準に配置します。塞がっていればさらに{direction}へ探します。"
-            : $"対象より{direction}の空いているレイヤーへ配置します。塞がっていればさらに{direction}へ探します。";
-        var fallback = ShowNeighborFallback ? Fallback switch
-        {
-            IntentFallback.CurrentTargetEnd => " 見つからなければ現在の対象の終了までにします。",
-            IntentFallback.TargetSpan => " 見つからなければ現在の対象と同じ範囲にします。",
-            IntentFallback.FixedDuration => $" 見つからなければ{ReadableFixedDuration()}で配置します。",
-            IntentFallback.DoNotPlace => " 見つからなければ配置しません。",
-            _ => ""
-        } : "";
-        return $"{target}を選んだとき、{timing}、{layer}{fallback}".Trim();
-    }
-    private string ReadableAbsoluteLayer() => int.TryParse(AbsoluteLayer, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n >= 0 ? n.ToString(CultureInfo.InvariantCulture) : "指定";
-    private string NeighborPhrase() => Neighbor switch
-    {
-        IntentNeighbor.NextSameType => "次の同じ種類のアイテム",
-        IntentNeighbor.PreviousSameType => "前の同じ種類のアイテム",
-        IntentNeighbor.NextSameCharacter => "次の同じキャラのアイテム",
-        IntentNeighbor.PreviousSameCharacter => "前の同じキャラのアイテム",
-        IntentNeighbor.NextSameTypeAndCharacter => "次の同じ種類・同じキャラのアイテム",
-        IntentNeighbor.PreviousSameTypeAndCharacter => "前の同じ種類・同じキャラのアイテム",
-        _ => "周囲のアイテム"
-    };
-    private string ReadableFixedDuration() => int.TryParse(FixedDuration, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n > 0 ? $"{n}フレーム" : "指定した長さ";
     public void AddEntry(IntentEntry entry, IReadOnlyList<LibraryEntry> library)
     {
         var draft = new IntentEntryDraft(entry, library);

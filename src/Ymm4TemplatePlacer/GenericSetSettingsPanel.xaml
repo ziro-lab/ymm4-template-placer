@@ -8,7 +8,7 @@
   <TextBlock Text="セット名"/>
   <TextBox x:Name="GenericSetNameBox" Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" Margin="0,3,0,8" Padding="5,3"/>
   <TextBlock Text="どう置く？" FontWeight="SemiBold"/>
-  <TextBlock x:Name="GenericSentenceText" Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,4,0,8"/>
+  <TextBlock x:Name="GenericSentenceText" Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,4,0,6"/>
   <CheckBox x:Name="TemplateLayerCheck" Content="テンプレートのレイヤーに置く" IsChecked="{Binding UseTemplateLayer,Mode=TwoWay}"/>
   <StackPanel Visibility="{Binding UseSavedRange,Converter={StaticResource VisibleWhen}}" Margin="0,5">
    <TextBlock Text="指定レイヤーが塞がっていたら"/>

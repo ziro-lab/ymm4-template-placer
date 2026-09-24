@@ -51,11 +51,83 @@ internal static partial class NativeProof
             Assert(draft.SentenceAnchors.Single(x => x.Value == IntentAnchor.PairBoundary).Available == false &&
                 draft.SentenceNeighbors.All(x => x.Value != IntentNeighbor.None),
                 "R2-C D2/D4 invalid single-target boundary and required-neighbor None choices are not selectable");
+            var anchorPresentation = draft.SentenceAnchors.ToDictionary(x => x.Value);
+            Assert(anchorPresentation[IntentAnchor.SelectionRangeStart].Name == "対象範囲の開始" &&
+                anchorPresentation[IntentAnchor.SelectionRangeEnd].Name == "対象範囲の終了" &&
+                anchorPresentation[IntentAnchor.PairBoundary].Name == "2件の間の区切り線" &&
+                anchorPresentation[IntentAnchor.SelectionRangeStart].StartsGroup &&
+                anchorPresentation[IntentAnchor.PairBoundary].StartsGroup &&
+                anchorPresentation[IntentAnchor.RelatedStart].StartsGroup,
+                "BEHAVIOR_PREVIEW UX anchor display language uses target-range/separator wording with bounded visual groups");
+            panel.AnchorBox.IsDropDownOpen = true; await Idle();
+            var rangeItem = panel.AnchorBox.Items.Cast<IntentSentenceOption<IntentAnchor>>().Single(x => x.Value == IntentAnchor.SelectionRangeStart);
+            var rangeContainer = (ComboBoxItem?)panel.AnchorBox.ItemContainerGenerator.ContainerFromItem(rangeItem);
+            Assert(rangeContainer != null && rangeContainer.BorderThickness.Top == 1 && rangeContainer.Margin.Top >= 5,
+                "BEHAVIOR_PREVIEW UX AnchorBox renders a visible category divider before target-range anchors");
+            panel.AnchorBox.IsDropDownOpen = false; await Idle();
+
+            // Hands-on regression: changing placement position from the real ComboBoxes
+            // must not re-enter WPF binding/Preview rendering or terminate the host.
+            var previewSignature = Signature(timeline);
+            var behaviorNotifications = 0;
+            draft.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(IntentPaletteDraft.BehaviorDescription)) behaviorNotifications++; };
+            var beforeSameValue = behaviorNotifications;
+            draft.Anchor = draft.Anchor;
+            draft.Direction = draft.Direction;
+            Assert(behaviorNotifications == beforeSameValue,
+                "BEHAVIOR_PREVIEW crash guard same-value ComboBox feedback is idempotent");
+
+            foreach (var anchor in new[] { IntentAnchor.SelectedStart, IntentAnchor.SelectedCenter, IntentAnchor.SelectedEnd })
+            {
+                panel.AnchorBox.IsDropDownOpen = true; await Idle();
+                panel.AnchorBox.SelectedValue = anchor;
+                panel.AnchorBox.IsDropDownOpen = false; await Idle();
+                Assert(draft.Anchor == anchor && panel.BehaviorPreview.Diagram is { HasDiagram: true } &&
+                    Signature(timeline) == previewSignature,
+                    $"BEHAVIOR_PREVIEW crash guard live AnchorBox change survives: {anchor}");
+            }
+            foreach (var alignment in Enum.GetValues<IntentAlignment>())
+            {
+                panel.AlignmentBox.IsDropDownOpen = true; await Idle();
+                panel.AlignmentBox.SelectedValue = alignment;
+                panel.AlignmentBox.IsDropDownOpen = false; await Idle();
+                Assert(draft.Alignment == alignment && panel.BehaviorPreview.Diagram is { HasDiagram: true } &&
+                    Signature(timeline) == previewSignature,
+                    $"BEHAVIOR_PREVIEW crash guard live AlignmentBox change survives: {alignment}");
+            }
+            foreach (var direction in Enum.GetValues<RelativeLayerDirection>())
+            {
+                panel.DirectionBox.IsDropDownOpen = true; await Idle();
+                panel.DirectionBox.SelectedValue = direction;
+                panel.DirectionBox.IsDropDownOpen = false; await Idle();
+                Assert(draft.Direction == direction && panel.BehaviorPreview.Diagram is { HasDiagram: true } &&
+                    Signature(timeline) == previewSignature,
+                    $"BEHAVIOR_PREVIEW crash guard live DirectionBox change survives: {direction}");
+            }
+            panel.AnchorBox.SelectedValue = IntentAnchor.SelectedStart;
+            panel.AlignmentBox.SelectedValue = IntentAlignment.StartAtAnchor;
+            panel.DirectionBox.SelectedValue = RelativeLayerDirection.Up;
+            await Idle();
+
             var oldRelation = first.Relation;
             panel.DurationBox.SelectedValue = IntentDuration.UntilRelated; await Idle();
             Assert(draft.Duration == IntentDuration.UntilRelated && draft.Neighbor != IntentNeighbor.None && draft.Alignment == IntentAlignment.StartAtAnchor &&
                 panel.RelationSummaryText.Text.Contains("まで", StringComparison.Ordinal) && Signature(timeline) == signature,
                 "R2-C D1/D3 sentence selector updates the existing finite fields and live summary, without Timeline mutation");
+            Assert(panel.BehaviorPreview.IsVisible &&
+                panel.BehaviorPreview.Diagram is { HasDiagram: true } targetedPreview &&
+                targetedPreview.Blocks.Any(x => x.Kind == PreviewBlockKind.Placed) &&
+                Signature(timeline) == signature,
+                "BEHAVIOR_PREVIEW v2 compact Settings updates diagram from the live Draft without Timeline writes");
+            double Top(FrameworkElement element) => element.TranslatePoint(new Point(0, 0), panel).Y;
+            Assert(Top(panel.SetNameBox) < Top(panel.TargetEditor) &&
+                Top(panel.TargetEditor) < Top(panel.BehaviorPreviewCard) &&
+                Top(panel.BehaviorPreviewCard) < Top(panel.RelationEditor),
+                "BEHAVIOR_PREVIEW UX targeted Settings reads Set name -> target -> Preview -> placement controls");
+            Assert(panel.SettingsScrollContent.Margin.Right == 8 &&
+                panel.EntryList.Margin.Right == 0 && panel.SourceList.Margin.Right == 0 &&
+                panel.EntryListActions.Margin.Right == 0 && panel.SourceListActions.Margin.Right == 0,
+                "BEHAVIOR_PREVIEW UX Settings uses one shared right gutter instead of mixed scrollbar spacing");
             draft.FixedDuration = "not an integer"; draft.Duration = IntentDuration.TargetSpan;
             var hidden = session.Build().IntentPalettes.Single(x => x.Id == first.Id);
             Assert(hidden.Relation == (oldRelation with { Neighbor = draft.Neighbor }) && hidden.Intent == first.Intent && draft.FixedDuration == "not an integer",
@@ -69,6 +141,8 @@ internal static partial class NativeProof
             Assert(session.IsGenericContext && session.SelectedPalette == null && session.SelectedGenericSet?.Id == style.Id &&
                 panel.GenericPalettePicker.IsVisible && !panel.PalettePicker.IsVisible && !session.HasChanges,
                 "R2-C C1/C9 native Generic target selects staged Style Sets on the same Settings surface without a write");
+            Assert(panel.GenericSettingsSurface.FindName("GenericBehaviorPreview") == null && Signature(timeline) == signature,
+                "BEHAVIOR_PREVIEW v2 Generic Settings does not force a redundant diagram");
             var generic = session.SelectedGenericSet!; generic.UseTemplateLayer = false; generic.Minimum = "4"; generic.Maximum = "12"; generic.Preferred = "8";
             var built = session.Build(); var genericModel = built.Palettes.Single(x => x.Id == style.Id);
             Assert(genericModel.Kind == PaletteKind.Style && genericModel.Layer == new LayerPolicy { UseTemplateLayer = false, Minimum = 4, Maximum = 12, Preferred = 8 } &&
