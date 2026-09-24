@@ -269,11 +269,17 @@ Current maintenance result:
 - validation volume is down from 1,822 at the accepted Phase 4 baseline by about **34.2%**;
 - Phase 4.5 is complete.
 
-### 5. Behavior preview + “what I want” checklist — NEXT
+### 5A. Behavior preview — ACTIVE
 
-Add a reusable Settings-assistance surface that can be opened from both Compact Settings and the later Full Settings Workspace.
+Add a reusable read-only Settings-assistance surface. Preview is implemented and accepted **before** the editing checklist so the visual/meaning vocabulary can stabilize first.
 
-This phase starts only after the source/placement responsibilities and near-term placement vocabulary are frozen enough that the preview is not expected to be immediately rewritten.
+Active authorities:
+
+- `BEHAVIOR_PREVIEW_DESIGN.md`;
+- `BEHAVIOR_PREVIEW_ACCEPTANCE.md`;
+- `BEHAVIOR_PREVIEW_WORKPLAN.md`.
+
+P0 first extracts one typed `PlacementBehaviorDescription` from the current staged Draft. The existing `このセットの動き` text and the visual Preview must consume that same projection.
 
 #### Behavior preview
 
@@ -296,7 +302,9 @@ The existing textual `このセットの動き` summary and the visual preview s
 
 Do not duplicate placement semantics inside the preview. Derive a bounded Preview Model from the authoritative source/placement Settings model.
 
-#### “What I want” checklist
+### 5B. “What I want” checklist — AFTER PREVIEW
+
+Start only after the read-only Preview vocabulary is accepted.
 
 Provide an alternate way to construct the same Settings by describing the intended outcome, for example:
 
