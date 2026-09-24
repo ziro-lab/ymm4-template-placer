@@ -58,7 +58,7 @@ internal static partial class NativeProof
         await VerifyAssociations(timeline, undo);
         await VerifyFinalUi(timeline);
         await VerifySafetyIntent(timeline);
-        VerifyFinalAcceptance(); VerifyWorkflowAcceptance();
+        VerifyFinalAcceptance();
         await VerifyRelativeFoundations(timeline, undo);
         await VerifyIntentCore(timeline, undo);
         await VerifyIntentSurface(timeline, undo);
@@ -89,7 +89,7 @@ internal static partial class NativeProof
         VerifyHandsOnRound4SettingsSession(timeline, undo);
         await VerifyHandsOnRound4Settings(timeline, undo);
         await VerifyFinalHandsOnPolish(timeline, undo);
-        VerifyTaskUxAcceptance();
+        VerifyTaskUxAcceptance(); VerifyWorkflowAcceptance();
         await VerifyExpressionPerformance(timeline, undo);
     }
 }
