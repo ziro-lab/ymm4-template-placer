@@ -96,14 +96,6 @@
     <StackPanel DataContext="{Binding IntentSettings.SelectedPalette}">
      <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
 
-     <Border Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Padding="9" Margin="0,2,0,8" CornerRadius="3">
-      <StackPanel>
-       <TextBlock Text="このセットの動き" FontWeight="SemiBold" Margin="0,0,0,3"/>
-       <local:PlacementBehaviorPreview x:Name="BehaviorPreview" DataContext="{Binding}" Margin="0,4,0,6"/>
-       <TextBlock x:Name="RelationSummaryText" Text="{Binding Summary}"/>
-      </StackPanel>
-     </Border>
-
      <TextBlock Text="セット名"/>
      <TextBox x:Name="SetNameBox" Text="{Binding Name,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
 
@@ -126,12 +118,32 @@
       </StackPanel>
      </StackPanel>
 
+     <Border x:Name="BehaviorPreviewCard" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Padding="9" Margin="0,4,0,6" CornerRadius="3">
+      <StackPanel>
+       <TextBlock Text="このセットの動き" FontWeight="SemiBold" Margin="0,0,0,3"/>
+       <local:PlacementBehaviorPreview x:Name="BehaviorPreview" DataContext="{Binding}" Margin="0,4,0,6"/>
+       <TextBlock x:Name="RelationSummaryText" Text="{Binding Summary}"/>
+      </StackPanel>
+     </Border>
+
      <StackPanel x:Name="RelationEditor" Margin="0,4">
       <TextBlock Text="どう置く？" Style="{StaticResource SettingsSectionHeader}"/>
       <StackPanel Margin="8,0,0,0">
        <WrapPanel>
        <ComboBox x:Name="AnchorBox" ItemsSource="{Binding SentenceAnchors}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Anchor,Mode=TwoWay}" MaxWidth="250">
-        <ComboBox.ItemContainerStyle><Style TargetType="ComboBoxItem"><Setter Property="IsEnabled" Value="{Binding Available}"/></Style></ComboBox.ItemContainerStyle>
+        <ComboBox.ItemContainerStyle>
+         <Style TargetType="ComboBoxItem">
+          <Setter Property="IsEnabled" Value="{Binding Available}"/>
+          <Style.Triggers>
+           <DataTrigger Binding="{Binding StartsGroup}" Value="True">
+            <Setter Property="Margin" Value="0,5,0,0"/>
+            <Setter Property="BorderThickness" Value="0,1,0,0"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"/>
+            <Setter Property="Padding" Value="4,5,4,3"/>
+           </DataTrigger>
+          </Style.Triggers>
+         </Style>
+        </ComboBox.ItemContainerStyle>
        </ComboBox>
 
        <StackPanel x:Name="AlignmentPanel">
