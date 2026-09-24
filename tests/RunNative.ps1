@@ -95,6 +95,7 @@ if (-not (Select-String -Path $log -Pattern '^PLACEMENT_RULE_P1=PASS$')) { throw
 if (-not (Select-String -Path $log -Pattern '^PLACEMENT_RULE_P2=PASS$')) { throw 'Placement Rule P2 proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^PLACEMENT_RULE_P3=PASS$')) { throw 'Placement Rule P3 proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^BEHAVIOR_PREVIEW_P0=PASS$')) { throw 'Behavior Preview P0 description projection proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^BEHAVIOR_PREVIEW_P1=PASS$')) { throw 'Behavior Preview P1 read-only schematic proof is incomplete' }
 
 $presetProofs=@(
  @{File='tachie-preset-capability.json'; Schema='YMM4-Template-Placer-Tachie-Preset-Capability/1'; Marker='TACHIE_PRESET_CAPABILITY_P3=PASS'},
