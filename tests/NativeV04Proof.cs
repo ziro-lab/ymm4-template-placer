@@ -56,7 +56,6 @@ internal static partial class NativeProof
             return;
         }
         await VerifyLibrary(timeline);
-        await VerifyExpressionPresets(timeline, undo);
         await VerifyAssociations(timeline, undo);
         await VerifySelectionProfiles(timeline, undo);
         await VerifySelectionRange(timeline, undo);

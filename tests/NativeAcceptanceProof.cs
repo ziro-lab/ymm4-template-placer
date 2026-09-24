@@ -10,7 +10,7 @@ internal static partial class NativeProof
         Assert(typeof(PlacerViewModel).Assembly.GetName().Version == new Version(0, 5, 0, 0), "W12 native plugin assembly is version 0.5.0.0");
         var lines = File.ReadAllLines(Path.Combine(output, "proof-log.txt"));
         var stages = Enumerable.Range(1, 9).Select(x => $"P{x}=PASS")
-            .Concat(new[] { "W3=PASS", "W7=PASS", "W8=PASS", "W9=PASS", "W10=PASS", "W11=PASS", "PLACEMENT_SOURCE_P3=PASS", "PLACEMENT_SOURCE_P7=PASS" })
+            .Concat(new[] { "W3=PASS", "W8=PASS", "W9=PASS", "W10=PASS", "W11=PASS", "PLACEMENT_SOURCE_P3=PASS", "PLACEMENT_SOURCE_P7=PASS" })
             .Append("W12_UI=PASS").ToArray();
         foreach (var required in stages) Assert(lines.Contains(required, StringComparer.Ordinal), "W12 integrated lane includes completed native stage " + required);
         var requirements = new (string Requirement, string Evidence)[]
@@ -25,14 +25,14 @@ internal static partial class NativeProof
             ("Generic occupied-layer policy uses explicit SearchUp/SearchDown rather than legacy Character Front/Back modes", "HANDS_ON_ROUND3_D"),
             ("Generic directional search inspects the whole proposed duration", "HANDS_ON_ROUND3_D"),
             ("Generic directional search is bounded, one-directional and never wraps to the opposite side", "HANDS_ON_ROUND3_D"),
-            ("Next Same Character/MaxGap never shorten for an overlapping next Voice", "W7; NativeExpressionPresetProof.cs"),
-            ("existing and planned occupancy determine Layers before commit", "P3/HANDS_ON_ROUND3_D/W7/W8; PlacementPlan.cs; native logs"),
+            ("current UntilRelated/Neighbor/MaxGap rules never shorten below the required target span and fail closed on missing neighbors", "current Intent/Placement Rule proofs"),
+            ("existing and planned occupancy determine Layers before commit", "P3/HANDS_ON_ROUND3_D/W8; PlacementPlan.cs; native logs"),
             ("associated expression placement gives Voice a weak serial", "W8; NativeAssociationProof.cs"),
             ("Resync resolves exactly one serial plus actual Character, otherwise skips", "W8; NativeResyncProof.cs"),
             ("Resync uses the currently saved expression preset", "W8; NativeResyncProof.cs"),
             ("successful subset of Resync is one native Undo operation", "W8; NativeResyncProof.cs"),
             ("normal placement never automatically deletes existing items", "P3/P8/HANDS_ON_ROUND3_D/W7-W11; native state assertions"),
-            ("invalid input, no Layer and broken references do not partially mutate", "P7/W3/W7-W11; native rejection assertions")
+            ("invalid input, no Layer and broken references do not partially mutate", "P7/W3/W8-W11/current Intent rejection assertions")
         };
         var checks = requirements.Select((x, i) => new { id = i + 1, requirement = x.Requirement, result = "PASS", evidence = x.Evidence }).ToArray();
         File.WriteAllText(Path.Combine(output, "v04-acceptance.json"), JsonSerializer.Serialize(new
