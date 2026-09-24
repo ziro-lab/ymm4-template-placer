@@ -26,7 +26,7 @@ The current product architecture retains the accepted v0.4.2 Hands-on/performanc
 - targeted Set layer placement with existing target-relative mode or explicit Absolute Layer, both using the shared bounded one-direction collision planner;
 - retained Template-mode performance and protected Settings guarantees.
 
-Compact Settings friction/discoverability is accepted at exact product/test/package source `05285a7bae1eb59b4b588c565aa46e29bdea795c` by Release #654 (`35897405826`), with **1,822 Native assertions PASS**, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Baseline simplification / compatibility cleanup is the active maintenance phase before Behavior Preview + checklist. Known later items include Full Settings UX, Composite/Fan-out placement, stronger Target/Neighbor grammar and measured built-in Tachie Preset loading optimization. Do not reopen completed Portable Settings, Placement Source, bounded Placement Rule or Compact Settings architecture while addressing those items.
+Compact Settings friction/discoverability is accepted at exact product/test/package source `05285a7bae1eb59b4b588c565aa46e29bdea795c` by Release #654 (`35897405826`), with **1,822 Native assertions PASS**, exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging. Baseline simplification / compatibility cleanup has completed P1-P4 and is in final Release/main promotion before Behavior Preview + checklist. Known later items include Full Settings UX, Composite/Fan-out placement, stronger Target/Neighbor grammar and measured built-in Tachie Preset loading optimization. Do not reopen completed Portable Settings, Placement Source, bounded Placement Rule or Compact Settings architecture while addressing those items.
 
 Read in this order:
 
@@ -36,24 +36,24 @@ Read in this order:
 4. `docs/BASELINE_SIMPLIFICATION_ACCEPTANCE.md`
 5. `docs/BASELINE_SIMPLIFICATION_WORKPLAN.md`
 6. `docs/COMPACT_SETTINGS_FRICTION_DESIGN.md` for the accepted compact-Settings friction baseline
-4. `docs/COMPACT_SETTINGS_FRICTION_ACCEPTANCE.md`
-5. `docs/COMPACT_SETTINGS_FRICTION_WORKPLAN.md`
-6. `docs/PLACEMENT_RULE_COMPLETION_DESIGN.md` for the accepted bounded placement-rule model
-7. `docs/PLACEMENT_RULE_COMPLETION_ACCEPTANCE.md`
-8. `docs/PLACEMENT_RULE_COMPLETION_WORKPLAN.md`
-9. `docs/PLACEMENT_SOURCE_UNIFICATION_DESIGN.md` for the accepted Source/Placement model
-10. `docs/PLACEMENT_SOURCE_UNIFICATION_ACCEPTANCE.md`
-11. `docs/PLACEMENT_SOURCE_UNIFICATION_WORKPLAN.md`
-12. `docs/GLOSSARY.md`
-13. `docs/VALIDATION_STRATEGY.md`
-14. `docs/TACHIE_PRESET_DESIGN.md`
-15. `docs/TACHIE_PRESET_ACCEPTANCE.md`
-16. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
-17. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
-18. `docs/FINAL_HANDS_ON_POLISH.md`
-19. `docs/BACKLOG.md` only for scope/detail
-20. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
-21. historical Round/W documents only when current authority points to them or when reconstructing rationale
+7. `docs/COMPACT_SETTINGS_FRICTION_ACCEPTANCE.md`
+8. `docs/COMPACT_SETTINGS_FRICTION_WORKPLAN.md`
+9. `docs/PLACEMENT_RULE_COMPLETION_DESIGN.md` for the accepted bounded placement-rule model
+10. `docs/PLACEMENT_RULE_COMPLETION_ACCEPTANCE.md`
+11. `docs/PLACEMENT_RULE_COMPLETION_WORKPLAN.md`
+12. `docs/PLACEMENT_SOURCE_UNIFICATION_DESIGN.md` for the accepted Source/Placement model
+13. `docs/PLACEMENT_SOURCE_UNIFICATION_ACCEPTANCE.md`
+14. `docs/PLACEMENT_SOURCE_UNIFICATION_WORKPLAN.md`
+15. `docs/GLOSSARY.md`
+16. `docs/VALIDATION_STRATEGY.md`
+17. `docs/TACHIE_PRESET_DESIGN.md`
+18. `docs/TACHIE_PRESET_ACCEPTANCE.md`
+19. `docs/EXPRESSION_PERFORMANCE_DESIGN.md`
+20. `docs/EXPRESSION_PERFORMANCE_ACCEPTANCE.md`
+21. `docs/FINAL_HANDS_ON_POLISH.md`
+22. `docs/BACKLOG.md` only for scope/detail
+23. `docs/LEGACY_COMPATIBILITY_MAP.md` before deleting/refactoring old-looking code
+24. historical Round/W documents only when current authority points to them or when reconstructing rationale
 
 Do not reimplement completed v0.5.0, Portable Settings, Placement Source or bounded Placement Rule work. Preserve the Settings transaction model, PlacementPlan/native Undo architecture, exact managed-expression safety, lazy expression-performance boundary, source-specific materialization / Set-owned geometry split, start/center/end alignment, target-relative/absolute layer modes and validation tiers.
 
