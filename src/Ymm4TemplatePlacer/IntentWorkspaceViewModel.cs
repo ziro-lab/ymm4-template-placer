@@ -50,6 +50,9 @@ public sealed partial class PlacerViewModel
                 x => ExecuteIntentTileFromCommand((IntentTileChoice)x!));
             OpenIntentSettingsCommand = new ActionCommand(_ => true, _ => IntentSettingsRequested?.Invoke(this, EventArgs.Empty));
             ImportNewExpressionsCommand = new ActionCommand(_ => settingsAvailable, _ => Guard(ImportNewIntentExpressions));
+            OnPropertyChanged(nameof(ExecuteIntentTileCommand));
+            OnPropertyChanged(nameof(OpenIntentSettingsCommand));
+            OnPropertyChanged(nameof(ImportNewExpressionsCommand));
         }
         if (!ReferenceEquals(intentTimeline, timeline))
         {

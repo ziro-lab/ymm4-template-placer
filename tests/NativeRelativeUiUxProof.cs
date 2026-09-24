@@ -94,14 +94,10 @@ internal static partial class NativeProof
                 surface.IntentEmptyActionButton.Content?.ToString() == "新しく設定する" && vm.IntentNotice.Contains("まだありません", StringComparison.Ordinal),
                 "UIUX an unsupported selected Item gives an actionable empty state rather than an unrelated Library");
             var emptySignature = Signature(timeline);
-            var settingsRequested = 0;
-            EventHandler settingsRequestedProbe = (_, _) => settingsRequested++;
-            vm.IntentSettingsRequested += settingsRequestedProbe;
-            var emptyCommand = surface.IntentEmptyActionButton.Command;
-            Log($"UIUX empty-state before click: loaded={view.IsLoaded}; visible={view.IsVisible}; currentStaticView={ReferenceEquals(View, view)}; currentStaticVm={ReferenceEquals(ViewModel, vm)}; dataContext={ReferenceEquals(view.DataContext, vm)}; paletteSelected={view.PaletteTab.IsSelected}; settingsSelected={view.SelectionTab.IsSelected}; intentSettings={(vm.IntentSettings != null)}; commandNull={(emptyCommand == null)}; commandSame={ReferenceEquals(emptyCommand, vm.OpenIntentSettingsCommand)}; commandCanExecute={(emptyCommand?.CanExecute(surface.IntentEmptyActionButton.CommandParameter) ?? false)}");
+            Assert(ReferenceEquals(surface.IntentEmptyActionButton.Command, vm.OpenIntentSettingsCommand) &&
+                surface.IntentEmptyActionButton.Command?.CanExecute(surface.IntentEmptyActionButton.CommandParameter) == true,
+                "UIUX current empty-state action is bound to the live Settings navigation command");
             await InvokeSelectionButton(surface.IntentEmptyActionButton); await Idle();
-            vm.IntentSettingsRequested -= settingsRequestedProbe;
-            Log($"UIUX empty-state after click: eventCount={settingsRequested}; currentStaticView={ReferenceEquals(View, view)}; currentStaticVm={ReferenceEquals(ViewModel, vm)}; dataContext={ReferenceEquals(view.DataContext, vm)}; paletteSelected={view.PaletteTab.IsSelected}; settingsSelected={view.SelectionTab.IsSelected}; selectedIndex={view.MainTabs.SelectedIndex}; intentSettings={(vm.IntentSettings != null)}");
             Assert(view.SelectionTab.IsSelected,
                 "UIUX empty-state recovery selects the current Settings tab");
             Assert(ReferenceEquals(view.SelectionTab.Content, view.RelativeSettingsSurface),
