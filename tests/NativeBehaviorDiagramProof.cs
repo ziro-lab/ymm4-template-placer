@@ -44,9 +44,11 @@ internal static partial class NativeProof
         var pair = Draft(new() { Anchor = IntentAnchor.PairBoundary, Duration = IntentDuration.Fixed }, multi).BehaviorDiagram;
         var range = Draft(new() { Anchor = IntentAnchor.SelectionRangeStart }, multi).BehaviorDiagram;
         Assert(pair.Blocks.Count(x => x.Kind == PreviewBlockKind.Target) == 2 && Placed(pair).Start == Target(pair).End &&
+            pair.AnchorHint == "区切り線" && pair.Notice.Contains("2件の間の区切り線", StringComparison.Ordinal) &&
             Placed(range).Start == range.Blocks.Where(x => x.Kind == PreviewBlockKind.Target).Min(x => x.Start) &&
-            Placed(range).End == range.Blocks.Where(x => x.Kind == PreviewBlockKind.Target).Max(x => x.End),
-            "BEHAVIOR_PREVIEW v2 pair boundary and whole selection range remain distinct");
+            Placed(range).End == range.Blocks.Where(x => x.Kind == PreviewBlockKind.Target).Max(x => x.End) &&
+            range.Caption == "対象範囲と同じ長さ",
+            "BEHAVIOR_PREVIEW v2 pair boundary is presented as a separator and target-range wording stays user-facing");
         var incomplete = Draft(new() { Duration = IntentDuration.Fixed }); incomplete.FixedDuration = "-";
         Assert(!incomplete.BehaviorDiagram.HasDiagram && incomplete.FixedDuration == "-",
             "BEHAVIOR_PREVIEW v2 incomplete active length suppresses made-up geometry and retains Draft text");
@@ -124,6 +126,9 @@ internal static partial class NativeProof
                     Canvas.GetTop(x) == (b.Row == 0 ? 23 : 68) &&
                     Canvas.GetLeft(x) >= 0 && Canvas.GetLeft(x) + x.Width <= preview.DiagramCanvas.ActualWidth + .1) && !preview.IsHitTestVisible,
                     $"BEHAVIOR_PREVIEW v2 {name}/{width}: actual WPF start/end and row positions preserve the model without clipping or interaction");
+                if (name == "pair")
+                    Assert(preview.DiagramCanvas.Children.OfType<TextBlock>().Any(x => x.Text == "区切り線"),
+                        $"BEHAVIOR_PREVIEW v2 pair/{width}: native WPF visibly labels the pair separator");
                 var image = new RenderTargetBitmap((int)Math.Ceiling(border.ActualWidth), (int)Math.Ceiling(border.ActualHeight), 96, 96, PixelFormats.Pbgra32);
                 image.Render(border); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image));
                 using var file = File.Create(Path.Combine(output, $"behavior-preview-v2-{name}-{width}.png")); encoder.Save(file);
