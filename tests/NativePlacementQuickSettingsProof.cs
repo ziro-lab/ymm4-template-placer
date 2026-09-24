@@ -101,7 +101,7 @@ internal static partial class NativeProof
                 "PLACEMENT_QUICK_SETTINGS P1 successful protected commit admits the next placement");
             vm.ExecuteIntentTileCommand.Execute(tile);
             await Idle();
-            var placed = timeline.Items.Except([voice]).Single();
+            var placed = timeline.Items.Except(new IItem[] { voice }).Single();
             Assert(placed.Frame == 118 && placed.Length == 5 && placed.Layer == 19,
                 "PLACEMENT_QUICK_SETTINGS P1 next placement consumes the committed center/template/up-one relation including retained offsets");
             await undo.UndoAsync();
