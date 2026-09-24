@@ -26,7 +26,7 @@ internal static partial class NativeProof
         var palette = new PaletteDefinition(Guid.NewGuid(), PaletteKind.Style, "古いパレット", null, [source.Id])
             { Layer = new() { UseTemplateLayer = false, Preferred = 9, Minimum = 2, Maximum = 80 } };
         var fixture = PlacerSettingsStore.Copy(scope.Original); fixture.Library = [source]; fixture.Palettes = [palette]; fixture.IntentPalettes = [set, multi];
-        fixture.ExpressionBootstrapComplete = true; fixture.LegacyWorkspace = true;
+        fixture.ExpressionBootstrapComplete = true;
         fixture.ManualStylePaletteId = palette.Id; fixture.ManualCharacterPaletteId = null;
         scope.Apply(fixture, [voice], [voice]); vm.BeginIntentSettings(); view.SelectionTab.IsSelected = true; await Idle();
         var buttons = RelativeVisuals(surface.SettingsTargetButtons).OfType<Button>().ToArray();
@@ -53,16 +53,18 @@ internal static partial class NativeProof
         Assert(JsonSerializer.Serialize(legacyRoundtrip.Target) == JsonSerializer.Serialize(multi.Target) && singleOwnerCopy.Target.TypeMatch == IntentTypeMatch.UniformType &&
             singleOwnerCopy.Target.ItemTypeKeys.SequenceEqual(new[] { IntentSelectionContext.TypeKey(typeof(TextItem)) }),
             "R3-C existing multi-type Set can be snapshot-copied into one Item owner without rewriting the legacy source");
-        var legacyCommands = new[] { vm.OpenLegacyWorkspaceCommand, vm.CloseLegacyWorkspaceCommand };
-        Round3Assert(!RelativeVisuals(view).OfType<Button>().Any(x => legacyCommands.Contains(x.Command)) &&
+        Round3Assert(!RelativeVisuals(view).OfType<Button>().Any(x =>
+                x.Content?.ToString() is "互換ワークスペース" or "旧ワークスペース" or "相対パレットへ戻る") &&
             !RelativeVisuals(surface).OfType<Expander>().Any(x => x.Header?.ToString()?.Contains("互換", StringComparison.Ordinal) == true),
-            "C4", "normal Settings has no compatibility workspace entry or toggle command");
+            "C4", "normal Settings has no compatibility workspace entry or toggle affordance");
         view.PaletteTab.IsSelected = true; await Idle();
         Round3Assert(ReferenceEquals(view.PaletteTab.Content, view.RelativePaletteSurface) &&
-            !RelativeVisuals(view).OfType<Button>().Any(x => x.Content?.ToString() == "相対パレットへ戻る" || legacyCommands.Contains(x.Command)),
+            !RelativeVisuals(view).OfType<Button>().Any(x => x.Content?.ToString() == "相対パレットへ戻る"),
             "C5", "normal placement has no legacy return/mode affordance");
         var path = Path.Combine(output, "round3-legacy-settings.json");
-        File.WriteAllText(path, JsonSerializer.Serialize(fixture)); var bytes = File.ReadAllBytes(path);
+        var historicalNode = JsonSerializer.SerializeToNode(fixture)!.AsObject();
+        historicalNode["LegacyWorkspace"] = true;
+        File.WriteAllText(path, historicalNode.ToJsonString()); var bytes = File.ReadAllBytes(path);
         var store = new PlacerSettingsStore(path); var loaded = store.Load();
         var sameData = JsonSerializer.Serialize(loaded) == JsonSerializer.Serialize(fixture);
         store.Save(loaded); var saved = new PlacerSettingsStore(path).Load();
@@ -76,10 +78,12 @@ internal static partial class NativeProof
         {
             fresh = new PlacerViewModel();
             typeof(PlacerViewModel).GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(fresh, loaded);
-            fresh.ActivateIntentWorkspace(); startsCurrent = !fresh.UseLegacyWorkspace && loaded.LegacyWorkspace;
+            fresh.ActivateIntentWorkspace();
+            startsCurrent = fresh.UsesRelativeExpressions &&
+                !JsonSerializer.Serialize(loaded).Contains("LegacyWorkspace", StringComparison.Ordinal);
         }
         finally { fresh?.Dispose(); ViewModel = vm; }
-        Round3Assert(startsCurrent, "C7", "a fresh root starts in current workspace even while the loaded LegacyWorkspace flag remains true");
+        Round3Assert(startsCurrent, "C7", "a historical LegacyWorkspace JSON field is ignored and cannot revive a second runtime workspace");
         var untouched = Path.Combine(output, "round3-legacy-readonly.json"); File.WriteAllBytes(untouched, bytes);
         _ = new PlacerSettingsStore(untouched).Load();
         Round3Assert(File.ReadAllBytes(untouched).SequenceEqual(bytes) && Signature(timeline) == currentSignature &&
