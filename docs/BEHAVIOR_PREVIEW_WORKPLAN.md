@@ -1,6 +1,6 @@
 # Behavior Preview Workplan
 
-Status: **P0 COMPLETE — P1 v2 RELEASE GREEN — P2 OWNER HANDS-ON PENDING**
+Status: **COMPLETE — P0/P1 RELEASE GREEN / P2 OWNER HANDS-ON ACCEPTED**
 
 This workplan records current implementation state. The DESIGN and ACCEPTANCE v2 documents define the required UX, not a claim that the owner has accepted it.
 
@@ -31,45 +31,46 @@ Production Preview has no Timeline/source/occupancy dependency and performs no m
 
 Initial v2 source `3d087ec00a69104ecc62311e127477377cc71a33` passed Checkpoint #728 (`36004405144`): **1,237 Native assertions PASS / 0 FAIL**.
 
-Final code/package source `878ab0e3decf0f5ab9cecdb8467f9f2e4e71cd02` passed Release #730 (`36006445462`, attempt 1):
+Release #730 established the first full v2 package baseline. Subsequent owner-driven compactness and clarity corrections were completed on exact tested source `6ed136abcb9b6a3346e32d1b0661c5aed98d69b3`.
 
-- **1,239 Native assertions PASS / 0 FAIL**;
+Final Release #747 is GREEN:
+
+- **1,254 Native assertions PASS / 0 FAIL**;
 - `BEHAVIOR_PREVIEW_P0=PASS`, `BEHAVIOR_PREVIEW_V2=PASS`, current `BEHAVIOR_PREVIEW_P1=PASS`;
-- 32 differential comparisons with the existing pure resolver, using isolated synthetic host fixtures;
-- 22 native WPF captures: 11 cases at 260/360 DIP, including a one-frame bar;
-- actual rendered bar x/width/row geometry checked against the diagram model;
-- current compact Settings integration and absence of Generic diagram;
-- rendering zero-write checks;
-- exact distribution-DLL identity smoke and verified `.ymme` / source / provenance packaging.
+- PairBoundary separator is conveyed by the guide line without duplicate separator text;
+- Settings owns one shared 8 DIP right gutter while retaining the wider left outer-scroll escape;
+- live Anchor / Alignment / Direction ComboBox changes retain the Preview crash guard;
+- rendering remains zero-write;
+- exact distribution-DLL smoke and verified `.ymme` / source / provenance packaging are GREEN.
 
-Artifact: `10810538400`, `native-yymm4-release`.
+Artifact: `10817701121`, `native-yymm4-release`.
 
-Artifact SHA256: `5bb92732e01cd1568f30c3b71d28c422008c8a87df2fcde2edfa414a2d828029`.
+Artifact SHA256: `d6406350f3c66eda36b181c131421ec5cb3d08145a38bf3a6cdbeed21bea3d66`.
 
-`.ymme` SHA256: `d667276734149682f290ae51cc368139898a3890d651febc9682a9c7d4c10eac`.
+`.ymme` SHA256: `8b3429f7d9059ba9e9322a26c9e7c93eeaf365df770b1430b6e5e9cb534ad4c1`.
 
-Distribution DLL SHA256: `06decfe40c4fb40d8f97ae6d5278a06516b06bf2b494124bcf5d566a06d43ab1`.
+Distribution DLL SHA256: `1888e12534f319bbd30387170e47f653a0280693790f865c21772fe70a455b55`.
 
-The final package was extracted unchanged from the Release artifact. Its embedded provenance/source identity and DLL digest were cross-checked. Native screenshot review covered alignment, neighbor edges, Up/Down and narrow rendering; final marker clearance, Absolute Layer caption and one-frame label were also inspected.
+Docs-only acceptance/roadmap updates after `6ed136ab...` do not constitute a newer tested product build.
 
-Docs-only evidence updates after that source do not constitute a newer tested product build.
+## P2 — owner hands-on — ACCEPTED
 
-## P2 — owner hands-on — PENDING
+Owner hands-on accepted the final v2 Preview after the #747 corrections. The Preview phase may be promoted; automated PASS is no longer standing in for owner acceptance.
 
-PR #36 remains open/Draft. Main is unchanged. Do not merge or claim first-time-user comprehension from automated PASS alone.
+Acceptance is specifically for the current owner workflow and v2 visual vocabulary. It is not a universal first-time-user comprehension claim.
 
-Hands-on questions:
+## P3 — product handoff — COMPLETE
 
-- Are placement start, end and vertical relation recognizable without reading the Summary?
-- Are “対象と同じ長さ”, “周辺の開始まで” and “周辺の終了まで” immediately distinguishable?
-- Does compact Settings retain enough working space at the owner's normal Tool size?
-- Are any remaining hints redundant?
+Behavior Preview closes here as a read-only Settings aid.
 
-The delivered `.ymme` is the Release #730 candidate, not the superseded card Preview.
+The next product work is intentionally reprioritized:
 
-## P3 — checklist handoff — AFTER PREVIEW ACCEPTANCE
+1. prove and expose compact **YMM4-native Undo / Redo** in the existing top context strip;
+2. investigate **placement quick settings** that edit the same current Settings Draft while the accepted Preview provides immediate feedback;
+3. re-evaluate the “what I want” checklist only if Preview + direct Settings + quick settings still leave a concrete comprehension/input problem;
+4. keep Full Settings Workspace deferred until real Set/tile scale creates a navigation/management problem.
 
-Use the same Settings Draft and accepted visual vocabulary. A future temporary checklist Draft applies explicitly; Cancel is zero-change. Full Settings Workspace, Undo/Redo UI, composite placement and Item Actions are not part of this implementation.
+No custom Undo stack, alternate Settings schema, second placement engine or Preview direct-manipulation path is introduced by this handoff.
 
 ## Historical v1
 
