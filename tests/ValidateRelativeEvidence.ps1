@@ -5,7 +5,8 @@ Set-StrictMode -Version Latest
 # Independent consumer contract: never trust a producer's PASS or its own stage list alone.
 $required=@('R1=PASS','R2=PASS','R3=PASS','R4=PASS','R5=PASS','R6=PASS','R7=PASS','R8=PASS',
  'R9_CORE=PASS','R9_UI=PASS','R10=PASS','R11=PASS','R12=PASS','R13=PASS','TEMPLATE_FIDELITY=PASS','RELATIVE_UIUX=PASS','R14_NATIVE=PASS',
- 'V04=PASS','UX_ACCEPTANCE=PASS','UX_WORKFLOW_ACCEPTANCE=PASS')
+ 'V04=PASS')
+$aggregateRequired=@('UX_ACCEPTANCE=PASS','UX_WORKFLOW_ACCEPTANCE=PASS')
 $handsOnIds=@(1..9 | ForEach-Object { "A$_" }) + @(1..11 | ForEach-Object { "B$_" }) +
  @(1..12 | ForEach-Object { "C$_" }) + @(1..3 | ForEach-Object { "D$_" }) + @(1..8 | ForEach-Object { "E$_" })
 $round2Ids=@(1..12 | ForEach-Object { "A$_" }) + @(1..10 | ForEach-Object { "B$_" }) +
@@ -14,7 +15,7 @@ $round2Ids=@(1..12 | ForEach-Object { "A$_" }) + @(1..10 | ForEach-Object { "B$_
 
 function Assert-RelativeEvidence {
  param([string[]]$Lines, $Manifest, $UiuxManifest, $HandsOnManifest, $Round2Manifest)
- foreach ($marker in ($required + @('V042_ACCEPTANCE=PASS','HANDS_ON_UX_POLISH=PASS',
+ foreach ($marker in ($required + $aggregateRequired + @('V042_ACCEPTANCE=PASS','HANDS_ON_UX_POLISH=PASS',
   'HANDS_ON_ROUND2_A=PASS','HANDS_ON_ROUND2_B=PASS','HANDS_ON_ROUND2_C=PASS','HANDS_ON_ROUND2_D=PASS','HANDS_ON_ROUND2_E=PASS','HANDS_ON_ROUND2=PASS'))) {
   if (@($Lines | Where-Object { $_ -ceq $marker }).Count -ne 1) { throw "Missing or duplicate native stage: $marker" }
  }
