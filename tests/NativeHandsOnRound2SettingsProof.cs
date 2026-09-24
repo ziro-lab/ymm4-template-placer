@@ -124,6 +124,10 @@ internal static partial class NativeProof
                 Top(panel.TargetEditor) < Top(panel.BehaviorPreviewCard) &&
                 Top(panel.BehaviorPreviewCard) < Top(panel.RelationEditor),
                 "BEHAVIOR_PREVIEW UX targeted Settings reads Set name -> target -> Preview -> placement controls");
+            Assert(panel.SettingsScrollContent.Margin.Right == 8 &&
+                panel.EntryList.Margin.Right == 0 && panel.SourceList.Margin.Right == 0 &&
+                panel.EntryListActions.Margin.Right == 0 && panel.SourceListActions.Margin.Right == 0,
+                "BEHAVIOR_PREVIEW UX Settings uses one shared right gutter instead of mixed scrollbar spacing");
             draft.FixedDuration = "not an integer"; draft.Duration = IntentDuration.TargetSpan;
             var hidden = session.Build().IntentPalettes.Single(x => x.Id == first.Id);
             Assert(hidden.Relation == (oldRelation with { Neighbor = draft.Neighbor }) && hidden.Intent == first.Intent && draft.FixedDuration == "not an integer",
