@@ -100,6 +100,10 @@ if (-not (Select-String -Path $log -Pattern '^NATIVE_UNDO_REDO_P0=PASS$')) { thr
 if (-not (Select-String -Path $log -Pattern '^PLACEMENT_QUICK_SETTINGS_P0=PASS$')) { throw 'Placement Quick Settings P0 shared-draft proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^PLACEMENT_QUICK_SETTINGS_P1=PASS$')) { throw 'Placement Quick Settings P1 finite-action proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^PLACEMENT_QUICK_SETTINGS_P2=PASS$')) { throw 'Placement Quick Settings P2 commit-order proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^NEIGHBOR_AMBIGUITY_P0=PASS$')) { throw 'Neighbor ambiguity P0 result resolver proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^NEIGHBOR_AMBIGUITY_P1=PASS$')) { throw 'Neighbor ambiguity P1 confirmation proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^NEIGHBOR_AMBIGUITY_P2=PASS$')) { throw 'Neighbor ambiguity P2 atomic fan-out proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^NEIGHBOR_AMBIGUITY_P3=PASS$')) { throw 'Neighbor ambiguity P3 source parity proof is incomplete' }
 
 $presetProofs=@(
  @{File='tachie-preset-capability.json'; Schema='YMM4-Template-Placer-Tachie-Preset-Capability/1'; Marker='TACHIE_PRESET_CAPABILITY_P3=PASS'},
