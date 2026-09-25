@@ -19,6 +19,7 @@ public sealed partial class PlacerViewModel
         var previous = activeTask;
         if (changed)
         {
+            InvalidateAsyncOperationLifetime();
             if (previous == "intent-settings") FinishSettingsSession();
             if (previous == "expression" && task != "expression") LeaveExpressionTask();
             if (task != "expression") { CancelExpressionNavigation(); CloseExpressionTrialSession(); }
