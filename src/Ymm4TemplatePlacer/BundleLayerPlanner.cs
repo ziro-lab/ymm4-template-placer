@@ -15,6 +15,8 @@ public sealed record RelativeLayerPolicy
     public int AbsoluteLayer { get; init; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool UseSourceLayer { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool SpecifiedLayerInitialized { get; init; }
     public int Minimum { get; init; }
     public int Maximum { get; init; } = 99;
     public void Validate()
