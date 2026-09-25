@@ -9,8 +9,6 @@ public enum PlacementQuickAction
     AlignEnd,
     DurationTargetSpan,
     DurationTemplate,
-    LayerRelative,
-    LayerSpecified,
     LayerUpOne,
     LayerDownOne,
     LayerSearchUp,
@@ -156,12 +154,6 @@ public sealed partial class PlacerViewModel
                 break;
             case PlacementQuickAction.DurationTemplate:
                 if (draft.Duration != IntentDuration.Template) draft.Duration = IntentDuration.Template;
-                break;
-            case PlacementQuickAction.LayerRelative:
-                if (draft.LayerMode != LayerPlacementMode.RelativeToTarget) draft.LayerMode = LayerPlacementMode.RelativeToTarget;
-                break;
-            case PlacementQuickAction.LayerSpecified:
-                if (draft.LayerMode != LayerPlacementMode.Absolute) draft.LayerMode = LayerPlacementMode.Absolute;
                 break;
             case PlacementQuickAction.LayerUpOne:
                 if (draft.LayerMode != LayerPlacementMode.RelativeToTarget) draft.LayerMode = LayerPlacementMode.RelativeToTarget;
