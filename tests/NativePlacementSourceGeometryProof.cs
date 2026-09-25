@@ -19,6 +19,7 @@ internal static partial class NativeProof
             PlacementSourceKind.TachiePreset,
             [new TextItem { Frame = 0, Length = 10, Layer = 0 }],
             10,
+            0,
             null,
             new string('a', 64),
             () => guardCalls++);
@@ -53,6 +54,7 @@ internal static partial class NativeProof
                 new TextItem { Frame = 5, Length = 20, Layer = 1 }
             ],
             25,
+            12,
             null,
             new string('b', 64),
             () => { });
@@ -77,7 +79,7 @@ internal static partial class NativeProof
 
         var legacyPolicy = JsonSerializer.Deserialize<RelativeLayerPolicy>("{}")!;
         Assert(legacyPolicy.Mode == LayerPlacementMode.RelativeToTarget &&
-            legacyPolicy.Offset == 1 && legacyPolicy.AbsoluteLayer == 0 &&
+            legacyPolicy.Offset == 1 && legacyPolicy.AbsoluteLayer == 0 && !legacyPolicy.UseSourceLayer &&
             legacyPolicy.Minimum == 0 && legacyPolicy.Maximum == 99,
             "PLACEMENT_RULE P2 old layer JSON defaults to the exact existing relative placement semantics");
         var defaultPolicyJson = JsonSerializer.Serialize(new RelativeLayerPolicy());
@@ -104,6 +106,7 @@ internal static partial class NativeProof
             PlacementSourceKind.TachiePreset,
             [new TextItem { Frame = 0, Length = 20, Layer = 0 }],
             20,
+            0,
             null,
             new string('d', 64),
             () => { });
@@ -126,6 +129,24 @@ internal static partial class NativeProof
         Assert(absolutePresetPlan.Single().Layer == 49,
             "PLACEMENT_RULE P2 absolute preset source starts at the requested layer and collision search moves only Up");
 
+        var sourceLayerPresetPlan = BundleLayerPlanner.Plan(
+            absolutePreset.Fork(),
+            frame: 130,
+            singletonLength: 20,
+            targetMinimumLayer: 20,
+            targetMaximumLayer: 20,
+            new RelativeLayerPolicy
+            {
+                Mode = LayerPlacementMode.Absolute,
+                UseSourceLayer = true,
+                Direction = RelativeLayerDirection.Down,
+                Minimum = 0,
+                Maximum = 99
+            },
+            [new TextItem { Frame = 130, Length = 20, Layer = 0 }]);
+        Assert(sourceLayerPresetPlan.Single().Layer == 1,
+            "LAYER_UX P0 registered preset source uses its generated base layer when specified-layer input is blank, then escapes Down");
+
         var absoluteMulti = new MaterializedPlacementSource(
             Guid.Parse("10000000-0000-4000-8000-000000000004"),
             PlacementSourceKind.Template,
@@ -134,6 +155,7 @@ internal static partial class NativeProof
                 new TextItem { Frame = 3, Length = 12, Layer = 1 }
             ],
             15,
+            23,
             null,
             new string('e', 64),
             () => { });
@@ -155,6 +177,24 @@ internal static partial class NativeProof
         Assert(absoluteMultiPlan[0].Layer == 40 && absoluteMultiPlan[1].Layer == 41,
             "PLACEMENT_RULE P2 absolute multi-item source preserves normalized internal layer offsets");
 
+        var sourceLayerMultiPlan = BundleLayerPlanner.Plan(
+            absoluteMulti.Fork(),
+            frame: 330,
+            singletonLength: null,
+            targetMinimumLayer: 1,
+            targetMaximumLayer: 1,
+            new RelativeLayerPolicy
+            {
+                Mode = LayerPlacementMode.Absolute,
+                UseSourceLayer = true,
+                Direction = RelativeLayerDirection.Up,
+                Minimum = 0,
+                Maximum = 99
+            },
+            [new TextItem { Frame = 330, Length = 10, Layer = 23 }]);
+        Assert(sourceLayerMultiPlan[0].Layer == 22 && sourceLayerMultiPlan[1].Layer == 23,
+            "LAYER_UX P0 multi-item source keeps internal layer offsets while escaping from its source base layer as one bundle");
+
         var noRoom = new MaterializedPlacementSource(
             Guid.Parse("10000000-0000-4000-8000-000000000005"),
             PlacementSourceKind.Template,
@@ -163,6 +203,7 @@ internal static partial class NativeProof
                 new TextItem { Frame = 0, Length = 10, Layer = 1 }
             ],
             10,
+            98,
             null,
             new string('f', 64),
             () => { });
@@ -198,6 +239,7 @@ internal static partial class NativeProof
                 PlacementSourceKind.TachiePreset,
                 [new TextItem { Frame = 1, Length = 10, Layer = 0 }],
                 11,
+                0,
                 null,
                 new string('c', 64),
                 () => { });
@@ -223,7 +265,10 @@ internal static partial class NativeProof
                 Maximum = 99
             };
             var wrapped = BundleLayerPlanner.Plan(bundle, 300, null, 20, 20, policy, []);
-            var generic = BundleLayerPlanner.Plan(MaterializedPlacementSource.FromTemplate(bundle), 300, null, 20, 20, policy, []);
+            var materializedTemplate = MaterializedPlacementSource.FromTemplate(bundle);
+            var generic = BundleLayerPlanner.Plan(materializedTemplate, 300, null, 20, 20, policy, []);
+            Assert(materializedTemplate.BaseLayer == 6,
+                "LAYER_UX P0 Template Source retains the original minimum layer as its source-layer baseline");
             Assert(wrapped.Select(x => (x.GetType(), x.Frame, x.Length, x.Layer)).SequenceEqual(
                     generic.Select(x => (x.GetType(), x.Frame, x.Length, x.Layer))),
                 "PLACEMENT_SOURCE P1 existing TemplateBundle wrapper and source-neutral materialized path produce identical geometry");
