@@ -1,6 +1,6 @@
 # Placement Quick Settings Acceptance
 
-Status: **DESIGN CANDIDATE**
+Status: **P0-P2 NATIVE ACCEPTED / P3 OWNER HANDS-ON PENDING**
 
 ## P0 — shared-state architecture
 
@@ -42,6 +42,24 @@ Native acceptance must prove:
 5. that outside placement cannot execute using the old relation;
 6. Settings conflict/dirty-session admission prevents a quick action from bypassing the protected session;
 7. one native Undo still reverts the resulting placement action only; Settings history remains the Settings transaction responsibility.
+
+## Native acceptance evidence
+
+Exact tested product/test/package source: `9dae643cb9c29780783dde265d41dc4a90f01a62`.
+
+Release #770 / run `36076134931`:
+
+- **1,277 ASSERT PASS / 0 FAIL**;
+- `PLACEMENT_QUICK_SETTINGS_P0=PASS`;
+- `PLACEMENT_QUICK_SETTINGS_P1=PASS`;
+- `PLACEMENT_QUICK_SETTINGS_P2=PASS`;
+- distribution build and proof build: **0 warnings / 0 errors**;
+- exact distribution-DLL smoke PASS;
+- PackageVerified PASS;
+- Release artifact `10840163556`, uploaded artifact SHA256 `fc938506cb949bdbfd0c6427da88b70b16d7f1c9e0724528d08b5473ff6713e0`;
+- distribution DLL SHA256 `e9505f9b140aedb8decee9cc812d46d4beb8c7ca000c7653a496401bda2d1a29`.
+
+P0-P2 therefore no longer depend on design inference. P3 remains an owner hands-on UX decision.
 
 ## P3 — hands-on
 
