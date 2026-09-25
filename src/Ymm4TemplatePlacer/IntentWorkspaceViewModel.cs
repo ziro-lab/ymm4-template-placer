@@ -65,6 +65,7 @@ public sealed partial class PlacerViewModel
     }
     public void DeactivateIntentWorkspace()
     {
+        InvalidateAsyncOperationLifetime();
         if (intentTimeline != null) intentTimeline.PropertyChanged -= IntentTimelineChanged;
         intentTimeline = null; EndTimelinePointer(); ClearIntentAmbiguityConfirmation();
         IntentWorkspaceDeactivated?.Invoke(this, EventArgs.Empty);
