@@ -84,7 +84,9 @@ internal static partial class NativeProof
             "PLACEMENT_RULE P2 old layer JSON defaults to the exact existing relative placement semantics");
         var defaultPolicyJson = JsonSerializer.Serialize(new RelativeLayerPolicy());
         Assert(!defaultPolicyJson.Contains("\"Mode\"", StringComparison.Ordinal) &&
-            !defaultPolicyJson.Contains("\"AbsoluteLayer\"", StringComparison.Ordinal),
+            !defaultPolicyJson.Contains("\"AbsoluteLayer\"", StringComparison.Ordinal) &&
+            !defaultPolicyJson.Contains("\"UseSourceLayer\"", StringComparison.Ordinal) &&
+            !defaultPolicyJson.Contains("\"SpecifiedLayerInitialized\"", StringComparison.Ordinal),
             "PLACEMENT_RULE P2 default relative policy does not add new placement-mode fields to persisted JSON");
         var invalidAbsoluteBoundsRejected = false;
         try
