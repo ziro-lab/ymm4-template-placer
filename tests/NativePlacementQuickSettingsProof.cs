@@ -99,7 +99,7 @@ internal static partial class NativeProof
                 Signature(timeline) == beforeTimeline,
                 "PLACEMENT_QUICK_SETTINGS P1 Preview and saved relation come from the same Draft with zero Timeline mutation");
 
-            new ButtonAutomationPeer(quick.QuickLayerSpecified).Invoke();
+            quick.QuickLayerModePicker.SelectedValue = LayerPlacementMode.Absolute;
             await Idle();
             var sourceLayerSaved = scope.Current.IntentPalettes.Single(x => x.Id == set.Id).Relation.Layer;
             Assert(sourceLayerSaved.Mode == LayerPlacementMode.Absolute && sourceLayerSaved.UseSourceLayer &&
