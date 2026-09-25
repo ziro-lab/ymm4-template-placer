@@ -159,13 +159,15 @@ public sealed partial class IntentPaletteDraft : IntentEditable
         {
             if (Get() == value) return;
             text[nameof(AbsoluteLayer)] = value;
-            model = model with
+            var layer = model.Relation.Layer with
             {
-                Relation = model.Relation with
-                {
-                    Layer = model.Relation.Layer with { UseSourceLayer = string.IsNullOrWhiteSpace(value) }
-                }
+                SpecifiedLayerInitialized = true,
+                UseSourceLayer = string.IsNullOrWhiteSpace(value)
             };
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) &&
+                parsed is >= 0 and <= 9999)
+                layer = layer with { AbsoluteLayer = parsed };
+            model = model with { Relation = model.Relation with { Layer = layer } };
             Notify();
             RaiseUiState();
         }
@@ -205,7 +207,22 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     public IntentNeighbor Neighbor { get => model.Relation.Neighbor; set => Change(model with { Relation = model.Relation with { Neighbor = value } }); }
     public IntentNeighborEdge NeighborEdge { get => model.Relation.NeighborEdge; set => Change(model with { Relation = model.Relation with { NeighborEdge = value } }); }
     public IntentFallback Fallback { get => model.Relation.Fallback; set => Change(model with { Relation = model.Relation with { Fallback = value } }); }
-    public LayerPlacementMode LayerMode { get => model.Relation.Layer.Mode; set => Change(model with { Relation = model.Relation with { Layer = model.Relation.Layer with { Mode = value } } }); }
+    public LayerPlacementMode LayerMode
+    {
+        get => model.Relation.Layer.Mode;
+        set
+        {
+            if (model.Relation.Layer.Mode == value) return;
+            var layer = model.Relation.Layer with { Mode = value };
+            if (value == LayerPlacementMode.Absolute)
+                layer = layer with
+                {
+                    SpecifiedLayerInitialized = true,
+                    UseSourceLayer = string.IsNullOrWhiteSpace(AbsoluteLayer)
+                };
+            Change(model with { Relation = model.Relation with { Layer = layer } });
+        }
+    }
     public RelativeLayerDirection Direction { get => model.Relation.Layer.Direction; set => Change(model with { Relation = model.Relation with { Layer = model.Relation.Layer with { Direction = value } } }); }
     public bool ExpressionCandidates { get => model.ExpressionCandidates; set => Change(model with { ExpressionCandidates = value }); }
     public bool CharacterRestricted
@@ -255,11 +272,13 @@ public sealed partial class IntentPaletteDraft : IntentEditable
         text[nameof(MaximumGap)] = source.Relation.MaximumNeighborGap?.ToString(CultureInfo.InvariantCulture) ?? "";
         text[nameof(BoundaryTolerance)] = source.Relation.BoundaryTolerance.ToString(CultureInfo.InvariantCulture);
         text[nameof(LayerOffset)] = source.Relation.Layer.Offset.ToString(CultureInfo.InvariantCulture);
-        var useSourceLayer = source.Relation.Layer.UseSourceLayer ||
-            (source.Relation.Layer.Mode == LayerPlacementMode.RelativeToTarget && source.Relation.Layer.AbsoluteLayer == 0);
-        if (useSourceLayer && !model.Relation.Layer.UseSourceLayer)
-            model = model with { Relation = model.Relation with { Layer = model.Relation.Layer with { UseSourceLayer = true } } };
-        text[nameof(AbsoluteLayer)] = useSourceLayer ? "" : source.Relation.Layer.AbsoluteLayer.ToString(CultureInfo.InvariantCulture);
+        var specifiedLayerInitialized = source.Relation.Layer.SpecifiedLayerInitialized ||
+            source.Relation.Layer.Mode == LayerPlacementMode.Absolute ||
+            source.Relation.Layer.UseSourceLayer ||
+            source.Relation.Layer.AbsoluteLayer != 0;
+        text[nameof(AbsoluteLayer)] = specifiedLayerInitialized && !source.Relation.Layer.UseSourceLayer
+            ? source.Relation.Layer.AbsoluteLayer.ToString(CultureInfo.InvariantCulture)
+            : "";
         text[nameof(LayerMinimum)] = source.Relation.Layer.Minimum.ToString(CultureInfo.InvariantCulture);
         text[nameof(LayerMaximum)] = source.Relation.Layer.Maximum.ToString(CultureInfo.InvariantCulture);
         characterRestricted = !string.IsNullOrWhiteSpace(source.Target.CharacterName);
@@ -301,6 +320,8 @@ public sealed partial class IntentPaletteDraft : IntentEditable
             BoundaryTolerance = ShowBoundaryTolerance ? Number(BoundaryTolerance, "境界の許容間隔") : model.Relation.BoundaryTolerance,
             Layer = model.Relation.Layer with {
                 Offset = ShowRelativeLayerPlacement ? Number(LayerOffset, "対象からの段数") : model.Relation.Layer.Offset,
+                SpecifiedLayerInitialized = ShowAbsoluteLayerPlacement
+                    ? true : model.Relation.Layer.SpecifiedLayerInitialized,
                 UseSourceLayer = ShowAbsoluteLayerPlacement
                     ? string.IsNullOrWhiteSpace(AbsoluteLayer)
                     : model.Relation.Layer.UseSourceLayer,
