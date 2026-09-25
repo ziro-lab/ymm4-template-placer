@@ -55,18 +55,19 @@ public static class LayerPlanner
         // No same-Character context deliberately falls back to the normal Base policy.
         if (policy.SearchMode != LayerSearchMode.Legacy)
         {
-            var searchMode = policy.SearchMode == LayerSearchMode.DoNotPlace ? LayerSearchMode.SearchUp : policy.SearchMode;
             var first = policy.UseTemplateLayer ? templateLayer : policy.Preferred;
             if (first < policy.Minimum || first > policy.Maximum)
                 throw new InvalidOperationException(policy.UseTemplateLayer
                     ? "元のレイヤーが保存済みの探索範囲外です。探索範囲を確認してください。"
                     : "指定レイヤーが保存済みの探索範囲外です。設定を確認してください。");
             if (Free(first)) return first;
-            if (searchMode == LayerSearchMode.SearchUp)
+            if (policy.SearchMode == LayerSearchMode.SearchUp)
                 for (var layer = first - 1; layer >= policy.Minimum; layer--) if (Free(layer)) return layer;
-            if (searchMode == LayerSearchMode.SearchDown)
+            if (policy.SearchMode == LayerSearchMode.SearchDown)
                 for (var layer = first + 1; layer <= policy.Maximum; layer++) if (Free(layer)) return layer;
-            throw new InvalidOperationException("指定方向の保存済み範囲に空きがありません。反対方向への配置や既存アイテムの移動・短縮はしていません。");
+            throw new InvalidOperationException(policy.SearchMode == LayerSearchMode.DoNotPlace
+                ? $"指定レイヤー {first} は予定の長さの途中を含めて使用中です。配置していません。"
+                : "指定方向の保存済み範囲に空きがありません。反対方向への配置や既存アイテムの移動・短縮はしていません。");
         }
         if (policy.UseTemplateLayer)
         {
