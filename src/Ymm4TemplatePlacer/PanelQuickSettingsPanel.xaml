@@ -43,14 +43,14 @@
      </WrapPanel>
 
      <TextBlock Text="レイヤー" FontWeight="SemiBold"/>
-     <WrapPanel Margin="0,3,0,5">
-      <Button x:Name="QuickLayerRelative" Content="対象から"
-       Command="{Binding DataContext.ApplyPlacementQuickActionCommand,RelativeSource={RelativeSource AncestorType=local:PanelQuickSettingsPanel}}"
-       CommandParameter="{x:Static local:PlacementQuickAction.LayerRelative}" Padding="8,3"/>
-      <Button x:Name="QuickLayerSpecified" Content="レイヤー指定"
-       Command="{Binding DataContext.ApplyPlacementQuickActionCommand,RelativeSource={RelativeSource AncestorType=local:PanelQuickSettingsPanel}}"
-       CommandParameter="{x:Static local:PlacementQuickAction.LayerSpecified}" Padding="8,3" Margin="4,0,0,0"/>
-     </WrapPanel>
+     <ListBox x:Name="QuickLayerModePicker" Margin="0,3,0,5"
+      ItemsSource="{Binding DataContext.IntentLayerModes,RelativeSource={RelativeSource AncestorType=local:PanelQuickSettingsPanel}}"
+      SelectedValuePath="Value" SelectedValue="{Binding LayerMode,Mode=TwoWay}" BorderThickness="0" Background="Transparent"
+      ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled"
+      AutomationProperties.Name="簡易設定の配置レイヤー方式">
+      <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+      <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" Padding="10,4"/></DataTemplate></ListBox.ItemTemplate>
+     </ListBox>
      <WrapPanel Margin="0,0,0,8" Visibility="{Binding ShowRelativeLayerPlacement,Converter={StaticResource VisibleWhen}}">
       <Button x:Name="QuickLayerUpOne" Content="1段上"
        Command="{Binding DataContext.ApplyPlacementQuickActionCommand,RelativeSource={RelativeSource AncestorType=local:PanelQuickSettingsPanel}}"
