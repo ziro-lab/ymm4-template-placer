@@ -38,7 +38,11 @@ public static class IntentPlacementGeometry
         out IReadOnlyList<ResolvedIntentTime> results)
     {
         ValidateInputs(context, palette, entry, source);
-        results = IntentNeighborResultResolver.Resolve(context, palette.Relation, entry, source.Span);
+        results = IntentNeighborResultResolver.Resolve(context, palette.Relation, entry, source.Span)
+            .OrderBy(x => x.Skip)
+            .ThenBy(x => x.Frame)
+            .ThenBy(x => x.Length)
+            .ToArray();
         var plannedOccupancy = occupancy.ToList();
         var geometries = new List<PlacementSourceGeometry>(results.Count);
 
