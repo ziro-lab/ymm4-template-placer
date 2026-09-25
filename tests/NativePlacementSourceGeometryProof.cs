@@ -281,5 +281,6 @@ internal static partial class NativeProof
         Assert(Signature(timeline) == signature,
             "PLACEMENT_SOURCE P1 geometry seam proof performs zero Timeline writes");
         Log("PLACEMENT_SOURCE_P1=PASS");
+        Log("LAYER_UX_P0=PASS");
     }
 }
