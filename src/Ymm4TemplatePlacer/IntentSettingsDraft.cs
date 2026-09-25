@@ -152,7 +152,24 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     public string MaximumGap { get => Get(); set => Put(value); }
     public string BoundaryTolerance { get => Get(); set => Put(value); }
     public string LayerOffset { get => Get(); set => Put(value); }
-    public string AbsoluteLayer { get => Get(); set => Put(value); }
+    public string AbsoluteLayer
+    {
+        get => Get();
+        set
+        {
+            if (Get() == value) return;
+            text[nameof(AbsoluteLayer)] = value;
+            model = model with
+            {
+                Relation = model.Relation with
+                {
+                    Layer = model.Relation.Layer with { UseSourceLayer = string.IsNullOrWhiteSpace(value) }
+                }
+            };
+            Notify();
+            RaiseUiState();
+        }
+    }
     public bool UseSourceLayer => LayerMode == LayerPlacementMode.Absolute && string.IsNullOrWhiteSpace(AbsoluteLayer);
     public string LayerMinimum { get => Get(); set => Put(value); }
     public string LayerMaximum { get => Get(); set => Put(value); }
