@@ -102,6 +102,7 @@ if (-not (Select-String -Path $log -Pattern '^PLACEMENT_QUICK_SETTINGS_P1=PASS$'
 if (-not (Select-String -Path $log -Pattern '^PLACEMENT_QUICK_SETTINGS_P2=PASS$')) { throw 'Placement Quick Settings P2 commit-order proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^AUDIT_B02=PASS$')) { throw 'Audit B02 panel quick disposal lifecycle proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^AUDIT_B01=PASS$')) { throw 'Audit B01 async operation lifetime proof is incomplete' }
+if (-not (Select-String -Path $log -Pattern '^AUDIT_B08=PASS$')) { throw 'Audit B08 commit fault recovery proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^NEIGHBOR_AMBIGUITY_P0=PASS$')) { throw 'Neighbor ambiguity P0 result resolver proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^NEIGHBOR_AMBIGUITY_P1=PASS$')) { throw 'Neighbor ambiguity P1 confirmation proof is incomplete' }
 if (-not (Select-String -Path $log -Pattern '^NEIGHBOR_AMBIGUITY_P2=PASS$')) { throw 'Neighbor ambiguity P2 atomic fan-out proof is incomplete' }
