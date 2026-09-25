@@ -12,7 +12,7 @@ public sealed class GenericLayerTargetDraft : IntentEditable
     public Guid SetId { get; }
     internal LayerPolicy Saved { get; }
     public static IReadOnlyList<IntentOption<LayerSearchMode>> Behaviors { get; } =
-        [new(LayerSearchMode.DoNotPlace, "配置しない"), new(LayerSearchMode.SearchUp, "上の空きを探す"), new(LayerSearchMode.SearchDown, "下の空きを探す")];
+        [new(LayerSearchMode.SearchUp, "上の空きを探す"), new(LayerSearchMode.SearchDown, "下の空きを探す")];
     public string Target
     {
         get => target;
@@ -20,32 +20,34 @@ public sealed class GenericLayerTargetDraft : IntentEditable
         {
             if (target == value) return;
             target = value;
-            if (behavior == null && !string.IsNullOrWhiteSpace(value)) { behavior = LayerSearchMode.DoNotPlace; Raise(nameof(OccupiedBehavior)); }
+            if (behavior == null) { behavior = LayerSearchMode.SearchUp; Raise(nameof(OccupiedBehavior)); }
             Changed();
         }
     }
     public LayerSearchMode? OccupiedBehavior { get => behavior; set { if (behavior == value) return; behavior = value; Changed(); } }
     public bool HasChanges => target != initialTarget || behavior != initialBehavior;
-    public string LegacyNotice => Saved.SearchMode != LayerSearchMode.Legacy ? "" : Saved.UseTemplateLayer
-        ? "現在はテンプレートのレイヤー。数値入力→Enterで指定に切り替えます。"
-        : "現在は以前の範囲探索。変更する場合は、塞がった時の動作を選んで適用してください。";
+    public string LegacyNotice => Saved.SearchMode == LayerSearchMode.Legacy
+        ? "旧レイヤー設定です。この画面で適用すると、元/指定レイヤーから選んだ方向へ探す現在の方式に切り替わります。" : "";
     public string BoundsHint => $"保存済みの範囲: {Saved.Minimum}～{Saved.Maximum}。上は小さい番号、下は大きい番号。Enterで適用、Escで戻す。";
-    public string Error => !HasChanges ? "" : !int.TryParse(Target, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) || n < Saved.Minimum || n > Saved.Maximum
-        ? $"レイヤーは{Saved.Minimum}～{Saved.Maximum}の整数で指定してください。"
-        : behavior is not (LayerSearchMode.DoNotPlace or LayerSearchMode.SearchUp or LayerSearchMode.SearchDown) ? "塞がった時の動作を選んでください。" : "";
+    public string Error => !HasChanges ? "" : !string.IsNullOrWhiteSpace(Target) &&
+        (!int.TryParse(Target, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) || n < Saved.Minimum || n > Saved.Maximum)
+        ? $"レイヤーは空欄（元レイヤー）か{Saved.Minimum}～{Saved.Maximum}の整数で指定してください。"
+        : behavior is not (LayerSearchMode.SearchUp or LayerSearchMode.SearchDown) ? "空きを探す方向を選んでください。" : "";
     public GenericLayerTargetDraft(Guid setId, LayerPolicy saved)
     {
         SetId = setId; Saved = saved;
         initialTarget = target = saved.UseTemplateLayer ? "" : saved.Preferred.ToString(CultureInfo.InvariantCulture);
-        initialBehavior = behavior = saved.SearchMode == LayerSearchMode.Legacy ? null : saved.SearchMode;
+        initialBehavior = behavior = saved.SearchMode == LayerSearchMode.SearchDown ? LayerSearchMode.SearchDown : LayerSearchMode.SearchUp;
     }
     private void Changed() { Notify(nameof(Target)); Raise(nameof(OccupiedBehavior)); Raise(nameof(HasChanges)); Raise(nameof(Error)); }
     internal LayerPolicy Build()
     {
-        if (!int.TryParse(Target, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ||
-            behavior is not (LayerSearchMode.DoNotPlace or LayerSearchMode.SearchUp or LayerSearchMode.SearchDown))
-            throw new InvalidOperationException("レイヤー番号と、塞がった時の動作を指定してください。");
-        var result = Saved with { UseTemplateLayer = false, Preferred = n, SearchMode = behavior.Value };
+        if (behavior is not (LayerSearchMode.SearchUp or LayerSearchMode.SearchDown))
+            throw new InvalidOperationException("空きを探す方向を指定してください。");
+        var useSourceLayer = string.IsNullOrWhiteSpace(Target);
+        var n = useSourceLayer ? Saved.Preferred : int.TryParse(Target, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
+            ? parsed : throw new InvalidOperationException("レイヤーは空欄（元レイヤー）か整数で指定してください。");
+        var result = Saved with { UseTemplateLayer = useSourceLayer, Preferred = n, SearchMode = behavior.Value };
         result.Validate(); return result;
     }
 }
@@ -54,7 +56,7 @@ public sealed partial class PlacerViewModel
 {
     public GenericLayerTargetDraft? GenericLayerTarget { get; private set; }
     public string GenericLayerButtonLabel => GenericLayerTarget is { } draft
-        ? $"レイヤー {(draft.Saved.UseTemplateLayer ? "元の位置" : draft.Saved.Preferred.ToString(CultureInfo.InvariantCulture))}{(draft.HasChanges ? " *" : "")} ▾" : "レイヤー ▾";
+        ? $"レイヤー {(draft.Saved.UseTemplateLayer ? "元レイヤー" : draft.Saved.Preferred.ToString(CultureInfo.InvariantCulture))}{(draft.HasChanges ? " *" : "")} ▾" : "レイヤー ▾";
     public ActionCommand ApplyGenericLayerTargetCommand { get; private set; } = null!;
     public ActionCommand ResetGenericLayerTargetCommand { get; private set; } = null!;
     private bool GenericLayerReadyForExecution => GenericLayerTarget?.HasChanges != true;
