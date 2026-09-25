@@ -165,8 +165,8 @@
        </WrapPanel>
        <WrapPanel x:Name="AbsoluteLayerRow" Visibility="{Binding ShowAbsoluteLayerPlacement,Converter={StaticResource VisibleWhen}}">
         <TextBlock Text="レイヤー" VerticalAlignment="Center" Margin="0,0,4,0"/>
-        <TextBox x:Name="AbsoluteLayerBox" Text="{Binding AbsoluteLayer,UpdateSourceTrigger=PropertyChanged}" Width="64"/>
-        <TextBlock Text="を基準に配置。塞がっていれば" VerticalAlignment="Center" Margin="4,0"/>
+        <TextBox x:Name="AbsoluteLayerBox" Text="{Binding AbsoluteLayer,UpdateSourceTrigger=PropertyChanged}" Width="64" ToolTip="空欄なら配置Sourceの元レイヤーを使います。"/>
+        <TextBlock Text="（空欄=元）を基準に配置。塞がっていれば" VerticalAlignment="Center" Margin="4,0"/>
         <ComboBox x:Name="AbsoluteDirectionBox" ItemsSource="{Binding DataContext.IntentDirections,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Direction,Mode=TwoWay}"/>
         <TextBlock Text="へ空きを探します。" VerticalAlignment="Center" Margin="4,0"/>
        </WrapPanel>
