@@ -42,9 +42,9 @@ internal static partial class NativeProof
         }
         Apply(palette.Layer); await Idle();
         Log($"R3-D surface: context={vm.PlacementContext}; set={vm.SelectedIntentSet?.Id}; draft={vm.GenericLayerTarget?.Target}; visible={surface.IsVisible}; box={surface.GenericTargetBox.IsVisible}; choices={surface.GenericOccupiedPicker.Items.Count}");
-        Round3Assert(surface.IsVisible && surface.GenericTargetBox.IsVisible && surface.GenericOccupiedPicker.Items.Count == 3 &&
-            GenericLayerTargetDraft.Behaviors.Select(x => x.Value).SequenceEqual(new[] { LayerSearchMode.DoNotPlace, LayerSearchMode.SearchUp, LayerSearchMode.SearchDown }),
-            "D1", "live Generic surface is numeric with exactly three finite occupied choices; no clicked-layer mode");
+        Round3Assert(surface.IsVisible && surface.GenericTargetBox.IsVisible && surface.GenericOccupiedPicker.Items.Count == 2 &&
+            GenericLayerTargetDraft.Behaviors.Select(x => x.Value).SequenceEqual(new[] { LayerSearchMode.SearchUp, LayerSearchMode.SearchDown }),
+            "D1", "live Generic surface exposes only Up/Down escape directions; layer collision no longer offers a do-not-place choice");
         var before = Signature(timeline);
         surface.GenericTargetBox.Text = "9"; surface.GenericOccupiedPicker.SelectedValue = LayerSearchMode.SearchUp; await Idle();
         Assert(vm.GenericLayerTarget?.Target == "9" && !vm.ExecuteIntentTileCommand.CanExecute(vm.IntentTiles.Single()), "R3-D unapplied numeric draft disables placement instead of using the old saved target");
@@ -61,12 +61,17 @@ internal static partial class NativeProof
         Assert(vm.GenericLayerTarget is { Target: "9", HasChanges: false }, "R3-D actual Escape resets the quick layer draft without saving");
         Apply(palette.Layer); await Idle();
         Round3Assert(await PlacesAt(8), "D3", "free target is used exactly, not the source template layer or another free layer");
-        Apply(palette.Layer, Occupied(8)); await Idle(); before = Signature(timeline); Tile(); await Idle();
-        Round3Assert(vm.HasError && Signature(timeline) == before, "D4", "occupied DoNotPlace is zero-write even when the overlap begins after the placement start");
+        Apply(palette.Layer, Occupied(8)); await Idle();
+        Round3Assert(await PlacesAt(7), "D4", "legacy saved DoNotPlace is normalized to Up escape so an explicit placement request still places when the first layer is occupied");
         Apply(palette.Layer with { SearchMode = LayerSearchMode.SearchUp }, Occupied(8), Occupied(7)); await Idle();
         Round3Assert(await PlacesAt(6), "D5", "SearchUp checks only smaller numbers and skips whole-duration occupancy");
         Apply(palette.Layer with { SearchMode = LayerSearchMode.SearchDown }, Occupied(8), Occupied(9)); await Idle();
         Round3Assert(await PlacesAt(10), "D6", "SearchDown checks only larger numbers even though lower numbers are free");
+        var sourceLayerPolicy = palette.Layer with { UseTemplateLayer = true, SearchMode = LayerSearchMode.SearchUp, Minimum = 0, Maximum = 99 };
+        Apply(sourceLayerPolicy, Occupied(60)); await Idle();
+        Assert(vm.GenericLayerTarget is { Target: "", OccupiedBehavior: LayerSearchMode.SearchUp },
+            "LAYER_UX P2 blank Generic target represents the template Source layer with an explicit escape direction");
+        Round3Assert(await PlacesAt(59), "D6S", "blank Generic layer uses the template's original layer first, then escapes Up when occupied");
         var noWrap = true;
         foreach (var mode in new[] { LayerSearchMode.SearchUp, LayerSearchMode.SearchDown })
         {
