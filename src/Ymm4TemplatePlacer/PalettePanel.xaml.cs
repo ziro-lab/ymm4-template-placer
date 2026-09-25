@@ -48,7 +48,6 @@ public partial class PalettePanel : UserControl
         if (sender is UIElement handle && handle.IsMouseCaptured) handle.ReleaseMouseCapture();
         dragEntry = null; e.Handled = true;
     }
-    private void OnDragHandleDoubleClick(object sender, MouseButtonEventArgs e) => e.Handled = true;
     private void OnPaletteDragOver(object sender, DragEventArgs e)
     {
         if (!e.Data.GetDataPresent(typeof(PaletteEntryView))) { e.Effects = DragDropEffects.None; ClearDropCue(); return; }
