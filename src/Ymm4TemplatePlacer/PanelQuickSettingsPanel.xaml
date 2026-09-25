@@ -43,7 +43,15 @@
      </WrapPanel>
 
      <TextBlock Text="レイヤー" FontWeight="SemiBold"/>
-     <WrapPanel Margin="0,3,0,8">
+     <WrapPanel Margin="0,3,0,5">
+      <Button x:Name="QuickLayerRelative" Content="対象から"
+       Command="{Binding DataContext.ApplyPlacementQuickActionCommand,RelativeSource={RelativeSource AncestorType=local:PanelQuickSettingsPanel}}"
+       CommandParameter="{x:Static local:PlacementQuickAction.LayerRelative}" Padding="8,3"/>
+      <Button x:Name="QuickLayerSpecified" Content="レイヤー指定"
+       Command="{Binding DataContext.ApplyPlacementQuickActionCommand,RelativeSource={RelativeSource AncestorType=local:PanelQuickSettingsPanel}}"
+       CommandParameter="{x:Static local:PlacementQuickAction.LayerSpecified}" Padding="8,3" Margin="4,0,0,0"/>
+     </WrapPanel>
+     <WrapPanel Margin="0,0,0,8" Visibility="{Binding ShowRelativeLayerPlacement,Converter={StaticResource VisibleWhen}}">
       <Button x:Name="QuickLayerUpOne" Content="1段上"
        Command="{Binding DataContext.ApplyPlacementQuickActionCommand,RelativeSource={RelativeSource AncestorType=local:PanelQuickSettingsPanel}}"
        CommandParameter="{x:Static local:PlacementQuickAction.LayerUpOne}" Padding="8,3"/>
@@ -51,6 +59,21 @@
        Command="{Binding DataContext.ApplyPlacementQuickActionCommand,RelativeSource={RelativeSource AncestorType=local:PanelQuickSettingsPanel}}"
        CommandParameter="{x:Static local:PlacementQuickAction.LayerDownOne}" Padding="8,3" Margin="4,0,0,0"/>
      </WrapPanel>
+     <StackPanel Margin="0,0,0,8" Visibility="{Binding ShowAbsoluteLayerPlacement,Converter={StaticResource VisibleWhen}}">
+      <WrapPanel Margin="0,0,0,4">
+       <TextBlock Text="レイヤー" VerticalAlignment="Center" Margin="0,0,5,0"/>
+       <TextBox x:Name="QuickAbsoluteLayerBox" Text="{Binding AbsoluteLayer,UpdateSourceTrigger=PropertyChanged}" Width="64" ToolTip="空欄なら元レイヤー"/>
+       <TextBlock Text="空欄=元" VerticalAlignment="Center" Margin="5,0,0,0" Opacity="0.72"/>
+      </WrapPanel>
+      <WrapPanel>
+       <Button x:Name="QuickLayerSearchUp" Content="上へ探す"
+        Command="{Binding DataContext.ApplyPlacementQuickActionCommand,RelativeSource={RelativeSource AncestorType=local:PanelQuickSettingsPanel}}"
+        CommandParameter="{x:Static local:PlacementQuickAction.LayerSearchUp}" Padding="8,3"/>
+       <Button x:Name="QuickLayerSearchDown" Content="下へ探す"
+        Command="{Binding DataContext.ApplyPlacementQuickActionCommand,RelativeSource={RelativeSource AncestorType=local:PanelQuickSettingsPanel}}"
+        CommandParameter="{x:Static local:PlacementQuickAction.LayerSearchDown}" Padding="8,3" Margin="4,0,0,0"/>
+      </WrapPanel>
+     </StackPanel>
 
      <TextBlock Text="{Binding DataContext.SettingsCommitNotice,RelativeSource={RelativeSource AncestorType=local:PanelQuickSettingsPanel}}" TextWrapping="Wrap" Margin="0,2,0,0"/>
      <TextBlock Text="{Binding DataContext.PlacementQuickSettingsNotice,RelativeSource={RelativeSource AncestorType=local:PanelQuickSettingsPanel}}" TextWrapping="Wrap" Opacity="0.72" Margin="0,2,0,6"/>
