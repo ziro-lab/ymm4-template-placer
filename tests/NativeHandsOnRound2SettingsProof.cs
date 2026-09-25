@@ -145,12 +145,15 @@ internal static partial class NativeProof
                 "BEHAVIOR_PREVIEW v2 Generic Settings does not force a redundant diagram");
             var generic = session.SelectedGenericSet!; generic.UseTemplateLayer = false; generic.Minimum = "4"; generic.Maximum = "12"; generic.Preferred = "8";
             var built = session.Build(); var genericModel = built.Palettes.Single(x => x.Id == style.Id);
-            Assert(genericModel.Kind == PaletteKind.Style && genericModel.Layer == new LayerPolicy { UseTemplateLayer = false, Minimum = 4, Maximum = 12, Preferred = 8 } &&
+            Assert(genericModel.Kind == PaletteKind.Style && genericModel.Layer == new LayerPolicy { UseTemplateLayer = false, SearchMode = LayerSearchMode.SearchUp, Minimum = 4, Maximum = 12, Preferred = 8 } &&
                 genericModel.LibraryEntryIds.SequenceEqual(style.LibraryEntryIds) && panel.GenericSettingsSurface.GenericSentenceText.Text.Contains("テンプレートの長さ", StringComparison.Ordinal),
                 "R2-C D7 Generic edits only existing QuickDrop CurrentFrame/intrinsic-duration/layer-policy semantics");
             generic.Minimum = "bad"; generic.UseTemplateLayer = true;
-            Assert(session.Build().Palettes.Single(x => x.Id == style.Id).Layer == style.Layer && generic.Minimum == "bad",
-                "R2-C D10 Generic unused range text is retained as a draft but never coerced or saved over its valid seed");
+            RejectWithoutMutation(timeline, () => session.Build(),
+                "R2-C D10 Generic Source-layer placement still requires a valid directional search range");
+            Assert(generic.Minimum == "bad" && generic.Preferred == "",
+                "R2-C D10 invalid Generic range remains editable while blank Preferred continues to mean Source layer");
+            generic.Minimum = "0";
             await InvokeSelectionButton(panel.NewPaletteButton);
             var created = session.SelectedGenericSet!;
             Assert(created.Id != style.Id && created.Entries.Count == 0 && session.GenericSets.Count == 2,
