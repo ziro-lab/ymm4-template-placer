@@ -183,6 +183,7 @@ internal static partial class NativeProof
 
             Log("PLACEMENT_QUICK_SETTINGS_P0=PASS");
             Log("PLACEMENT_QUICK_SETTINGS_P1=PASS");
+            Log("LAYER_UX_P1=PASS");
             Log("PLACEMENT_QUICK_SETTINGS_P2=PASS");
         }
         finally
