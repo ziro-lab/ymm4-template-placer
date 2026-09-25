@@ -213,8 +213,8 @@ internal static partial class NativeProof
                 Maximum = 99
             },
             [new TextItem { Frame = 330, Length = 10, Layer = 23 }]);
-        Assert(sourceLayerMultiPlan[0].Layer == 22 && sourceLayerMultiPlan[1].Layer == 23,
-            "LAYER_UX P0 multi-item source keeps internal layer offsets while escaping from its source base layer as one bundle");
+        Assert(sourceLayerMultiPlan[0].Layer == 21 && sourceLayerMultiPlan[1].Layer == 22,
+            "LAYER_UX P0 multi-item source keeps internal layer offsets and shifts the whole bundle until every member is collision-free");
 
         var noRoom = new MaterializedPlacementSource(
             Guid.Parse("10000000-0000-4000-8000-000000000005"),
