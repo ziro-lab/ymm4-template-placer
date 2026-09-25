@@ -34,7 +34,7 @@ A useful candidate should not be promoted from score alone. Each candidate also 
 | Tile/action search | M now / H at scale | M | M-H | Core | M | Normal browsing/filtering becomes materially slower once Set/tile counts grow |
 | Repeat last Template Placer action | H if used repeatedly | M | M-H | Core-adjacent | M | Hands-on use shows a common repeated-placement loop where re-resolving current Context is predictable and clearly faster than choosing the tile again |
 | Item-type custom ordering | L-M | L | M | Core | L | Default Item-type ordering itself becomes a repeated navigation irritation |
-| Persistent shortcut strip / utility tiles | M-H | L-M | H | Core-adjacent | M | Real use shows a small set of actions should remain one-click reachable across Set/context changes without consuming the main tile grid |
+| Pinned / fixed tile strip | M-H | L-M | H | Core | L-M | Real use shows Templates or bounded Template Placer actions that should remain one-click reachable regardless of the current Set/context |
 
 ### Tier B — valuable, but evidence-gated or structurally heavier
 
@@ -271,46 +271,60 @@ Boundary:
 - do not add a second configuration model, validation path or persistence route;
 - choose the final finite control set from hands-on frequency rather than from all available placement options.
 
-### Persistent shortcut strip / utility tiles
+### Pinned / fixed tile strip
 
 Status: **CANDIDATE / HIGH-REACH SURFACE**
 
 Candidate concept:
 
-> Add an optional always-visible one-row shortcut strip, likely along the bottom edge of the Placement surface, whose contents are explicitly configured by the user.
+> Add an optional always-visible one-row **fixed tile strip**, likely along the bottom edge of the Placement surface, for Templates and a small bounded set of Template Placer actions that should remain available regardless of the current Set/context.
 
 This is separate from the dedicated persistent YMM4-native Undo / Redo controls.
 
-Possible properties:
+Primary role:
 
-- one compact strip / band;
-- globally ON/OFF;
-- fixed small number of slots or bounded overflow behavior;
-- slots keep their configured actions while Sets and ordinary placement tiles change;
-- reuse existing tile visual language where practical;
-- ordinary Set/tile layout remains unchanged when the strip is OFF.
+- ordinary Set tiles remain **context-dependent**;
+- pinned/fixed tiles remain **context-independent in visibility**;
+- the strip reduces Set switching or duplicate registration for content that is useful across many workflows.
 
-The strip is a **surface**, not permission to create a generic automation framework.
+Candidate contents:
 
-Preferred action sources:
-
-- existing Template Placer actions that already have a safe execution route;
-- bounded YMM4-native commands only when repeated hands-on use demonstrates clear value;
+- existing Template Placer placement sources / tiles that the user explicitly pins;
+- safe Template Placer-specific actions with an existing bounded execution route, such as a future "repeat last Template Placer action";
 - future bounded Item Actions only after those actions have their own safety/execution design.
 
-Do not add arbitrary scripts, external-app launchers, macros, or a general command-discovery system merely because the strip can host buttons.
+The strip should **not** become a generic YMM4 command launcher.
+
+Candidate UI/state:
+
+- one compact bottom strip / band;
+- globally ON/OFF and consumes no layout space when OFF;
+- user-configured pinned entries and order;
+- fixed small number of visible slots or bounded overflow behavior;
+- reuse the existing tile visual language where practical;
+- pinned entries stay visible while ordinary Sets/context change;
+- ordinary Set/tile layout remains unchanged when the strip is OFF.
+
+Important model boundary:
+
+- pinning a Template/Source should preferably reference the existing authoritative Source/entry identity rather than create a second copied Template database;
+- pinning must not duplicate placement semantics accidentally: if a pinned placement needs behavior independent of a Set, that behavior must be explicitly modeled rather than inferred from whichever Set happens to be active;
+- if the simplest safe model is "pin an existing tile together with its owning Set/placement rule", preserve that identity explicitly.
+
+Do not add arbitrary scripts, external-app launchers, macros, generic command discovery, or every available YMM4 command merely because the strip can host buttons.
 
 Key UX questions before implementation:
 
-- does a bottom strip materially reduce pointer travel / Set-switching friction;
-- does it remain useful without stealing too much vertical Timeline/Tool space;
+- which Templates/actions are genuinely useful regardless of current Set;
+- whether pinning an existing Set tile (Set + Source + placement rule identity) is sufficient for the first slice;
+- does a bottom strip materially reduce Set-switching / duplicate-registration friction;
+- does it remain useful without stealing too much vertical Tool space;
 - should it disappear completely when disabled;
-- whether slot order alone is enough, or named groups/separators are needed later;
-- whether keyboard shortcuts for strip positions are useful or redundant with the existing position-shortcut model.
+- whether keyboard shortcuts for fixed-strip positions add value or merely duplicate the existing position-shortcut model.
 
 Promotion trigger:
 
-> A stable small set of actions is repeatedly wanted regardless of the current Set/context, and keeping them in the normal Set tile population creates avoidable switching or recognition cost.
+> A stable group of Templates or Template Placer actions is repeatedly wanted across multiple Sets, and keeping them inside ordinary Set populations causes avoidable Set switching, duplication, or recognition cost.
 
 ### Interaction-surface candidates
 
