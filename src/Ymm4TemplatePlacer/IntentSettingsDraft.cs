@@ -188,22 +188,7 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     public IntentNeighbor Neighbor { get => model.Relation.Neighbor; set => Change(model with { Relation = model.Relation with { Neighbor = value } }); }
     public IntentNeighborEdge NeighborEdge { get => model.Relation.NeighborEdge; set => Change(model with { Relation = model.Relation with { NeighborEdge = value } }); }
     public IntentFallback Fallback { get => model.Relation.Fallback; set => Change(model with { Relation = model.Relation with { Fallback = value } }); }
-    public LayerPlacementMode LayerMode
-    {
-        get => model.Relation.Layer.Mode;
-        set
-        {
-            if (model.Relation.Layer.Mode == value) return;
-            var layer = model.Relation.Layer with { Mode = value };
-            if (value == LayerPlacementMode.Absolute && layer.AbsoluteLayer == 0 && !layer.UseSourceLayer)
-            {
-                layer = layer with { UseSourceLayer = true };
-                text[nameof(AbsoluteLayer)] = "";
-                Raise(nameof(AbsoluteLayer));
-            }
-            Change(model with { Relation = model.Relation with { Layer = layer } });
-        }
-    }
+    public LayerPlacementMode LayerMode { get => model.Relation.Layer.Mode; set => Change(model with { Relation = model.Relation with { Layer = model.Relation.Layer with { Mode = value } } }); }
     public RelativeLayerDirection Direction { get => model.Relation.Layer.Direction; set => Change(model with { Relation = model.Relation with { Layer = model.Relation.Layer with { Direction = value } } }); }
     public bool ExpressionCandidates { get => model.ExpressionCandidates; set => Change(model with { ExpressionCandidates = value }); }
     public bool CharacterRestricted
