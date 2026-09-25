@@ -23,6 +23,46 @@ public static class IntentPlacementGeometry
     internal static PlacementSourceGeometry Prepare(Timeline timeline, IntentSelectionContext context, IntentPalette palette,
         IntentEntry entry, MaterializedPlacementSource source, IEnumerable<IItem> occupancy)
     {
+        ValidateInputs(context, palette, entry, source);
+        var time = IntentRelationResolver.Resolve(context, palette.Relation, entry, source.Span);
+        return PrepareResolved(timeline, context, palette, source, occupancy, time);
+    }
+
+    internal static IReadOnlyList<PlacementSourceGeometry> PrepareAlternatives(
+        Timeline timeline,
+        IntentSelectionContext context,
+        IntentPalette palette,
+        IntentEntry entry,
+        MaterializedPlacementSource source,
+        IEnumerable<IItem> occupancy,
+        out IReadOnlyList<ResolvedIntentTime> results)
+    {
+        ValidateInputs(context, palette, entry, source);
+        results = IntentNeighborResultResolver.Resolve(context, palette.Relation, entry, source.Span)
+            .OrderBy(x => x.Skip)
+            .ThenBy(x => x.Frame)
+            .ThenBy(x => x.Length)
+            .ToArray();
+        var plannedOccupancy = occupancy.ToList();
+        var geometries = new List<PlacementSourceGeometry>(results.Count);
+
+        foreach (var result in results)
+        {
+            var fork = source.Fork();
+            var geometry = PrepareResolved(timeline, context, palette, fork, plannedOccupancy, result);
+            geometries.Add(geometry);
+            plannedOccupancy.AddRange(geometry.Items);
+        }
+
+        return geometries.AsReadOnly();
+    }
+
+    private static void ValidateInputs(
+        IntentSelectionContext context,
+        IntentPalette palette,
+        IntentEntry entry,
+        MaterializedPlacementSource source)
+    {
         ArgumentNullException.ThrowIfNull(source);
         palette.Target.Validate();
         palette.Relation.Validate();
@@ -36,7 +76,16 @@ public static class IntentPlacementGeometry
 
         ValidateCharacters(context, source);
         source.ValidateCurrent();
-        var time = IntentRelationResolver.Resolve(context, palette.Relation, entry, source.Span);
+    }
+
+    private static PlacementSourceGeometry PrepareResolved(
+        Timeline timeline,
+        IntentSelectionContext context,
+        IntentPalette palette,
+        MaterializedPlacementSource source,
+        IEnumerable<IItem> occupancy,
+        ResolvedIntentTime time)
+    {
         if (time.Skip) return new(context, source, [], true);
         if (source.Items.Count > 1 && time.Length != source.Span)
             throw new InvalidOperationException("複数アイテムの内部の長さは変更しません。演出の設定で「テンプレート内の長さを維持」を選んでください。");

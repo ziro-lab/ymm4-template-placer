@@ -30,6 +30,7 @@ public sealed partial class PlacerViewModel
         set
         {
             if (refreshingIntent || value == null || !IntentSets.Any(x => ReferenceEquals(x, value)) || value == selectedIntentSet) return;
+            ClearIntentAmbiguityConfirmation();
             selectedIntentSet = value; OnPropertyChanged(); RememberIntentSet(); RefreshIntentTiles();
         }
     }
@@ -65,12 +66,14 @@ public sealed partial class PlacerViewModel
     public void DeactivateIntentWorkspace()
     {
         if (intentTimeline != null) intentTimeline.PropertyChanged -= IntentTimelineChanged;
-        intentTimeline = null; EndTimelinePointer();
+        intentTimeline = null; EndTimelinePointer(); ClearIntentAmbiguityConfirmation();
         IntentWorkspaceDeactivated?.Invoke(this, EventArgs.Empty);
     }
     private void IntentTimelineChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (!ReferenceEquals(sender, intentTimeline)) return;
+        if (e.PropertyName is nameof(Timeline.SelectedItems) or nameof(Timeline.SelectedItem) or nameof(Timeline.Items))
+            ClearIntentAmbiguityConfirmation();
         if (e.PropertyName is nameof(Timeline.SelectedItems) or nameof(Timeline.SelectedItem)) ObserveContextSelection();
         if (e.PropertyName is nameof(Timeline.SelectedItems) or nameof(Timeline.SelectedItem) or nameof(Timeline.Items))
         {
@@ -301,11 +304,16 @@ public sealed partial class PlacerViewModel
             if (!ReferenceEquals(current, timeline) || selectedIntentSet?.Id != tile.PaletteId)
                 throw new InvalidOperationException("配置の準備中に対象シーンまたはSetが変わりました。配置していません。");
 
+            if (!AdmitIntentExecutionPlan(plan, tile, current, settingsSnapshot))
+                return 0;
+
             var count = plan.Commit(current, manager, settings);
             HasError = false;
             Status = plan.Skipped
                 ? "必要な周囲アイテムが見つからないため、この設定では配置しません。"
-                : $"「{tile.Label}」を配置しました。YMM4の「元に戻す」1回で戻せます。";
+                : plan.HasMultipleResults
+                    ? $"「{tile.Label}」を{plan.ResultCount}通り配置しました。YMM4の「元に戻す」1回で全部戻せます。"
+                    : $"「{tile.Label}」を配置しました。YMM4の「元に戻す」1回で戻せます。";
             return count;
         }
         finally
@@ -328,6 +336,7 @@ public sealed partial class PlacerViewModel
             int count; bool skipped = false;
             if (tile.IsGeneric)
             {
+                ClearIntentAmbiguityConfirmation();
                 if (PlacementContext != PlacementContext.Generic || selectedIntentSet?.Generic == null)
                     throw new InvalidOperationException("時間位置用のセットを選び直してください。");
                 if (!GenericLayerReadyForExecution) throw new InvalidOperationException("レイヤーの入力をEnterで適用するか、Escで戻してから配置してください。");
@@ -343,8 +352,18 @@ public sealed partial class PlacerViewModel
                     throw new InvalidOperationException("対象アイテム用のセットを選び直してください。");
                 var palette = settings.IntentPalettes.Single(x => x.Id == tile.PaletteId);
                 var entry = palette.Entries.Single(x => x.LibraryEntryId == tile.LibraryEntryId);
-                var plan = IntentExecutionPlan.Create(RequireTimeline(), palette, entry, settings.Library);
-                count = plan.Commit(RequireTimeline(), undo); skipped = plan.Skipped;
+                var current = RequireTimeline();
+                var plan = IntentExecutionPlan.Create(current, palette, entry, settings.Library);
+                if (!AdmitIntentExecutionPlan(plan, tile, current, settings))
+                    return 0;
+                count = plan.Commit(current, undo); skipped = plan.Skipped;
+                HasError = false;
+                Status = skipped
+                    ? "必要な周囲アイテムが見つからないため、この設定では配置しません。"
+                    : plan.HasMultipleResults
+                        ? $"「{tile.Label}」を{plan.ResultCount}通り配置しました。YMM4の「元に戻す」1回で全部戻せます。"
+                        : $"「{tile.Label}」を配置しました。YMM4の「元に戻す」1回で戻せます。";
+                return count;
             }
             HasError = false;
             Status = skipped ? "必要な周囲アイテムが見つからないため、この設定では配置しません。" : $"「{tile.Label}」を配置しました。YMM4の「元に戻す」1回で戻せます。";

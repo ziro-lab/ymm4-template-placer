@@ -88,6 +88,17 @@ Possible explicit scopes:
 
 All results must be preflighted as one operation. Deduplication rules must be defined before implementation.
 
+### Neighbor ambiguity result fan-out — IMPLEMENTED / RELEASE #775 GREEN
+
+Equal-ranked Neighbor candidates are now resolved by **distinct final placement result** for normal Targeted tile placement:
+
+- one distinct result -> immediate placement;
+- several distinct results -> first execution stops / exact second execution places all;
+- all alternatives preflight atomically and success is one native Undo;
+- no fuzzy candidate choice.
+
+This does **not** implement the stronger selector vocabulary below.
+
 ### Stronger Neighbor selectors
 
 Possible finite additions:

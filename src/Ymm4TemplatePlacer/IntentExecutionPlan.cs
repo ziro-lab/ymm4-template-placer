@@ -7,21 +7,40 @@ namespace Ymm4TemplatePlacer;
 /// <summary>Source/context guards around the existing native-Undo PlacementPlan gateway.</summary>
 public sealed class IntentExecutionPlan
 {
-    private readonly PlacementSourceGeometry geometry;
+    private readonly IReadOnlyList<PlacementSourceGeometry> geometries;
+    private readonly IReadOnlyList<ResolvedIntentTime> results;
     private readonly IntentPalette palette;
     private readonly string paletteSnapshot;
     private readonly PlacementPlan plan;
     private readonly bool requireSettingsRevalidation;
-    public bool Skipped => geometry.Skipped;
+
+    public bool Skipped => geometries.All(x => x.Skipped);
     public int Count => plan.Count;
+    public int ResultCount => results.Count;
+    public bool HasMultipleResults => ResultCount > 1;
+
+    internal IntentSelectionContext Context => geometries[0].Context;
+    internal Guid PaletteId => palette.Id;
+    internal Guid SourceId => geometries[0].Source.SourceId;
+    internal string PaletteSnapshot => paletteSnapshot;
+    internal string SourceSemanticHash => geometries[0].Source.SemanticHash;
+    internal string ResultSignature => string.Join(";", results
+        .OrderBy(x => x.Skip)
+        .ThenBy(x => x.Frame)
+        .ThenBy(x => x.Length)
+        .Select(x => $"{(x.Skip ? 1 : 0)}:{x.Frame}:{x.Length}"));
 
     private IntentExecutionPlan(
-        PlacementSourceGeometry geometry,
+        IReadOnlyList<PlacementSourceGeometry> geometries,
+        IReadOnlyList<ResolvedIntentTime> results,
         IntentPalette palette,
         PlacementPlan plan,
         bool requireSettingsRevalidation)
     {
-        this.geometry = geometry;
+        if (geometries.Count == 0 || results.Count == 0 || geometries.Count != results.Count)
+            throw new InvalidOperationException("配置結果の計画数が不正です。配置していません。");
+        this.geometries = geometries;
+        this.results = results;
         this.palette = palette;
         this.plan = plan;
         this.requireSettingsRevalidation = requireSettingsRevalidation;
@@ -38,9 +57,10 @@ public sealed class IntentExecutionPlan
         var reference = library.SingleOrDefault(x => x.Id == tile.SourceId)
             ?? throw new InvalidOperationException("元テンプレートの登録を一意に特定できません。");
         var source = MaterializedPlacementSource.FromTemplate(TemplateResolver.RequireBundle(reference));
-        var geometry = IntentPlacementGeometry.Prepare(timeline, context, palette, tile, source, timeline.Items);
+        var geometries = IntentPlacementGeometry.PrepareAlternatives(
+            timeline, context, palette, tile, source, timeline.Items, out var results);
         context.ValidateCurrent(timeline);
-        return new(geometry, palette, PlacementPlan.Create(timeline, geometry.Items), false);
+        return Build(timeline, geometries, results, palette, false);
     }
 
     internal static async Task<IntentExecutionPlan> CreateAsync(
@@ -77,10 +97,22 @@ public sealed class IntentExecutionPlan
         }
 
         context.ValidateCurrent(timeline);
-        var geometry = IntentPlacementGeometry.Prepare(
-            timeline, context, palette, tile, source, timeline.Items);
+        var geometries = IntentPlacementGeometry.PrepareAlternatives(
+            timeline, context, palette, tile, source, timeline.Items, out var results);
         context.ValidateCurrent(timeline);
-        return new(geometry, palette, PlacementPlan.Create(timeline, geometry.Items), true);
+        return Build(timeline, geometries, results, palette, true);
+    }
+
+    private static IntentExecutionPlan Build(
+        Timeline timeline,
+        IReadOnlyList<PlacementSourceGeometry> geometries,
+        IReadOnlyList<ResolvedIntentTime> results,
+        IntentPalette palette,
+        bool requireSettingsRevalidation)
+    {
+        var plans = geometries.Select(x => PlacementPlan.Create(timeline, x.Items)).ToArray();
+        var combined = plans.Length == 1 ? plans[0] : PlacementPlan.Combine(timeline, plans);
+        return new(geometries, results, palette, combined, requireSettingsRevalidation);
     }
 
     public int Commit(Timeline timeline, UndoRedoManager undo)
@@ -101,13 +133,13 @@ public sealed class IntentExecutionPlan
         if (currentPalette == null || JsonSerializer.Serialize(currentPalette) != paletteSnapshot)
             throw new InvalidOperationException("計画後にパレット設定が変更されました。配置していません。");
 
-        var current = PlacementSourceRegistry.Resolve(settings, geometry.Source.SourceId);
+        var current = PlacementSourceRegistry.Resolve(settings, SourceId);
         string semanticHash;
         if (current.Kind == PlacementSourceKind.Template)
             semanticHash = IntentAssociationTag.Hash(TemplateResolver.RequireBundle(current.Template!));
         else
             semanticHash = current.TachiePreset!.SemanticHash();
-        if (semanticHash != geometry.Source.SemanticHash)
+        if (semanticHash != SourceSemanticHash)
             throw new InvalidOperationException("計画後に配置Sourceが変更されました。配置していません。");
 
         return plan.Commit(timeline, undo);
@@ -115,8 +147,11 @@ public sealed class IntentExecutionPlan
 
     private void ValidateCore(Timeline timeline)
     {
-        geometry.Context.ValidateCurrent(timeline);
-        geometry.Source.ValidateCurrent();
-        IntentPlacementGeometry.ValidateCharacters(geometry.Context, geometry.Source);
+        Context.ValidateCurrent(timeline);
+        foreach (var geometry in geometries)
+        {
+            geometry.Source.ValidateCurrent();
+            IntentPlacementGeometry.ValidateCharacters(Context, geometry.Source);
+        }
     }
 }
