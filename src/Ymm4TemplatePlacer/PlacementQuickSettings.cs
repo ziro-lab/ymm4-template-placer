@@ -9,8 +9,12 @@ public enum PlacementQuickAction
     AlignEnd,
     DurationTargetSpan,
     DurationTemplate,
+    LayerRelative,
+    LayerSpecified,
     LayerUpOne,
-    LayerDownOne
+    LayerDownOne,
+    LayerSearchUp,
+    LayerSearchDown
 }
 
 public sealed partial class PlacerViewModel
@@ -153,6 +157,12 @@ public sealed partial class PlacerViewModel
             case PlacementQuickAction.DurationTemplate:
                 if (draft.Duration != IntentDuration.Template) draft.Duration = IntentDuration.Template;
                 break;
+            case PlacementQuickAction.LayerRelative:
+                if (draft.LayerMode != LayerPlacementMode.RelativeToTarget) draft.LayerMode = LayerPlacementMode.RelativeToTarget;
+                break;
+            case PlacementQuickAction.LayerSpecified:
+                if (draft.LayerMode != LayerPlacementMode.Absolute) draft.LayerMode = LayerPlacementMode.Absolute;
+                break;
             case PlacementQuickAction.LayerUpOne:
                 if (draft.LayerMode != LayerPlacementMode.RelativeToTarget) draft.LayerMode = LayerPlacementMode.RelativeToTarget;
                 if (draft.Direction != RelativeLayerDirection.Up) draft.Direction = RelativeLayerDirection.Up;
@@ -162,6 +172,14 @@ public sealed partial class PlacerViewModel
                 if (draft.LayerMode != LayerPlacementMode.RelativeToTarget) draft.LayerMode = LayerPlacementMode.RelativeToTarget;
                 if (draft.Direction != RelativeLayerDirection.Down) draft.Direction = RelativeLayerDirection.Down;
                 if (draft.LayerOffset != "1") draft.LayerOffset = "1";
+                break;
+            case PlacementQuickAction.LayerSearchUp:
+                if (draft.LayerMode != LayerPlacementMode.Absolute) draft.LayerMode = LayerPlacementMode.Absolute;
+                if (draft.Direction != RelativeLayerDirection.Up) draft.Direction = RelativeLayerDirection.Up;
+                break;
+            case PlacementQuickAction.LayerSearchDown:
+                if (draft.LayerMode != LayerPlacementMode.Absolute) draft.LayerMode = LayerPlacementMode.Absolute;
+                if (draft.Direction != RelativeLayerDirection.Down) draft.Direction = RelativeLayerDirection.Down;
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(action));
