@@ -267,6 +267,11 @@ public sealed partial class PlacerViewModel
             return;
         }
         try { await ExecuteIntentTileAsync(tile); }
+        catch (OperationCanceledException)
+        {
+            HasError = false;
+            Status = "画面・作業タブまたは対象シーンが変わったため、配置を中止しました。必要ならもう一度実行してください。";
+        }
         catch (Exception ex)
         {
             HasError = true;
@@ -290,6 +295,7 @@ public sealed partial class PlacerViewModel
 
         intentExecuting = true;
         ExecuteIntentTileCommand.RaiseCanExecuteChanged();
+        using var lifetime = BeginAsyncOperation(token);
         try
         {
             var current = RequireTimeline();
@@ -298,8 +304,9 @@ public sealed partial class PlacerViewModel
             var palette = settingsSnapshot.IntentPalettes.Single(x => x.Id == tile.PaletteId);
             var entry = palette.Entries.Single(x => x.SourceId == tile.LibraryEntryId);
             var plan = await IntentExecutionPlan.CreateAsync(
-                current, palette, entry, settingsSnapshot, PresetTargetResolver, token);
+                current, palette, entry, settingsSnapshot, PresetTargetResolver, lifetime.Token);
 
+            lifetime.Validate();
             if (!ReferenceEquals(settings, settingsSnapshot))
                 throw new InvalidOperationException("配置の準備中に設定が変更されました。配置していません。もう一度選んでください。");
             if (!ReferenceEquals(current, timeline) || selectedIntentSet?.Id != tile.PaletteId)
@@ -308,6 +315,7 @@ public sealed partial class PlacerViewModel
             if (!AdmitIntentExecutionPlan(plan, tile, current, settingsSnapshot))
                 return 0;
 
+            lifetime.Validate();
             var count = plan.Commit(current, manager, settings);
             HasError = false;
             Status = plan.Skipped
