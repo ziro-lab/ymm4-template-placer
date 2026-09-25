@@ -99,6 +99,33 @@ internal static partial class NativeProof
                 Signature(timeline) == beforeTimeline,
                 "PLACEMENT_QUICK_SETTINGS P1 Preview and saved relation come from the same Draft with zero Timeline mutation");
 
+            new ButtonAutomationPeer(quick.QuickLayerSpecified).Invoke();
+            await Idle();
+            var sourceLayerSaved = scope.Current.IntentPalettes.Single(x => x.Id == set.Id).Relation.Layer;
+            Assert(sourceLayerSaved.Mode == LayerPlacementMode.Absolute && sourceLayerSaved.UseSourceLayer &&
+                quick.QuickAbsoluteLayerBox.IsVisible && !quick.QuickLayerUpOne.IsVisible,
+                "LAYER_UX P1 Quick Settings switches to specified-layer mode with blank=Source-layer semantics");
+
+            quick.QuickAbsoluteLayerBox.Text = "15";
+            quick.QuickAbsoluteLayerBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)!.UpdateSource();
+            new ButtonAutomationPeer(quick.QuickLayerSearchDown).Invoke();
+            await Idle();
+            var explicitLayerSaved = scope.Current.IntentPalettes.Single(x => x.Id == set.Id).Relation.Layer;
+            Assert(explicitLayerSaved.Mode == LayerPlacementMode.Absolute && !explicitLayerSaved.UseSourceLayer &&
+                explicitLayerSaved.AbsoluteLayer == 15 && explicitLayerSaved.Direction == RelativeLayerDirection.Down,
+                "LAYER_UX P1 Quick Settings saves explicit layer + one-direction collision escape through the shared Settings Draft");
+
+            quick.QuickAbsoluteLayerBox.Text = "";
+            quick.QuickAbsoluteLayerBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)!.UpdateSource();
+            new ButtonAutomationPeer(quick.QuickLayerSearchUp).Invoke();
+            await Idle();
+            var blankLayerSaved = scope.Current.IntentPalettes.Single(x => x.Id == set.Id).Relation.Layer;
+            Assert(blankLayerSaved.UseSourceLayer && blankLayerSaved.Direction == RelativeLayerDirection.Up,
+                "LAYER_UX P1 clearing the quick specified-layer number restores Source-layer placement without a second mode");
+
+            new ButtonAutomationPeer(quick.QuickLayerUpOne).Invoke();
+            await Idle();
+
             var quickDraftBeforePresentationReset = vm.PlacementQuickDraft;
             Assert(vm.ShapeCurrentIntentSetCommand.CanExecute(IntentTileShape.Square),
                 "PLACEMENT_QUICK_SETTINGS P1 existing presentation quick action is admitted after placement commit");
