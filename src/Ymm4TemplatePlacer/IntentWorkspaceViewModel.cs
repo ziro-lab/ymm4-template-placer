@@ -46,6 +46,7 @@ public sealed partial class PlacerViewModel
             intentInitialized = true;
             InitializeIntentTileOrdering(); InitializeIntentTileEditing(); InitializeGenericLayerTarget();
             ExecuteIntentTileCommand = new ActionCommand(x => !intentExecuting && tileEditState == IntentTileEditState.Idle && settingsAvailable && undo != null &&
+                !PlacementQuickSettingsBlocksPlacement &&
                 x is IntentTileChoice tile && tile.Available && (!tile.IsGeneric || GenericLayerReadyForExecution) && IntentTiles.Any(x => ReferenceEquals(x, tile)),
                 x => ExecuteIntentTileFromCommand((IntentTileChoice)x!));
             OpenIntentSettingsCommand = new ActionCommand(_ => true, _ => IntentSettingsRequested?.Invoke(this, EventArgs.Empty));
@@ -276,6 +277,8 @@ public sealed partial class PlacerViewModel
         if (intentExecuting || tileEditState != IntentTileEditState.Idle ||
             !IntentTiles.Any(x => ReferenceEquals(x, tile)) || selectedIntentSet?.Id != tile.PaletteId)
             throw new InvalidOperationException("表示しているセットが変わりました。演出を選び直してください。");
+        if (PlacementQuickSettingsBlocksPlacement)
+            throw new InvalidOperationException("配置のクイック設定を反映できていません。設定を確認してから配置してください。");
         if (undo == null || !settingsAvailable)
             throw new InvalidOperationException("現在は配置できません。Toolと設定を確認してください。");
         if (PlacementContext != PlacementContext.Selection || selectedIntentSet?.Targeted == null)
@@ -316,6 +319,8 @@ public sealed partial class PlacerViewModel
     {
         if (intentExecuting || tileEditState != IntentTileEditState.Idle || !IntentTiles.Any(x => ReferenceEquals(x, tile)) || selectedIntentSet?.Id != tile.PaletteId)
             throw new InvalidOperationException("表示しているセットが変わりました。演出を選び直してください。");
+        if (PlacementQuickSettingsBlocksPlacement)
+            throw new InvalidOperationException("配置のクイック設定を反映できていません。設定を確認してから配置してください。");
         if (undo == null || !settingsAvailable) throw new InvalidOperationException("現在は配置できません。Toolと設定を確認してください。");
         intentExecuting = true; ExecuteIntentTileCommand.RaiseCanExecuteChanged();
         try

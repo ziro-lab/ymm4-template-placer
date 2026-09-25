@@ -34,7 +34,13 @@ public partial class IntentPalettePanel : UserControl
             CloseTileMenu();
         };
         DataContextChanged += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
-        PanelQuickSettingsPopup.Closed += (_, _) => { DetachOwnerQuickDismiss(); PanelQuickSettingsButton.IsChecked = false; quickPopupSetId = null; };
+        PanelQuickSettingsPopup.Closed += (_, _) =>
+        {
+            observedRoot?.EndPanelQuickSettings();
+            DetachOwnerQuickDismiss();
+            PanelQuickSettingsButton.IsChecked = false;
+            quickPopupSetId = null;
+        };
         IsVisibleChanged += (_, _) => { if (!IsVisible) PanelQuickSettingsButton.IsChecked = false; };
     }
     private void ObserveOwnerWindow(Window? next)
@@ -67,6 +73,9 @@ public partial class IntentPalettePanel : UserControl
             if (PanelQuickSettingsPopup.Child is FrameworkElement popupRoot &&
                 (ReferenceEquals(source, popupRoot) || popupRoot.IsAncestorOf(source))) return;
         }
+        // Settle a valid placement quick edit before the owner-window click is
+        // allowed to continue into a placement command using saved settings.
+        observedRoot?.EndPanelQuickSettings();
         // Keep interaction inside the Popup open. Any remaining owner-window mouse
         // input is outside quick settings, so close without consuming that YMM4 click.
         PanelQuickSettingsButton.IsChecked = false;
@@ -76,6 +85,7 @@ public partial class IntentPalettePanel : UserControl
     {
         // WPF Popup owns a separate native surface. Tie its visibility back to the
         // actual YMM4 owner window so it cannot remain stranded over another app.
+        observedRoot?.EndPanelQuickSettings();
         PanelQuickSettingsButton.IsChecked = false;
     }
 
@@ -102,6 +112,7 @@ public partial class IntentPalettePanel : UserControl
         quickPopupSetId = vm.SelectedIntentSet?.Id;
         AttachOwnerQuickDismiss();
         vm.BeginPanelQuickSettings();
+        PanelQuickSettingsSurface.SelectDefaultPage();
     }
     private void ThemeChanged(object? sender, PropertyChangedEventArgs e)
     {

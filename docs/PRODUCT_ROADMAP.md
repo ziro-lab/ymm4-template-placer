@@ -325,7 +325,7 @@ Release #760 / run `36068432875`:
 
 Docs-only closeout commits after the tested source do not constitute a newer tested product build.
 
-### 5C. Placement quick settings — ACTIVE
+### 5C. Placement quick settings — FIRST SLICE RELEASE GREEN / OWNER HANDS-ON NEXT
 
 Primary question:
 
@@ -351,6 +351,10 @@ Direction:
 - avoid duplicating validation, persistence or placement semantics.
 
 The design should optimize “small correction before the next placement”, not reproduce the full Settings screen in miniature.
+
+First-slice implementation is Release GREEN at exact tested source `9dae643cb9c29780783dde265d41dc4a90f01a62` by Release #770 / run `36076134931`: **1,277 ASSERT PASS / 0 FAIL**, `PLACEMENT_QUICK_SETTINGS_P0/P1/P2=PASS`, exact distribution-DLL smoke and PackageVerified PASS.
+
+The implemented slice is intentionally bounded to start/center/end alignment, target-span/template duration and one-layer up/down on Targeted Sets. P3 owner hands-on is next; do not add neighbor compound recipes or numeric quick inputs before that review.
 
 Exit:
 

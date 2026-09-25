@@ -43,13 +43,14 @@ public sealed partial class PlacerViewModel
     {
         CancelScheduledSettingsCommit(); settingsCommitRevision++;
         SetSettingsCommitState(SettingsCommitPhase.Idle, "変更を反映しました。今回の変更は元に戻せます。");
+        PlacementQuickSettingsCommitCompleted();
     }
     // One Dispatcher operation coalesces an edit burst; there is no polling timer.
     // Settings persistence is high-risk, so this path stays in the stable-core Focused native profile.
     private void RequestSettingsAutoCommit()
     {
         rollbackIntentSettingsCommand?.RaiseCanExecuteChanged();
-        if (activeTask != "intent-settings" || IntentSettings?.HasChanges != true ||
+        if ((activeTask != "intent-settings" && !placementQuickSettingsOpen) || IntentSettings?.HasChanges != true ||
             settingsCommitPhase is SettingsCommitPhase.Committing or SettingsCommitPhase.Conflict or SettingsCommitPhase.Disposed ||
             settingsCommitOperation != null) return;
         var dispatcher = Application.Current?.Dispatcher;
@@ -60,7 +61,7 @@ public sealed partial class PlacerViewModel
         {
             if (epoch != settingsCommitEpoch || !ReferenceEquals(session, IntentSettings)) return;
             settingsCommitOperation = null;
-            if (activeTask == "intent-settings") TryCommitSettingsAutomatically();
+            if (activeTask == "intent-settings" || placementQuickSettingsOpen) TryCommitSettingsAutomatically();
         }));
     }
     private bool TryCommitSettingsAutomatically()

@@ -36,6 +36,7 @@ internal static partial class NativeProof
         VerifyBehaviorPreviewDescription();
         await VerifyBehaviorPreviewDiagram(timeline);
         VerifyNativeHistoryCommandSurface();
+        await VerifyPlacementQuickSettings(timeline, undo);
 
         var profile = (Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_NATIVE_PROFILE") ?? "checkpoint").ToLowerInvariant();
         if (profile == "focused")

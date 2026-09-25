@@ -51,6 +51,7 @@ public sealed partial class PlacerViewModel
 
     public void BeginPanelQuickSettings()
     {
+        BeginPlacementQuickSettings();
         if (PanelQuickPresentation == null || !panelQuickDraftDirty)
         {
             PanelQuickPresentation = new(settings.Presentation);
@@ -61,6 +62,11 @@ public sealed partial class PlacerViewModel
             : "設定タブに反映待ちの入力があります。確定または「今回の変更を戻す」後に変更できます。";
         OnPropertyChanged(nameof(CanEditPanelQuickSettings));
         ShapeCurrentIntentSetCommand.RaiseCanExecuteChanged();
+    }
+
+    public void EndPanelQuickSettings()
+    {
+        EndPlacementQuickSettings();
     }
 
     private void PanelQuickPresentationEdited(object? sender, EventArgs e)
@@ -159,5 +165,6 @@ public sealed partial class PlacerViewModel
     {
         OnPropertyChanged(nameof(CanEditPanelQuickSettings));
         shapeCurrentIntentSetCommand?.RaiseCanExecuteChanged();
+        RefreshPlacementQuickSettingsAdmission();
     }
 }

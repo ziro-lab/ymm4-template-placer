@@ -70,6 +70,7 @@ public sealed partial class PlacerViewModel
     private void IntentSettingsEdited(object? sender, EventArgs e)
     {
         if (!ReferenceEquals(sender, IntentSettings)) return;
+        ObservePlacementQuickSettingsEdited();
         UpdateIntentSettingsCommands(); RequestSettingsAutoCommit();
     }
     public void ResetIntentSettings()
@@ -78,6 +79,7 @@ public sealed partial class PlacerViewModel
         var types = (timeline?.Items.Select(x => x.GetType()) ?? []).Concat(ItemSettings.Default.Templates.SelectMany(x => x.Items).Select(x => x.GetType()));
         IntentSettings = new(settings, types, timeline?.SelectedItems.ToArray() ?? []); IntentSettings.Edited += IntentSettingsEdited;
         ResetSettingsTransaction();
+        RebindPlacementQuickDraftAfterSettingsReset();
     }
     public void SaveIntentSettings()
     {
