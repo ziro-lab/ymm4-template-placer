@@ -6,6 +6,82 @@ Being listed here is not implementation approval or priority commitment. Current
 
 Current roadmap state: **Behavior Preview and native Undo/Redo are accepted; Placement Quick Settings first slice is Release GREEN with owner hands-on NEXT.** The “what I want” checklist and Full Settings Workspace are deferred for need-based re-evaluation. Do not use this Backlog to silently reorder those phases.
 
+## Candidate triage snapshot
+
+This is a lightweight decision aid for the **still-open** candidates below. It does not override `PRODUCT_ROADMAP.md`, and completed/current closeout work is not ranked here.
+
+Primary axes:
+
+- **Effect** — expected reduction in editing time, repeated actions, or cognitive load.
+- **Implementation** — expected product/UI/host-evidence/validation cost.
+
+Secondary filters:
+
+- **Reach** — how often / how broadly the benefit applies.
+- **Fit** — whether the idea strengthens Template Placer's core role of **showing and placing reusable content**, is merely adjacent, or introduces a separate editing responsibility.
+- **Future cost** — ongoing compatibility, maintenance, UI/state complexity, and regression surface.
+
+Ratings are deliberately coarse: **H / M / L**. Implementation uses **L / M / H / ?** where measurement or host evidence is required first.
+
+A useful candidate should not be promoted from score alone. Each candidate also has a **promotion trigger**: the concrete user problem/evidence that should exist before implementation starts.
+
+### Tier A — strong payoff / revisit first when the trigger appears
+
+| Candidate | Effect | Implementation | Reach | Fit | Future cost | Promotion trigger |
+| --- | --- | --- | --- | --- | --- | --- |
+| Set display / workspace profiles | H at scale | M | M-H | Core | L-M | Set-switch shortcuts exist, but the number of Sets still creates meaningful recognition/navigation cost in real projects |
+| Visual grouping / separators on tile surfaces | M | L | H | Core | L | Real Sets become hard to scan even though their tile order is already good |
+| Tile/action search | M now / H at scale | M | M-H | Core | M | Normal browsing/filtering becomes materially slower once Set/tile counts grow |
+| Repeat last Template Placer action | H if used repeatedly | M | M-H | Core-adjacent | M | Hands-on use shows a common repeated-placement loop where re-resolving current Context is predictable and clearly faster than choosing the tile again |
+| Item-type custom ordering | L-M | L | M | Core | L | Default Item-type ordering itself becomes a repeated navigation irritation |
+
+### Tier B — valuable, but evidence-gated or structurally heavier
+
+| Candidate | Effect | Implementation | Reach | Fit | Future cost | Promotion trigger |
+| --- | --- | --- | --- | --- | --- | --- |
+| Built-in Tachie Preset loading performance polish | H if the hot path is real | ? | M | Core | M | Profiling identifies a measurable built-in preset hot path that materially affects ordinary use |
+| Quick Palette near editing location | M-H | M-H | M-H | Core | M-H | Existing Set/tile shortcuts still leave a meaningful pointer-travel / surface-access cost |
+| Previous / next relevant Item selection | M | L-M | M-H | Adjacent | L | Repeated navigation between relevant Timeline items is measured as a common Template Placer workflow bottleneck |
+| Stronger Neighbor selectors | M-H | M | M | Core | M | Current finite selectors cannot express recurring real placement cases after ambiguity fan-out is already solved |
+| Stronger Target conditions | M-H | M-H | M | Core | M | Repeated real projects need explicit conditions such as count/type/role that cannot be represented safely today |
+| Fan-out over explicit selections / boundaries | H for batch workflows | H | M | Core | M-H | Users repeatedly perform the same safe placement once per explicit selected target/boundary |
+| Composite Placement Steps | H for compound workflows | H | L-M | Core | H | Multiple independent placements are repeatedly performed together and one atomic tile operation would materially reduce work |
+| Full Settings Workspace | M at large scale | H | L-M | Core | H | Compact Settings + Preview + filtering/search no longer scale to real Set/tile libraries |
+| “What I want” checklist | L-M after Preview | M-H | L-M | Core | H | Real users still cannot reliably express/understand common placement behavior using Preview + Quick Settings |
+
+### Tier C — useful ideas, but separate editing responsibility
+
+These may still be good tools, but they should not be promoted merely because the shared tile surface can launch them.
+
+| Candidate | Effect | Implementation | Reach | Fit | Future cost | Current direction |
+| --- | --- | --- | --- | --- | --- | --- |
+| Proportional split | M | M | M | Separate Item Action | M | Keep separate from normal Placement; prefer a host-native split route |
+| Effect Template apply / replace | H for effect-heavy workflows | H | M | Separate Item Action | H | Strong candidate for a bounded Item Action/effect executor, not a Placement Source |
+| Fit playback speed to exact span | M-H | M-H | L-M | Separate Item Action | M-H | Require a concrete compatible-media workflow before promotion |
+| Extend / trim to exact boundary | H in matching workflows | M-H | M | Separate Item Action | H | Destructive semantics need their own explicit target/safety design |
+| Match Item duration | M | M | M | Separate Item Action | M | Keep distinct from playback-rate fitting |
+| Fixed-gap multi-Item arrangement | M-H | H | L-M | Separate Item Action | H | Lower priority until a bounded Item Action responsibility is proven |
+| Generic finite Action Tiles | M | M-H | M | Adjacent / scope-expanding | H | Add concrete actions only; do not build a generic action framework first |
+
+### Tier D — do not broaden Template Placer for these
+
+- general automation / scripting language;
+- arbitrary C# expressions, DSLs, node graphs, loops or previous-step branching;
+- AI/fuzzy target selection;
+- general launcher behavior for external apps/scripts/macros;
+- native commands such as play/pause, delete, copy/paste merely because they can be surfaced as tiles, unless a Template-Placer-specific workflow problem is first demonstrated.
+
+### Reading the tiers
+
+The default preference is:
+
+1. **high effect + low/medium implementation + Core fit + low future cost**;
+2. then evidence-gated Core improvements;
+3. keep separate editing responsibilities separate unless a clear shared execution boundary proves worthwhile;
+4. do not implement generic extensibility in advance of a concrete workflow.
+
+This means a small Tier A improvement may outrank a much more powerful Tier B/C idea if it removes frequent friction without widening the product boundary.
+
 ## Performance polish
 
 ### Built-in Tachie Preset loading performance
