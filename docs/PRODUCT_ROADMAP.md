@@ -363,6 +363,30 @@ Exit:
 - Preview updates from the same Draft;
 - Compact Settings remains the complete ordinary configuration surface.
 
+### 5C.1 Neighbor ambiguity result fan-out — RELEASE GREEN / OWNER HANDS-ON PENDING
+
+A placement-friction correction discovered during the Phase 5C hands-on preparation.
+
+Authorities:
+
+- `NEIGHBOR_AMBIGUITY_FANOUT_DESIGN.md`;
+- `NEIGHBOR_AMBIGUITY_FANOUT_ACCEPTANCE.md`;
+- `NEIGHBOR_AMBIGUITY_FANOUT_WORKPLAN.md`.
+
+Implemented rule:
+
+- tied Neighbor candidates that collapse to one final result place immediately;
+- several distinct final results perform zero writes on first execution;
+- exact same ambiguity on the next execution places every distinct result;
+- changed Set / tile / settings / selection / scene / Source semantics re-arm instead of confirming;
+- alternatives preflight together, later alternatives avoid earlier planned occupancy and success is one native Undo;
+- fan-out is bounded to 32 distinct results;
+- strict automated expression / Resync paths remain single-result and are not silently fan-out enabled.
+
+Release #775 / run `36082152950` at exact tested source `7615dddfc6b9e7d6f54d8d77b2f65eceb185fffa` is GREEN with **1,292 ASSERT PASS / 0 FAIL**, `NEIGHBOR_AMBIGUITY_P0-P3=PASS`, exact distribution-DLL smoke and PackageVerified PASS.
+
+Owner hands-on should evaluate only the warning / second-execution feel before extending Neighbor grammar further.
+
 ### 5D. “What I want” checklist — DEFERRED / RE-EVALUATE
 
 The checklist is no longer the automatic next phase.
