@@ -215,6 +215,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     public void LoadState(ToolState stateData) { }
     public void Dispose()
     {
+        DisposePanelQuickSettings();
         DisposeAutomaticSettingsSession();
         disposedTransientWork ??= CaptureTransientWork();
         CancelExpressionNavigation(true); CancelTachiePresetApply(); CancelTachiePresetCalibration(); DisposeVoiceFreshness(); DisposePresetDiscovery();
