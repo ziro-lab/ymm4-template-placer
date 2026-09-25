@@ -61,6 +61,7 @@ internal static class TachiePresetSourceMaterializer
             PlacementSourceKind.TachiePreset,
             [item],
             item.Length,
+            item.Layer,
             source.CharacterName,
             semanticHash,
             EnsureCurrent);
