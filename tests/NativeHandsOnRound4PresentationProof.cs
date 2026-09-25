@@ -40,21 +40,31 @@ internal static partial class NativeProof
         var before = Signature(timeline);
         Round4Assert(!RelativeVisuals(palette).OfType<FrameworkElement>().Any(x => x.Name == "IntentSetSettingsButton"),
             "B1", "normal placement has no permanent Set-wide button");
-        var titleY = palette.IntentContextTitleText.TranslatePoint(new Point(), palette).Y;
-        var layerY = palette.GenericLayerSurface.TranslatePoint(new Point(), palette).Y;
-        Round4Assert(palette.GenericLayerSurface.IsVisible && Math.Abs(titleY - layerY) < 2,
-            "B2", "inline Generic layer editor shares the context title row at the real narrow width");
+        palette.UpdateLayout();
+        var headerTop = palette.IntentContextHeader.TranslatePoint(new Point(), palette).Y;
+        var headerCenterY = headerTop + palette.IntentContextHeader.ActualHeight / 2;
+        var layerTop = palette.GenericLayerSurface.TranslatePoint(new Point(), palette).Y;
+        var layerCenterY = layerTop + palette.GenericLayerSurface.ActualHeight / 2;
+        Round4Assert(palette.GenericLayerSurface.IsVisible && Math.Abs(headerCenterY - layerCenterY) < 2,
+            "B2", "inline Generic layer editor stays vertically centered beside the fixed primary history controls");
         Round4Assert(palette.GenericLayerSurface.GenericTargetBox.IsVisible && palette.GenericLayerSurface.GenericOccupiedPicker.IsVisible &&
             palette.GenericLayerSurface.ActualHeight <= 48 && palette.IntentContextHeader.ActualHeight >= 48,
             "B3", "layer target and escape direction stay visible beside the two-line header while large history controls fill the header height");
-        palette.UpdateLayout();
-        var undoCenterBefore = palette.NativeUndoButton.TranslatePoint(
-            new Point(palette.NativeUndoButton.ActualWidth / 2, palette.NativeUndoButton.ActualHeight / 2), palette).X;
+        var undoLeftBefore = palette.NativeUndoButton.TranslatePoint(new Point(), palette).X;
+        var redoRightBefore = palette.NativeRedoButton.TranslatePoint(
+            new Point(palette.NativeRedoButton.ActualWidth, 0), palette).X;
+        var historyCenterBefore = (undoLeftBefore + redoRightBefore) / 2;
+        Round4Assert(Math.Abs(historyCenterBefore - palette.ActualWidth / 2) < 0.5,
+            "B3C", "the combined Undo/Redo control group is fixed at the exact horizontal center of the placement panel");
         vm.ObserveTimelinePointer(TimelinePointerOrigin.Item); timeline.SelectedItems = [first]; vm.EndTimelinePointer(); await Idle(); palette.UpdateLayout();
-        var undoCenterAfter = palette.NativeUndoButton.TranslatePoint(
-            new Point(palette.NativeUndoButton.ActualWidth / 2, palette.NativeUndoButton.ActualHeight / 2), palette).X;
-        Round4Assert(!palette.GenericLayerSurface.IsVisible && Math.Abs(undoCenterBefore - undoCenterAfter) < 0.5,
-            "B3H", "Undo/Redo stay at the exact same horizontal center when the right-side Generic layer controls disappear");
+        var undoLeftAfter = palette.NativeUndoButton.TranslatePoint(new Point(), palette).X;
+        var redoRightAfter = palette.NativeRedoButton.TranslatePoint(
+            new Point(palette.NativeRedoButton.ActualWidth, 0), palette).X;
+        var historyCenterAfter = (undoLeftAfter + redoRightAfter) / 2;
+        Round4Assert(!palette.GenericLayerSurface.IsVisible &&
+            Math.Abs(historyCenterBefore - historyCenterAfter) < 0.5 &&
+            Math.Abs(historyCenterAfter - palette.ActualWidth / 2) < 0.5,
+            "B3H", "Undo/Redo stay at the exact same panel center when the right-side Generic layer controls disappear");
         timeline.SelectedItems = []; vm.ObserveTimelinePointer(TimelinePointerOrigin.TimelineBackground); vm.EndTimelinePointer(); await Idle();
         try
         {
