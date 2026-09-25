@@ -24,6 +24,39 @@ Before changing architecture:
 
 This is performance polish, not a reason to reopen the accepted Placement Source architecture.
 
+## Set display profiles / workspace profiles
+
+Status: **CANDIDATE / NEED-DRIVEN SCALING**
+
+As Template Placer makes it practical to keep more Templates and Sets, the next cognitive-cost problem may become the number of Sets visible for a given production.
+
+Candidate concept:
+
+> Save and switch named **Set display configurations** for different kinds of videos or workflows.
+
+Examples may include normal episodes, battle-heavy episodes, explanation videos, shorts, or individual series.
+
+A profile should primarily describe the **view/composition of existing Sets**, not duplicate the Sets themselves. Candidate profile state may include:
+
+- which Sets are visible;
+- Set display/order within the profile;
+- optionally the initially selected Set;
+- only presentation state that materially reduces navigation cost.
+
+Core boundary:
+
+- one Set remains one authoritative Set with one placement rule/settings body;
+- the same Set may appear in multiple profiles;
+- editing a Set updates that shared Set everywhere it is referenced;
+- profiles must not become copied Settings databases or a second Set hierarchy;
+- ordinary Context -> Set -> tile behavior remains unchanged after a profile chooses the visible Set population.
+
+User problem:
+
+> Keep a large reusable Set library without forcing every production to expose every Set at once.
+
+This is intentionally not required for the current feature-complete line. Promote it only when real use shows that Set count itself has become a meaningful recognition/navigation cost after Set-switch shortcuts are available.
+
 ## Full Settings Workspace
 
 Status: **DEFERRED / NEED-DRIVEN AFTER QUICK-SETTINGS EVIDENCE**
