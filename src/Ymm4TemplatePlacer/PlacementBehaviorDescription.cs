@@ -37,6 +37,7 @@ public sealed record TargetedPlacementBehaviorDescription(
     LayerPlacementMode LayerMode,
     RelativeLayerDirection LayerDirection,
     string LayerOffsetText,
+    bool UseSourceLayer,
     string AbsoluteLayerText,
     string LayerMinimumText,
     string LayerMaximumText) : PlacementBehaviorDescription
@@ -115,6 +116,7 @@ public static class PlacementBehaviorProjection
             draft.LayerMode,
             draft.Direction,
             draft.LayerOffset,
+            draft.UseSourceLayer,
             draft.AbsoluteLayer,
             draft.LayerMinimum,
             draft.LayerMaximum);
@@ -196,8 +198,10 @@ internal static class PlacementBehaviorText
         var direction = description.LayerDirection == RelativeLayerDirection.Up ? "上" : "下";
         if (description.LayerMode == LayerPlacementMode.Absolute)
         {
-            var absolute = description.AbsoluteLayer is int layer ? layer.ToString(CultureInfo.InvariantCulture) : "未確定";
-            return $"レイヤー {absolute} / 塞がっていれば{direction}へ";
+            var absolute = description.UseSourceLayer
+                ? "元のレイヤー"
+                : description.AbsoluteLayer is int layer ? $"レイヤー {layer.ToString(CultureInfo.InvariantCulture)}" : "レイヤー未確定";
+            return $"{absolute} / 塞がっていれば{direction}へ";
         }
         var offset = description.LayerOffset is int value ? value.ToString(CultureInfo.InvariantCulture) : "未確定";
         return $"対象より{direction} {offset}レイヤー / 塞がっていれば{direction}へ";
@@ -243,9 +247,11 @@ internal static class PlacementBehaviorText
             _ => anchor
         };
         var direction = description.LayerDirection == RelativeLayerDirection.Up ? "上" : "下";
-        var absoluteLayer = description.AbsoluteLayer is int layerNumber ? layerNumber.ToString(CultureInfo.InvariantCulture) : "指定";
+        var absoluteLayer = description.UseSourceLayer
+            ? "元のレイヤー"
+            : description.AbsoluteLayer is int layerNumber ? $"レイヤー{layerNumber.ToString(CultureInfo.InvariantCulture)}" : "指定レイヤー";
         var layer = description.LayerMode == LayerPlacementMode.Absolute
-            ? $"レイヤー{absoluteLayer}を基準に配置します。塞がっていればさらに{direction}へ探します。"
+            ? $"{absoluteLayer}を基準に配置します。塞がっていればさらに{direction}へ探します。"
             : $"対象より{direction}の空いているレイヤーへ配置します。塞がっていればさらに{direction}へ探します。";
         var needsNeighbor = description.Duration == IntentDuration.UntilRelated ||
             description.Anchor is IntentAnchor.RelatedStart or IntentAnchor.RelatedEnd;
