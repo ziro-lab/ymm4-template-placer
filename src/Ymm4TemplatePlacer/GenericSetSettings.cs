@@ -9,19 +9,27 @@ public sealed class GenericSetDraft : IntentEditable
 {
     private readonly PaletteDefinition original;
     private string name, minimum, maximum, preferred;
-    private bool useTemplateLayer;
     private LayerSearchMode searchMode;
     private IntentEntryDraft? selectedEntry;
     public Guid Id => original.Id;
     public string Name { get => name; set { if (name == value) return; name = value; Notify(); Raise(nameof(Label)); } }
     public string Label => Name;
-    public bool UseTemplateLayer { get => useTemplateLayer; set { if (useTemplateLayer == value) return; useTemplateLayer = value; Notify(); Raise(nameof(UseSavedRange)); RaiseDescription(); } }
-    public bool UseSavedRange => !UseTemplateLayer;
+    public bool UseTemplateLayer
+    {
+        get => string.IsNullOrWhiteSpace(Preferred);
+        set
+        {
+            if (value == UseTemplateLayer) return;
+            Preferred = value ? "" : original.Layer.Preferred.ToString(CultureInfo.InvariantCulture);
+            Notify(); Raise(nameof(UseSavedRange)); RaiseDescription();
+        }
+    }
+    public bool UseSavedRange => true;
     public IReadOnlyList<IntentOption<LayerSearchMode>> OccupiedBehaviors => GenericLayerTargetDraft.Behaviors;
     public LayerSearchMode? OccupiedBehavior
     {
-        get => searchMode == LayerSearchMode.Legacy ? null : searchMode;
-        set { if (value == null || value == searchMode) return; searchMode = value.Value; Notify(); RaiseDescription(); }
+        get => searchMode;
+        set { if (value is not (LayerSearchMode.SearchUp or LayerSearchMode.SearchDown) || value == searchMode) return; searchMode = value.Value; Notify(); RaiseDescription(); }
     }
     public string Minimum { get => minimum; set { minimum = value; Notify(); RaiseDescription(); } }
     public string Maximum { get => maximum; set { maximum = value; Notify(); RaiseDescription(); } }
@@ -33,10 +41,11 @@ public sealed class GenericSetDraft : IntentEditable
     public IntentEntryDraft? SelectedEntry { get => selectedEntry; set { if (selectedEntry == value) return; selectedEntry = value; Raise(); } }
     public GenericSetDraft(PaletteDefinition source, IReadOnlyList<LibraryEntry> library)
     {
-        original = source; name = source.Name; useTemplateLayer = source.Layer.UseTemplateLayer; searchMode = source.Layer.SearchMode;
+        original = source; name = source.Name;
+        searchMode = source.Layer.SearchMode == LayerSearchMode.SearchDown ? LayerSearchMode.SearchDown : LayerSearchMode.SearchUp;
         minimum = source.Layer.Minimum.ToString(CultureInfo.InvariantCulture);
         maximum = source.Layer.Maximum.ToString(CultureInfo.InvariantCulture);
-        preferred = source.Layer.Preferred.ToString(CultureInfo.InvariantCulture);
+        preferred = source.Layer.UseTemplateLayer ? "" : source.Layer.Preferred.ToString(CultureInfo.InvariantCulture);
         foreach (var id in source.LibraryEntryIds) AddEntry(id, library);
         Entries.CollectionChanged += (_, _) => Notify(nameof(Entries));
     }
@@ -54,9 +63,14 @@ public sealed class GenericSetDraft : IntentEditable
     }
     public PaletteDefinition Build()
     {
-        var layer = UseTemplateLayer ? original.Layer with { UseTemplateLayer = true, SearchMode = LayerSearchMode.Legacy } : original.Layer with
+        var useSourceLayer = string.IsNullOrWhiteSpace(Preferred);
+        var layer = original.Layer with
         {
-            UseTemplateLayer = false, SearchMode = searchMode, Minimum = Number(Minimum, "最小レイヤー"), Maximum = Number(Maximum, "最大レイヤー"), Preferred = Number(Preferred, "優先レイヤー")
+            UseTemplateLayer = useSourceLayer,
+            SearchMode = searchMode,
+            Minimum = Number(Minimum, "最小レイヤー"),
+            Maximum = Number(Maximum, "最大レイヤー"),
+            Preferred = useSourceLayer ? original.Layer.Preferred : Number(Preferred, "配置レイヤー")
         };
         layer.Validate();
         var appearances = Entries.Select(x => x.Build()).ToDictionary(x => x.LibraryEntryId, x => new PaletteTileAppearance(x.DisplayAlias, x.Color, x.Shape));
@@ -111,7 +125,7 @@ public sealed partial class IntentSettingsSession
         for (var i = 2; ; i++) { var name = $"{stem} {i}"; if (!GenericSets.Any(x => x.Name == name)) return name; }
     }
     private void CreateGenericSet() => SelectedGenericSet = AddGenericDraft(new(Guid.NewGuid(), PaletteKind.Style, UniqueGenericName("新しい汎用セット"), null, [])
-        { Layer = new() { UseTemplateLayer = false, SearchMode = LayerSearchMode.DoNotPlace } });
+        { Layer = new() { UseTemplateLayer = true, SearchMode = LayerSearchMode.SearchUp } });
     private void DuplicateGenericSet()
     {
         var source = SelectedGenericSet?.Build() ?? throw new InvalidOperationException("複製するセットを選んでください。");
