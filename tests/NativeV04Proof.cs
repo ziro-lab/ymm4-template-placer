@@ -39,6 +39,7 @@ internal static partial class NativeProof
         await VerifyPlacementQuickSettings(timeline, undo);
         await VerifyPanelQuickSettingsLifecycle();
         await VerifyAsyncOperationLifecycle(timeline, undo);
+        await VerifyPlacementCommitFaultRecovery(timeline, undo);
         await VerifyNeighborAmbiguityFanout(timeline, undo);
 
         var profile = (Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_NATIVE_PROFILE") ?? "checkpoint").ToLowerInvariant();
