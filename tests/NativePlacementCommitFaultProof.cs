@@ -59,17 +59,24 @@ internal static partial class NativeProof
                     PlacementPlan.ProofCommitFaultInjection = null;
                 }
 
-                Assert(failed && Signature(timeline) != baseline,
-                    $"AUDIT_B08 injected {faultPoint} fault occurs only after live mutation has begun");
+                Assert(failed &&
+                    Signature(timeline) == baseline &&
+                    timeline.Items.Count == 1 &&
+                    ReferenceEquals(timeline.Items[0], existing) &&
+                    existing is { Frame: 100, Length: 20, Layer: 10, Remark: "B08 existing" },
+                    $"AUDIT_B08 {faultPoint} commit failure restores the exact pre-commit snapshot before returning the error");
+
+                var committed = plan.Commit(timeline, undo);
+                Assert(committed == 2 && Signature(timeline) != baseline,
+                    $"AUDIT_B08 normal commit remains usable after recovered {faultPoint} failure");
 
                 await undo.UndoAsync();
                 await Idle();
 
                 Assert(Signature(timeline) == baseline &&
                     timeline.Items.Count == 1 &&
-                    ReferenceEquals(timeline.Items[0], existing) &&
-                    existing is { Frame: 100, Length: 20, Layer: 10, Remark: "B08 existing" },
-                    $"AUDIT_B08 native Undo restores exact pre-commit state after {faultPoint} failure");
+                    ReferenceEquals(timeline.Items[0], existing),
+                    $"AUDIT_B08 recovered {faultPoint} failure does not poison the next successful native Undo");
             }
 
             Log("AUDIT_B08=PASS");
