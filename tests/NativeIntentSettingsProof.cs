@@ -67,6 +67,15 @@ internal static partial class NativeProof
                 panel.AbsoluteLayerRow.IsVisible && !panel.RelativeLayerRow.IsVisible &&
                 draft.Summary.Contains("レイヤー42", StringComparison.Ordinal) && draft.Summary.Contains("下", StringComparison.Ordinal),
                 "PLACEMENT_RULE P2 specified-layer Settings shows only relevant controls and summary describes layer/direction");
+            draft.AbsoluteLayer = "0";
+            await Idle();
+            Assert(!draft.UseSourceLayer && draft.Summary.Contains("レイヤー0", StringComparison.Ordinal),
+                "LAYER_UX P1 explicit layer zero remains distinct from blank Source-layer placement");
+            draft.LayerMode = LayerPlacementMode.RelativeToTarget; await Idle();
+            draft.LayerMode = LayerPlacementMode.Absolute; await Idle();
+            Assert(draft.AbsoluteLayer == "0" && !draft.UseSourceLayer,
+                "LAYER_UX P1 explicit layer zero survives relative/specified mode switching and automatic persistence");
+            draft.AbsoluteLayer = "42";
             draft.LayerMode = LayerPlacementMode.RelativeToTarget; draft.Direction = RelativeLayerDirection.Up;
             await Idle();
             Assert(draft.ShowRelativeLayerPlacement && !draft.ShowAbsoluteLayerPlacement &&
