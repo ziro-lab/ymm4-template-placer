@@ -238,7 +238,11 @@ public sealed partial class IntentPaletteDraft : IntentEditable
         text[nameof(MaximumGap)] = source.Relation.MaximumNeighborGap?.ToString(CultureInfo.InvariantCulture) ?? "";
         text[nameof(BoundaryTolerance)] = source.Relation.BoundaryTolerance.ToString(CultureInfo.InvariantCulture);
         text[nameof(LayerOffset)] = source.Relation.Layer.Offset.ToString(CultureInfo.InvariantCulture);
-        text[nameof(AbsoluteLayer)] = source.Relation.Layer.UseSourceLayer ? "" : source.Relation.Layer.AbsoluteLayer.ToString(CultureInfo.InvariantCulture);
+        var useSourceLayer = source.Relation.Layer.UseSourceLayer ||
+            (source.Relation.Layer.Mode == LayerPlacementMode.RelativeToTarget && source.Relation.Layer.AbsoluteLayer == 0);
+        if (useSourceLayer && !model.Relation.Layer.UseSourceLayer)
+            model = model with { Relation = model.Relation with { Layer = model.Relation.Layer with { UseSourceLayer = true } } };
+        text[nameof(AbsoluteLayer)] = useSourceLayer ? "" : source.Relation.Layer.AbsoluteLayer.ToString(CultureInfo.InvariantCulture);
         text[nameof(LayerMinimum)] = source.Relation.Layer.Minimum.ToString(CultureInfo.InvariantCulture);
         text[nameof(LayerMaximum)] = source.Relation.Layer.Maximum.ToString(CultureInfo.InvariantCulture);
         characterRestricted = !string.IsNullOrWhiteSpace(source.Target.CharacterName);
@@ -280,7 +284,9 @@ public sealed partial class IntentPaletteDraft : IntentEditable
             BoundaryTolerance = ShowBoundaryTolerance ? Number(BoundaryTolerance, "境界の許容間隔") : model.Relation.BoundaryTolerance,
             Layer = model.Relation.Layer with {
                 Offset = ShowRelativeLayerPlacement ? Number(LayerOffset, "対象からの段数") : model.Relation.Layer.Offset,
-                UseSourceLayer = ShowAbsoluteLayerPlacement && string.IsNullOrWhiteSpace(AbsoluteLayer),
+                UseSourceLayer = ShowAbsoluteLayerPlacement
+                    ? string.IsNullOrWhiteSpace(AbsoluteLayer)
+                    : model.Relation.Layer.UseSourceLayer,
                 AbsoluteLayer = ShowAbsoluteLayerPlacement && !string.IsNullOrWhiteSpace(AbsoluteLayer)
                     ? Number(AbsoluteLayer, "配置するレイヤー番号") : model.Relation.Layer.AbsoluteLayer,
                 Minimum = Number(LayerMinimum, "探索レイヤーの最小"), Maximum = Number(LayerMaximum, "探索レイヤーの最大") } };
