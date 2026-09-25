@@ -1,6 +1,6 @@
 # Neighbor Ambiguity Fan-out Acceptance
 
-Status: **ACTIVE**
+Status: **P0-P3 NATIVE ACCEPTED / P4 OWNER HANDS-ON PENDING**
 
 ## P0 — result resolver
 
@@ -41,6 +41,25 @@ Prove the multi-result path for:
 - registered Tachie Preset Source.
 
 No Source kind may reuse the same pending mutable Item instance across alternatives.
+
+## Native acceptance evidence
+
+Exact tested product/test/package source: `7615dddfc6b9e7d6f54d8d77b2f65eceb185fffa`.
+
+Release #775 / run `36082152950`:
+
+- **1,292 ASSERT PASS / 0 FAIL**;
+- `NEIGHBOR_AMBIGUITY_P0=PASS`;
+- `NEIGHBOR_AMBIGUITY_P1=PASS`;
+- `NEIGHBOR_AMBIGUITY_P2=PASS`;
+- `NEIGHBOR_AMBIGUITY_P3=PASS`;
+- distribution build and proof build: **0 warnings / 0 errors**;
+- exact distribution-DLL smoke PASS;
+- PackageVerified PASS;
+- Release artifact `10842118808`, uploaded artifact SHA256 `2b08dc3a6ba7f485b33125edfa5bc48a18d89f399e7a65952cfa1d409a107439`;
+- distribution DLL SHA256 `f75d7be8bf2be3b5d0dcf645ec98886db2ebc0af08f8c7c1672dc305aa4875d0`.
+
+P0-P3 are therefore native accepted. P4 remains an owner hands-on UX decision.
 
 ## P4 — owner hands-on
 
