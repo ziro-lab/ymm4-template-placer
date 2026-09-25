@@ -16,13 +16,13 @@
     </TextBlock>
    </StackPanel>
    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-    <Button x:Name="NativeUndoButton" Content="↶  戻す" Command="{Binding NativeUndoCommand}" Width="88" Height="48" Padding="8,0" FontSize="14" FontWeight="SemiBold"
+    <Button x:Name="NativeUndoButton" Content="↶ 戻す" Command="{Binding NativeUndoCommand}" Width="80" Height="48" Padding="6,0" FontSize="14" FontWeight="SemiBold"
      ToolTip="戻す（YMM4の元に戻す）" ToolTipService.ShowOnDisabled="True" AutomationProperties.Name="戻す"/>
-    <Button x:Name="NativeRedoButton" Content="↷  やり直す" Command="{Binding NativeRedoCommand}" Width="96" Height="48" Padding="8,0" FontSize="14" FontWeight="SemiBold" Margin="6,0,0,0"
+    <Button x:Name="NativeRedoButton" Content="↷ やり直す" Command="{Binding NativeRedoCommand}" Width="88" Height="48" Padding="6,0" FontSize="14" FontWeight="SemiBold" Margin="4,0,0,0"
      ToolTip="やり直す（YMM4のやり直し）" ToolTipService.ShowOnDisabled="True" AutomationProperties.Name="やり直す"/>
    </StackPanel>
-   <Grid Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="8,0,0,0">
-    <local:GenericLayerTargetPanel x:Name="GenericLayerSurface" Width="154"/>
+   <Grid Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
+    <local:GenericLayerTargetPanel x:Name="GenericLayerSurface" Width="82"/>
    </Grid>
   </Grid>
 
