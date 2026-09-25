@@ -109,6 +109,6 @@ internal static partial class NativeProof
             !JsonSerializer.Serialize(old).Contains("SearchMode", StringComparison.Ordinal),
             "D11", "absent search field preserves legacy range wrap and template-layer semantics; default serialization is unchanged");
         Apply(palette.Layer); await Idle(); SaveNamedView(view, "v042-round3-layer-360.png");
-        Round3Phase("D", "hands-on-round3-layer.json"); Log("HANDS_ON_ROUND3_D=PASS");
+        Round3Phase("D", "hands-on-round3-layer.json"); Log("HANDS_ON_ROUND3_D=PASS"); Log("LAYER_UX_P2=PASS");
     }
 }
