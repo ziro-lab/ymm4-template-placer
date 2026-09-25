@@ -4,7 +4,7 @@ This is the collection point for **unimplemented or deferred product ideas**.
 
 Being listed here is not implementation approval or priority commitment. Current implementation order is controlled by `docs/PRODUCT_ROADMAP.md`.
 
-Current roadmap state: **Behavior Preview and native Undo/Redo are accepted; Placement Quick Settings first slice is Release GREEN with owner hands-on NEXT.** The “what I want” checklist and Full Settings Workspace are deferred for need-based re-evaluation. Do not use this Backlog to silently reorder those phases.
+Current roadmap state: **Behavior Preview and native Undo/Redo are accepted; Placement Quick Settings and Neighbor ambiguity fan-out are Release GREEN with owner hands-on NEXT; the pre-release lifecycle audit safety closeout is Release GREEN.** The “what I want” checklist and Full Settings Workspace are deferred for need-based re-evaluation. Do not use this Backlog to silently reorder those phases.
 
 ## Candidate triage snapshot
 

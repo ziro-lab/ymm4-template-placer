@@ -64,6 +64,12 @@ public sealed partial class PlacerViewModel
         {
             await ResyncAsync();
         }
+        catch (OperationCanceledException)
+        {
+            HasError = false;
+            Status = "画面・作業タブまたは対象シーンが変わったため、再同期を中止しました。必要ならもう一度実行してください。";
+            UpdateCommands();
+        }
         catch (Exception ex)
         {
             HasError = true;
@@ -79,6 +85,7 @@ public sealed partial class PlacerViewModel
 
     internal async Task<ResyncPlan> ResyncAsync(CancellationToken token = default)
     {
+        using var lifetime = BeginAsyncOperation(token);
         CloseExpressionTrialSession();
         var current = RequireTimeline();
         var manager = undo ?? throw new InvalidOperationException("YMM4の「元に戻す」に接続できません。");
@@ -96,17 +103,18 @@ public sealed partial class PlacerViewModel
             settingsSnapshot,
             PresetTargetResolver,
             selected,
-            token);
+            lifetime.Token);
 
-        token.ThrowIfCancellationRequested();
+        lifetime.Validate();
         if (!ReferenceEquals(settings, settingsSnapshot) ||
             !ReferenceEquals(current, timeline) ||
             !current.SelectedItems.SequenceEqual(selected, ReferenceEqualityComparer.Instance))
             throw new InvalidOperationException("再同期の準備中に設定・シーンまたは選択が変わりました。何も変更していません。");
 
         legacyAndTemplate.ValidateCurrent(current, settings);
-        registered.ValidateCurrent(current, settings, token);
+        registered.ValidateCurrent(current, settings, lifetime.Token);
 
+        lifetime.Validate();
         var combinedPlan = PlacementPlan.Combine(
             current,
             [legacyAndTemplate.Result.Plan, registered.Result.Plan]);
@@ -116,6 +124,7 @@ public sealed partial class PlacerViewModel
             legacyAndTemplate.Result.Ignored + registered.Result.Ignored,
             legacyAndTemplate.Result.Skipped.Concat(registered.Result.Skipped).ToArray());
 
+        lifetime.Validate();
         combinedPlan.Commit(current, manager);
         HasError = false;
         Status = $"関連演出を再同期: {result.Plan.UpdateCount}件更新 / {result.Unchanged}件変更なし / {result.Skipped.Count}件スキップ。" +

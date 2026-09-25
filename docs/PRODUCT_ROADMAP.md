@@ -387,6 +387,40 @@ Release #775 / run `36082152950` at exact tested source `7615dddfc6b9e7d6f54d8d7
 
 Owner hands-on should evaluate only the warning / second-execution feel before extending Neighbor grammar further.
 
+### 5C.2 Pre-release lifecycle audit closeout — RELEASE GREEN
+
+A repository-wide pre-release audit found no reason to redesign Placement, Settings or native Undo. The bounded release-safety findings were closed without reopening those architectures.
+
+Completed items:
+
+- **A01** — removed only the three verified unreferenced private helpers;
+- **A02** — current README / usage now documents Placement Quick Settings, YMM4-native Undo/Redo and Neighbor second-execution confirmation;
+- **A03** — historical validation JSON remains generated/validated in CI evidence but is no longer copied into the installed `.ymme` payload;
+- **B01** — normal async targeted placement and registered-preset Resync are bound to the initiating task/workspace lifetime; tab/workspace/scene/Dispose changes cancel before commit;
+- **B02** — queued presentation Quick Settings persistence is cancelled on root Dispose, Draft subscriptions are detached and late callbacks are lifetime-guarded;
+- **B08** — fault injection reproduced a real gap: native Undo alone did not restore a commit that threw after live mutation began. `PlacementPlan` now restores its exact pre-commit snapshot on commit failure, without adding a second Undo history.
+
+B08 was not closed by assumption: Release proof injects failures after updates, after `Timeline.Items` replacement and after refresh, and verifies exact immediate restoration, a later successful commit, and a later normal native Undo.
+
+Exact tested product/test/package source: `e03ca525c255532faa1d2865b6b7ad59fc05cf7b`.
+
+Release #787 / run `36136152209`:
+
+- **1,305 ASSERT PASS / 0 FAIL**;
+- `AUDIT_B01=PASS`;
+- `AUDIT_B02=PASS`;
+- `AUDIT_B08=PASS`;
+- distribution build and proof build: **0 warnings / 0 errors**;
+- exact distribution-DLL smoke PASS;
+- PackageVerified PASS;
+- distribution DLL SHA256 `73fd42042a423415a55af8c9aea46fb71eb54cacbb1b88d89809569fb0e02d32`;
+- Release artifact `10865061548`;
+- uploaded artifact SHA256 `f36f439552801c6b27207b5d0bc18b4a704534100dcd7fe0d9d337769ddc00ee`.
+
+Docs-only closeout commits after that tested source do not constitute a newer tested product build.
+
+Remaining audit items stay deferred/evidence-gated rather than blocking this closeout: legacy Panel cleanup, clone/performance measurement, strict/normal Neighbor calculation deduplication, Focused test routing cleanup, historical validator consolidation, public-wrapper compatibility review, owner hands-on and built-in Tachie Preset performance measurement.
+
 ### 5D. “What I want” checklist — DEFERRED / RE-EVALUATE
 
 The checklist is no longer the automatic next phase.

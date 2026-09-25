@@ -67,6 +67,16 @@ public sealed class PlacementPlan
             x.Item.Group != x.Group || x.Item.Remark != x.Remark || !Equals(ItemCharacters.Get(x.Item), x.Character)))
             throw new InvalidOperationException("計画後にタイムラインまたは配置アイテムが変更されました。操作をやり直してください。");
     }
+#if YMM4_PROOF
+    internal static Action<string>? ProofCommitFaultInjection { get; set; }
+#endif
+    private static void InjectCommitFault(string point)
+    {
+#if YMM4_PROOF
+        ProofCommitFaultInjection?.Invoke(point);
+#endif
+    }
+
     private int Apply(Timeline timeline)
     {
         foreach (var update in updates)
@@ -74,22 +84,70 @@ public sealed class PlacementPlan
             update.Item.Frame = update.Frame; update.Item.Length = update.Length;
             update.Item.Layer = update.Layer; update.Item.Remark = update.Remark;
         }
-        timeline.Items = after; timeline.RefreshTimelineLengthAndMaxLayer();
+        InjectCommitFault("after-updates");
+        timeline.Items = after;
+        InjectCommitFault("after-items");
+        timeline.RefreshTimelineLengthAndMaxLayer();
+        InjectCommitFault("after-refresh");
         return ChangeCount;
     }
+    private void RestoreBeforeAfterCommitFailure(Timeline timeline)
+    {
+        // This is exception-local restoration, not an independent Undo history.
+        // PlacementPlan already owns the exact pre-commit object/list snapshot.
+        timeline.Items = before;
+        foreach (var state in observed)
+        {
+            if (!before.Contains(state.Item)) continue;
+            state.Item.Frame = state.Frame;
+            state.Item.Length = state.Length;
+            state.Item.Layer = state.Layer;
+            state.Item.Group = state.Group;
+            state.Item.Remark = state.Remark;
+        }
+        timeline.RefreshTimelineLengthAndMaxLayer();
+    }
+
     public int Commit(Timeline timeline, UndoRedoManager undo)
     {
         ValidateCurrent(timeline);
         if (ChangeCount == 0) return 0;
         undo.Record();
-        var count = Apply(timeline);
-        undo.Record();
-        return count;
+        try
+        {
+            var count = Apply(timeline);
+            undo.Record();
+            return count;
+        }
+        catch (Exception commitError)
+        {
+            try
+            {
+                RestoreBeforeAfterCommitFailure(timeline);
+                // Close the native record at the exact pre-commit state. The
+                // failed operation itself must not become a partial Undo entry.
+                undo.Record();
+            }
+            catch (Exception restoreError)
+            {
+                throw new AggregateException(
+                    "配置の確定中にエラーが発生し、開始前の状態へ完全に戻せませんでした。YMM4プロジェクトを確認してください。",
+                    commitError,
+                    restoreError);
+            }
+            throw;
+        }
     }
     internal int CommitWithinOpenRecord(Timeline timeline)
     {
         ValidateCurrent(timeline);
-        return ChangeCount == 0 ? 0 : Apply(timeline);
+        if (ChangeCount == 0) return 0;
+        try { return Apply(timeline); }
+        catch
+        {
+            RestoreBeforeAfterCommitFailure(timeline);
+            throw;
+        }
     }
 }
 public static class PlacementMath

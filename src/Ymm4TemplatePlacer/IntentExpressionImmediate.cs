@@ -424,5 +424,4 @@ public sealed partial class PlacerViewModel
         }
         catch (InvalidOperationException) { return false; }
     }
-    private bool HasPendingRelativeAssignments() => UsesRelativeExpressions && PendingRelativeExpressionCount > 0;
 }

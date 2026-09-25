@@ -47,6 +47,9 @@ $currentNativeStages=@(
  'BEHAVIOR_PREVIEW_P1',
  'NATIVE_UNDO_REDO_P0','NATIVE_UNDO_REDO_P1',
  'PLACEMENT_QUICK_SETTINGS_P0','PLACEMENT_QUICK_SETTINGS_P1','PLACEMENT_QUICK_SETTINGS_P2',
+ 'AUDIT_B02',
+ 'AUDIT_B01',
+ 'AUDIT_B08',
  'NEIGHBOR_AMBIGUITY_P0','NEIGHBOR_AMBIGUITY_P1','NEIGHBOR_AMBIGUITY_P2','NEIGHBOR_AMBIGUITY_P3',
  'P1','P2','P3','P4','P5','P6','P7','P8','P9',
  'V04','UX_ACCEPTANCE','UX_WORKFLOW_ACCEPTANCE','WUX13',
@@ -79,15 +82,6 @@ if ($smoke -notmatch '(?m)^build=distribution\r?$' -or $smoke -notmatch "(?m)^sh
 Copy-Item docs/USAGE.md (Join-Path $package 'README.md')
 Copy-Item LICENSE.md $package
 Copy-Item THIRD_PARTY_NOTICES.md $package
-Copy-Item (Join-Path $OutputDir 'v04-acceptance.json') $package
-Copy-Item (Join-Path $OutputDir 'ux-acceptance.json') $package
-Copy-Item (Join-Path $OutputDir 'ux-workflow-acceptance.json') $package
-Copy-Item (Join-Path $OutputDir 'v042-acceptance.json') $package
-Copy-Item (Join-Path $OutputDir 'v042-uiux-acceptance.json') $package
-Copy-Item (Join-Path $OutputDir 'hands-on-ux-polish.json') $package
-Copy-Item (Join-Path $OutputDir 'hands-on-round2.json') $package
-$round3Payload=@('hands-on-round3.json','hands-on-round3-appearance.json','hands-on-round3-shortcuts.json','hands-on-round3-settings.json','hands-on-round3-layer.json','hands-on-round3-freshness.json','hands-on-round3-navigation.json','hands-on-round3-playback-observation.json','round3-evidence-guard-tests.json')
-foreach($name in $round3Payload){Copy-Item (Join-Path $OutputDir $name) $package}
 $usage=Get-Content -Raw (Join-Path $package 'README.md')
 if ($usage -notmatch '^# YMM4 Template Placer v0\.5\.0') { throw 'Obsolete package usage documentation' }
 foreach($section in @('現在の v0.5.0 系の使い方です','## 配置パネルの簡易設定・固定列・位置ショートカット','## 汎用配置のレイヤーをすばやく指定する','## 表情プリセットを使う','Setへ登録','## 表情をまとめて：行クリックと即時反映','## Excelと未配置作業の保護','⚙ 簡易設定','マウスホイールで±1','行の下端にマウスを合わせて上下ドラッグ','数値を直接入力してEnter','今回の変更を戻す','一覧を読み直す','YMM4側の別の場所をクリックすると閉じます','他のアイテムへコピー','「複数種類」')) {
@@ -118,7 +112,7 @@ if($LASTEXITCODE -ne 0 -or $sourceTree -cne (git rev-parse 'HEAD^{tree}')) {thro
  distribution_dll_sha256=$dllHash; ymme_install_folder=$installFolder
 } | ConvertTo-Json | Set-Content (Join-Path $OutputDir 'provenance.json')
 Copy-Item (Join-Path $OutputDir 'provenance.json') $package
-$expected=@('Ymm4TemplatePlacer.dll','Ymm4TemplatePlacer.deps.json','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll','README.md','LICENSE.md','THIRD_PARTY_NOTICES.md','provenance.json','v04-acceptance.json','ux-acceptance.json','ux-workflow-acceptance.json','v042-acceptance.json','v042-uiux-acceptance.json','hands-on-ux-polish.json','hands-on-round2.json') + $round3Payload
+$expected=@('Ymm4TemplatePlacer.dll','Ymm4TemplatePlacer.deps.json','DocumentFormat.OpenXml.dll','DocumentFormat.OpenXml.Framework.dll','README.md','LICENSE.md','THIRD_PARTY_NOTICES.md','provenance.json')
 $files=@(Get-ChildItem $package -File -Recurse)
 if ($files.Count -ne $expected.Count -or @($files | Where-Object { $_.Name -notin $expected -or $_.Directory.FullName -ne (Resolve-Path $package).Path }).Count -ne 0) { throw 'Unexpected, nested or missing distributable content' }
 
