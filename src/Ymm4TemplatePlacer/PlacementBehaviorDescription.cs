@@ -222,11 +222,12 @@ internal static class PlacementBehaviorText
         };
     }
 
-    internal static string GenericLayer(GenericPlacementBehaviorDescription description) =>
-        description.UseTemplateLayer ? "テンプレートのレイヤー" :
-        description.SearchMode == LayerSearchMode.Legacy
-            ? $"範囲 {description.MinimumText}〜{description.MaximumText} / {description.PreferredText}優先"
-            : $"レイヤー {description.PreferredText} / {(description.SearchMode == LayerSearchMode.DoNotPlace ? "塞がっていれば配置しない" : description.SearchMode == LayerSearchMode.SearchUp ? "塞がっていれば上へ" : "塞がっていれば下へ")}";
+    internal static string GenericLayer(GenericPlacementBehaviorDescription description)
+    {
+        var direction = description.SearchMode == LayerSearchMode.SearchDown ? "下へ" : "上へ";
+        var basis = description.UseTemplateLayer ? "元のレイヤー" : $"レイヤー {description.PreferredText}";
+        return $"{basis} / 塞がっていれば{direction}";
+    }
 
     internal static string Targeted(TargetedPlacementBehaviorDescription description)
     {
@@ -266,10 +267,12 @@ internal static class PlacementBehaviorText
         return $"{Target(description)}を選んだとき、{timing}、{layer}{fallback}".Trim();
     }
 
-    internal static string Generic(GenericPlacementBehaviorDescription description) =>
-        description.UseTemplateLayer
-            ? "現在の再生位置から、テンプレートの長さ・レイヤーで配置します。選択アイテムには関連付けません。"
-            : description.SearchMode == LayerSearchMode.Legacy
-                ? $"現在の再生位置から、テンプレートの長さで配置します。レイヤー{description.MinimumText}〜{description.MaximumText}の空きから{description.PreferredText}を優先します。選択アイテムには関連付けません。"
-                : $"現在の再生位置から、テンプレートの長さでレイヤー{description.PreferredText}へ配置します。塞がっていれば{(description.SearchMode == LayerSearchMode.DoNotPlace ? "配置しません" : description.SearchMode == LayerSearchMode.SearchUp ? "上（小さい番号）の空きを探します" : "下（大きい番号）の空きを探します")}。範囲は{description.MinimumText}〜{description.MaximumText}です。";
+    internal static string Generic(GenericPlacementBehaviorDescription description)
+    {
+        var basis = description.UseTemplateLayer ? "元のレイヤー" : $"レイヤー{description.PreferredText}";
+        var direction = description.SearchMode == LayerSearchMode.SearchDown
+            ? "下（大きい番号）の空きを探します"
+            : "上（小さい番号）の空きを探します";
+        return $"現在の再生位置から、テンプレートの長さで{basis}へ配置します。塞がっていれば{direction}。範囲は{description.MinimumText}〜{description.MaximumText}です。";
+    }
 }
