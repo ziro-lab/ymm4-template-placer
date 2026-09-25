@@ -20,8 +20,9 @@ public sealed record LayerPolicy
     {
         if (!Enum.IsDefined(SearchMode))
             throw new InvalidOperationException("レイヤー探索設定が不正です。");
-        if (Minimum < 0 || Maximum < Minimum || Maximum > 9999 || Preferred < Minimum || Preferred > Maximum)
-            throw new InvalidOperationException("レイヤー探索範囲は0〜9999、優先レイヤーはその範囲内にしてください。9999はプラグインの探索上限です。");
+        if (Minimum < 0 || Maximum < Minimum || Maximum > 9999 ||
+            (!UseTemplateLayer && (Preferred < Minimum || Preferred > Maximum)))
+            throw new InvalidOperationException("レイヤー探索範囲は0〜9999、数値指定レイヤーはその範囲内にしてください。9999はプラグインの探索上限です。");
     }
 }
 public static class LayerPlanner
