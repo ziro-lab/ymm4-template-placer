@@ -45,8 +45,17 @@ internal static partial class NativeProof
         Round4Assert(palette.GenericLayerSurface.IsVisible && Math.Abs(titleY - layerY) < 2,
             "B2", "inline Generic layer editor shares the context title row at the real narrow width");
         Round4Assert(palette.GenericLayerSurface.GenericTargetBox.IsVisible && palette.GenericLayerSurface.GenericOccupiedPicker.IsVisible &&
-            palette.GenericLayerSurface.ActualHeight <= 48 && palette.IntentContextHeader.ActualHeight <= 54,
-            "B3", "layer target and occupied behavior stay visible inside the two-line header; no full-width row or popup");
+            palette.GenericLayerSurface.ActualHeight <= 48 && palette.IntentContextHeader.ActualHeight >= 48,
+            "B3", "layer target and escape direction stay visible beside the two-line header while large history controls fill the header height");
+        palette.UpdateLayout();
+        var undoCenterBefore = palette.NativeUndoButton.TranslatePoint(
+            new Point(palette.NativeUndoButton.ActualWidth / 2, palette.NativeUndoButton.ActualHeight / 2), palette).X;
+        vm.ObserveTimelinePointer(TimelinePointerOrigin.Item); timeline.SelectedItems = [first]; vm.EndTimelinePointer(); await Idle(); palette.UpdateLayout();
+        var undoCenterAfter = palette.NativeUndoButton.TranslatePoint(
+            new Point(palette.NativeUndoButton.ActualWidth / 2, palette.NativeUndoButton.ActualHeight / 2), palette).X;
+        Round4Assert(!palette.GenericLayerSurface.IsVisible && Math.Abs(undoCenterBefore - undoCenterAfter) < 0.5,
+            "B3H", "Undo/Redo stay at the exact same horizontal center when the right-side Generic layer controls disappear");
+        timeline.SelectedItems = []; vm.ObserveTimelinePointer(TimelinePointerOrigin.TimelineBackground); vm.EndTimelinePointer(); await Idle();
         try
         {
             Window.GetWindow(view)!.Activate();
