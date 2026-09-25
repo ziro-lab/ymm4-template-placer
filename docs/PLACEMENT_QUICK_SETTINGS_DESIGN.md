@@ -1,6 +1,6 @@
 # Placement Quick Settings Design
 
-Status: **ACTIVE DESIGN — NO PRODUCT IMPLEMENTATION YET**
+Status: **FIRST SLICE IMPLEMENTED / RELEASE GREEN — OWNER HANDS-ON PENDING**
 
 ## Goal
 
