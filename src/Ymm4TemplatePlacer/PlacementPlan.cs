@@ -67,6 +67,16 @@ public sealed class PlacementPlan
             x.Item.Group != x.Group || x.Item.Remark != x.Remark || !Equals(ItemCharacters.Get(x.Item), x.Character)))
             throw new InvalidOperationException("計画後にタイムラインまたは配置アイテムが変更されました。操作をやり直してください。");
     }
+#if YMM4_PROOF
+    internal static Action<string>? ProofCommitFaultInjection { get; set; }
+#endif
+    private static void InjectCommitFault(string point)
+    {
+#if YMM4_PROOF
+        ProofCommitFaultInjection?.Invoke(point);
+#endif
+    }
+
     private int Apply(Timeline timeline)
     {
         foreach (var update in updates)
@@ -74,7 +84,11 @@ public sealed class PlacementPlan
             update.Item.Frame = update.Frame; update.Item.Length = update.Length;
             update.Item.Layer = update.Layer; update.Item.Remark = update.Remark;
         }
-        timeline.Items = after; timeline.RefreshTimelineLengthAndMaxLayer();
+        InjectCommitFault("after-updates");
+        timeline.Items = after;
+        InjectCommitFault("after-items");
+        timeline.RefreshTimelineLengthAndMaxLayer();
+        InjectCommitFault("after-refresh");
         return ChangeCount;
     }
     public int Commit(Timeline timeline, UndoRedoManager undo)
