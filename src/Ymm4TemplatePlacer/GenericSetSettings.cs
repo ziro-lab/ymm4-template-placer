@@ -10,6 +10,7 @@ public sealed class GenericSetDraft : IntentEditable
     private readonly PaletteDefinition original;
     private string name, minimum, maximum, preferred;
     private LayerSearchMode searchMode;
+    private bool layerPolicyEdited;
     private IntentEntryDraft? selectedEntry;
     public Guid Id => original.Id;
     public string Name { get => name; set { if (name == value) return; name = value; Notify(); Raise(nameof(Label)); } }
@@ -28,12 +29,29 @@ public sealed class GenericSetDraft : IntentEditable
     public IReadOnlyList<IntentOption<LayerSearchMode>> OccupiedBehaviors => GenericLayerTargetDraft.Behaviors;
     public LayerSearchMode? OccupiedBehavior
     {
-        get => searchMode;
-        set { if (value is not (LayerSearchMode.SearchUp or LayerSearchMode.SearchDown) || value == searchMode) return; searchMode = value.Value; Notify(); RaiseDescription(); }
+        get => searchMode == LayerSearchMode.SearchDown ? LayerSearchMode.SearchDown : LayerSearchMode.SearchUp;
+        set
+        {
+            if (value is not (LayerSearchMode.SearchUp or LayerSearchMode.SearchDown)) return;
+            if (searchMode == value.Value && layerPolicyEdited) return;
+            searchMode = value.Value; layerPolicyEdited = true; Notify(); RaiseDescription();
+        }
     }
-    public string Minimum { get => minimum; set { minimum = value; Notify(); RaiseDescription(); } }
-    public string Maximum { get => maximum; set { maximum = value; Notify(); RaiseDescription(); } }
-    public string Preferred { get => preferred; set { preferred = value; Notify(); RaiseDescription(); } }
+    public string Minimum
+    {
+        get => minimum;
+        set { if (minimum == value) return; minimum = value; layerPolicyEdited = true; Notify(); RaiseDescription(); }
+    }
+    public string Maximum
+    {
+        get => maximum;
+        set { if (maximum == value) return; maximum = value; layerPolicyEdited = true; Notify(); RaiseDescription(); }
+    }
+    public string Preferred
+    {
+        get => preferred;
+        set { if (preferred == value) return; preferred = value; layerPolicyEdited = true; Notify(); RaiseDescription(); }
+    }
     public GenericPlacementBehaviorDescription BehaviorDescription => PlacementBehaviorProjection.Describe(this);
     public string Summary => BehaviorDescription.Summary;
     private void RaiseDescription() { Raise(nameof(BehaviorDescription)); Raise(nameof(Summary)); }
@@ -42,7 +60,7 @@ public sealed class GenericSetDraft : IntentEditable
     public GenericSetDraft(PaletteDefinition source, IReadOnlyList<LibraryEntry> library)
     {
         original = source; name = source.Name;
-        searchMode = source.Layer.SearchMode == LayerSearchMode.SearchDown ? LayerSearchMode.SearchDown : LayerSearchMode.SearchUp;
+        searchMode = source.Layer.SearchMode;
         minimum = source.Layer.Minimum.ToString(CultureInfo.InvariantCulture);
         maximum = source.Layer.Maximum.ToString(CultureInfo.InvariantCulture);
         preferred = source.Layer.UseTemplateLayer ? "" : source.Layer.Preferred.ToString(CultureInfo.InvariantCulture);
@@ -67,7 +85,9 @@ public sealed class GenericSetDraft : IntentEditable
         var layer = original.Layer with
         {
             UseTemplateLayer = useSourceLayer,
-            SearchMode = searchMode,
+            SearchMode = layerPolicyEdited
+                ? (searchMode == LayerSearchMode.SearchDown ? LayerSearchMode.SearchDown : LayerSearchMode.SearchUp)
+                : original.Layer.SearchMode,
             Minimum = Number(Minimum, "最小レイヤー"),
             Maximum = Number(Maximum, "最大レイヤー"),
             Preferred = useSourceLayer ? original.Layer.Preferred : Number(Preferred, "配置レイヤー")
