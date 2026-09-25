@@ -61,6 +61,35 @@ internal sealed class MaterializedPlacementSource
 
     public void ValidateCurrent() => validateCurrent();
 
+    public MaterializedPlacementSource Fork()
+    {
+        ValidateCurrent();
+        var clones = new List<IItem>(Items.Count);
+        foreach (var source in Items)
+        {
+            var clone = source.GetClone();
+            if (clone == null || Items.Any(x => ReferenceEquals(x, clone)) ||
+                clones.Any(x => ReferenceEquals(x, clone)) || clone.GetType() != source.GetType() ||
+                !ReferenceEquals(ItemCharacters.Get(source), ItemCharacters.Get(clone)))
+                throw new InvalidOperationException("配置Sourceを複数結果用に独立複製できませんでした。配置していません。");
+            clone.Frame = source.Frame;
+            clone.Length = source.Length;
+            clone.Layer = source.Layer;
+            clone.Group = 0;
+            clone.Remark = PluginRemarks.WithoutAssociation(clone.Remark);
+            clones.Add(clone);
+        }
+        ValidateCurrent();
+        return new(
+            SourceId,
+            Kind,
+            clones.AsReadOnly(),
+            Span,
+            CharacterName,
+            SemanticHash,
+            validateCurrent);
+    }
+
     public static MaterializedPlacementSource FromTemplate(TemplateBundle bundle)
     {
         ArgumentNullException.ThrowIfNull(bundle);
