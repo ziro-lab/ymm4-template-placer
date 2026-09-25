@@ -10,6 +10,7 @@ public sealed partial class PlacerViewModel
     private DispatcherOperation? panelQuickCommitOperation;
     private long panelQuickCommitEpoch;
     private bool panelQuickDraftDirty;
+    private bool panelQuickSettingsDisposed;
     private string panelQuickSettingsNotice = "配置画面の見た目・操作だけをすばやく調整します。";
     private ActionCommand? shapeCurrentIntentSetCommand;
 
@@ -37,7 +38,7 @@ public sealed partial class PlacerViewModel
         }
     }
 
-    public bool CanEditPanelQuickSettings => settingsAvailable && !intentExecuting &&
+    public bool CanEditPanelQuickSettings => !panelQuickSettingsDisposed && settingsAvailable && !intentExecuting &&
         tileEditState == IntentTileEditState.Idle && IntentSettings?.HasChanges != true;
 
     public ActionCommand ShapeCurrentIntentSetCommand => shapeCurrentIntentSetCommand ??= new(
@@ -51,6 +52,7 @@ public sealed partial class PlacerViewModel
 
     public void BeginPanelQuickSettings()
     {
+        if (panelQuickSettingsDisposed) return;
         BeginPlacementQuickSettings();
         if (PanelQuickPresentation == null || !panelQuickDraftDirty)
         {
@@ -86,7 +88,7 @@ public sealed partial class PlacerViewModel
         PanelQuickSettingsNotice = "変更を反映しています…";
         panelQuickCommitOperation = dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
         {
-            if (epoch != panelQuickCommitEpoch || !ReferenceEquals(draft, PanelQuickPresentation)) return;
+            if (panelQuickSettingsDisposed || epoch != panelQuickCommitEpoch || !ReferenceEquals(draft, PanelQuickPresentation)) return;
             panelQuickCommitOperation = null;
             CommitPanelQuickPresentation(draft!);
         }));
@@ -94,6 +96,7 @@ public sealed partial class PlacerViewModel
 
     private void CommitPanelQuickPresentation(PalettePresentationDraft draft)
     {
+        if (panelQuickSettingsDisposed) return;
         if (!CanEditPanelQuickSettings)
         {
             PanelQuickSettingsNotice = "反映待ち: 設定タブの入力を先に確定または戻してください。";
@@ -159,6 +162,17 @@ public sealed partial class PlacerViewModel
         panelQuickCommitEpoch++;
         panelQuickCommitOperation?.Abort();
         panelQuickCommitOperation = null;
+    }
+
+    private void DisposePanelQuickSettings()
+    {
+        if (panelQuickSettingsDisposed) return;
+        panelQuickSettingsDisposed = true;
+        CancelPanelQuickCommit();
+        if (panelQuickPresentation != null)
+            panelQuickPresentation.Edited -= PanelQuickPresentationEdited;
+        panelQuickPresentation = null;
+        panelQuickDraftDirty = false;
     }
 
     private void RefreshPanelQuickSettingsAdmission()
