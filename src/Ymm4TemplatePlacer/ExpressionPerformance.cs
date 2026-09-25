@@ -298,14 +298,6 @@ internal static partial class ExpressionPreparation
     private static IReadOnlyList<TemplateChoice> EmptyChoices() => [new(null, "— 候補なし —")];
     private static bool SameVoice(VoiceSnapshot left, VoiceSnapshot right) => ReferenceEquals(left.Voice, right.Voice) &&
         left.Character == right.Character && left.Frame == right.Frame && left.Length == right.Length && left.Serif == right.Serif && left.Layer == right.Layer;
-    private static bool SameItems(IReadOnlyList<ExpressionCapturedItem> left, IReadOnlyList<ExpressionCapturedItem> right)
-    {
-        if (left.Count != right.Count) return false;
-        for (var i = 0; i < left.Count; i++)
-            if (!ReferenceEquals(left[i].Item, right[i].Item) || left[i].IsVoice != right[i].IsVoice || left[i].Character != right[i].Character ||
-                left[i].Group != right[i].Group || left[i].Remark != right[i].Remark) return false;
-        return true;
-    }
 }
 
 internal sealed class ExpressionPerformanceDiagnostics
