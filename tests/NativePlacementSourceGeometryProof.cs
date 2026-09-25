@@ -129,8 +129,17 @@ internal static partial class NativeProof
         Assert(absolutePresetPlan.Single().Layer == 49,
             "PLACEMENT_RULE P2 absolute preset source starts at the requested layer and collision search moves only Up");
 
+        var sourceLayerPreset = new MaterializedPlacementSource(
+            Guid.Parse("10000000-0000-4000-8000-000000000013"),
+            PlacementSourceKind.TachiePreset,
+            [new TextItem { Frame = 0, Length = 20, Layer = 0 }],
+            20,
+            0,
+            null,
+            new string('d', 64),
+            () => { });
         var sourceLayerPresetPlan = BundleLayerPlanner.Plan(
-            absolutePreset.Fork(),
+            sourceLayerPreset,
             frame: 130,
             singletonLength: 20,
             targetMinimumLayer: 20,
@@ -177,8 +186,20 @@ internal static partial class NativeProof
         Assert(absoluteMultiPlan[0].Layer == 40 && absoluteMultiPlan[1].Layer == 41,
             "PLACEMENT_RULE P2 absolute multi-item source preserves normalized internal layer offsets");
 
+        var sourceLayerMulti = new MaterializedPlacementSource(
+            Guid.Parse("10000000-0000-4000-8000-000000000014"),
+            PlacementSourceKind.Template,
+            [
+                new TextItem { Frame = 0, Length = 10, Layer = 0 },
+                new TextItem { Frame = 3, Length = 12, Layer = 1 }
+            ],
+            15,
+            23,
+            null,
+            new string('e', 64),
+            () => { });
         var sourceLayerMultiPlan = BundleLayerPlanner.Plan(
-            absoluteMulti.Fork(),
+            sourceLayerMulti,
             frame: 330,
             singletonLength: null,
             targetMinimumLayer: 1,
