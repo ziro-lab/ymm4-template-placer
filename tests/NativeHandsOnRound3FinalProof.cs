@@ -76,7 +76,7 @@ internal static partial class NativeProof
             "G7", "unavailable pointer dependencies do not govern Preview/viewport adapters and their two degraded native paths passed independently");
         Round3Assert(retained.All(Has) && !lines.Any(x => x.StartsWith("ASSERT FAIL:", StringComparison.Ordinal) || x.StartsWith("FAIL ", StringComparison.Ordinal)),
             "G8", "all current core/source/rule/Round2/Round3/fidelity/UIUX native gates available at this point passed with no failed assertion");
-        var phases = new[] { ("A", 10, "appearance"), ("B", 15, "shortcuts"), ("C", 8, "settings"), ("D", 11, "layer"), ("E", 10, "freshness"), ("F", 15, "navigation") };
+        var phases = new[] { ("A", 10, "appearance"), ("B", 15, "shortcuts"), ("C", 8, "settings"), ("D", 12, "layer"), ("E", 10, "freshness"), ("F", 15, "navigation") };
         var expected = phases.SelectMany(x => Enumerable.Range(1, x.Item2).Select(n => x.Item1 + n)).Concat(Enumerable.Range(1, 9).Select(x => "G" + x)).ToArray();
         var phaseFiles = new List<object>();
         foreach (var (group, count, suffix) in phases)
@@ -91,14 +91,14 @@ internal static partial class NativeProof
                 "R3-G exact current phase identity, check IDs and evidence match the live assertion collection: " + file);
             phaseFiles.Add(new { file, sha256 = Round3Hash(path) });
         }
-        Round3Assert(round3Checks.Count == 77 && expected.Where(x => x != "G9").All(round3Checks.ContainsKey), "G9", "all 78 A-F/G1-G9 checks have one authoritative current native manifest; release gates G10-G15 remain separate");
+        Round3Assert(round3Checks.Count == 78 && expected.Where(x => x != "G9").All(round3Checks.ContainsKey), "G9", "all 79 A-F/G1-G9 checks have one authoritative current native manifest; release gates G10-G15 remain separate");
         var manifest = new
         {
             schema = "YMM4-Template-Placer-Hands-On-Round3/1", version = "0.5.0", host = "YMM4 4.55.1.1 Lite", result = "PASS",
             source_head = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_SOURCE_HEAD"),
             checkout_tree = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_CHECKOUT_TREE"),
             run_id = Environment.GetEnvironmentVariable("GITHUB_RUN_ID"), run_attempt = Environment.GetEnvironmentVariable("GITHUB_RUN_ATTEMPT"),
-            native_scope = "A1-F15 plus G1-G9 (78 checks)",
+            native_scope = "A1-F15 plus G1-G9 (79 checks)",
             release_scope = "G10: independent evidence consumer; G11-G14: package/build/smoke gates; G15: external final Git metadata verification. Native PASS does not claim these future steps.",
             phases = phaseFiles,
             playback = new { file = "hands-on-round3-playback-observation.json", sha256 = Round3Hash(Path.Combine(output, "hands-on-round3-playback-observation.json")) },
@@ -107,7 +107,7 @@ internal static partial class NativeProof
         var manifestPath = Path.Combine(output, "hands-on-round3.json");
         File.WriteAllText(manifestPath, JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
         using var written = JsonDocument.Parse(File.ReadAllText(manifestPath));
-        Assert(written.RootElement.GetProperty("checks").GetArrayLength() == 78, "R3-G consolidated manifest is written and readable before its success marker");
+        Assert(written.RootElement.GetProperty("checks").GetArrayLength() == 79, "R3-G consolidated manifest is written and readable before its success marker");
         Log("HANDS_ON_ROUND3=PASS");
     }
     private static string Round3Hash(string path) => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant();
