@@ -156,7 +156,12 @@
        <WrapPanel>
        <ComboBox x:Name="DurationBox" ItemsSource="{Binding DataContext.IntentDurations,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Duration,Mode=TwoWay}"/>
        <TextBlock Text="で、配置レイヤーは" VerticalAlignment="Center" Margin="4,0"/>
-       <ComboBox x:Name="LayerModeBox" ItemsSource="{Binding DataContext.IntentLayerModes,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding LayerMode,Mode=TwoWay}"/>
+       <ListBox x:Name="LayerModeBox" ItemsSource="{Binding DataContext.IntentLayerModes,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}"
+        SelectedValuePath="Value" SelectedValue="{Binding LayerMode,Mode=TwoWay}" BorderThickness="0" Background="Transparent"
+        ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="配置レイヤーの方式">
+        <ListBox.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+        <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" Padding="10,4"/></DataTemplate></ListBox.ItemTemplate>
+       </ListBox>
        </WrapPanel>
        <WrapPanel x:Name="RelativeLayerRow" Visibility="{Binding ShowRelativeLayerPlacement,Converter={StaticResource VisibleWhen}}">
         <TextBlock Text="対象より" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -165,8 +170,8 @@
        </WrapPanel>
        <WrapPanel x:Name="AbsoluteLayerRow" Visibility="{Binding ShowAbsoluteLayerPlacement,Converter={StaticResource VisibleWhen}}">
         <TextBlock Text="レイヤー" VerticalAlignment="Center" Margin="0,0,4,0"/>
-        <TextBox x:Name="AbsoluteLayerBox" Text="{Binding AbsoluteLayer,UpdateSourceTrigger=PropertyChanged}" Width="64"/>
-        <TextBlock Text="を基準に配置。塞がっていれば" VerticalAlignment="Center" Margin="4,0"/>
+        <TextBox x:Name="AbsoluteLayerBox" Text="{Binding AbsoluteLayer,UpdateSourceTrigger=PropertyChanged}" Width="64" ToolTip="空欄なら配置Sourceの元レイヤーを使います。"/>
+        <TextBlock Text="（空欄=元）を基準に配置。塞がっていれば" VerticalAlignment="Center" Margin="4,0"/>
         <ComboBox x:Name="AbsoluteDirectionBox" ItemsSource="{Binding DataContext.IntentDirections,RelativeSource={RelativeSource AncestorType=local:IntentSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Direction,Mode=TwoWay}"/>
         <TextBlock Text="へ空きを探します。" VerticalAlignment="Center" Margin="4,0"/>
        </WrapPanel>

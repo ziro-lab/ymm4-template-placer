@@ -9,16 +9,17 @@
   <TextBox x:Name="GenericSetNameBox" Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" Margin="0,3,0,8" Padding="5,3"/>
   <TextBlock Text="どう置く？" FontWeight="SemiBold"/>
   <TextBlock x:Name="GenericSentenceText" Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,4,0,6"/>
-  <CheckBox x:Name="TemplateLayerCheck" Content="テンプレートのレイヤーに置く" IsChecked="{Binding UseTemplateLayer,Mode=TwoWay}"/>
-  <StackPanel Visibility="{Binding UseSavedRange,Converter={StaticResource VisibleWhen}}" Margin="0,5">
-   <TextBlock Text="指定レイヤーが塞がっていたら"/>
-   <ComboBox x:Name="GenericOccupiedBehaviorPicker" ItemsSource="{Binding OccupiedBehaviors}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding OccupiedBehavior,Mode=TwoWay}"/>
-  </StackPanel>
+  <TextBlock Text="レイヤー指定" FontWeight="SemiBold" Margin="0,2,0,2"/>
+  <WrapPanel Margin="0,0,0,5">
+   <TextBox x:Name="GenericPreferredLayerBox" Text="{Binding Preferred,UpdateSourceTrigger=PropertyChanged}" Width="72" ToolTip="空欄なら各テンプレートの元レイヤーを使います。"/>
+   <TextBlock Text="空欄 = 元レイヤー" VerticalAlignment="Center" Opacity="0.72" Margin="6,0,0,0"/>
+  </WrapPanel>
+  <TextBlock Text="塞がっていたら"/>
+  <ComboBox x:Name="GenericOccupiedBehaviorPicker" ItemsSource="{Binding OccupiedBehaviors}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding OccupiedBehavior,Mode=TwoWay}" Margin="0,2,0,4"/>
   <Expander x:Name="GenericFineTuning" Header="細かく調整" Margin="0,5">
-   <StackPanel Visibility="{Binding UseSavedRange,Converter={StaticResource VisibleWhen}}" Margin="8,5">
+   <StackPanel Margin="8,5">
     <TextBlock Text="空きレイヤーを探す範囲"/>
     <WrapPanel><TextBox Text="{Binding Minimum,UpdateSourceTrigger=PropertyChanged}" Width="60"/><TextBlock Text=" ～ "/><TextBox Text="{Binding Maximum,UpdateSourceTrigger=PropertyChanged}" Width="60"/></WrapPanel>
-    <TextBlock Text="優先レイヤー"/><TextBox Text="{Binding Preferred,UpdateSourceTrigger=PropertyChanged}" Width="80" HorizontalAlignment="Left"/>
    </StackPanel>
   </Expander>
   <TextBlock Text="タイルと並び順" FontWeight="SemiBold" Margin="0,8,0,4"/>

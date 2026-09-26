@@ -2,7 +2,7 @@ param([Parameter(Mandatory=$true)][string]$OutputDir, [switch]$SelfTest,
  [string]$ExpectedSourceHead, [string]$ExpectedCheckoutTree, [string]$ExpectedRunId, [string]$ExpectedRunAttempt)
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
-$specs=[ordered]@{appearance=@('A',10); shortcuts=@('B',15); settings=@('C',8); layer=@('D',11); freshness=@('E',10); navigation=@('F',15)}
+$specs=[ordered]@{appearance=@('A',10); shortcuts=@('B',15); settings=@('C',8); layer=@('D',12); freshness=@('E',10); navigation=@('F',15)}
 $ids=@(foreach($s in $specs.Values){1..([int]$s[1]) | ForEach-Object { "$($s[0])$_" }}) + @(1..9 | ForEach-Object {"G$_"})
 $phaseNames=@($specs.Keys | ForEach-Object {"hands-on-round3-$_.json"})
 if (-not $ExpectedSourceHead) {
@@ -25,7 +25,7 @@ function Assert-Round3Evidence {
      $Manifest.version -cne '0.5.0' -or $Manifest.host -cne 'YMM4 4.55.1.1 Lite' -or $Manifest.result -cne 'PASS') { throw 'Round3 manifest identity mismatch' }
  if ($Manifest.source_head -cne $context.source -or $Manifest.checkout_tree -cne $context.tree -or
      [string]$Manifest.run_id -cne $context.run -or [string]$Manifest.run_attempt -cne $context.attempt) { throw 'Stale Round3 source/tree/run/attempt' }
- if (@($Manifest.checks).Count -ne 78 -or (@($Manifest.checks.id | Sort-Object) -join ',') -cne (($ids | Sort-Object) -join ',')) { throw 'Missing/duplicate Round3 check IDs' }
+ if (@($Manifest.checks).Count -ne 79 -or (@($Manifest.checks.id | Sort-Object) -join ',') -cne (($ids | Sort-Object) -join ',')) { throw 'Missing/duplicate Round3 check IDs' }
  foreach($check in $Manifest.checks) {
   if ($check.result -cne 'PASS' -or [string]::IsNullOrWhiteSpace($check.evidence)) { throw 'Incomplete Round3 assertion' }
   $line="ASSERT PASS: R3 $($check.id): $($check.evidence)"

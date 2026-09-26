@@ -67,7 +67,7 @@ public sealed record BehaviorPreviewModel(
             return Unclear("周辺アイテムと、見つからない場合の設定を確認してください。");
         if (d.LayerMinimum is not int lower || d.LayerMaximum is not int upper || lower > upper || upper > 9999 ||
             (d.LayerMode == LayerPlacementMode.RelativeToTarget && (d.LayerOffset == null || d.LayerOffset > 9999)) ||
-            (d.LayerMode == LayerPlacementMode.Absolute && (d.AbsoluteLayer == null || d.AbsoluteLayer < lower || d.AbsoluteLayer > upper)))
+            (d.LayerMode == LayerPlacementMode.Absolute && !d.UseSourceLayer && (d.AbsoluteLayer == null || d.AbsoluteLayer < lower || d.AbsoluteLayer > upper)))
             return Unclear("配置するレイヤー・探索範囲を確認してください。");
         var pair = d.Anchor == IntentAnchor.PairBoundary;
         var range = d.Anchor is IntentAnchor.SelectionRangeStart or IntentAnchor.SelectionRangeEnd;
@@ -147,7 +147,7 @@ public sealed record BehaviorPreviewModel(
         if (duration == IntentDuration.UntilRelated) guides.Add(d.NeighborEdge == IntentNeighborEdge.Start ? neighborStart : neighborEnd);
         if (meaningful) { guides.Add(from); guides.Add(to); }
         return new(blocks.AsReadOnly(), guides.Distinct().ToArray(), caption, scope,
-            absolute ? $"配置先：レイヤー {d.AbsoluteLayer}（空きは{(d.LayerDirection == RelativeLayerDirection.Up ? "上" : "下")}へ）"
+            absolute ? $"配置先：{(d.UseSourceLayer ? "元のレイヤー" : $"レイヤー {d.AbsoluteLayer}")}（空きは{(d.LayerDirection == RelativeLayerDirection.Up ? "上" : "下")}へ）"
                 : $"{(d.LayerDirection == RelativeLayerDirection.Up ? "↑" : "↓")} 対象より{d.LayerOffset}段{(d.LayerDirection == RelativeLayerDirection.Up ? "上" : "下")} ・ 空きは{(d.LayerDirection == RelativeLayerDirection.Up ? "上" : "下")}へ",
             fallback, string.Join(" ・ ", notes), absolute, true, left - padding, right + padding);
     }

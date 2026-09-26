@@ -21,9 +21,11 @@ internal static partial class NativeProof
             ReferenceEquals(panel.NativeRedoButton.Command, vm.NativeRedoCommand),
             "NATIVE_UNDO_REDO P0 placement header buttons use the product native-history bridge");
 
-        Assert(panel.NativeUndoButton.Width == 30 && panel.NativeRedoButton.Width == 30 &&
-            panel.NativeUndoButton.Height == 26 && panel.NativeRedoButton.Height == 26,
-            "NATIVE_UNDO_REDO P0 controls stay compact and do not require a taller placement header");
+        Assert(panel.NativeUndoButton.Width >= 80 && panel.NativeRedoButton.Width >= 80 &&
+            panel.NativeUndoButton.Height >= 46 && panel.NativeRedoButton.Height >= 46 &&
+            panel.NativeUndoButton.Content?.ToString()?.Contains("戻す", StringComparison.Ordinal) == true &&
+            panel.NativeRedoButton.Content?.ToString()?.Contains("やり直す", StringComparison.Ordinal) == true,
+            "NATIVE_UNDO_REDO P0 persistent history controls are large, text-labeled primary actions instead of tiny icon buttons");
 
         Assert(panel.NativeUndoButton.ToolTip?.ToString()?.Contains("YMM4", StringComparison.Ordinal) == true &&
             panel.NativeRedoButton.ToolTip?.ToString()?.Contains("YMM4", StringComparison.Ordinal) == true,

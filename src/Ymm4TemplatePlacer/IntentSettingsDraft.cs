@@ -137,7 +137,7 @@ public sealed partial class IntentPaletteDraft : IntentEditable
         Raise(nameof(BehaviorDescription)); Raise(nameof(Summary)); Raise(nameof(ShowTypeMatch)); Raise(nameof(ShowFixedDuration)); Raise(nameof(ShowNeighborSettings));
         Raise(nameof(ShowNeighborEdge)); Raise(nameof(ShowNeighborFallback)); Raise(nameof(ShowMaximumGap)); Raise(nameof(ShowBoundaryTolerance));
         Raise(nameof(ShowAlignment)); Raise(nameof(ShowCharacterName)); Raise(nameof(CharacterRestrictionLabel));
-        Raise(nameof(ShowRelativeLayerPlacement)); Raise(nameof(ShowAbsoluteLayerPlacement));
+        Raise(nameof(ShowRelativeLayerPlacement)); Raise(nameof(ShowAbsoluteLayerPlacement)); Raise(nameof(UseSourceLayer));
         Raise(nameof(SentenceAnchors)); Raise(nameof(SentenceNeighbors)); Raise(nameof(SentenceAnchorJoin));
     }
     public string Name { get => Get(); set => Put(value); }
@@ -152,7 +152,27 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     public string MaximumGap { get => Get(); set => Put(value); }
     public string BoundaryTolerance { get => Get(); set => Put(value); }
     public string LayerOffset { get => Get(); set => Put(value); }
-    public string AbsoluteLayer { get => Get(); set => Put(value); }
+    public string AbsoluteLayer
+    {
+        get => Get();
+        set
+        {
+            if (Get() == value) return;
+            text[nameof(AbsoluteLayer)] = value;
+            var layer = model.Relation.Layer with
+            {
+                SpecifiedLayerInitialized = true,
+                UseSourceLayer = string.IsNullOrWhiteSpace(value)
+            };
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) &&
+                parsed is >= 0 and <= 9999)
+                layer = layer with { AbsoluteLayer = parsed };
+            model = model with { Relation = model.Relation with { Layer = layer } };
+            Notify();
+            RaiseUiState();
+        }
+    }
+    public bool UseSourceLayer => LayerMode == LayerPlacementMode.Absolute && string.IsNullOrWhiteSpace(AbsoluteLayer);
     public string LayerMinimum { get => Get(); set => Put(value); }
     public string LayerMaximum { get => Get(); set => Put(value); }
     public IntentTypeMatch TypeMatch { get => model.Target.TypeMatch; set => Change(model with { Target = model.Target with { TypeMatch = value } }); }
@@ -187,7 +207,22 @@ public sealed partial class IntentPaletteDraft : IntentEditable
     public IntentNeighbor Neighbor { get => model.Relation.Neighbor; set => Change(model with { Relation = model.Relation with { Neighbor = value } }); }
     public IntentNeighborEdge NeighborEdge { get => model.Relation.NeighborEdge; set => Change(model with { Relation = model.Relation with { NeighborEdge = value } }); }
     public IntentFallback Fallback { get => model.Relation.Fallback; set => Change(model with { Relation = model.Relation with { Fallback = value } }); }
-    public LayerPlacementMode LayerMode { get => model.Relation.Layer.Mode; set => Change(model with { Relation = model.Relation with { Layer = model.Relation.Layer with { Mode = value } } }); }
+    public LayerPlacementMode LayerMode
+    {
+        get => model.Relation.Layer.Mode;
+        set
+        {
+            if (model.Relation.Layer.Mode == value) return;
+            var layer = model.Relation.Layer with { Mode = value };
+            if (value == LayerPlacementMode.Absolute)
+                layer = layer with
+                {
+                    SpecifiedLayerInitialized = true,
+                    UseSourceLayer = string.IsNullOrWhiteSpace(AbsoluteLayer)
+                };
+            Change(model with { Relation = model.Relation with { Layer = layer } });
+        }
+    }
     public RelativeLayerDirection Direction { get => model.Relation.Layer.Direction; set => Change(model with { Relation = model.Relation with { Layer = model.Relation.Layer with { Direction = value } } }); }
     public bool ExpressionCandidates { get => model.ExpressionCandidates; set => Change(model with { ExpressionCandidates = value }); }
     public bool CharacterRestricted
@@ -237,7 +272,13 @@ public sealed partial class IntentPaletteDraft : IntentEditable
         text[nameof(MaximumGap)] = source.Relation.MaximumNeighborGap?.ToString(CultureInfo.InvariantCulture) ?? "";
         text[nameof(BoundaryTolerance)] = source.Relation.BoundaryTolerance.ToString(CultureInfo.InvariantCulture);
         text[nameof(LayerOffset)] = source.Relation.Layer.Offset.ToString(CultureInfo.InvariantCulture);
-        text[nameof(AbsoluteLayer)] = source.Relation.Layer.AbsoluteLayer.ToString(CultureInfo.InvariantCulture);
+        var specifiedLayerInitialized = source.Relation.Layer.SpecifiedLayerInitialized ||
+            source.Relation.Layer.Mode == LayerPlacementMode.Absolute ||
+            source.Relation.Layer.UseSourceLayer ||
+            source.Relation.Layer.AbsoluteLayer != 0;
+        text[nameof(AbsoluteLayer)] = specifiedLayerInitialized && !source.Relation.Layer.UseSourceLayer
+            ? source.Relation.Layer.AbsoluteLayer.ToString(CultureInfo.InvariantCulture)
+            : "";
         text[nameof(LayerMinimum)] = source.Relation.Layer.Minimum.ToString(CultureInfo.InvariantCulture);
         text[nameof(LayerMaximum)] = source.Relation.Layer.Maximum.ToString(CultureInfo.InvariantCulture);
         characterRestricted = !string.IsNullOrWhiteSpace(source.Target.CharacterName);
@@ -279,7 +320,13 @@ public sealed partial class IntentPaletteDraft : IntentEditable
             BoundaryTolerance = ShowBoundaryTolerance ? Number(BoundaryTolerance, "境界の許容間隔") : model.Relation.BoundaryTolerance,
             Layer = model.Relation.Layer with {
                 Offset = ShowRelativeLayerPlacement ? Number(LayerOffset, "対象からの段数") : model.Relation.Layer.Offset,
-                AbsoluteLayer = ShowAbsoluteLayerPlacement ? Number(AbsoluteLayer, "配置するレイヤー番号") : model.Relation.Layer.AbsoluteLayer,
+                SpecifiedLayerInitialized = ShowAbsoluteLayerPlacement
+                    ? true : model.Relation.Layer.SpecifiedLayerInitialized,
+                UseSourceLayer = ShowAbsoluteLayerPlacement
+                    ? string.IsNullOrWhiteSpace(AbsoluteLayer)
+                    : model.Relation.Layer.UseSourceLayer,
+                AbsoluteLayer = ShowAbsoluteLayerPlacement && !string.IsNullOrWhiteSpace(AbsoluteLayer)
+                    ? Number(AbsoluteLayer, "配置するレイヤー番号") : model.Relation.Layer.AbsoluteLayer,
                 Minimum = Number(LayerMinimum, "探索レイヤーの最小"), Maximum = Number(LayerMaximum, "探索レイヤーの最大") } };
         return model with { Name = Name.Trim(), Intent = Intent, Target = target, Relation = relation, Entries = Entries.Select(x => x.Build()).ToList() };
     }

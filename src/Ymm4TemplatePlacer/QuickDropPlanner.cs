@@ -21,7 +21,11 @@ public static class QuickDropPlanner
         else mode = CharacterLayerMode.Base;
         clone.Frame = timeline.CurrentFrame;
         PlacementMath.ValidateSpan(clone.Frame, clone.Length);
-        clone.Layer = LayerPlanner.Find(clone.Frame, clone.Length, clone.Layer, palette.Layer, mode, character, timeline.Items);
+        var layerPolicy = palette.Kind == PaletteKind.Style &&
+            palette.Layer.SearchMode is LayerSearchMode.Legacy or LayerSearchMode.DoNotPlace
+            ? palette.Layer with { SearchMode = LayerSearchMode.SearchUp }
+            : palette.Layer;
+        clone.Layer = LayerPlanner.Find(clone.Frame, clone.Length, clone.Layer, layerPolicy, mode, character, timeline.Items);
         clone.Remark = PluginRemarks.WithoutAssociation(clone.Remark);
         return new(clone, PlacementPlan.Create(timeline, [clone]));
     }

@@ -14,6 +14,7 @@ internal sealed class MaterializedPlacementSource
     public PlacementSourceKind Kind { get; }
     public IReadOnlyList<IItem> Items { get; }
     public int Span { get; }
+    public int BaseLayer { get; }
     public string? CharacterName { get; }
     public string SemanticHash { get; }
 
@@ -22,6 +23,7 @@ internal sealed class MaterializedPlacementSource
         PlacementSourceKind kind,
         IReadOnlyList<IItem> items,
         int span,
+        int baseLayer,
         string? characterName,
         string semanticHash,
         Action validateCurrent)
@@ -44,6 +46,8 @@ internal sealed class MaterializedPlacementSource
         var actualSpan = checked((int)snapshot.Max(x => (long)x.Frame + x.Length));
         if (span != actualSpan)
             throw new InvalidOperationException("配置Sourceの長さと生成アイテムの範囲が一致しません。");
+        if (baseLayer < 0)
+            throw new InvalidOperationException("配置Sourceの基準レイヤーは0以上にしてください。");
         var names = snapshot.Select(ItemCharacters.Name).OfType<string>().Distinct(StringComparer.Ordinal).ToArray();
         if (characterName != null && names.Any(x => x != characterName))
             throw new InvalidOperationException("配置Sourceのキャラクター名と生成アイテムが一致しません。");
@@ -54,6 +58,7 @@ internal sealed class MaterializedPlacementSource
         Kind = kind;
         Items = Array.AsReadOnly(snapshot);
         Span = span;
+        BaseLayer = baseLayer;
         CharacterName = characterName;
         SemanticHash = semanticHash;
         this.validateCurrent = validateCurrent;
@@ -85,6 +90,7 @@ internal sealed class MaterializedPlacementSource
             Kind,
             clones.AsReadOnly(),
             Span,
+            BaseLayer,
             CharacterName,
             SemanticHash,
             validateCurrent);
@@ -100,6 +106,7 @@ internal sealed class MaterializedPlacementSource
             PlacementSourceKind.Template,
             items,
             bundle.Span,
+            bundle.MinimumLayer,
             bundle.CharacterName,
             IntentAssociationTag.Hash(bundle),
             bundle.ValidateCurrent);

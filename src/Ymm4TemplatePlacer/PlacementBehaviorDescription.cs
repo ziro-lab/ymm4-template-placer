@@ -37,6 +37,7 @@ public sealed record TargetedPlacementBehaviorDescription(
     LayerPlacementMode LayerMode,
     RelativeLayerDirection LayerDirection,
     string LayerOffsetText,
+    bool UseSourceLayer,
     string AbsoluteLayerText,
     string LayerMinimumText,
     string LayerMaximumText) : PlacementBehaviorDescription
@@ -115,6 +116,7 @@ public static class PlacementBehaviorProjection
             draft.LayerMode,
             draft.Direction,
             draft.LayerOffset,
+            draft.UseSourceLayer,
             draft.AbsoluteLayer,
             draft.LayerMinimum,
             draft.LayerMaximum);
@@ -196,8 +198,10 @@ internal static class PlacementBehaviorText
         var direction = description.LayerDirection == RelativeLayerDirection.Up ? "上" : "下";
         if (description.LayerMode == LayerPlacementMode.Absolute)
         {
-            var absolute = description.AbsoluteLayer is int layer ? layer.ToString(CultureInfo.InvariantCulture) : "未確定";
-            return $"レイヤー {absolute} / 塞がっていれば{direction}へ";
+            var absolute = description.UseSourceLayer
+                ? "元のレイヤー"
+                : description.AbsoluteLayer is int layer ? $"レイヤー {layer.ToString(CultureInfo.InvariantCulture)}" : "レイヤー未確定";
+            return $"{absolute} / 塞がっていれば{direction}へ";
         }
         var offset = description.LayerOffset is int value ? value.ToString(CultureInfo.InvariantCulture) : "未確定";
         return $"対象より{direction} {offset}レイヤー / 塞がっていれば{direction}へ";
@@ -218,11 +222,12 @@ internal static class PlacementBehaviorText
         };
     }
 
-    internal static string GenericLayer(GenericPlacementBehaviorDescription description) =>
-        description.UseTemplateLayer ? "テンプレートのレイヤー" :
-        description.SearchMode == LayerSearchMode.Legacy
-            ? $"範囲 {description.MinimumText}〜{description.MaximumText} / {description.PreferredText}優先"
-            : $"レイヤー {description.PreferredText} / {(description.SearchMode == LayerSearchMode.DoNotPlace ? "塞がっていれば配置しない" : description.SearchMode == LayerSearchMode.SearchUp ? "塞がっていれば上へ" : "塞がっていれば下へ")}";
+    internal static string GenericLayer(GenericPlacementBehaviorDescription description)
+    {
+        var direction = description.SearchMode == LayerSearchMode.SearchDown ? "下へ" : "上へ";
+        var basis = description.UseTemplateLayer ? "元のレイヤー" : $"レイヤー {description.PreferredText}";
+        return $"{basis} / 塞がっていれば{direction}";
+    }
 
     internal static string Targeted(TargetedPlacementBehaviorDescription description)
     {
@@ -243,9 +248,11 @@ internal static class PlacementBehaviorText
             _ => anchor
         };
         var direction = description.LayerDirection == RelativeLayerDirection.Up ? "上" : "下";
-        var absoluteLayer = description.AbsoluteLayer is int layerNumber ? layerNumber.ToString(CultureInfo.InvariantCulture) : "指定";
+        var absoluteLayer = description.UseSourceLayer
+            ? "元のレイヤー"
+            : description.AbsoluteLayer is int layerNumber ? $"レイヤー{layerNumber.ToString(CultureInfo.InvariantCulture)}" : "指定レイヤー";
         var layer = description.LayerMode == LayerPlacementMode.Absolute
-            ? $"レイヤー{absoluteLayer}を基準に配置します。塞がっていればさらに{direction}へ探します。"
+            ? $"{absoluteLayer}を基準に配置します。塞がっていればさらに{direction}へ探します。"
             : $"対象より{direction}の空いているレイヤーへ配置します。塞がっていればさらに{direction}へ探します。";
         var needsNeighbor = description.Duration == IntentDuration.UntilRelated ||
             description.Anchor is IntentAnchor.RelatedStart or IntentAnchor.RelatedEnd;
@@ -260,10 +267,12 @@ internal static class PlacementBehaviorText
         return $"{Target(description)}を選んだとき、{timing}、{layer}{fallback}".Trim();
     }
 
-    internal static string Generic(GenericPlacementBehaviorDescription description) =>
-        description.UseTemplateLayer
-            ? "現在の再生位置から、テンプレートの長さ・レイヤーで配置します。選択アイテムには関連付けません。"
-            : description.SearchMode == LayerSearchMode.Legacy
-                ? $"現在の再生位置から、テンプレートの長さで配置します。レイヤー{description.MinimumText}〜{description.MaximumText}の空きから{description.PreferredText}を優先します。選択アイテムには関連付けません。"
-                : $"現在の再生位置から、テンプレートの長さでレイヤー{description.PreferredText}へ配置します。塞がっていれば{(description.SearchMode == LayerSearchMode.DoNotPlace ? "配置しません" : description.SearchMode == LayerSearchMode.SearchUp ? "上（小さい番号）の空きを探します" : "下（大きい番号）の空きを探します")}。範囲は{description.MinimumText}〜{description.MaximumText}です。";
+    internal static string Generic(GenericPlacementBehaviorDescription description)
+    {
+        var basis = description.UseTemplateLayer ? "元のレイヤー" : $"レイヤー{description.PreferredText}";
+        var direction = description.SearchMode == LayerSearchMode.SearchDown
+            ? "下（大きい番号）の空きを探します"
+            : "上（小さい番号）の空きを探します";
+        return $"現在の再生位置から、テンプレートの長さで{basis}へ配置します。塞がっていれば{direction}。範囲は{description.MinimumText}〜{description.MaximumText}です。";
+    }
 }

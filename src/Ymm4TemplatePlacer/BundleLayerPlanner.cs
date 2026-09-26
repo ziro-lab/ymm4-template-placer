@@ -13,13 +13,17 @@ public sealed record RelativeLayerPolicy
     public int Offset { get; init; } = 1;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public int AbsoluteLayer { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseSourceLayer { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool SpecifiedLayerInitialized { get; init; }
     public int Minimum { get; init; }
     public int Maximum { get; init; } = 99;
     public void Validate()
     {
         if (!Enum.IsDefined(Mode) || !Enum.IsDefined(Direction) || Offset < 1 || Offset > 9999 ||
             AbsoluteLayer < 0 || AbsoluteLayer > 9999 || Minimum < 0 || Maximum < Minimum || Maximum > 9999 ||
-            (Mode == LayerPlacementMode.Absolute && (AbsoluteLayer < Minimum || AbsoluteLayer > Maximum)))
+            (Mode == LayerPlacementMode.Absolute && !UseSourceLayer && (AbsoluteLayer < Minimum || AbsoluteLayer > Maximum)))
             throw new InvalidOperationException("レイヤー配置は保存済み探索範囲内の0〜9999、上下の間隔は1〜9999段で設定してください。");
     }
 }
@@ -67,9 +71,11 @@ public static class BundleLayerPlanner
         long first;
         if (policy.Mode == LayerPlacementMode.Absolute)
         {
-            first = policy.AbsoluteLayer;
+            first = policy.UseSourceLayer ? source.BaseLayer : policy.AbsoluteLayer;
             if (first < policy.Minimum || first + width > policy.Maximum)
-                throw new InvalidOperationException("指定した絶対レイヤーでは配置Source全体が探索範囲に収まりません。");
+                throw new InvalidOperationException(policy.UseSourceLayer
+                    ? "元のレイヤーでは配置Source全体が探索範囲に収まりません。探索範囲を確認してください。"
+                    : "指定レイヤーでは配置Source全体が探索範囲に収まりません。");
         }
         else
         {

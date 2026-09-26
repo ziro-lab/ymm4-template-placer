@@ -9,6 +9,8 @@ public sealed partial class PlacerViewModel
         if (!ReferenceEquals(draft, GenericLayerTarget) || selectedIntentSet is not { Generic: not null } set ||
             set.Id != draft.SetId || !CanEditIntentSet(set))
             throw new InvalidOperationException("入力途中の設定を確定または戻してから、レイヤーを変更してください。");
+        if (string.IsNullOrWhiteSpace(draft.Target))
+            throw new InvalidOperationException("元レイヤー使用中です。数値を変更する場合はレイヤー番号を入力してください。");
         if (!int.TryParse(draft.Target, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value) ||
             value < draft.Saved.Minimum || value > draft.Saved.Maximum)
             throw new InvalidOperationException("先に範囲内のレイヤー番号を入力してください。入力途中の値は変更していません。");

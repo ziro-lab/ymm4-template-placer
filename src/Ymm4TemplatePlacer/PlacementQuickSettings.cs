@@ -10,7 +10,9 @@ public enum PlacementQuickAction
     DurationTargetSpan,
     DurationTemplate,
     LayerUpOne,
-    LayerDownOne
+    LayerDownOne,
+    LayerSearchUp,
+    LayerSearchDown
 }
 
 public sealed partial class PlacerViewModel
@@ -162,6 +164,14 @@ public sealed partial class PlacerViewModel
                 if (draft.LayerMode != LayerPlacementMode.RelativeToTarget) draft.LayerMode = LayerPlacementMode.RelativeToTarget;
                 if (draft.Direction != RelativeLayerDirection.Down) draft.Direction = RelativeLayerDirection.Down;
                 if (draft.LayerOffset != "1") draft.LayerOffset = "1";
+                break;
+            case PlacementQuickAction.LayerSearchUp:
+                if (draft.LayerMode != LayerPlacementMode.Absolute) draft.LayerMode = LayerPlacementMode.Absolute;
+                if (draft.Direction != RelativeLayerDirection.Up) draft.Direction = RelativeLayerDirection.Up;
+                break;
+            case PlacementQuickAction.LayerSearchDown:
+                if (draft.LayerMode != LayerPlacementMode.Absolute) draft.LayerMode = LayerPlacementMode.Absolute;
+                if (draft.Direction != RelativeLayerDirection.Down) draft.Direction = RelativeLayerDirection.Down;
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(action));
