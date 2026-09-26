@@ -71,7 +71,7 @@ internal static partial class NativeProof
         Apply(sourceLayerPolicy, Occupied(60)); await Idle();
         Assert(vm.GenericLayerTarget is { Target: "", OccupiedBehavior: LayerSearchMode.SearchUp },
             "LAYER_UX P2 blank Generic target represents the template Source layer with an explicit escape direction");
-        Round3Assert(await PlacesAt(59), "D6S", "blank Generic layer uses the template's original layer first, then escapes Up when occupied");
+        Round3Assert(await PlacesAt(59), "D12", "blank Generic layer uses the template's original layer first, then escapes Up when occupied");
         var noWrap = true;
         foreach (var mode in new[] { LayerSearchMode.SearchUp, LayerSearchMode.SearchDown })
         {
