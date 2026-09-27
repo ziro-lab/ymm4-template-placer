@@ -84,7 +84,7 @@ internal static partial class NativeProof
             if (depth > 5) return false; var type = item.GetType();
             var header = type.GetProperty("Header")?.GetValue(item)?.ToString() ?? type.GetProperty("Title")?.GetValue(item)?.ToString() ?? type.GetProperty("Name")?.GetValue(item)?.ToString() ?? "";
             Log("tool menu: " + type.FullName + " | " + header); DumpType(type);
-            if (header.Contains("YMM4 Template Placer", StringComparison.Ordinal))
+            if (header.Equals("Template Placer", StringComparison.Ordinal))
             {
                 var command = type.GetProperty("Command")?.GetValue(item) as ICommand; var parameter = type.GetProperty("CommandParameter")?.GetValue(item);
                 if (command?.CanExecute(parameter) == true) { command.Execute(parameter); return true; }
