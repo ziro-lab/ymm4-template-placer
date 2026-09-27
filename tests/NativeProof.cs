@@ -73,6 +73,8 @@ internal static partial class NativeProof
             .ToArray();
         Assert(pluginTypes.Length == 1 && pluginTypes[0] == typeof(PlacerToolPlugin),
             "plugin assembly exposes exactly one YMM4 plugin registration type");
+        Assert(new PlacerToolPlugin().Name == "Template Placer",
+            "tool menu display name omits redundant YMM4 prefix");
     }
 
     private static void InspectTemplateRegistration(Timeline timeline)
