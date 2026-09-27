@@ -6,7 +6,7 @@
 
 ## インストール・更新
 
-YMM4に `Ymm4TemplatePlacer-v0.5.0.ymme` をインストールし、再起動します。Toolメニューの「ユーティリティ」グループから「YMM4 Template Placer」を開きます。YMM4の表示言語によってグループ名は変わります。
+YMM4に `Ymm4TemplatePlacer-v0.5.0.ymme` をインストールし、再起動します。Toolメニューの「ユーティリティ」グループから「Template Placer」を開きます。YMM4の表示言語によってグループ名は変わります。
 
 インストール先の固定フォルダは `YMM4/user/plugin/Ymm4TemplatePlacer/` です。版が変わっても `.ymme` 内部のフォルダ名は変わりません。以前のCandidateで `Ymm4TemplatePlacer-v0.x.y/` のような版付きフォルダが残っている場合は、YMM4を閉じ、バックアップを取ってから旧Template Placerの該当フォルダだけを整理してください。他のプラグインや素材は削除しないでください。
 
