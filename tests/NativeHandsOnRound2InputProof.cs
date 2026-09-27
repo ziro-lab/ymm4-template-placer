@@ -79,10 +79,10 @@ internal static partial class NativeProof
             host.WindowState = WindowState.Maximized; host.Activate(); await Task.Delay(150); await Idle();
             timeline.Items = [voice]; timeline.SelectedItems = []; timeline.CurrentFrame = 0;
             timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record(); vm.ActivateIntentWorkspace(); await Idle();
-            Assert(TimelinePointerIntentClassifier.IsPinnedHost && TimelinePointerIntentClassifier.DependencySurfaceAvailable &&
+            Assert(TimelinePointerIntentClassifier.DependencySurfaceAvailable &&
                 vm.PlacementContextCompatibilityNotice == "" &&
                 new PlacerToolPlugin().DefaultGroupName == YukkuriMovieMaker.Resources.Localization.Texts.ToolGroupUtilityName,
-                "R2-A A1/A2 exact-host dependency surface is healthy and Utility group uses the shared host localization resource");
+                "R2-A A1/A2 current-host dependency surface is healthy and Utility group uses the shared host localization resource");
             Assert(TimelinePointerIntentClassifier.DependencySurfaceAvailableFor(_ => true) &&
                 !TimelinePointerIntentClassifier.DependencySurfaceAvailableFor(name => name != TimelinePointerIntentClassifier.ScaleViewName),
                 "R2-A host compatibility is capability-based rather than a blanket version gate");
