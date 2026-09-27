@@ -125,7 +125,7 @@ internal static partial class NativeProof
         Check(Signature(timeline) == initial, "all guard cases leave Timeline unchanged");
         File.WriteAllText(Path.Combine(output, "tachie-preset-guards.json"), JsonSerializer.Serialize(new
         {
-            schema = "YMM4-Template-Placer-Tachie-Preset-Guards/1", result = "PASS", host = "YMM4 4.55.1.1 Lite",
+            schema = "YMM4-Template-Placer-Tachie-Preset-Guards/1", result = "PASS", host = "YMM4 4.56.1.0 Lite",
             sourceHead = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_SOURCE_HEAD"),
             checkoutTree = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_CHECKOUT_TREE"),
             runId = Environment.GetEnvironmentVariable("GITHUB_RUN_ID"), checks
