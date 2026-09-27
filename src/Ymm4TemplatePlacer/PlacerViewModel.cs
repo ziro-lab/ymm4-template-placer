@@ -15,7 +15,7 @@ public sealed partial class PlacerViewModel : Bindable, ITimelineToolViewModel, 
     private UndoRedoManager? undo;
     private string status = "";
     private bool hasError;
-    public string Title => "YMM4 Template Placer";
+    public string Title => "Template Placer";
     public bool CanSuspend => true;
     public string SceneName => timeline?.Name ?? "シーンなし";
     public ExpressionRowCollection Rows { get; } = [];
