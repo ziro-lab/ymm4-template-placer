@@ -98,7 +98,7 @@ if($LASTEXITCODE -ne 0 -or $sourceTree -cne (git rev-parse 'HEAD^{tree}')) {thro
  schema='YMM4-Template-Placer-Provenance/1'; repository=$env:GITHUB_REPOSITORY; plugin_version=$version
  source_head=$sourceHead; source_tree=$sourceTree; checkout_commit=(git rev-parse HEAD); checkout_tree=(git rev-parse 'HEAD^{tree}')
  run_id=$env:GITHUB_RUN_ID; run_attempt=$env:GITHUB_RUN_ATTEMPT; run_url="https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
- ymm4_version='4.55.1.1 Lite'; ymm4_zip_sha256='125860147cc33b831fc1a6d6ea996958001c2ead3b0d37f7d900251d5617db9b'
+ ymm4_version='4.56.1.0 Lite'; ymm4_zip_sha256='49c0ed689f545737b7ce939971bfc625962e00791c57883dc8e6f058aa336c5a'
  result=(Get-Content -Raw (Join-Path $OutputDir 'proof-result.txt')).Trim(); v04_result=$acceptance.result
  native_assertions=@(Select-String -Path $logPath -Pattern '^ASSERT PASS:').Count; acceptance_requirements=@($acceptance.checks).Count
  base_task_ux_version=$ux.version; base_task_ux_requirements=@($ux.checks).Count; base_task_ux_result=$ux.result
