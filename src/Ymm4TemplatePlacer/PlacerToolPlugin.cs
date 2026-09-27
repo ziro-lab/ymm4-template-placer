@@ -29,7 +29,7 @@ public sealed class PlacerToolPlugin : IToolPlugin
 #endif
     }
 
-    public string Name => "YMM4 Template Placer";
+    public string Name => "Template Placer";
     public Type ViewModelType => typeof(PlacerViewModel);
     public Type ViewType => typeof(PlacerView);
     public bool AllowMultipleInstances => false;
