@@ -75,6 +75,8 @@ internal static partial class NativeProof
             "plugin assembly exposes exactly one YMM4 plugin registration type");
         Assert(new PlacerToolPlugin().Name == "Template Placer",
             "tool menu display name omits redundant YMM4 prefix");
+        Assert(new PlacerViewModel().Title == "Template Placer",
+            "tool window title matches the concise menu display name");
     }
 
     private static void InspectTemplateRegistration(Timeline timeline)
