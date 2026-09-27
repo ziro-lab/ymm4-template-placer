@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text;
 using System.Windows;
 using System.Windows.Threading;
+using YukkuriMovieMaker.Plugin;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
 using YukkuriMovieMaker.Settings;
@@ -47,6 +48,7 @@ internal static partial class NativeProof
                     var undo = model?.GetType().GetProperty("UndoRedoManager")?.GetValue(model) as UndoRedoManager;
                     if (timeline == null || undo == null) continue;
                     timer.Stop(); Log($"YMM4={typeof(Timeline).Assembly.GetName().Version}; host={root.GetType().FullName}");
+                    VerifySinglePluginRegistration();
                     InspectTemplateRegistration(timeline);
                     await Run(root, timeline, undo);
                     VerifyWorkbookVariants(timeline);
@@ -63,6 +65,16 @@ internal static partial class NativeProof
         };
         timer.Start();
     }
+    private static void VerifySinglePluginRegistration()
+    {
+        var pluginTypes = typeof(PlacerToolPlugin).Assembly.GetTypes()
+            .Where(type => type is { IsAbstract: false, IsInterface: false } &&
+                (typeof(IToolPlugin).IsAssignableFrom(type) || typeof(ILocalizePlugin).IsAssignableFrom(type)))
+            .ToArray();
+        Assert(pluginTypes.Length == 1 && pluginTypes[0] == typeof(PlacerToolPlugin),
+            "plugin assembly exposes exactly one YMM4 plugin registration type");
+    }
+
     private static void InspectTemplateRegistration(Timeline timeline)
     {
         var character = new Character { Name = "RegistrationProbe" };
