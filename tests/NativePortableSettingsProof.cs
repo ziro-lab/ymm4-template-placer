@@ -30,7 +30,7 @@ internal static partial class NativeProof
             return File.ReadAllBytes(seed);
         }
 
-        var pluginRoot = Path.GetFullPath(Path.GetDirectoryName(typeof(PluginEntry).Assembly.Location)!);
+        var pluginRoot = Path.GetFullPath(Path.GetDirectoryName(typeof(PlacerToolPlugin).Assembly.Location)!);
         var expectedPortable = Path.Combine(pluginRoot, "Data", "settings-v04.json");
         Assert(Path.GetFullPath(PlacerSettingsStore.DefaultPath) == Path.GetFullPath(expectedPortable) &&
             !string.Equals(PlacerSettingsStore.DefaultPath, PlacerSettingsStore.LegacyPath, StringComparison.OrdinalIgnoreCase),
