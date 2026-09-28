@@ -12,6 +12,12 @@ YMM4に `Ymm4TemplatePlacer-v0.5.0.ymme` をインストールし、再起動し
 
 設定ファイルは `YMM4/user/plugin/Ymm4TemplatePlacer/Data/settings-v04.json` です。旧 `%LOCALAPPDATA%/Ymm4TemplatePlacer/settings-v04.json` だけがある場合は検証後にPortable側へ移行し、旧ファイルは自動削除しません。Portable側が存在する場合はそちらを正として読み込み、旧LocalAppData側と内容が異なっていてもPortable側を優先します。設定・プロジェクト・使用素材は別々にバックアップしてください。
 
+## ニコニコ動画へ投稿する場合
+
+Template Placerの紹介動画 **`sm46860617`** を、ニコニコ用の作品IDとしてプラグイン情報に登録しています。
+
+Template Placerを使った作品をニコニコ動画へ投稿する場合は、よければこの紹介動画を親作品に登録してください。親作品への登録は必須ではありません。
+
 ## まず1つ配置する
 
 YMM4のテンプレート機能へ、繰り返し使いたいアイテムを登録します。Template Placerはその元を参照し、配置時に独立したコピーを作ります。元テンプレートを改名したり、内容をプラグイン設定へ複製したりはしません。
