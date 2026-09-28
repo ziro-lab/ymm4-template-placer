@@ -30,6 +30,11 @@ public sealed class PlacerToolPlugin : IToolPlugin
     }
 
     public string Name => "Template Placer";
+    public PluginDetailsAttribute Details => new()
+    {
+        AuthorName = "Ziro Lab",
+        ContentId = "sm46860617",
+    };
     public Type ViewModelType => typeof(PlacerViewModel);
     public Type ViewType => typeof(PlacerView);
     public bool AllowMultipleInstances => false;
