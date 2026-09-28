@@ -79,10 +79,10 @@ internal static partial class NativeProof
             host.WindowState = WindowState.Maximized; host.Activate(); await Task.Delay(150); await Idle();
             timeline.Items = [voice]; timeline.SelectedItems = []; timeline.CurrentFrame = 0;
             timeline.RefreshTimelineLengthAndMaxLayer(); undo.Record(); vm.ActivateIntentWorkspace(); await Idle();
-            Assert(TimelinePointerIntentClassifier.IsPinnedHost && TimelinePointerIntentClassifier.DependencySurfaceAvailable &&
+            Assert(TimelinePointerIntentClassifier.DependencySurfaceAvailable &&
                 vm.PlacementContextCompatibilityNotice == "" &&
                 new PlacerToolPlugin().DefaultGroupName == YukkuriMovieMaker.Resources.Localization.Texts.ToolGroupUtilityName,
-                "R2-A A1/A2 exact-host dependency surface is healthy and Utility group uses the shared host localization resource");
+                "R2-A A1/A2 current-host dependency surface is healthy and Utility group uses the shared host localization resource");
             Assert(TimelinePointerIntentClassifier.DependencySurfaceAvailableFor(_ => true) &&
                 !TimelinePointerIntentClassifier.DependencySurfaceAvailableFor(name => name != TimelinePointerIntentClassifier.ScaleViewName),
                 "R2-A host compatibility is capability-based rather than a blanket version gate");
@@ -121,7 +121,13 @@ internal static partial class NativeProof
                     await Task.Delay(60); await Idle();
                     var actual = Mouse.DirectlyOver as DependencyObject;
                     if (TimelinePointerIntentClassifier.Classify(actual) == expected) return screen;
-                    Log($"R2-A rejected occluded host point for {expected}: actual={actual?.GetType().FullName}; window={Window.GetWindow(actual ?? host)?.GetType().FullName}; x={screen.X:0}; y={screen.Y:0}");
+                    var route = new List<string>();
+                    for (var node = actual; node != null && route.Count < 16; node = TimelinePointerIntentClassifier.Parent(node))
+                    {
+                        var element = node as FrameworkElement;
+                        route.Add($"{node.GetType().FullName}[dc={element?.DataContext?.GetType().FullName};hit={element?.IsHitTestVisible};visible={element?.IsVisible}]");
+                    }
+                    Log($"R2-A rejected occluded host point for {expected}: actual={actual?.GetType().FullName}; window={Window.GetWindow(actual ?? host)?.GetType().FullName}; x={screen.X:0}; y={screen.Y:0}; route={string.Join(" > ", route)}");
                 }
                 throw new InvalidOperationException("No exact host hit route for " + expected);
             }

@@ -17,7 +17,7 @@ internal static partial class NativeProof
 
         var character = new Character { Name = "P6 association" };
         var fingerprint = new TachiePresetCapabilityFingerprint(
-            "YMM4 4.55.1.1 Lite",
+            "YMM4 4.56.1.0 Lite",
             character.Name,
             new string('c', 64),
             "Fixture.Plugin",
@@ -248,7 +248,7 @@ internal static partial class NativeProof
         File.WriteAllText(Path.Combine(output, "tachie-preset-association.json"), JsonSerializer.Serialize(new
         {
             schema = "YMM4-Template-Placer-Tachie-Preset-Association/1",
-            host = "YMM4 4.55.1.1 Lite",
+            host = "YMM4 4.56.1.0 Lite",
             result = "PASS",
             sourceHead = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_SOURCE_HEAD"),
             checkoutTree = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_CHECKOUT_TREE"),

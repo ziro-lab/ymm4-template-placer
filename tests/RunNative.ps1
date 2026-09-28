@@ -126,7 +126,7 @@ $presetProofs=@(
 foreach ($proof in $presetProofs) {
  if (-not (Select-String -Path $log -Pattern ('^'+[regex]::Escape($proof.Marker)+'$'))) { throw "Missing preset proof marker: $($proof.Marker)" }
  $data=Get-Content -Raw (Join-Path $OutputDir $proof.File) | ConvertFrom-Json
- if ($data.schema -cne $proof.Schema -or $data.result -cne 'PASS' -or $data.host -cne 'YMM4 4.55.1.1 Lite' -or
+ if ($data.schema -cne $proof.Schema -or $data.result -cne 'PASS' -or $data.host -cne 'YMM4 4.56.1.0 Lite' -or
      $data.sourceHead -cne $env:YMM4_TEMPLATE_PLACER_SOURCE_HEAD -or $data.checkoutTree -cne $env:YMM4_TEMPLATE_PLACER_CHECKOUT_TREE -or
      $data.runId -cne $env:GITHUB_RUN_ID -or @($data.checks).Count -eq 0) { throw "Incomplete or stale preset proof: $($proof.File)" }
 }
