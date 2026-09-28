@@ -73,8 +73,11 @@ internal static partial class NativeProof
             .ToArray();
         Assert(pluginTypes.Length == 1 && pluginTypes[0] == typeof(PlacerToolPlugin),
             "plugin assembly exposes exactly one YMM4 plugin registration type");
-        Assert(new PlacerToolPlugin().Name == "Template Placer",
+        var plugin = new PlacerToolPlugin();
+        Assert(plugin.Name == "Template Placer",
             "tool menu display name omits redundant YMM4 prefix");
+        Assert(plugin.Details.AuthorName == "Ziro Lab" && plugin.Details.ContentId == "sm46860617",
+            "plugin metadata exposes the official author and Niconico parent-work content id");
         Assert(new PlacerViewModel().Title == "Template Placer",
             "tool window title matches the concise menu display name");
     }
