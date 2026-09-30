@@ -169,9 +169,10 @@ internal static partial class NativeProof
         bitmap.Render(visual);
         var pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
         bitmap.CopyPixels(pixels, bitmap.PixelWidth * 4, 0);
-        var opaque = 0; var transparent = 0;
+        var opaque = 0; var transparent = 0; byte minimumAlpha = 255;
         for (var i = 3; i < pixels.Length; i += 4)
         {
+            minimumAlpha = Math.Min(minimumAlpha, pixels[i]);
             if (pixels[i] == 255) opaque++;
             else if (pixels[i] == 0) transparent++;
         }
@@ -180,8 +181,11 @@ internal static partial class NativeProof
         using (var file = File.Create(path)) encoder.Save(file);
         // Save even rejected output, so a failed capture is diagnosable.
         var pixelCount = bitmap.PixelWidth * bitmap.PixelHeight;
-        Log($"SETTINGS_CAPTURE pixels {filename}: opaque={opaque}/{pixelCount}; transparent={transparent}; background={view.Background}; hostBackground={host.Background}; opacity={view.Opacity}; dpi={VisualTreeHelper.GetDpi(view)}; visualClip={VisualTreeHelper.GetClip(view)?.Bounds}; descendants={VisualTreeHelper.GetDescendantBounds(view)}; layoutClip={System.Windows.Controls.Primitives.LayoutInformation.GetLayoutClip(view)}");
-        Assert(opaque == pixelCount,
+        Log($"SETTINGS_CAPTURE pixels {filename}: opaque={opaque}/{pixelCount}; transparent={transparent}; minAlpha={minimumAlpha}; background={view.Background}; hostBackground={host.Background}; opacity={view.Opacity}; dpi={VisualTreeHelper.GetDpi(view)}; visualClip={VisualTreeHelper.GetClip(view)?.Bounds}; descendants={VisualTreeHelper.GetDescendantBounds(view)}; layoutClip={System.Windows.Controls.Primitives.LayoutInformation.GetLayoutClip(view)}");
+        // Native WPF text composition can round an opaque glyph pixel to alpha
+        // 254 (observed in the scene heading); all pixels must still be covered.
+        // Unlike a percentage threshold, this rejects even one transparent pixel.
+        Assert(minimumAlpha >= 254,
             "SETTINGS_CAPTURE requested image has no transparent padded region: " + filename);
         return Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant();
     }
