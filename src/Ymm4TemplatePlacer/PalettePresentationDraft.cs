@@ -17,10 +17,12 @@ public sealed class PalettePresentationDraft : IntentEditable
     private string columns;
     private readonly int rowHeight;
     private bool enabled;
+    private bool showOtherCharacterSets;
     private ExpressionViewportFollow follow;
     public PaletteLayoutMode LayoutMode { get => layout; set { if (layout == value) return; layout = value; Notify(); Raise(nameof(IsFixed)); } }
     public string FixedColumns { get => columns; set { if (columns == value) return; columns = value; Notify(); } }
     public bool ShortcutsEnabled { get => enabled; set { if (enabled == value) return; enabled = value; Notify(); } }
+    public bool ShowOtherCharacterSets { get => showOtherCharacterSets; set { if (showOtherCharacterSets == value) return; showOtherCharacterSets = value; Notify(); } }
     public bool IsFixed => LayoutMode == PaletteLayoutMode.Fixed;
     public ExpressionViewportFollow ViewportFollow { get => follow; set { if (follow == value) return; follow = value; Notify(); } }
     public ObservableCollection<PositionShortcutDraft> Shortcuts { get; } = [];
@@ -30,6 +32,7 @@ public sealed class PalettePresentationDraft : IntentEditable
     public IReadOnlyList<IntentOption<ExpressionViewportFollow>> ViewportModes { get; } = [new(ExpressionViewportFollow.Off,"追従しない"), new(ExpressionViewportFollow.WhenOutside,"画面外の時だけ追従"), new(ExpressionViewportFollow.Always,"常に追従")];
     public PalettePresentationDraft(PalettePresentationSettings source)
     {
+        showOtherCharacterSets = source.ShowOtherCharacterSets;
         rowHeight = source.ExpressionRowHeight; layout = source.LayoutMode; columns = source.FixedColumns.ToString(CultureInfo.InvariantCulture); enabled = source.ShortcutsEnabled; follow = source.ViewportFollow;
         foreach (var binding in source.PositionShortcuts) Add(new(binding.SlotIndex, binding.Gesture));
         AddShortcutCommand = new(_ => Shortcuts.Count < 64, _ =>
@@ -48,7 +51,7 @@ public sealed class PalettePresentationDraft : IntentEditable
     public PalettePresentationSettings Build()
     {
         var result = new PalettePresentationSettings { LayoutMode = LayoutMode, FixedColumns = Number(FixedColumns,"固定列数"),
-            ShortcutsEnabled = ShortcutsEnabled, PositionShortcuts = Shortcuts.Select(x => x.Build()).ToList(), ViewportFollow = ViewportFollow, ExpressionRowHeight = rowHeight };
+            ShowOtherCharacterSets = ShowOtherCharacterSets, ShortcutsEnabled = ShortcutsEnabled, PositionShortcuts = Shortcuts.Select(x => x.Build()).ToList(), ViewportFollow = ViewportFollow, ExpressionRowHeight = rowHeight };
         result.Validate(); return result;
     }
 }

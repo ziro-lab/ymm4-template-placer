@@ -44,6 +44,8 @@ public sealed record PalettePresentationSettings
     public int FixedColumns { get; init; } = 4;
     public int ExpressionRowHeight { get; init; } = 36;
     public bool ShortcutsEnabled { get; init; }
+    // Settings list visibility only; never changes runtime Target matching.
+    public bool ShowOtherCharacterSets { get; init; }
     public List<PositionShortcut> PositionShortcuts { get; init; } = [];
     public ExpressionViewportFollow ViewportFollow { get; init; } = ExpressionViewportFollow.WhenOutside;
     public void Validate()

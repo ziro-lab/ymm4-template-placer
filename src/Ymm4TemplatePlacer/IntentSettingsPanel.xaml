@@ -71,9 +71,27 @@
     <WrapPanel Grid.Column="2" VerticalAlignment="Top">
      <Button x:Name="NewPaletteButton" Style="{StaticResource SetPickerButtonStyle}" Content="＋" Command="{Binding CreateIntentPaletteCommand}" ToolTip="このアイテムで使うセットを作る" AutomationProperties.Name="このアイテムのセットを作成"/>
     </WrapPanel>
-    <ComboBox Grid.Column="1" x:Name="PalettePicker" Style="{StaticResource SetPickerComboStyle}" ItemsSource="{Binding IntentSettings.VisiblePalettes}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedPalette,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集するセット"/>
-    <ComboBox Grid.Column="1" x:Name="GenericPalettePicker" Style="{StaticResource SetPickerComboStyle}" ItemsSource="{Binding IntentSettings.GenericSets}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedGenericSet,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集する汎用セット"/>
+    <ComboBox Grid.Column="1" x:Name="PalettePicker" Style="{StaticResource SetPickerComboStyle}" ItemsSource="{Binding IntentSettings.VisiblePalettes}" SelectedItem="{Binding IntentSettings.SelectedPalette,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集するセット" MaxDropDownHeight="260" ToolTip="{Binding SelectedItem.Label,RelativeSource={RelativeSource Self}}">
+     <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Label}"/></DataTemplate></ComboBox.ItemTemplate>
+     <ComboBox.ItemContainerStyle><Style TargetType="ComboBoxItem">
+      <Setter Property="MaxWidth" Value="{Binding ActualWidth,ElementName=PalettePicker}"/>
+      <Setter Property="ToolTip" Value="{Binding Label}"/>
+      <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><TextBlock Text="{Binding Label}" TextWrapping="Wrap"/></DataTemplate></Setter.Value></Setter>
+     </Style></ComboBox.ItemContainerStyle>
+    </ComboBox>
+    <ComboBox Grid.Column="1" x:Name="GenericPalettePicker" Style="{StaticResource SetPickerComboStyle}" ItemsSource="{Binding IntentSettings.GenericSets}" SelectedItem="{Binding IntentSettings.SelectedGenericSet,Mode=TwoWay}" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="編集する汎用セット" MaxDropDownHeight="260" ToolTip="{Binding SelectedItem.Label,RelativeSource={RelativeSource Self}}">
+     <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Label}"/></DataTemplate></ComboBox.ItemTemplate>
+     <ComboBox.ItemContainerStyle><Style TargetType="ComboBoxItem">
+      <Setter Property="MaxWidth" Value="{Binding ActualWidth,ElementName=GenericPalettePicker}"/>
+      <Setter Property="ToolTip" Value="{Binding Label}"/>
+      <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><TextBlock Text="{Binding Label}" TextWrapping="Wrap"/></DataTemplate></Setter.Value></Setter>
+     </Style></ComboBox.ItemContainerStyle>
+    </ComboBox>
    </Grid>
+   <DockPanel x:Name="SettingsCharacterFilterRow" Margin="0,3,6,4" Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}">
+    <CheckBox x:Name="ShowOtherCharacterSetsCheck" DockPanel.Dock="Right" Content="他のキャラ専用セットを表示" IsChecked="{Binding IntentSettings.ShowOtherCharacterSets,Mode=TwoWay}" IsEnabled="{Binding IntentSettings.HasSettingsReferenceCharacter}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+    <TextBlock x:Name="SettingsReferenceCharacterText" Text="{Binding IntentSettings.SettingsReferenceCharacterLabel}" ToolTip="{Binding IntentSettings.SettingsReferenceCharacterLabel}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Opacity="0.72"/>
+   </DockPanel>
    <TextBlock x:Name="ContextNoticeText" Text="{Binding IntentSettings.ContextNotice}" TextWrapping="Wrap" Opacity="0.72"/>
 
   </StackPanel>

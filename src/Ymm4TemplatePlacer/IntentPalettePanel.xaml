@@ -26,21 +26,33 @@
    </Grid>
   </Grid>
 
-  <TextBlock x:Name="SingleSetTitleText" Grid.Row="1" Text="{Binding SelectedIntentSet.Label}" FontWeight="SemiBold" Margin="4,0,4,6">
-   <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowSingleSetName}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+  <TextBlock x:Name="SingleSetTitleText" Grid.Row="1" Text="{Binding SelectedIntentSet.Label}" ToolTip="{Binding SelectedIntentSet.Label}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="4,0,4,6">
+   <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowSingleSetName}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding HasIntentSets}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
   </TextBlock>
 
   <DockPanel x:Name="IntentSetRow" Grid.Row="2" Margin="2,6,2,8">
    <DockPanel.Style><Style TargetType="DockPanel"><Style.Triggers><DataTrigger Binding="{Binding HasIntentSets}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></DockPanel.Style>
    <TextBlock Text="セット" VerticalAlignment="Center" Margin="0,0,8,0" DockPanel.Dock="Left"/>
-   <ComboBox x:Name="IntentSetPicker" ItemsSource="{Binding IntentSets}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedIntentSet,Mode=TwoWay}" MinWidth="120" HorizontalContentAlignment="Stretch" AutomationProperties.Name="セットを選択">
+   <ComboBox x:Name="IntentSetPicker" ItemsSource="{Binding IntentSets}" SelectedItem="{Binding SelectedIntentSet,Mode=TwoWay}" MinWidth="120" MaxDropDownHeight="260" ToolTip="{Binding SelectedIntentSet.Label}" HorizontalContentAlignment="Stretch" AutomationProperties.Name="セットを選択">
     <ComboBox.Style><Style TargetType="ComboBox"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding UseIntentSetPicker}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></ComboBox.Style>
+    <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Label}"/></DataTemplate></ComboBox.ItemTemplate>
+    <ComboBox.ItemContainerStyle><Style TargetType="ComboBoxItem">
+     <Setter Property="MaxWidth" Value="{Binding ActualWidth,ElementName=IntentSetPicker}"/>
+     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+     <Setter Property="ToolTip" Value="{Binding Label}"/>
+     <Setter Property="AutomationProperties.Name" Value="{Binding Label}"/>
+     <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><TextBlock Text="{Binding Label}" TextWrapping="Wrap"/></DataTemplate></Setter.Value></Setter>
+    </Style></ComboBox.ItemContainerStyle>
    </ComboBox>
    <ListBox x:Name="IntentSetSegments" ItemsSource="{Binding IntentSets}" SelectedItem="{Binding SelectedIntentSet,Mode=TwoWay}" BorderThickness="0" Background="Transparent"
     ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="セットを切り替える">
     <ListBox.Style><Style TargetType="ListBox"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding UseSegmentedIntentSets}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></ListBox.Style>
-    <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
-    <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Label}" Padding="10,5"/></DataTemplate></ListBox.ItemTemplate>
+    <ListBox.ItemsPanel><ItemsPanelTemplate><local:SetSwitchPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
+    <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem">
+     <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="5,3"/><Setter Property="Margin" Value="2,0,2,4"/>
+     <Setter Property="ToolTip" Value="{Binding Label}"/><Setter Property="AutomationProperties.Name" Value="{Binding Label}"/>
+    </Style></ListBox.ItemContainerStyle>
+    <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Label}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="28" LineHeight="14" LineStackingStrategy="BlockLineHeight"/></DataTemplate></ListBox.ItemTemplate>
    </ListBox>
   </DockPanel>
 

@@ -15,7 +15,14 @@ internal static partial class NativeProof
 {
     // First capture the existing crowded surface; promote the explicit layout
     // checks with the product candidate, without changing this fixture.
-    private static readonly bool CrowdedSetCandidate = false;
+    private static readonly bool CrowdedSetCandidate = true;
+    private static void VerifyCrowdedPopupBounds(FrameworkElement popup, Window host, int width)
+    {
+        var screen = popup.PointToScreen(new Point()); var origin = host.PointToScreen(new Point());
+        Assert(screen.X - origin.X >= -1 && screen.X - origin.X + popup.ActualWidth <= width + 1 &&
+            screen.Y - origin.Y >= -1 && screen.Y - origin.Y + popup.ActualHeight <= host.ActualHeight + 1,
+            "CROWDED_SETS native dropdown stays inside the exact captured viewport without horizontal clipping");
+    }
     private static async Task VerifyCrowdedSetCapture(Timeline timeline, UndoRedoManager undo)
     {
         stage = "crowded Set visual evidence";
@@ -73,6 +80,9 @@ internal static partial class NativeProof
                             items.All(x => Math.Abs(x.ActualWidth - items[0].ActualWidth) <= 1) &&
                             items.All(x => x.TranslatePoint(new Point(x.ActualWidth, 0), surface).X <= surface.ActualWidth + 1),
                             $"CROWDED_SETS equal-width four-Set cells fit {width}px without a hover selection ambiguity");
+                        Assert(items.All(x => x.ToolTip?.ToString() == (x.DataContext as IntentSetChoice)?.Label &&
+                            System.Windows.Automation.AutomationProperties.GetName(x) == (x.DataContext as IntentSetChoice)?.Label),
+                            "CROWDED_SETS abbreviated similar names retain exact full tooltip/accessibility names");
                         Assert(surface.SingleSetTitleText.IsVisible && surface.SingleSetTitleText.Text == vm.SelectedIntentSet!.Label,
                             "CROWDED_SETS selected long/similar Set has a full-name title");
                     }
@@ -87,6 +97,10 @@ internal static partial class NativeProof
                         surface.IntentSetPicker.IsDropDownOpen = true; await Idle();
                         var popup = (Popup)surface.IntentSetPicker.Template.FindName("PART_Popup", surface.IntentSetPicker);
                         var child = (FrameworkElement)popup.Child;
+                        VerifyCrowdedPopupBounds(child, window, width);
+                        var choices = RelativeVisuals(child).OfType<ComboBoxItem>().ToArray();
+                        Assert(choices.Length > 4 && choices.All(x => x.ActualWidth <= surface.IntentSetPicker.ActualWidth + 1),
+                            "CROWDED_SETS many-Set dropdown wraps complete names within its bounded width");
                         filename = $"crowded-sets-{width}-many-dropdown.png";
                         images.Add(new { File = filename, Sha256 = SaveFullSettingsBitmap(capture, filename, child), Width = width, Height = 640,
                             Case = "many-dropdown", SelectedSet = vm.SelectedIntentSet.Label,
@@ -114,8 +128,25 @@ internal static partial class NativeProof
                             SelectedSet = session.SelectedPalette!.Name,
                             SetNames = session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Name).ToArray(),
                             CharacterContext = (panel.FindName("SettingsReferenceCharacterText") as TextBlock)?.Text });
+                        VerifyCrowdedPopupBounds((FrameworkElement)popup.Child, window, width);
+                        Assert(session.HasSettingsReferenceCharacter && !session.ShowOtherCharacterSets &&
+                            session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(all.Where(x => x.Target.CharacterName != "魔理沙").Select(x => x.Id)),
+                            "CROWDED_SETS real Set-opening coordinator shows reference-character plus common Sets in saved order");
                         panel.PalettePicker.IsDropDownOpen = false; await Idle();
+                        panel.ShowOtherCharacterSetsCheck.IsChecked = true; await Idle();
+                        Assert(session.ShowOtherCharacterSets && session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(all.Select(x => x.Id)),
+                            "CROWDED_SETS actual checkbox reveals all same-type Sets without changing order");
+                        panel.PalettePicker.IsDropDownOpen = true; await Idle();
+                        popup = (Popup)panel.PalettePicker.Template.FindName("PART_Popup", panel.PalettePicker);
+                        filename = $"crowded-settings-{width}-all-characters-dropdown.png";
+                        VerifyCrowdedPopupBounds((FrameworkElement)popup.Child, window, width);
+                        images.Add(new { File = filename, Sha256 = SaveFullSettingsBitmap(capture, filename, (FrameworkElement)popup.Child),
+                            Width = width, Height = 640, Case = "settings-all-characters-dropdown", SelectedSet = session.SelectedPalette!.Name,
+                            SetNames = session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Name).ToArray(),
+                            CharacterContext = panel.SettingsReferenceCharacterText.Text });
+                        panel.PalettePicker.IsDropDownOpen = false; panel.ShowOtherCharacterSetsCheck.IsChecked = false; await Idle();
                     }
+                    if (session.HasChanges) vm.SaveIntentSettings();
                     Assert(JsonSerializer.Serialize(session.Build()) == draftBefore,
                         "CROWDED_SETS opening dropdowns preserves the complete Settings draft");
                 }

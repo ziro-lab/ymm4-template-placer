@@ -66,9 +66,9 @@ public sealed partial class IntentSettingsSession
         set
         {
             if (refreshingNavigation || value == selectedItemContext || (value != null && !ItemContexts.Contains(value))) return;
-            selectedItemContext = value; RefreshNavigation(); NavigationChanged();
+            selectedItemContext = value; ClearActiveEditingPalette(); RefreshNavigation(); NavigationChanged();
             Raise(nameof(IsGenericContext)); Raise(nameof(IsTargetedContext)); Raise(nameof(HasSelectedSet)); Raise(nameof(HasSelectedSetEntry));
-            Raise(nameof(CanCreateForContext)); Raise(nameof(ContextNotice)); RefreshCopyDestination();
+            Raise(nameof(CanCreateForContext)); Raise(nameof(ContextNotice)); RaiseCharacterVisibility(); RefreshCopyDestination();
         }
     }
     public string? SelectedIntent
@@ -83,7 +83,7 @@ public sealed partial class IntentSettingsSession
     private void InitializeNavigation(IReadOnlyList<IItem> selection)
     {
         VisiblePalettes = new ListCollectionView(Palettes);
-        VisiblePalettes.Filter = x => x is IntentPaletteDraft draft && !IsGenericContext && MatchesContext(draft);
+        VisiblePalettes.Filter = x => x is IntentPaletteDraft draft && !IsGenericContext && MatchesSettingsVisibility(draft);
         ItemContexts.Add(new("generic", "汎用", []));
         var names = KnownTypes.Values.GroupBy(x => x, StringComparer.Ordinal).ToDictionary(x => x.Key, x => x.Count(), StringComparer.Ordinal);
         var ordinals = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -94,6 +94,7 @@ public sealed partial class IntentSettingsSession
             ItemContexts.Add(new(pair.Key, label, [pair.Key]));
         }
         EnsureCompatibilityContext();
+        InitializeCharacterVisibility(selection);
         UpdateSelectionContext(selection);
         RefreshNavigation();
     }
@@ -134,6 +135,7 @@ public sealed partial class IntentSettingsSession
         refreshingNavigation = false;
         RefreshNavigation(); NavigationChanged(nameof(SelectedItemContext));
         Raise(nameof(CanCreateForContext)); Raise(nameof(ContextNotice));
+        RaiseCharacterVisibility();
         Raise(nameof(DirectItemContexts)); Raise(nameof(CommonItemContexts)); Raise(nameof(OtherItemContexts));
         Raise(nameof(IsGenericContext)); Raise(nameof(IsTargetedContext));
     }
@@ -159,7 +161,7 @@ public sealed partial class IntentSettingsSession
         try
         {
             var preferred = selectedPalette?.Id;
-            var applicable = Palettes.Where(MatchesContext).ToArray();
+            var applicable = Palettes.Where(MatchesSettingsVisibility).ToArray();
             var intent = applicable.FirstOrDefault(x => x.Id == preferred)?.Intent ?? selectedIntent;
             Intents.Clear(); foreach (var name in applicable.Select(x => x.Intent).Distinct(StringComparer.Ordinal)) Intents.Add(name);
             selectedIntent = intent != null && Intents.Contains(intent) ? intent : Intents.FirstOrDefault();
@@ -182,6 +184,7 @@ public sealed partial class IntentSettingsSession
         VisiblePalettes.Refresh();
         var visible = VisiblePalettes.Cast<IntentPaletteDraft>().ToArray();
         selectedPalette = visible.FirstOrDefault(x => x.Id == preferred) ?? visible.FirstOrDefault();
+        PinActiveEditingPalette(selectedPalette);
     }
     private void RefreshCopyDestination()
     {
