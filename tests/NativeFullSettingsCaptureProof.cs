@@ -58,7 +58,11 @@ internal static partial class NativeProof
                 ShowInTaskbar = false,
                 Left = SystemParameters.WorkArea.Left + 16, Top = SystemParameters.WorkArea.Top + 16
             };
-            window.Show(); capture.SelectionTab.IsSelected = true; await Idle();
+            // Select Settings before Loaded so the second view cannot close and
+            // replace the shared session through its default Palette tab.
+            capture.SelectionTab.IsSelected = true;
+            window.Show(); await Idle();
+            Assert(ReferenceEquals(session, vm.IntentSettings), "SETTINGS_CAPTURE uses the configured live Settings session");
             var panel = capture.RelativeSettingsSurface;
             var entryDetails = RelativeVisuals(panel.EntryEditor).OfType<Expander>()
                 .Single(x => x.Header?.ToString() == "選択した演出だけの微調整");
@@ -117,7 +121,8 @@ internal static partial class NativeProof
                     }
                 }
             }
-            Assert(Signature(timeline) == beforeTimeline && JsonSerializer.Serialize(session.Build()) == beforeSettings &&
+            Assert(ReferenceEquals(session, vm.IntentSettings) && Signature(timeline) == beforeTimeline &&
+                JsonSerializer.Serialize(vm.IntentSettings!.Build()) == beforeSettings &&
                 string.Join("|", scope.Templates.Select(x => x.Name + ":" + x.Items.Count)) == beforeTemplates,
                 "SETTINGS_CAPTURE navigation/rendering preserves fixture Timeline, Settings Draft and Template identities");
             File.WriteAllText(Path.Combine(output, "settings-full-capture.json"), JsonSerializer.Serialize(new
