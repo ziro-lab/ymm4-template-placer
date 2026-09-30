@@ -104,10 +104,17 @@ internal static partial class NativeProof
                     AssertSelectedVisible();
                     var fullyVisible = items.Count(x => { var b = x.TransformToAncestor(scroll).TransformBounds(new Rect(x.RenderSize));
                         return b.Left >= -1 && b.Right <= scroll.ViewportWidth + 1; });
-                    Assert(fullyVisible >= Math.Min(vm.IntentSets.Count, width == 360 ? 5 : 9) && items.All(x => x.ActualHeight >= 28 && x.ActualHeight <= 36 && Math.Abs(x.ActualHeight - items[0].ActualHeight) <= 1) &&
-                        surface.IntentSetScrollLeftButton.ActualHeight >= items[0].ActualHeight - 1 &&
-                        surface.IntentSetScrollRightButton.ActualHeight >= items[0].ActualHeight - 1,
-                        $"CROWDED_SETS compact uniform two-line tabs expose at least {(width == 360 ? 5 : 9)} applicable headers when present at {width}px");
+                    var regularHeight = items.First(x => !x.IsSelected).ActualHeight;
+                    var headerTexts = items.Select(x => RelativeVisuals(x).OfType<TextBlock>().Single(t => t.Text == (x.DataContext as IntentSetChoice)?.Label)).ToArray();
+                    Log($"CROWDED_SETS geometry {width}px count={items.Length} visible={fullyVisible}; tabHeights={string.Join(',', items.Select(x => x.ActualHeight))}; arrowHeights={surface.IntentSetScrollLeftButton.ActualHeight},{surface.IntentSetScrollRightButton.ActualHeight}");
+                    Assert(fullyVisible >= Math.Min(vm.IntentSets.Count, width == 360 ? 5 : 9),
+                        $"CROWDED_SETS compact two-line tabs expose {(width == 360 ? 5 : 9)} applicable headers when present at {width}px");
+                    Assert(headerTexts.All(x => Math.Abs(x.ActualHeight - 28) <= 1 && x.TextWrapping == TextWrapping.Wrap) &&
+                        items.All(x => x.IsSelected ? x.ActualHeight >= regularHeight && x.ActualHeight <= regularHeight + 2 : Math.Abs(x.ActualHeight - regularHeight) <= 1),
+                        "CROWDED_SETS short/long headers share an exact two-line content height while retaining the native selected-tab overlap");
+                    Assert(surface.IntentSetScrollLeftButton.ActualHeight >= regularHeight - 1 &&
+                        surface.IntentSetScrollRightButton.ActualHeight >= regularHeight - 1,
+                        "CROWDED_SETS browse arrows remain as tall as the normal two-line headers");
                     Assert(surface.SingleSetTitleText.TextWrapping == TextWrapping.NoWrap,
                         "CROWDED_SETS selected name does not add wrapping height at the expense of placement density");
                     CaptureTabs(many ? "many" : "four");
