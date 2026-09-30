@@ -79,7 +79,7 @@ internal static partial class NativeProof
                     presentationScroll.ScrollToHome();
                     panel.SettingsScroll.ScrollToHome();
                     await Idle(); window.UpdateLayout(); capture.UpdateLayout();
-                    Assert(Math.Abs(capture.ActualWidth - width) < 1 && Math.Abs(capture.ActualHeight - 640) < 1 &&
+                    Assert(capture.IsLoaded && capture.IsVisible && Math.Abs(capture.ActualWidth - width) < 1 && Math.Abs(capture.ActualHeight - 640) < 1 &&
                         Math.Abs(VisualTreeHelper.GetOffset(capture).X) < 1 && Math.Abs(VisualTreeHelper.GetOffset(capture).Y) < 1,
                         $"SETTINGS_CAPTURE exact unclipped {width}x640 native root");
                     var scroll = panel.SettingsScroll;
@@ -151,18 +151,38 @@ internal static partial class NativeProof
     {
         var bitmap = new RenderTargetBitmap((int)Math.Round(view.ActualWidth), (int)Math.Round(view.ActualHeight),
             96, 96, PixelFormats.Pbgra32);
-        // The dedicated window lays out this root at (0,0); no VisualBrush offset,
-        // scaling, host clipping or transparent padded canvas is involved.
-        bitmap.Render(view);
+        // Capture the actual native host composition, including its background.
+        // Rendering only a UserControl can omit the host-painted background even
+        // when the control's logical size is correct. This borderless window has
+        // exactly the same client dimensions as the unmodified product view.
+        var host = Window.GetWindow(view)!;
+        Assert(Math.Abs(host.ActualWidth - view.ActualWidth) < 1 && Math.Abs(host.ActualHeight - view.ActualHeight) < 1,
+            "SETTINGS_CAPTURE native host and product viewport dimensions match");
+        var bounds = new Rect(0, 0, host.ActualWidth, host.ActualHeight);
+        var visual = new DrawingVisual();
+        using (var drawing = visual.RenderOpen())
+            drawing.DrawRectangle(new VisualBrush(host)
+            {
+                ViewboxUnits = BrushMappingMode.Absolute, Viewbox = bounds,
+                Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top
+            }, null, bounds);
+        bitmap.Render(visual);
         var pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
         bitmap.CopyPixels(pixels, bitmap.PixelWidth * 4, 0);
-        var opaque = 0;
-        for (var i = 3; i < pixels.Length; i += 4) if (pixels[i] == 255) opaque++;
-        Assert(opaque == bitmap.PixelWidth * bitmap.PixelHeight,
-            "SETTINGS_CAPTURE entire requested image is rendered without transparent padding: " + filename);
+        var opaque = 0; var transparent = 0;
+        for (var i = 3; i < pixels.Length; i += 4)
+        {
+            if (pixels[i] == 255) opaque++;
+            else if (pixels[i] == 0) transparent++;
+        }
         var path = Path.Combine(output, filename);
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
         using (var file = File.Create(path)) encoder.Save(file);
+        // Save even rejected output, so a failed capture is diagnosable.
+        var pixelCount = bitmap.PixelWidth * bitmap.PixelHeight;
+        Log($"SETTINGS_CAPTURE pixels {filename}: opaque={opaque}/{pixelCount}; transparent={transparent}; background={view.Background}; hostBackground={host.Background}; opacity={view.Opacity}; dpi={VisualTreeHelper.GetDpi(view)}; visualClip={VisualTreeHelper.GetClip(view)?.Bounds}; descendants={VisualTreeHelper.GetDescendantBounds(view)}; layoutClip={System.Windows.Controls.Primitives.LayoutInformation.GetLayoutClip(view)}");
+        Assert(opaque == pixelCount,
+            "SETTINGS_CAPTURE requested image has no transparent padded region: " + filename);
         return Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant();
     }
 }
