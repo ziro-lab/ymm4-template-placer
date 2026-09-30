@@ -114,13 +114,25 @@ public partial class IntentPalettePanel : UserControl
         IntentSetScrollLeftButton.IsEnabled = scroll != null && scroll.HorizontalOffset > 0.5;
         IntentSetScrollRightButton.IsEnabled = scroll != null && scroll.HorizontalOffset < scroll.ScrollableWidth - 0.5;
     }
-    private void BrowseSets(int direction)
+    private void ScrollSetHeaders(double distance)
     {
         if (IntentSetHeaderScroll is not { } scroll) return;
         // Browsing exposes adjacent headers only. Selection, placement and saved order
         // remain unchanged until a real native TabItem is selected.
         exposeSelectedSet = false;
-        scroll.ScrollToHorizontalOffset(Math.Clamp(scroll.HorizontalOffset + direction * setTabWidth, 0, scroll.ScrollableWidth));
+        scroll.ScrollToHorizontalOffset(Math.Clamp(scroll.HorizontalOffset + distance, 0, scroll.ScrollableWidth));
+    }
+    private void BrowseSets(int direction) => ScrollSetHeaders(direction * setTabWidth);
+    private void IntentSetWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (e.Handled || e.Delta == 0 || Keyboard.Modifiers != ModifierKeys.None ||
+            setPointerPhase == TilePointerPhase.Dragging || IntentSetHeaderScroll == null ||
+            !new Rect(IntentSetRow.RenderSize).Contains(e.GetPosition(IntentSetRow))) return;
+        // Only this bounded header strip (including arrows) owns plain wheel
+        // input. Preserve fractional deltas and consume both saturated ends so
+        // browsing cannot spill into the tile area's vertical scroll or host.
+        ScrollSetHeaders(-e.Delta / (double)Mouse.MouseWheelDeltaForOneLine * setTabWidth);
+        e.Handled = true;
     }
     private void IntentSetScrollLeft(object sender, RoutedEventArgs e) => BrowseSets(-1);
     private void IntentSetScrollRight(object sender, RoutedEventArgs e) => BrowseSets(1);

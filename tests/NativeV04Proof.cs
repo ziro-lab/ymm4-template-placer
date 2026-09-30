@@ -44,6 +44,7 @@ internal static partial class NativeProof
 
         await VerifySettingsCharacterFilter(timeline, undo);
         await VerifyIntentSetOrdering(timeline, undo);
+        await VerifyIntentSetWheel(timeline, undo);
         var profile = (Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_NATIVE_PROFILE") ?? "checkpoint").ToLowerInvariant();
         if (profile == "focused")
         {

@@ -30,7 +30,7 @@
    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowSingleSetName}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding HasIntentSets}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
   </TextBlock>
 
-  <Grid x:Name="IntentSetRow" Grid.Row="2" Margin="2,6,2,0" AllowDrop="True" DragOver="SetStripDragOver" Drop="SetStripDrop" DragLeave="SetStripDragLeave">
+  <Grid x:Name="IntentSetRow" Grid.Row="2" Margin="2,6,2,0" AllowDrop="True" PreviewMouseWheel="IntentSetWheel" DragOver="SetStripDragOver" Drop="SetStripDrop" DragLeave="SetStripDragLeave">
    <Grid.Style><Style TargetType="Grid"><Style.Triggers><DataTrigger Binding="{Binding HasIntentSets}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Grid.Style>
    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <!-- The native selected TabItem overlaps this shared content edge. No per-Set content is created. -->
