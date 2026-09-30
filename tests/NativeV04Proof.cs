@@ -99,5 +99,6 @@ internal static partial class NativeProof
         VerifyTaskUxAcceptance(); VerifyWorkflowAcceptance();
         await VerifyExpressionPerformance(timeline, undo);
         await VerifyFullSettingsCapture(timeline, undo);
+        await VerifyCrowdedSetCapture(timeline, undo);
     }
 }

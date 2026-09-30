@@ -172,7 +172,7 @@ internal static partial class NativeProof
         }
     }
 
-    private static string SaveFullSettingsBitmap(PlacerView view, string filename)
+    private static string SaveFullSettingsBitmap(PlacerView view, string filename, FrameworkElement? popup = null)
     {
         var bitmap = new RenderTargetBitmap((int)Math.Round(view.ActualWidth), (int)Math.Round(view.ActualHeight),
             96, 96, PixelFormats.Pbgra32);
@@ -186,11 +186,24 @@ internal static partial class NativeProof
         var bounds = new Rect(0, 0, host.ActualWidth, host.ActualHeight);
         var visual = new DrawingVisual();
         using (var drawing = visual.RenderOpen())
+        {
             drawing.DrawRectangle(new VisualBrush(host)
             {
                 ViewboxUnits = BrushMappingMode.Absolute, Viewbox = bounds,
                 Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top
             }, null, bounds);
+            if (popup != null)
+            {
+                // WPF Popup is a separate native presentation source. Preserve
+                // its real layout; draw it at its actual window-relative point.
+                var screen = popup.PointToScreen(new Point());
+                var origin = host.PointToScreen(new Point());
+                var popupBounds = new Rect(screen.X - origin.X, screen.Y - origin.Y, popup.ActualWidth, popup.ActualHeight);
+                Log($"CROWDED_SETS native popup bounds: {popupBounds}");
+                drawing.DrawRectangle(new VisualBrush(popup) { Stretch = Stretch.None,
+                    AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top }, null, popupBounds);
+            }
+        }
         bitmap.Render(visual);
         var pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
         bitmap.CopyPixels(pixels, bitmap.PixelWidth * 4, 0);
