@@ -5,9 +5,8 @@
  <UserControl.Resources><BooleanToVisibilityConverter x:Key="VisibleWhen"/></UserControl.Resources>
  <StackPanel DataContext="{Binding IntentSettings.SelectedGenericSet}">
   <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-  <TextBlock Text="セット名"/>
-  <TextBox x:Name="GenericSetNameBox" Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" Margin="0,3,0,8" Padding="5,3"/>
-  <TextBlock Text="どう置く？" FontWeight="SemiBold"/>
+  <Border x:Name="GenericCommonPlacementCard" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" BorderThickness="1" Padding="8" Margin="0,4,0,8" CornerRadius="3"><StackPanel>
+  <TextBlock Text="セット共通の配置" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,6"/>
   <TextBlock x:Name="GenericSentenceText" Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,4,0,6"/>
   <TextBlock Text="レイヤー指定" FontWeight="SemiBold" Margin="0,2,0,2"/>
   <WrapPanel Margin="0,0,0,5">
@@ -22,6 +21,7 @@
     <WrapPanel><TextBox Text="{Binding Minimum,UpdateSourceTrigger=PropertyChanged}" Width="60"/><TextBlock Text=" ～ "/><TextBox Text="{Binding Maximum,UpdateSourceTrigger=PropertyChanged}" Width="60"/></WrapPanel>
    </StackPanel>
   </Expander>
+  </StackPanel></Border>
   <TextBlock Text="タイルと並び順" FontWeight="SemiBold" Margin="0,8,0,4"/>
   <ListBox x:Name="GenericEntryList" ItemsSource="{Binding Entries}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedEntry,Mode=TwoWay}" MinHeight="70" MaxHeight="200" ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
   <WrapPanel Margin="0,4">
@@ -29,8 +29,11 @@
    <Button Content="↓ 下へ" Command="{Binding DataContext.MoveIntentEntryCommand,RelativeSource={RelativeSource AncestorType=local:GenericSetSettingsPanel}}" CommandParameter="1" Padding="8,5" Margin="0,0,4,0"/>
    <Button Content="セットから外す" Command="{Binding DataContext.RemoveIntentEntryCommand,RelativeSource={RelativeSource AncestorType=local:GenericSetSettingsPanel}}" Padding="8,5"/>
   </WrapPanel>
+  <Border BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" BorderThickness="1" Padding="8" Margin="0,4,0,8" CornerRadius="3">
   <StackPanel x:Name="GenericEntryAppearanceEditor" DataContext="{Binding SelectedEntry}">
    <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+   <TextBlock Text="選択タイルの見た目" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,4"/>
+   <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" ToolTip="{Binding SourceDetail}" Margin="0,0,0,8"/>
    <TextBlock Text="タイルの表示名（空欄なら短い名前）"/>
    <TextBox x:Name="EntryAliasBox" Text="{Binding DisplayAlias,UpdateSourceTrigger=PropertyChanged}" MaxLength="128" Margin="0,3,0,6"/>
    <TextBlock Text="色ラベル"/>
@@ -38,5 +41,8 @@
    <TextBlock Text="形"/>
    <ComboBox x:Name="EntryShapePicker" ItemsSource="{Binding DataContext.IntentTileShapes,RelativeSource={RelativeSource AncestorType=local:GenericSetSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Shape,Mode=TwoWay}" Margin="0,3,0,6"/>
   </StackPanel>
+  </Border>
+  <TextBlock Text="セット名" FontWeight="SemiBold" FontSize="13"/>
+  <TextBox x:Name="GenericSetNameBox" Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" Margin="0,3,0,8" Padding="5,3"/>
  </StackPanel>
 </UserControl>
