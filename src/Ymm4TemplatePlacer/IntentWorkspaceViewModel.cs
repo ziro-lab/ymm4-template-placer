@@ -46,7 +46,7 @@ public sealed partial class PlacerViewModel
         if (!intentInitialized)
         {
             intentInitialized = true;
-            InitializeIntentTileOrdering(); InitializeIntentTileEditing(); InitializeGenericLayerTarget();
+            InitializeIntentTileOrdering(); InitializeIntentSetOrdering(); InitializeIntentTileEditing(); InitializeGenericLayerTarget();
             ExecuteIntentTileCommand = new ActionCommand(x => !intentExecuting && tileEditState == IntentTileEditState.Idle && settingsAvailable && undo != null &&
                 !PlacementQuickSettingsBlocksPlacement &&
                 x is IntentTileChoice tile && tile.Available && (!tile.IsGeneric || GenericLayerReadyForExecution) && IntentTiles.Any(x => ReferenceEquals(x, tile)),

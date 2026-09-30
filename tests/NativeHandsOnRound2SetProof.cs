@@ -85,8 +85,8 @@ internal static partial class NativeProof
             var many = PlacerSettingsStore.Copy(two);
             many.Palettes = Enumerable.Range(0, 5).Select(i => generic with { Id = Guid.NewGuid(), Name = "汎用" + i }).ToList();
             field.SetValue(vm, many); vm.RefreshIntentWorkspace(); view.Width = 360; view.Height = 440; await Idle();
-            Assert(surface.IntentSetSegments.IsVisible && surface.IntentSetHeaderScroll!.ScrollableWidth > 0 && vm.IntentSets.Count == 5 && view.PaletteTab.IsSelected,
-                "R2-B many Generic Sets retain bounded tabs without changing the main task");
+            Assert(surface.IntentSetSegments.IsVisible && surface.IntentSetHeaderScroll!.ScrollableWidth < 1 && vm.IntentSets.Count == 5 && view.PaletteTab.IsSelected,
+                "R2-B five Generic Sets fit compact native tabs without changing the main task");
             SaveNamedView(view, "v042-round2-generic-360.png");
             File.WriteAllText(Path.Combine(output, "hands-on-round2-sets.json"), JsonSerializer.Serialize(new {
                 schema = "YMM4-Template-Placer-Round2-Sets/1", result = "PASS", targeted = "IntentExecutionPlan", generic = "QuickDropPlanner" }));

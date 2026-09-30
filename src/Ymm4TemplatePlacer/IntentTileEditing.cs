@@ -37,7 +37,7 @@ public sealed partial class PlacerViewModel
     {
         RenameIntentTileCommand?.RaiseCanExecuteChanged(); ColorIntentTileCommand?.RaiseCanExecuteChanged();
         ShapeIntentTileCommand?.RaiseCanExecuteChanged(); OpenTileSettingsCommand?.RaiseCanExecuteChanged();
-        ReorderIntentTileCommand?.RaiseCanExecuteChanged(); ExecuteIntentTileCommand?.RaiseCanExecuteChanged();
+        ReorderIntentTileCommand?.RaiseCanExecuteChanged(); ReorderIntentSetCommand?.RaiseCanExecuteChanged(); ExecuteIntentTileCommand?.RaiseCanExecuteChanged();
         ShapeIntentSetCommand?.RaiseCanExecuteChanged(); OpenIntentSetSettingsCommand?.RaiseCanExecuteChanged();
         ShapeCurrentIntentSetCommand?.RaiseCanExecuteChanged(); RefreshPanelQuickSettingsAdmission();
         UpdateGenericLayerCommands();

@@ -84,7 +84,7 @@ internal static partial class NativeProof
                         System.Windows.Automation.AutomationProperties.GetName(x) == (x.DataContext as IntentSetChoice)?.Label),
                         "CROWDED_SETS abbreviated similar names retain exact full tooltip/accessibility names");
                     Assert(surface.SingleSetTitleText.IsVisible && surface.SingleSetTitleText.Text == vm.SelectedIntentSet!.Label,
-                        "CROWDED_SETS selected long/similar Set has a full-name title");
+                        "CROWDED_SETS selected long/similar Set retains its exact name in the compact title");
                     void AssertSelectedVisible()
                     {
                         var tab = items.Single(x => x.IsSelected);
@@ -102,6 +102,12 @@ internal static partial class NativeProof
                                 x.ActualWidth, x.ActualHeight, Left = x.TranslatePoint(new Point(), scroll).X }).ToArray() });
                     }
                     AssertSelectedVisible();
+                    var fullyVisible = items.Count(x => { var b = x.TransformToAncestor(scroll).TransformBounds(new Rect(x.RenderSize));
+                        return b.Left >= -1 && b.Right <= scroll.ViewportWidth + 1; });
+                    Assert(fullyVisible >= Math.Min(vm.IntentSets.Count, width == 360 ? 5 : 9) && items.All(x => x.ActualHeight <= 24),
+                        $"CROWDED_SETS compact single-line tabs expose at least {(width == 360 ? 5 : 9)} applicable headers when present at {width}px");
+                    Assert(surface.SingleSetTitleText.TextWrapping == TextWrapping.NoWrap,
+                        "CROWDED_SETS selected name does not add wrapping height at the expense of placement density");
                     CaptureTabs(many ? "many" : "four");
                     if (scroll.ScrollableWidth > 0)
                     {

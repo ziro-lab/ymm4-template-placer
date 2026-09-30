@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace Ymm4TemplatePlacer;
 public partial class IntentPalettePanel : UserControl
@@ -15,7 +16,11 @@ public partial class IntentPalettePanel : UserControl
     private Guid? quickPopupSetId;
     private (Grid Cell, IntentTileChoice Tile, Point Point)? pendingDrag;
     private bool exposeSelectedSet;
-    private double setTabWidth = 140;
+    private double setTabWidth = 52;
+    private TilePointerPhase setPointerPhase;
+    private (TabItem Header, IntentSetChoice Set, Point Point, PlacerViewModel Root)? pendingSetDrag;
+    private IntentSetChoice? draggingSet;
+    private PlacerViewModel? draggingSetRoot;
     public ScrollViewer? IntentSetHeaderScroll => IntentSetSegments?.Template?.FindName("IntentSetHeaderScroll", IntentSetSegments) as ScrollViewer;
     public IntentPalettePanel()
     {
@@ -38,9 +43,10 @@ public partial class IntentPalettePanel : UserControl
             ObserveRoot(null);
             SystemParameters.StaticPropertyChanged -= ThemeChanged;
             CancelLocalGesture();
+            CancelSetGesture();
             CloseTileMenu();
         };
-        DataContextChanged += (_, _) => { RequestSelectedSetExposure(); PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
+        DataContextChanged += (_, _) => { CancelSetGesture(); RequestSelectedSetExposure(); PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
         PanelQuickSettingsPopup.Closed += (_, _) =>
         {
             observedRoot?.EndPanelQuickSettings();
@@ -50,7 +56,7 @@ public partial class IntentPalettePanel : UserControl
         };
         IsVisibleChanged += (_, _) =>
         {
-            if (!IsVisible) { exposeSelectedSet = false; PanelQuickSettingsButton.IsChecked = false; }
+            if (!IsVisible) { exposeSelectedSet = false; CancelSetGesture(); PanelQuickSettingsButton.IsChecked = false; }
             else RequestSelectedSetExposure();
         };
     }
@@ -58,7 +64,7 @@ public partial class IntentPalettePanel : UserControl
     {
         // One local layout flag always reads the CURRENT selection. There are no
         // queued selection snapshots that could scroll back after rapid input/re-entry.
-        exposeSelectedSet = true;
+        exposeSelectedSet = setPointerPhase != TilePointerPhase.Dragging;
         SizeSetTabs();
     }
     private void SizeSetTabs()
@@ -66,8 +72,8 @@ public partial class IntentPalettePanel : UserControl
         var viewport = IntentSetHeaderScroll?.ViewportWidth ?? 0;
         if (viewport <= 0 || !double.IsFinite(viewport)) return;
         var available = Math.Max(1, viewport - 4); // room for the native selected-tab overlap
-        var columns = Math.Min(Math.Max(1, IntentSetSegments.Items.Count), Math.Max(1, (int)Math.Floor(available / 120)));
-        var width = Math.Clamp(available / columns, 64, 160);
+        var columns = Math.Min(Math.Max(1, IntentSetSegments.Items.Count), Math.Max(1, (int)Math.Floor(available / 52)));
+        var width = Math.Clamp(available / columns, 50, 96);
         setTabWidth = width;
         for (var i = 0; i < IntentSetSegments.Items.Count; i++)
             if (IntentSetSegments.ItemContainerGenerator.ContainerFromIndex(i) is TabItem tab && Math.Abs(tab.Width - width) > 0.1)
@@ -118,6 +124,152 @@ public partial class IntentPalettePanel : UserControl
     }
     private void IntentSetScrollLeft(object sender, RoutedEventArgs e) => BrowseSets(-1);
     private void IntentSetScrollRight(object sender, RoutedEventArgs e) => BrowseSets(1);
+
+    private void CancelSetGesture()
+    {
+        var header = pendingSetDrag?.Header;
+        pendingSetDrag = null; draggingSet = null; draggingSetRoot = null;
+        setPointerPhase = TilePointerPhase.Idle;
+        ClearSetInsertion();
+        if (header?.IsMouseCaptured == true) header.ReleaseMouseCapture();
+    }
+    private void ClearSetInsertion() => IntentSetInsertionMarker.Visibility = Visibility.Collapsed;
+    private void SetPointerDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not TabItem { DataContext: IntentSetChoice set } header || DataContext is not PlacerViewModel vm) return;
+        CancelSetGesture();
+        pendingSetDrag = (header, set, e.GetPosition(this), vm);
+        setPointerPhase = TilePointerPhase.Pressed;
+        // Native TabItem selects on mouse-down. Defer this pointer selection until
+        // a short release so dragging another header preserves the current Set.
+        // Keyboard selection and the native TabItem template remain unchanged.
+        e.Handled = true;
+        if (!header.CaptureMouse()) CancelSetGesture();
+    }
+    private void SetPointerUp(object sender, MouseButtonEventArgs e)
+    {
+        if (setPointerPhase == TilePointerPhase.Idle) return;
+        var drag = pendingSetDrag;
+        var select = setPointerPhase == TilePointerPhase.Pressed && drag != null &&
+            ReferenceEquals(DataContext, drag.Value.Root) && drag.Value.Root.IntentSets.Any(x => ReferenceEquals(x, drag.Value.Set)) &&
+            new Rect(drag.Value.Header.RenderSize).Contains(e.GetPosition(drag.Value.Header));
+        CancelSetGesture();
+        e.Handled = true;
+        if (select && drag is { } click)
+        {
+            // SetCurrentValue preserves the normal Selector binding route; Focus
+            // supplies native tab focus/keyboard behavior for this short click.
+            click.Header.SetCurrentValue(TabItem.IsSelectedProperty, true);
+            click.Header.Focus();
+        }
+    }
+    private void SetPointerLostCapture(object sender, MouseEventArgs e)
+    {
+        if (setPointerPhase == TilePointerPhase.Pressed) CancelSetGesture();
+    }
+    private void SetPointerMove(object sender, MouseEventArgs e)
+    {
+        if (setPointerPhase != TilePointerPhase.Pressed || pendingSetDrag is not { } drag) return;
+        if (e.LeftButton != MouseButtonState.Pressed || !ReferenceEquals(DataContext, drag.Root)) { CancelSetGesture(); return; }
+        var point = e.GetPosition(this);
+        if (Math.Abs(point.X - drag.Point.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(point.Y - drag.Point.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+        e.Handled = true;
+        if (drag.Root.ReorderIntentSetCommand?.CanExecute(new IntentSetReorderRequest(drag.Set, drag.Set)) != true)
+        {
+            setPointerPhase = TilePointerPhase.SuppressRelease;
+            return;
+        }
+        setPointerPhase = TilePointerPhase.Dragging;
+        draggingSet = drag.Set; draggingSetRoot = drag.Root;
+        pendingSetDrag = null;
+        if (drag.Header.IsMouseCaptured) drag.Header.ReleaseMouseCapture();
+        exposeSelectedSet = false;
+        try
+        {
+            DragDrop.DoDragDrop(drag.Header, new DataObject(typeof(IntentSetChoice), drag.Set), DragDropEffects.Move);
+        }
+        finally
+        {
+            draggingSet = null; draggingSetRoot = null;
+            setPointerPhase = TilePointerPhase.Idle;
+            ClearSetInsertion();
+            RequestSelectedSetExposure();
+        }
+    }
+    private void SetQueryContinueDrag(object sender, QueryContinueDragEventArgs e)
+    {
+        if (!IsVisible || draggingSet == null || draggingSetRoot is not { } root || !ReferenceEquals(DataContext, root) ||
+            root.ReorderIntentSetCommand?.CanExecute(new IntentSetReorderRequest(draggingSet, draggingSet)) != true)
+        {
+            e.Action = DragAction.Cancel;
+            e.Handled = true;
+            ClearSetInsertion();
+        }
+    }
+    private IntentSetReorderRequest? SetRequest(object sender, DragEventArgs e)
+    {
+        if (sender is not TabItem { DataContext: IntentSetChoice target } header ||
+            !ReferenceEquals(DataContext, draggingSetRoot) || draggingSet == null ||
+            !e.Data.GetDataPresent(typeof(IntentSetChoice)) || e.Data.GetData(typeof(IntentSetChoice)) is not IntentSetChoice source ||
+            !ReferenceEquals(source, draggingSet)) return null;
+        return new(source, target, e.GetPosition(header).X >= header.ActualWidth / 2);
+    }
+    private bool BrowseSetDragEdge(DragEventArgs e)
+    {
+        if (!ReferenceEquals(DataContext, draggingSetRoot) || draggingSet == null ||
+            !e.Data.GetDataPresent(typeof(IntentSetChoice)) || !ReferenceEquals(e.Data.GetData(typeof(IntentSetChoice)), draggingSet) ||
+            IntentSetHeaderScroll is not { ViewportWidth: > 0 } scroll) return false;
+        var point = e.GetPosition(scroll);
+        if (point.Y < 0 || point.Y > scroll.ActualHeight) return false;
+        var direction = point.X <= 12 ? -1 : point.X >= scroll.ViewportWidth - 12 ? 1 : 0;
+        if (direction == 0 || direction < 0 && scroll.HorizontalOffset <= 0 ||
+            direction > 0 && scroll.HorizontalOffset >= scroll.ScrollableWidth) return false;
+        // Native DragOver events advance one header at an exposed edge. No timer,
+        // persistent reorder state or independent root mutation is introduced.
+        BrowseSets(direction);
+        return true;
+    }
+    private void SetHeaderDragOver(object sender, DragEventArgs e)
+    {
+        var request = SetRequest(sender, e);
+        var admitted = request != null && DataContext is PlacerViewModel vm && vm.ReorderIntentSetCommand.CanExecute(request);
+        e.Effects = admitted ? DragDropEffects.Move : DragDropEffects.None;
+        e.Handled = true;
+        if (!admitted || request == null || sender is not TabItem header) { ClearSetInsertion(); return; }
+        BrowseSetDragEdge(e);
+        var edge = header.TranslatePoint(new Point(request.After ? header.ActualWidth : 0, 0), IntentSetDropFeedback).X;
+        ((TranslateTransform)IntentSetInsertionMarker.RenderTransform).X = Math.Clamp(edge, 0, Math.Max(0, IntentSetDropFeedback.ActualWidth - 2));
+        IntentSetInsertionMarker.Visibility = Visibility.Visible;
+    }
+    private void SetHeaderDrop(object sender, DragEventArgs e)
+    {
+        var request = SetRequest(sender, e);
+        e.Effects = DragDropEffects.None;
+        if (request != null && DataContext is PlacerViewModel vm && vm.ReorderIntentSetCommand.CanExecute(request))
+        {
+            vm.ReorderIntentSetCommand.Execute(request);
+            e.Effects = DragDropEffects.Move;
+        }
+        ClearSetInsertion();
+        e.Handled = true;
+    }
+    private void SetStripDragOver(object sender, DragEventArgs e)
+    {
+        if (!BrowseSetDragEdge(e)) ClearSetInsertion();
+        e.Effects = DragDropEffects.None;
+        e.Handled = true;
+    }
+    private void SetStripDrop(object sender, DragEventArgs e)
+    {
+        // Blank strip/arrow drops have no target; only a real header can reorder.
+        ClearSetInsertion(); e.Effects = DragDropEffects.None; e.Handled = true;
+    }
+    private void SetStripDragLeave(object sender, DragEventArgs e)
+    {
+        var point = e.GetPosition(IntentSetRow);
+        if (!new Rect(IntentSetRow.RenderSize).Contains(point)) ClearSetInsertion();
+    }
 
     private void ObserveOwnerWindow(Window? next)
     {
