@@ -108,13 +108,13 @@ internal static partial class NativeProof
                     var headerTexts = items.Select(x => RelativeVisuals(x).OfType<TextBlock>().Single(t => t.Text == (x.DataContext as IntentSetChoice)?.Label)).ToArray();
                     Log($"CROWDED_SETS geometry {width}px count={items.Length} visible={fullyVisible}; tabHeights={string.Join(',', items.Select(x => x.ActualHeight))}; arrowHeights={surface.IntentSetScrollLeftButton.ActualHeight},{surface.IntentSetScrollRightButton.ActualHeight}");
                     Assert(fullyVisible >= Math.Min(vm.IntentSets.Count, width == 360 ? 5 : 9),
-                        $"CROWDED_SETS compact two-line tabs expose {(width == 360 ? 5 : 9)} applicable headers when present at {width}px");
-                    Assert(headerTexts.All(x => Math.Abs(x.ActualHeight - 28) <= 1 && x.TextWrapping == TextWrapping.Wrap) &&
+                        $"CROWDED_SETS compact three-line tabs expose {(width == 360 ? 5 : 9)} applicable headers when present at {width}px");
+                    Assert(headerTexts.All(x => Math.Abs(x.ActualHeight - 42) <= 1 && x.TextWrapping == TextWrapping.Wrap) &&
                         items.All(x => x.IsSelected ? x.ActualHeight >= regularHeight && x.ActualHeight <= regularHeight + 2 : Math.Abs(x.ActualHeight - regularHeight) <= 1),
-                        "CROWDED_SETS short/long headers share an exact two-line content height while retaining the native selected-tab overlap");
+                        "CROWDED_SETS short/long headers share an exact three-line content height while retaining the native selected-tab overlap");
                     Assert(surface.IntentSetScrollLeftButton.ActualHeight >= regularHeight - 1 &&
                         surface.IntentSetScrollRightButton.ActualHeight >= regularHeight - 1,
-                        "CROWDED_SETS browse arrows remain as tall as the normal two-line headers");
+                        "CROWDED_SETS browse arrows remain as tall as the normal three-line headers");
                     Assert(surface.SingleSetTitleText.TextWrapping == TextWrapping.NoWrap,
                         "CROWDED_SETS selected name does not add wrapping height at the expense of placement density");
                     CaptureTabs(many ? "many" : "four");
