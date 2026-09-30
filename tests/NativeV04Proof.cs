@@ -98,5 +98,6 @@ internal static partial class NativeProof
         await VerifyFinalHandsOnPolish(timeline, undo);
         VerifyTaskUxAcceptance(); VerifyWorkflowAcceptance();
         await VerifyExpressionPerformance(timeline, undo);
+        await VerifyFullSettingsCapture(timeline, undo);
     }
 }
