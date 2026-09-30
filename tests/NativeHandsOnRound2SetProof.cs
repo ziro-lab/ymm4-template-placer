@@ -75,8 +75,8 @@ internal static partial class NativeProof
             var otherStyle = generic with { Id = Guid.NewGuid(), Name = "もう一つ", LibraryEntryIds = [library[1].Id] };
             var two = PlacerSettingsStore.Copy(fixture); two.Palettes.Add(otherStyle); field.SetValue(vm, two);
             vm.ObserveTimelinePointer(TimelinePointerOrigin.Ruler); vm.EndTimelinePointer(); await Idle();
-            Assert(vm.IntentSets.Count == 2 && surface.IntentSetSegments.IsVisible && !surface.IntentSetPicker.IsVisible,
-                "R2-B B6 small Generic Set choices use the same visible segments as targeted Sets");
+            Assert(vm.IntentSets.Count == 2 && surface.IntentSetSegments.IsVisible && surface.FindName("IntentSetPicker") == null,
+                "R2-B B6 small Generic Set choices use the same native tabs as targeted Sets");
             surface.IntentSetSegments.SelectedIndex = 1; await Idle();
             vm.EndTimelinePointer(); timeline.SelectedItems = [voice]; await Idle();
             vm.ObserveTimelinePointer(TimelinePointerOrigin.Ruler); vm.EndTimelinePointer(); await Idle();
@@ -85,8 +85,8 @@ internal static partial class NativeProof
             var many = PlacerSettingsStore.Copy(two);
             many.Palettes = Enumerable.Range(0, 5).Select(i => generic with { Id = Guid.NewGuid(), Name = "汎用" + i }).ToList();
             field.SetValue(vm, many); vm.RefreshIntentWorkspace(); view.Width = 360; view.Height = 440; await Idle();
-            Assert(surface.IntentSetPicker.IsVisible && !surface.IntentSetSegments.IsVisible && vm.IntentSets.Count == 5,
-                "R2-B only many Generic Sets use a picker; no Intent level is reintroduced");
+            Assert(surface.IntentSetSegments.IsVisible && surface.IntentSetHeaderScroll!.ScrollableWidth > 0 && vm.IntentSets.Count == 5 && view.PaletteTab.IsSelected,
+                "R2-B many Generic Sets retain bounded tabs without changing the main task");
             SaveNamedView(view, "v042-round2-generic-360.png");
             File.WriteAllText(Path.Combine(output, "hands-on-round2-sets.json"), JsonSerializer.Serialize(new {
                 schema = "YMM4-Template-Placer-Round2-Sets/1", result = "PASS", targeted = "IntentExecutionPlan", generic = "QuickDropPlanner" }));

@@ -14,11 +14,17 @@ public partial class IntentPalettePanel : UserControl
     private bool ownerQuickDismissAttached;
     private Guid? quickPopupSetId;
     private (Grid Cell, IntentTileChoice Tile, Point Point)? pendingDrag;
+    private bool exposeSelectedSet;
+    private double setTabWidth = 140;
+    public ScrollViewer? IntentSetHeaderScroll => IntentSetSegments?.Template?.FindName("IntentSetHeaderScroll", IntentSetSegments) as ScrollViewer;
     public IntentPalettePanel()
     {
         InitializeComponent();
+        IntentSetSegments.ItemContainerGenerator.StatusChanged += (_, _) => RequestSelectedSetExposure();
+        IntentSetSegments.LayoutUpdated += IntentSetHeaderLayoutUpdated;
         Loaded += (_, _) =>
         {
+            RequestSelectedSetExposure();
             ObserveRoot(DataContext as PlacerViewModel);
             ObserveOwnerWindow(Window.GetWindow(this));
             SystemParameters.StaticPropertyChanged -= ThemeChanged;
@@ -26,6 +32,7 @@ public partial class IntentPalettePanel : UserControl
         };
         Unloaded += (_, _) =>
         {
+            exposeSelectedSet = false;
             PanelQuickSettingsButton.IsChecked = false;
             ObserveOwnerWindow(null);
             ObserveRoot(null);
@@ -33,7 +40,7 @@ public partial class IntentPalettePanel : UserControl
             CancelLocalGesture();
             CloseTileMenu();
         };
-        DataContextChanged += (_, _) => { PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
+        DataContextChanged += (_, _) => { RequestSelectedSetExposure(); PanelQuickSettingsButton.IsChecked = false; ObserveRoot(IsLoaded ? DataContext as PlacerViewModel : null); CancelLocalGesture(); CloseTileMenu(); };
         PanelQuickSettingsPopup.Closed += (_, _) =>
         {
             observedRoot?.EndPanelQuickSettings();
@@ -41,8 +48,77 @@ public partial class IntentPalettePanel : UserControl
             PanelQuickSettingsButton.IsChecked = false;
             quickPopupSetId = null;
         };
-        IsVisibleChanged += (_, _) => { if (!IsVisible) PanelQuickSettingsButton.IsChecked = false; };
+        IsVisibleChanged += (_, _) =>
+        {
+            if (!IsVisible) { exposeSelectedSet = false; PanelQuickSettingsButton.IsChecked = false; }
+            else RequestSelectedSetExposure();
+        };
     }
+    private void RequestSelectedSetExposure()
+    {
+        // One local layout flag always reads the CURRENT selection. There are no
+        // queued selection snapshots that could scroll back after rapid input/re-entry.
+        exposeSelectedSet = true;
+        SizeSetTabs();
+    }
+    private void SizeSetTabs()
+    {
+        var viewport = IntentSetHeaderScroll?.ViewportWidth ?? 0;
+        if (viewport <= 0 || !double.IsFinite(viewport)) return;
+        var available = Math.Max(1, viewport - 4); // room for the native selected-tab overlap
+        var columns = Math.Min(Math.Max(1, IntentSetSegments.Items.Count), Math.Max(1, (int)Math.Floor(available / 120)));
+        var width = Math.Clamp(available / columns, 64, 160);
+        setTabWidth = width;
+        for (var i = 0; i < IntentSetSegments.Items.Count; i++)
+            if (IntentSetSegments.ItemContainerGenerator.ContainerFromIndex(i) is TabItem tab && Math.Abs(tab.Width - width) > 0.1)
+                tab.Width = width;
+    }
+    private void IntentSetSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ReferenceEquals(e.OriginalSource, IntentSetSegments)) RequestSelectedSetExposure();
+        // Keep the normal TwoWay binding as the sole route into the root coordinator.
+        // The owner's MainTabs handler already ignores nested SelectionChanged events.
+    }
+    private void IntentSetHeaderScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        if (e.ViewportWidthChange != 0) RequestSelectedSetExposure();
+        UpdateSetBrowseButtons();
+    }
+    private void IntentSetHeaderLayoutUpdated(object? sender, EventArgs e)
+    {
+        if (!exposeSelectedSet || !IsLoaded || !IsVisible) return;
+        if (IntentSetHeaderScroll is not { ViewportWidth: > 0 } scroll || !scroll.IsArrangeValid) return;
+        if (IntentSetSegments.SelectedItem == null) { exposeSelectedSet = false; UpdateSetBrowseButtons(); return; }
+        if (IntentSetSegments.ItemContainerGenerator.ContainerFromItem(IntentSetSegments.SelectedItem) is not TabItem tab ||
+            !tab.IsArrangeValid || tab.ActualWidth <= 0) return;
+        exposeSelectedSet = false;
+        var bounds = tab.TransformToAncestor(scroll).TransformBounds(new Rect(tab.RenderSize));
+        var left = bounds.Left - 2;
+        var right = bounds.Right + 2;
+        var offset = scroll.HorizontalOffset;
+        if (left < 0 || right - left > scroll.ViewportWidth) offset += left;
+        else if (right > scroll.ViewportWidth) offset += right - scroll.ViewportWidth;
+        scroll.ScrollToHorizontalOffset(Math.Clamp(offset, 0, scroll.ScrollableWidth));
+        UpdateSetBrowseButtons();
+    }
+    private void UpdateSetBrowseButtons()
+    {
+        if (IntentSetScrollLeftButton == null || IntentSetScrollRightButton == null) return;
+        var scroll = IntentSetHeaderScroll;
+        IntentSetScrollLeftButton.IsEnabled = scroll != null && scroll.HorizontalOffset > 0.5;
+        IntentSetScrollRightButton.IsEnabled = scroll != null && scroll.HorizontalOffset < scroll.ScrollableWidth - 0.5;
+    }
+    private void BrowseSets(int direction)
+    {
+        if (IntentSetHeaderScroll is not { } scroll) return;
+        // Browsing exposes adjacent headers only. Selection, placement and saved order
+        // remain unchanged until a real native TabItem is selected.
+        exposeSelectedSet = false;
+        scroll.ScrollToHorizontalOffset(Math.Clamp(scroll.HorizontalOffset + direction * setTabWidth, 0, scroll.ScrollableWidth));
+    }
+    private void IntentSetScrollLeft(object sender, RoutedEventArgs e) => BrowseSets(-1);
+    private void IntentSetScrollRight(object sender, RoutedEventArgs e) => BrowseSets(1);
+
     private void ObserveOwnerWindow(Window? next)
     {
         if (ReferenceEquals(observedOwnerWindow, next)) return;

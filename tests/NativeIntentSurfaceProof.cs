@@ -46,7 +46,7 @@ internal static partial class NativeProof
             Assert(vm.IntentSets.Select(x => x.Targeted!.Intent).SequenceEqual(new[] { "表情", "表情", "リアクション" }), "R7/R2-B runtime Voice context directly exposes every matching Set, retaining compatibility Intent values");
             Assert(vm.IntentSets.Count == 3 && vm.HasIntentSets && vm.IntentTiles.Count == 1, "R7/R2-B distinct purposes remain independent Sets with concrete tiles on one surface");
             var signature = Signature(timeline); var settingsJson = JsonSerializer.Serialize(fixture);
-            view.RelativePaletteSurface.IntentSetPicker.SelectedIndex = 1; await Idle();
+            view.RelativePaletteSurface.IntentSetSegments.SelectedIndex = 1; await Idle();
             Assert(vm.SelectedIntentSet?.Targeted?.Id == second.Id && Signature(timeline) == signature && JsonSerializer.Serialize(fixture) == settingsJson,
                 "R7 native set selection changes neither Timeline nor persisted settings model");
             view.RelativePaletteSurface.IntentSetSegments.SelectedIndex = 2; await Idle();

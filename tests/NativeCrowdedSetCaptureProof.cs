@@ -67,46 +67,64 @@ internal static partial class NativeProof
                     Assert(vm.IntentSets.Select(x => x.Id).SequenceEqual((many ? all : sets)
                         .Where(x => x.Target.CharacterName != "魔理沙").Select(x => x.Id)),
                         "CROWDED_SETS runtime filtering retains saved order and excludes other-character Sets");
-                    Assert(ReferenceEquals(surface.IntentSetSegments.SelectedItem, vm.SelectedIntentSet) &&
-                        ReferenceEquals(surface.IntentSetPicker.SelectedItem, vm.SelectedIntentSet),
-                        "CROWDED_SETS both visual selectors reference the exact selected model");
+                    Assert(surface.IntentSetSegments is TabControl && ReferenceEquals(surface.IntentSetSegments.SelectedItem, vm.SelectedIntentSet) &&
+                        capture.PaletteTab.IsSelected && surface.FindName("IntentSetPicker") == null,
+                        "CROWDED_SETS native tabs retain the exact selected model at every Set count and never switch MainTabs");
+                    var scroll = surface.IntentSetHeaderScroll!;
                     var cursor = window.PointToScreen(new Point(5, 5));
                     Assert(Round2Input.SetCursorPos((int)cursor.X, (int)cursor.Y), "CROWDED_SETS cursor moves to neutral scene-heading space");
                     await Idle();
-                    var items = RelativeVisuals(surface.IntentSetSegments).OfType<ListBoxItem>().ToArray();
-                    if (CrowdedSetCandidate && !many)
+                    var items = RelativeVisuals(surface.IntentSetSegments).OfType<TabItem>().ToArray();
+                    Assert(items.Length == vm.IntentSets.Count && items.All(x => !x.IsMouseOver) &&
+                        items.All(x => Math.Abs(x.ActualWidth - items[0].ActualWidth) <= 1) &&
+                        surface.IntentSetSegments.ActualWidth <= surface.ActualWidth + 1 &&
+                        surface.IntentSetContentBorder.ActualWidth <= surface.ActualWidth + 1,
+                        $"CROWDED_SETS equal-width native headers stay in one bounded strip at {width}px");
+                    Assert(items.All(x => x.ToolTip?.ToString() == (x.DataContext as IntentSetChoice)?.Label &&
+                        System.Windows.Automation.AutomationProperties.GetName(x) == (x.DataContext as IntentSetChoice)?.Label),
+                        "CROWDED_SETS abbreviated similar names retain exact full tooltip/accessibility names");
+                    Assert(surface.SingleSetTitleText.IsVisible && surface.SingleSetTitleText.Text == vm.SelectedIntentSet!.Label,
+                        "CROWDED_SETS selected long/similar Set has a full-name title");
+                    void AssertSelectedVisible()
                     {
-                        Assert(items.Length == 4 && items.All(x => !x.IsMouseOver) &&
-                            items.All(x => Math.Abs(x.ActualWidth - items[0].ActualWidth) <= 1) &&
-                            items.All(x => x.TranslatePoint(new Point(x.ActualWidth, 0), surface).X <= surface.ActualWidth + 1),
-                            $"CROWDED_SETS equal-width four-Set cells fit {width}px without a hover selection ambiguity");
-                        Assert(items.All(x => x.ToolTip?.ToString() == (x.DataContext as IntentSetChoice)?.Label &&
-                            System.Windows.Automation.AutomationProperties.GetName(x) == (x.DataContext as IntentSetChoice)?.Label),
-                            "CROWDED_SETS abbreviated similar names retain exact full tooltip/accessibility names");
-                        Assert(surface.SingleSetTitleText.IsVisible && surface.SingleSetTitleText.Text == vm.SelectedIntentSet!.Label,
-                            "CROWDED_SETS selected long/similar Set has a full-name title");
+                        var tab = items.Single(x => x.IsSelected);
+                        var bounds = tab.TransformToAncestor(scroll).TransformBounds(new Rect(tab.RenderSize));
+                        Assert(ReferenceEquals(tab.DataContext, vm.SelectedIntentSet) && bounds.Left >= -1 && bounds.Right <= scroll.ViewportWidth + 1,
+                            "CROWDED_SETS actual selected native header is fully exposed after selection or viewport change");
                     }
-                    var filename = $"crowded-sets-{width}-{(many ? "many" : "four")}.png";
-                    images.Add(new { File = filename, Sha256 = SaveFullSettingsBitmap(capture, filename), Width = width, Height = 640,
-                        Case = many ? "many" : "four", SelectedSet = vm.SelectedIntentSet!.Label,
-                        SetNames = vm.IntentSets.Select(x => x.Label).ToArray(),
-                        Rows = items.Select(x => new { Label = (x.DataContext as IntentSetChoice)?.Label, x.IsSelected, x.IsMouseOver, x.IsKeyboardFocusWithin,
-                            x.ActualWidth, x.ActualHeight, Left = x.TranslatePoint(new Point(), surface).X }).ToArray() });
-                    if (many)
+                    void CaptureTabs(string suffix)
                     {
-                        surface.IntentSetPicker.IsDropDownOpen = true; await Idle();
-                        var popup = (Popup)surface.IntentSetPicker.Template.FindName("PART_Popup", surface.IntentSetPicker);
-                        var child = (FrameworkElement)popup.Child;
-                        VerifyCrowdedPopupBounds(child, window, width);
-                        var choices = RelativeVisuals(child).OfType<ComboBoxItem>().ToArray();
-                        Assert(choices.Length > 4 && choices.All(x => x.ActualWidth <= surface.IntentSetPicker.ActualWidth + 1),
-                            "CROWDED_SETS many-Set dropdown wraps complete names within its bounded width");
-                        filename = $"crowded-sets-{width}-many-dropdown.png";
-                        images.Add(new { File = filename, Sha256 = SaveFullSettingsBitmap(capture, filename, child), Width = width, Height = 640,
-                            Case = "many-dropdown", SelectedSet = vm.SelectedIntentSet.Label,
-                            SetNames = vm.IntentSets.Select(x => x.Label).ToArray() });
-                        surface.IntentSetPicker.IsDropDownOpen = false; await Idle();
+                        var filename = $"crowded-sets-{width}-{suffix}.png";
+                        images.Add(new { File = filename, Sha256 = SaveFullSettingsBitmap(capture, filename), Width = width, Height = 640,
+                            Case = suffix, SelectedSet = vm.SelectedIntentSet!.Label,
+                            SetNames = vm.IntentSets.Select(x => x.Label).ToArray(), scroll.HorizontalOffset, scroll.ViewportWidth, scroll.ScrollableWidth,
+                            Rows = items.Select(x => new { Label = (x.DataContext as IntentSetChoice)?.Label, x.IsSelected, x.IsMouseOver, x.IsKeyboardFocusWithin,
+                                x.ActualWidth, x.ActualHeight, Left = x.TranslatePoint(new Point(), scroll).X }).ToArray() });
                     }
+                    AssertSelectedVisible();
+                    CaptureTabs(many ? "many" : "four");
+                    if (scroll.ScrollableWidth > 0)
+                    {
+                        var selectedBefore = vm.SelectedIntentSet;
+                        scroll.ScrollToLeftEnd(); await Idle();
+                        Assert(surface.IntentSetScrollRightButton.IsEnabled && !surface.IntentSetScrollLeftButton.IsEnabled,
+                            "CROWDED_SETS browse arrows reflect the left boundary");
+                        await InvokeSelectionButton(surface.IntentSetScrollRightButton); await Idle();
+                        Assert(scroll.HorizontalOffset > 0 && ReferenceEquals(vm.SelectedIntentSet, selectedBefore) && capture.PaletteTab.IsSelected,
+                            "CROWDED_SETS right arrow browses headers without selecting or changing the main task");
+                        await InvokeSelectionButton(surface.IntentSetScrollLeftButton); await Idle();
+                        Assert(scroll.HorizontalOffset < 1 && ReferenceEquals(vm.SelectedIntentSet, selectedBefore),
+                            "CROWDED_SETS left arrow returns to the boundary without selecting a Set");
+                    }
+                    // Select a native header outside the initial viewport, then return
+                    // through the real selector. Both paths must reveal the current tab.
+                    surface.IntentSetSegments.SelectedIndex = vm.IntentSets.Count - 1; await Idle();
+                    AssertSelectedVisible();
+                    Assert(capture.PaletteTab.IsSelected && vm.SelectedIntentSet!.Id == vm.IntentSets.Last().Id &&
+                        surface.SingleSetTitleText.Text == vm.SelectedIntentSet.Label,
+                        "CROWDED_SETS native last-header selection updates the full name and leaves MainTabs alone");
+                    if (many) CaptureTabs("many-last-selected");
+                    surface.IntentSetSegments.SelectedIndex = 2; await Idle(); AssertSelectedVisible();
                 }
                 if (many)
                 {
@@ -157,7 +175,7 @@ internal static partial class NativeProof
             File.WriteAllText(Path.Combine(output, "crowded-set-capture.json"), JsonSerializer.Serialize(new {
                 SourceHead = Environment.GetEnvironmentVariable("YMM4_TEMPLATE_PLACER_SOURCE_HEAD"),
                 CheckoutCommit = Environment.GetEnvironmentVariable("GITHUB_SHA"), RunId = Environment.GetEnvironmentVariable("GITHUB_RUN_ID"),
-                RunAttempt = Environment.GetEnvironmentVariable("GITHUB_RUN_ATTEMPT"), CandidateLayoutChecks = CrowdedSetCandidate,
+                RunAttempt = Environment.GetEnvironmentVariable("GITHUB_RUN_ATTEMPT"), CandidateLayoutChecks = CrowdedSetCandidate, SetSelector = "Native one-row TabControl headers with bounded browsing and shared content",
                 Capture = "Native WPF proof-window composition, with native ComboBox Popup child composited at its actual screen-relative bounds; not desktop screenshots",
                 Fixture = "Same synthetic Voice(霊夢), four short/long/similar Sets, then twelve same-character/common/other-character Sets", Images = images
             }, new JsonSerializerOptions { WriteIndented = true }));
