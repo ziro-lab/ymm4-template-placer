@@ -88,7 +88,7 @@
      </Style></ComboBox.ItemContainerStyle>
     </ComboBox>
    </Grid>
-   <DockPanel x:Name="SettingsCharacterFilterRow" Margin="0,3,6,4" Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}">
+   <DockPanel x:Name="SettingsCharacterFilterRow" Margin="0,3,6,4" Visibility="{Binding IntentSettings.SelectedItemContext.IsRealItemType,Converter={StaticResource VisibleWhen}}">
     <CheckBox x:Name="ShowOtherCharacterSetsCheck" DockPanel.Dock="Right" Content="他のキャラ専用セットを表示" IsChecked="{Binding IntentSettings.ShowOtherCharacterSets,Mode=TwoWay}" IsEnabled="{Binding IntentSettings.HasSettingsReferenceCharacter}" VerticalAlignment="Center" Margin="8,0,0,0"/>
     <TextBlock x:Name="SettingsReferenceCharacterText" Text="{Binding IntentSettings.SettingsReferenceCharacterLabel}" ToolTip="{Binding IntentSettings.SettingsReferenceCharacterLabel}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Opacity="0.72"/>
    </DockPanel>
