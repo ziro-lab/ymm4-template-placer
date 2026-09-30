@@ -190,7 +190,14 @@
           <TextBlock Text="周囲アイテムとして見る最大間隔（空欄なら制限なし）"/>
           <TextBox x:Name="MaximumGapBox" Text="{Binding MaximumGap,UpdateSourceTrigger=PropertyChanged}"/>
          </StackPanel>
-         <WrapPanel><TextBlock Text="開始をずらす" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding StartOffset,UpdateSourceTrigger=PropertyChanged}" Width="72"/><TextBlock Text="終了をずらす" VerticalAlignment="Center" Margin="12,0,8,0"/><TextBox Text="{Binding EndOffset,UpdateSourceTrigger=PropertyChanged}" Width="72"/></WrapPanel>
+         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <TextBlock Text="開始をずらす" Style="{StaticResource SettingsFieldLabel}"/>
+          <TextBox Grid.Column="1" x:Name="SetStartOffsetBox" Text="{Binding StartOffset,UpdateSourceTrigger=PropertyChanged}" Width="72" HorizontalAlignment="Left"/>
+         </Grid>
+         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <TextBlock Text="終了をずらす" Style="{StaticResource SettingsFieldLabel}"/>
+          <TextBox Grid.Column="1" x:Name="SetEndOffsetBox" Text="{Binding EndOffset,UpdateSourceTrigger=PropertyChanged}" Width="72" HorizontalAlignment="Left"/>
+         </Grid>
          <WrapPanel x:Name="RelativeLayerOffsetRow" Visibility="{Binding ShowRelativeLayerPlacement,Converter={StaticResource VisibleWhen}}"><TextBlock Text="対象から何段離すか" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding LayerOffset,UpdateSourceTrigger=PropertyChanged}" Width="64"/></WrapPanel>
          <WrapPanel><TextBlock Text="探索するレイヤー番号" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBox Text="{Binding LayerMinimum,UpdateSourceTrigger=PropertyChanged}" Width="64"/><TextBlock Text=" ～ " VerticalAlignment="Center"/><TextBox Text="{Binding LayerMaximum,UpdateSourceTrigger=PropertyChanged}" Width="64"/></WrapPanel>
         </StackPanel>

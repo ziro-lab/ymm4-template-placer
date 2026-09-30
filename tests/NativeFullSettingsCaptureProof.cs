@@ -104,6 +104,13 @@ internal static partial class NativeProof
                         Right(panel.AnchorBox) <= scroll.ActualWidth + 1 &&
                         Right(panel.DurationBox) <= scroll.ActualWidth + 1,
                         $"SETTINGS_HIERARCHY labeled common fields align and fit {width}px");
+                    if (expanded)
+                        Assert(Math.Abs(Left(panel.SetStartOffsetBox) - Left(panel.SetEndOffsetBox)) <= 1 &&
+                            panel.SetEndOffsetBox.TranslatePoint(new Point(), panel).Y >
+                                panel.SetStartOffsetBox.TranslatePoint(new Point(), panel).Y &&
+                            Right(panel.SetStartOffsetBox) <= scroll.ActualWidth + 1 &&
+                            Right(panel.SetEndOffsetBox) <= scroll.ActualWidth + 1,
+                            $"SETTINGS_HIERARCHY advanced offsets keep complete aligned label/input rows at {width}px");
                     var mode = expanded ? "expanded" : "default";
                     var sectionPositions = new FrameworkElement[] { panel.SetManagement, panel.TargetEditor, panel.RelationEditor,
                         panel.EntryEditor, panel.EntryAppearanceEditor, panel.SourceEditor, panel.PresentationSettingsSurface, panel.SetShapeButtons }
