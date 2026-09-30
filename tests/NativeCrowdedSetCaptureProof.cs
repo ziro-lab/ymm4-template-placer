@@ -104,8 +104,10 @@ internal static partial class NativeProof
                     AssertSelectedVisible();
                     var fullyVisible = items.Count(x => { var b = x.TransformToAncestor(scroll).TransformBounds(new Rect(x.RenderSize));
                         return b.Left >= -1 && b.Right <= scroll.ViewportWidth + 1; });
-                    Assert(fullyVisible >= Math.Min(vm.IntentSets.Count, width == 360 ? 5 : 9) && items.All(x => x.ActualHeight <= 24),
-                        $"CROWDED_SETS compact single-line tabs expose at least {(width == 360 ? 5 : 9)} applicable headers when present at {width}px");
+                    Assert(fullyVisible >= Math.Min(vm.IntentSets.Count, width == 360 ? 5 : 9) && items.All(x => x.ActualHeight >= 28 && x.ActualHeight <= 36 && Math.Abs(x.ActualHeight - items[0].ActualHeight) <= 1) &&
+                        surface.IntentSetScrollLeftButton.ActualHeight >= items[0].ActualHeight - 1 &&
+                        surface.IntentSetScrollRightButton.ActualHeight >= items[0].ActualHeight - 1,
+                        $"CROWDED_SETS compact uniform two-line tabs expose at least {(width == 360 ? 5 : 9)} applicable headers when present at {width}px");
                     Assert(surface.SingleSetTitleText.TextWrapping == TextWrapping.NoWrap,
                         "CROWDED_SETS selected name does not add wrapping height at the expense of placement density");
                     CaptureTabs(many ? "many" : "four");

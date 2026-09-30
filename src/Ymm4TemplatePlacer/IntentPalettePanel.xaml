@@ -61,7 +61,7 @@
      <Setter Property="Width" Value="52"/>
      <Setter Property="ToolTip" Value="{Binding Label}"/><Setter Property="AutomationProperties.Name" Value="{Binding Label}"/>
      <Setter Property="HeaderTemplate"><Setter.Value><DataTemplate>
-      <TextBlock Text="{Binding}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Height="14" LineHeight="14" LineStackingStrategy="BlockLineHeight"/>
+      <TextBlock Text="{Binding}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Height="28" LineHeight="14" LineStackingStrategy="BlockLineHeight"/>
      </DataTemplate></Setter.Value></Setter>
     </Style></TabControl.ItemContainerStyle>
    </TabControl>
