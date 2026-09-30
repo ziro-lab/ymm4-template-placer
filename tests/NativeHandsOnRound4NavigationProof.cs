@@ -9,7 +9,7 @@ using YukkuriMovieMaker.UndoRedo;
 namespace Ymm4TemplatePlacer;
 internal static partial class NativeProof
 {
-    private static async Task<bool> Round4DragScrollThumb(ScrollViewer viewer)
+    private static async Task<bool> Round4DragScrollThumb(ScrollViewer viewer, ScrollViewer? outer = null)
     {
         viewer.ScrollToVerticalOffset(viewer.ScrollableHeight / 2); viewer.UpdateLayout(); await Idle();
         var bar = viewer.Template.FindName("PART_VerticalScrollBar", viewer) as ScrollBar
@@ -17,6 +17,19 @@ internal static partial class NativeProof
         bar.ApplyTemplate(); bar.UpdateLayout();
         var thumb = Descendant<Thumb>(bar) ?? throw new InvalidOperationException("R4-A scrollbar thumb fixture missing");
         thumb.BringIntoView(); await Idle();
+        if (outer != null)
+        {
+            // An inner list can be taller than its outer viewport. BringIntoView
+            // can expose its leading edge while leaving the thumb center clipped.
+            // Position that actual hit target in the outer viewport before input.
+            var center = thumb.TranslatePoint(new Point(thumb.ActualWidth / 2, thumb.ActualHeight / 2), outer);
+            outer.ScrollToVerticalOffset(outer.VerticalOffset + center.Y - outer.ViewportHeight / 2);
+            await Idle(); outer.UpdateLayout();
+            center = thumb.TranslatePoint(new Point(thumb.ActualWidth / 2, thumb.ActualHeight / 2), outer);
+            Log($"R4-A inner thumb exposed: center={center}; outerViewport={outer.ViewportHeight}; offset={outer.VerticalOffset}");
+            Assert(center.Y >= 0 && center.Y <= outer.ViewportHeight,
+                "R4-A inner thumb hit point is inside the authoritative outer viewport");
+        }
         var point = thumb.PointToScreen(new Point(thumb.ActualWidth / 2, thumb.ActualHeight / 2));
         Round2Input.SetCursorPos((int)Math.Round(point.X), (int)Math.Round(point.Y)); await Task.Delay(80); await Idle();
         var hit = Mouse.DirectlyOver as DependencyObject;
@@ -143,7 +156,7 @@ internal static partial class NativeProof
             var outerDrag = await Round4DragScrollThumb(root);
             surface.SourceList.BringIntoView(); await Idle();
             SaveNamedView(view, "v042-round4-a-before-inner-thumb.png");
-            var innerDrag = await Round4DragScrollThumb(inner);
+            var innerDrag = await Round4DragScrollThumb(inner, root);
             Round4Assert(outerDrag && innerDrag, "A11", "native mouse thumb drags still move both outer and inner scrollbar ranges");
             Round4Assert(!NestedWheelRouting.TryScroll(root, inner, -120, ModifierKeys.Control) &&
                 !NestedWheelRouting.TryScroll(root, new TextBlock(), -120, ModifierKeys.None) &&
