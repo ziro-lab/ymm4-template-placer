@@ -141,8 +141,14 @@ internal static partial class NativeProof
         }
 
         scope.Apply(fixture, [a, b], [a]);
-        var vm = ViewModel!; vm.BeginIntentSettings();
-        vm.IntentSettings!.OpenPaletteForEditing(vm.IntentSettings.Palettes.Single(x => x.Id == own.Id));
+        var vm = ViewModel!; vm.BeginIntentSettings(); await Idle();
+        Assert(vm.IntentSettings!.SelectedItemContext?.IsCurrentSelection == true &&
+            View!.RelativeSettingsSurface.SettingsCharacterFilterRow.Visibility == System.Windows.Visibility.Collapsed,
+            "SET_CHARACTER_FILTER actual UI does not add inactive visibility controls to strict current-selection mode");
+        vm.IntentSettings.OpenPaletteForEditing(vm.IntentSettings.Palettes.Single(x => x.Id == own.Id)); await Idle();
+        Assert(View!.RelativeSettingsSurface.SettingsCharacterFilterRow.Visibility == System.Windows.Visibility.Visible &&
+            View.RelativeSettingsSurface.ShowOtherCharacterSetsCheck.IsEnabled,
+            "SET_CHARACTER_FILTER actual UI exposes the preference in a definite-character editing parent");
         var timelineBefore = Signature(timeline);
         var runtimeContext = IntentSelectionContext.Capture(timeline);
         vm.IntentSettings.ShowOtherCharacterSets = true; vm.SaveIntentSettings();

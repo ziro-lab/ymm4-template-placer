@@ -128,6 +128,9 @@ internal static partial class NativeProof
 
             vm.BeginIntentSettings(); view.SelectionTab.IsSelected = true; await Idle();
             var surface = view.RelativeSettingsSurface;
+            // Exercise the actual Set-opening parent where character visibility
+            // controls apply, including its smaller compact viewport.
+            vm.IntentSettings!.OpenPaletteForEditing(vm.IntentSettings.Palettes.Single()); await Idle();
             // The preceding R3-G proof deliberately expanded the presentation editor.
             // Restore a focused SourceList viewport instead of aiming at a clipped thumb.
             ((Expander)surface.PresentationSettingsSurface.Content).IsExpanded = false;
