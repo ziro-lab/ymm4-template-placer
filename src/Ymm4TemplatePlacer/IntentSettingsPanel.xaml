@@ -80,7 +80,6 @@
   <ScrollViewer x:Name="SettingsScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
    <StackPanel x:Name="SettingsScrollContent" Margin="0,0,8,0">
     <local:GenericSetSettingsPanel x:Name="GenericSettingsSurface" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}"/>
-    <TextBlock x:Name="SetManagementHeading" Text="セットの管理" Style="{StaticResource SettingsSectionHeader}"/>
     <StackPanel DataContext="{Binding IntentSettings.SelectedPalette}">
      <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
 
@@ -283,6 +282,7 @@
      </StackPanel>
     </StackPanel>
    <StackPanel x:Name="SetManagement" Margin="0,8,0,4" Visibility="{Binding IntentSettings.HasSelectedSet,Converter={StaticResource VisibleWhen}}">
+    <TextBlock x:Name="SetManagementHeading" Text="セットの管理" Style="{StaticResource SettingsSectionHeader}"/>
     <StackPanel DataContext="{Binding IntentSettings.SelectedPalette}">
      <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
      <TextBlock Text="セット名"/>

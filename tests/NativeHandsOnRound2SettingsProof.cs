@@ -126,7 +126,8 @@ internal static partial class NativeProof
                 Top(panel.TargetEditor) < Top(panel.EntryEditor) &&
                 Top(panel.EntryEditor) < Top(panel.SourceEditor) &&
                 Top(panel.SourceEditor) < Top(panel.SetManagement) &&
-                Top(panel.SetManagement) < Top(panel.SetNameBox),
+                Top(panel.SetManagement) <= Top(panel.SetManagementHeading) &&
+                Top(panel.SetManagementHeading) < Top(panel.SetNameBox),
                 "SETTINGS_HIERARCHY common controls -> live Preview -> applicability -> tiles -> sources -> subordinate management");
             Assert(panel.SettingsScrollContent.Margin.Right == 8 &&
                 panel.EntryList.Margin.Right == 0 && panel.SourceList.Margin.Right == 0 &&
