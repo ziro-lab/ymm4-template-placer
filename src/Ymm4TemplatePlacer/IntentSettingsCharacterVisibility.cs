@@ -30,6 +30,9 @@ public sealed partial class IntentSettingsSession
         Presentation.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName != nameof(PalettePresentationDraft.ShowOtherCharacterSets)) return;
+            // An explicit visibility toggle must immediately reflect in the list.
+            // Editing-field changes still keep their active draft pinned via MatchesSettingsVisibility.
+            ClearActiveEditingPalette();
             RefreshNavigation(); Raise(nameof(ShowOtherCharacterSets));
         };
     }

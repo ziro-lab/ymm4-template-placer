@@ -80,22 +80,22 @@ internal static partial class NativeProof
             "SET_CHARACTER_FILTER Generic retains its separate Set model and never applies this targeted character filter");
 
         var editing = Session(a); editing.OpenPaletteForEditing(editing.Palettes.Single(x => x.Id == own.Id));
-        editing.ShowOtherCharacterSets = true;
-        var active = editing.Palettes.Single(x => x.Id == other.Id); editing.SelectedPalette = active;
+        var active = editing.SelectedPalette!;
         active.MinimumCount = "入力途中"; active.CharacterName = "Filter C";
         active.CharacterRestricted = false; active.CharacterRestricted = true;
         active.TypeChoices.Single(x => x.Key == voiceKey).Selected = false;
-        editing.ShowOtherCharacterSets = false;
         Assert(ReferenceEquals(editing.SelectedPalette, active) && Visible(editing).Contains(active.Id) &&
             active.MinimumCount == "入力途中" && active.CharacterName == "Filter C" && !active.TypeChoices.Single(x => x.Key == voiceKey).Selected &&
             editing.Palettes.Select(x => x.Id).SequenceEqual(order),
-            "SET_CHARACTER_FILTER toggling or editing conditions retains the active Set, invalid text, incomplete target and every underlying Set/order");
+            "SET_CHARACTER_FILTER editing conditions keep the active draft visible with invalid/incomplete input and preserve every underlying Set/order");
         active.TypeChoices.Single(x => x.Key == voiceKey).Selected = true; active.MinimumCount = "1";
-        active.CharacterName = "Filter B";
-        editing.ShowOtherCharacterSets = true; editing.SelectedPalette = editing.Palettes.Single(x => x.Id == common.Id);
+        active.CharacterName = "Filter A";
+        editing.ShowOtherCharacterSets = true;
+        var otherDraft = editing.Palettes.Single(x => x.Id == other.Id); editing.SelectedPalette = otherDraft;
         editing.ShowOtherCharacterSets = false;
-        Assert(!Visible(editing).Contains(other.Id) && editing.SettingsReferenceCharacterLabel.Contains("Filter A", StringComparison.Ordinal),
-            "SET_CHARACTER_FILTER the previous other-character draft stops being pinned once a different Set is actively edited; reference remains fixed");
+        Assert(!Visible(editing).Contains(other.Id) && !ReferenceEquals(editing.SelectedPalette, otherDraft) &&
+            editing.Palettes.Contains(otherDraft) && editing.SettingsReferenceCharacterLabel.Contains("Filter A", StringComparison.Ordinal),
+            "SET_CHARACTER_FILTER explicit OFF immediately hides an active other-character Set without deleting its draft; reference remains fixed");
         Assert(JsonSerializer.Serialize(fixture) == sourceJson,
             "SET_CHARACTER_FILTER all visibility and incomplete edits leave the original settings snapshot unchanged");
 
@@ -149,6 +149,13 @@ internal static partial class NativeProof
         Assert(View!.RelativeSettingsSurface.SettingsCharacterFilterRow.Visibility == System.Windows.Visibility.Visible &&
             View.RelativeSettingsSurface.ShowOtherCharacterSetsCheck.IsEnabled,
             "SET_CHARACTER_FILTER actual UI exposes the preference in a definite-character editing parent");
+        vm.IntentSettings.ShowOtherCharacterSets = true; await Idle();
+        var uiOther = vm.IntentSettings.Palettes.Single(x => x.Id == other.Id);
+        vm.IntentSettings.SelectedPalette = uiOther; await Idle();
+        View.RelativeSettingsSurface.ShowOtherCharacterSetsCheck.IsChecked = false; await Idle();
+        Assert(!vm.IntentSettings.VisiblePalettes.Cast<IntentPaletteDraft>().Any(x => x.Id == other.Id) &&
+            vm.IntentSettings.SelectedPalette?.Id != other.Id,
+            "SET_CHARACTER_FILTER actual checkbox OFF immediately removes the active other-character Set from the picker");
         var timelineBefore = Signature(timeline);
         var runtimeContext = IntentSelectionContext.Capture(timeline);
         vm.IntentSettings.ShowOtherCharacterSets = true; vm.SaveIntentSettings();

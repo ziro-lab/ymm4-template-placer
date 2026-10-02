@@ -97,6 +97,36 @@
   </StackPanel>
   <ScrollViewer x:Name="SettingsScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
    <StackPanel x:Name="SettingsScrollContent" Margin="0,0,8,0">
+   <StackPanel x:Name="SetManagement" Margin="0,8,0,4" Visibility="{Binding IntentSettings.HasSelectedSet,Converter={StaticResource VisibleWhen}}">
+    <TextBlock x:Name="SetManagementHeading" Text="セットの管理" Style="{StaticResource SettingsSectionHeader}"/>
+    <StackPanel DataContext="{Binding IntentSettings.SelectedPalette}">
+     <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+     <TextBlock Text="セット名"/>
+     <TextBox x:Name="SetNameBox" Text="{Binding Name,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+
+    </StackPanel>
+    <WrapPanel x:Name="SetManagementFlow" Margin="8,6,0,0">
+     <StackPanel x:Name="SetManagementBlock" Margin="0,0,24,4" VerticalAlignment="Top">
+      <TextBlock Text="セット操作" FontWeight="SemiBold" Margin="0,0,0,2"/>
+      <WrapPanel x:Name="SetManagementActions">
+       <Button x:Name="DuplicateButton" Content="複製" Command="{Binding DuplicateIntentPaletteCommand}"/>
+       <Button Content="↑" ToolTip="このアイテム内でSetを前へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="-1"/>
+       <Button Content="↓" ToolTip="このアイテム内でSetを後へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="1"/>
+       <Button x:Name="ManageDeletePaletteButton" Content="削除" Command="{Binding DeleteIntentPaletteCommand}" ToolTip="現在選択しているセットを削除"/>
+      </WrapPanel>
+     </StackPanel>
+     <StackPanel x:Name="CopySetToItemPanel" Width="260" Margin="0,0,0,4" VerticalAlignment="Top"
+                 ToolTip="現在のSetをその時点の設定で複製します。コピー後は元と別々に編集できます。"
+                 Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}">
+      <TextBlock x:Name="CopySetHeading" Text="ほかのアイテムへコピー" FontWeight="SemiBold" Margin="0,0,0,2"/>
+      <Grid x:Name="CopySetActions">
+       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+       <ComboBox Grid.Column="0" x:Name="CopyDestinationPicker" Style="{StaticResource CopyDestinationComboStyle}" ItemsSource="{Binding IntentSettings.CopyDestinations}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedCopyDestination,Mode=TwoWay}" MinWidth="170" AutomationProperties.Name="Setのコピー先アイテム"/>
+       <Button Grid.Column="1" x:Name="CopyToItemButton" Style="{StaticResource CopyActionButtonStyle}" Content="コピー" Command="{Binding CopyIntentPaletteToItemCommand}"/>
+      </Grid>
+     </StackPanel>
+    </WrapPanel>
+   </StackPanel>
     <local:GenericSetSettingsPanel x:Name="GenericSettingsSurface" Visibility="{Binding IntentSettings.IsGenericContext,Converter={StaticResource VisibleWhen}}"/>
     <StackPanel DataContext="{Binding IntentSettings.SelectedPalette}">
      <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
@@ -307,36 +337,6 @@
       </StackPanel>
      </StackPanel>
     </StackPanel>
-   <StackPanel x:Name="SetManagement" Margin="0,8,0,4" Visibility="{Binding IntentSettings.HasSelectedSet,Converter={StaticResource VisibleWhen}}">
-    <TextBlock x:Name="SetManagementHeading" Text="セットの管理" Style="{StaticResource SettingsSectionHeader}"/>
-    <StackPanel DataContext="{Binding IntentSettings.SelectedPalette}">
-     <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-     <TextBlock Text="セット名"/>
-     <TextBox x:Name="SetNameBox" Text="{Binding Name,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
-
-    </StackPanel>
-    <WrapPanel x:Name="SetManagementFlow" Margin="8,6,0,0">
-     <StackPanel x:Name="SetManagementBlock" Margin="0,0,24,4" VerticalAlignment="Top">
-      <TextBlock Text="セット操作" FontWeight="SemiBold" Margin="0,0,0,2"/>
-      <WrapPanel x:Name="SetManagementActions">
-       <Button x:Name="DuplicateButton" Content="複製" Command="{Binding DuplicateIntentPaletteCommand}"/>
-       <Button Content="↑" ToolTip="このアイテム内でSetを前へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="-1"/>
-       <Button Content="↓" ToolTip="このアイテム内でSetを後へ" Command="{Binding MoveIntentPaletteCommand}" CommandParameter="1"/>
-       <Button x:Name="ManageDeletePaletteButton" Content="削除" Command="{Binding DeleteIntentPaletteCommand}" ToolTip="現在選択しているセットを削除"/>
-      </WrapPanel>
-     </StackPanel>
-     <StackPanel x:Name="CopySetToItemPanel" Width="260" Margin="0,0,0,4" VerticalAlignment="Top"
-                 ToolTip="現在のSetをその時点の設定で複製します。コピー後は元と別々に編集できます。"
-                 Visibility="{Binding IntentSettings.IsTargetedContext,Converter={StaticResource VisibleWhen}}">
-      <TextBlock x:Name="CopySetHeading" Text="ほかのアイテムへコピー" FontWeight="SemiBold" Margin="0,0,0,2"/>
-      <Grid x:Name="CopySetActions">
-       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <ComboBox Grid.Column="0" x:Name="CopyDestinationPicker" Style="{StaticResource CopyDestinationComboStyle}" ItemsSource="{Binding IntentSettings.CopyDestinations}" DisplayMemberPath="Label" SelectedItem="{Binding IntentSettings.SelectedCopyDestination,Mode=TwoWay}" MinWidth="170" AutomationProperties.Name="Setのコピー先アイテム"/>
-       <Button Grid.Column="1" x:Name="CopyToItemButton" Style="{StaticResource CopyActionButtonStyle}" Content="コピー" Command="{Binding CopyIntentPaletteToItemCommand}"/>
-      </Grid>
-     </StackPanel>
-    </WrapPanel>
-   </StackPanel>
     <local:PalettePresentationPanel x:Name="PresentationSettingsSurface" Margin="0,6,0,0"/>
     <WrapPanel x:Name="SetShapeButtons" Visibility="{Binding IntentSettings.HasSelectedSet,Converter={StaticResource VisibleWhen}}" Margin="8,8,0,4">
      <TextBlock Text="このセットの形" VerticalAlignment="Center" Margin="0,0,8,0"/>

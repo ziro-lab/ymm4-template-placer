@@ -12,7 +12,7 @@ public sealed class GenericLayerTargetDraft : IntentEditable
     public Guid SetId { get; }
     internal LayerPolicy Saved { get; }
     public static IReadOnlyList<IntentOption<LayerSearchMode>> Behaviors { get; } =
-        [new(LayerSearchMode.SearchUp, "↑ 上"), new(LayerSearchMode.SearchDown, "↓ 下")];
+        [new(LayerSearchMode.SearchUp, "上"), new(LayerSearchMode.SearchDown, "下")];
     public string Target
     {
         get => target;

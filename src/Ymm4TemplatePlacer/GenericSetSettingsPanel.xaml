@@ -5,6 +5,8 @@
  <UserControl.Resources><BooleanToVisibilityConverter x:Key="VisibleWhen"/></UserControl.Resources>
  <StackPanel DataContext="{Binding IntentSettings.SelectedGenericSet}">
   <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+  <TextBlock Text="セット名" FontWeight="SemiBold" FontSize="13"/>
+  <TextBox x:Name="GenericSetNameBox" Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" Margin="0,3,0,8" Padding="5,3"/>
   <Border x:Name="GenericCommonPlacementCard" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" BorderThickness="1" Padding="8" Margin="0,4,0,8" CornerRadius="3"><StackPanel>
   <TextBlock Text="セット共通の配置" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,6"/>
   <TextBlock x:Name="GenericSentenceText" Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,4,0,6"/>
@@ -42,7 +44,5 @@
    <ComboBox x:Name="EntryShapePicker" ItemsSource="{Binding DataContext.IntentTileShapes,RelativeSource={RelativeSource AncestorType=local:GenericSetSettingsPanel}}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Shape,Mode=TwoWay}" Margin="0,3,0,6"/>
   </StackPanel>
   </Border>
-  <TextBlock Text="セット名" FontWeight="SemiBold" FontSize="13"/>
-  <TextBox x:Name="GenericSetNameBox" Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" Margin="0,3,0,8" Padding="5,3"/>
  </StackPanel>
 </UserControl>
