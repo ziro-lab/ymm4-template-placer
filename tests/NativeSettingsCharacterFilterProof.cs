@@ -1,4 +1,3 @@
-using System.IO;
 using System.Text.Json;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
@@ -10,7 +9,7 @@ internal static partial class NativeProof
 {
     private static async Task VerifySettingsCharacterFilter(Timeline timeline, UndoRedoManager undo)
     {
-        stage = "Settings character-aware Set visibility";
+        stage = "Settings explicit character Set filter";
         using var scope = new Round3Fixture(timeline, undo);
         var voiceKey = IntentSelectionContext.TypeKey(typeof(VoiceItem));
         var textKey = IntentSelectionContext.TypeKey(typeof(TextItem));
@@ -28,151 +27,100 @@ internal static partial class NativeProof
         var legacy = Set("Legacy", "Filter B") with { Target = new() { ItemTypeKeys = [voiceKey, textKey], CharacterName = "Filter B" } };
         var generic = new PaletteDefinition(Guid.NewGuid(), PaletteKind.Style, "Generic", null, []);
         var fixture = new PlacerSettings { ExpressionBootstrapComplete = true, IntentPaletteRevision = 1,
-            IntentPalettes = [other, common, pair, text, own, third, legacy], Palettes = [generic], ManualStylePaletteId = generic.Id };
+            IntentPalettes = [other, common, pair, text, own, third, legacy], Palettes = [generic], ManualStylePaletteId = generic.Id,
+            Presentation = new() { ShowOtherCharacterSets = true } };
         var sourceJson = JsonSerializer.Serialize(fixture);
-        var order = fixture.IntentPalettes.Select(x => x.Id).ToArray();
         IntentSettingsSession Session(params IItem[] selection) => new(fixture, new[] { typeof(VoiceItem), typeof(TextItem) }, selection);
         static Guid[] Visible(IntentSettingsSession session) => session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).ToArray();
         void VoiceParent(IntentSettingsSession session) => session.SelectedItemContext = session.ItemContexts.Single(x => x.Key == voiceKey);
-        var session = Session(a);
-        Assert(!session.ShowOtherCharacterSets && Visible(session).SequenceEqual(new[] { common.Id, own.Id }),
-            "SET_CHARACTER_FILTER old/default presentation uses OFF and retains strict current-selection count/character applicability");
-        VoiceParent(session);
-        Assert(session.HasSettingsReferenceCharacter && Visible(session).SequenceEqual(new[] { common.Id, pair.Id, own.Id }),
-            "SET_CHARACTER_FILTER definite live character shows its Sets plus unrestricted Sets in saved interleaved order, independent of placement count");
-        session.ShowOtherCharacterSets = true;
-        Assert(Visible(session).SequenceEqual(new[] { other.Id, common.Id, pair.Id, own.Id, third.Id }) &&
-            session.Palettes.Select(x => x.Id).SequenceEqual(order),
-            "SET_CHARACTER_FILTER ON reveals other characters only within the Item parent without sorting, rewriting order or revealing other Item types");
-        session.ShowOtherCharacterSets = false;
-        session.OpenPaletteForEditing(session.Palettes.Single(x => x.Id == other.Id));
-        Assert(session.SettingsReferenceCharacterLabel.Contains("Filter B", StringComparison.Ordinal) &&
-            Visible(session).SequenceEqual(new[] { other.Id, common.Id }),
-            "SET_CHARACTER_FILTER explicitly opened restricted Set takes reference precedence over selected-item character");
-        session.UpdateSelectionContext([a, b]);
-        session.SelectedPalette = session.Palettes.Single(x => x.Id == common.Id);
-        Assert(session.SettingsReferenceCharacterLabel.Contains("Filter B", StringComparison.Ordinal) &&
-            Visible(session).SequenceEqual(new[] { other.Id, common.Id }),
-            "SET_CHARACTER_FILTER dropdown switches and later mixed Timeline selection retain the editing-session reference");
-
-        var liveFallback = Session(a); liveFallback.UpdateSelectionContext([b]);
-        liveFallback.OpenPaletteForEditing(liveFallback.Palettes.Single(x => x.Id == common.Id));
-        Assert(liveFallback.SettingsReferenceCharacterLabel.Contains("Filter B", StringComparison.Ordinal) &&
-            Visible(liveFallback).SequenceEqual(new[] { other.Id, common.Id }),
-            "SET_CHARACTER_FILTER explicitly opened unrestricted Set captures the then-current definite live selection");
-        var mixedFallback = Session(a, b); mixedFallback.OpenPaletteForEditing(mixedFallback.Palettes.Single(x => x.Id == common.Id));
-        Assert(!mixedFallback.HasSettingsReferenceCharacter && Visible(mixedFallback).Length == 5,
-            "SET_CHARACTER_FILTER unrestricted Set opened from mixed characters keeps all same-type Sets");
-        var noCharacter = Session(new TextItem { Length = 10 }); VoiceParent(noCharacter);
-        var mixed = Session(a, b); VoiceParent(mixed);
-        var empty = Session(); VoiceParent(empty);
         var allVoice = new[] { other.Id, common.Id, pair.Id, own.Id, third.Id };
-        Assert(new[] { noCharacter, mixed, empty }.All(x => !x.HasSettingsReferenceCharacter && Visible(x).SequenceEqual(allVoice)),
-            "SET_CHARACTER_FILTER no-character, mixed-character and empty contexts invent no character restriction");
-        var sameName = Session(a, new VoiceItem(new Character { Name = "Filter A" }) { Length = 10 }); VoiceParent(sameName);
-        Assert(Visible(sameName).SequenceEqual(new[] { common.Id, pair.Id, own.Id }),
-            "SET_CHARACTER_FILTER distinct host Characters sharing one logical name remain a definite reference");
-        session.SelectedItemContext = session.ItemContexts.Single(x => x.IsMultiTypeCompatibility);
-        Assert(!session.HasSettingsReferenceCharacter && Visible(session).SequenceEqual(new[] { legacy.Id }),
-            "SET_CHARACTER_FILTER compatibility context is not narrowed by a captured character");
+
+        var session = Session(a);
+        Assert(!session.HasCharacterFilterOptions && session.CharacterFilterCharacter == null &&
+            Visible(session).SequenceEqual(new[] { common.Id, own.Id }),
+            "SET_CHARACTER_FILTER current-selection context keeps strict applicability and does not expose the manual character filter");
+
+        VoiceParent(session);
+        Assert(session.HasCharacterFilterOptions && session.CharacterFilterCharacter == null &&
+            session.CharacterFilterOptions.Select(x => x.Label).SequenceEqual(new[] { "すべて", "Filter B", "Filter A", "Filter C" }) &&
+            Visible(session).SequenceEqual(allVoice),
+            "SET_CHARACTER_FILTER manual Item parent derives unique character names from saved Set order and defaults to all Sets");
+
+        session.CharacterFilterCharacter = "Filter A";
+        Assert(Visible(session).SequenceEqual(new[] { pair.Id, own.Id }) && !Visible(session).Contains(common.Id) && !session.HasChanges,
+            "SET_CHARACTER_FILTER selecting a character shows only Sets that explicitly contain that character, excluding unrestricted Sets");
+        session.CharacterFilterCharacter = "Filter B";
+        Assert(Visible(session).SequenceEqual(new[] { other.Id }) && session.SelectedPalette?.Id == other.Id,
+            "SET_CHARACTER_FILTER switching the explicit character immediately moves selection into the filtered list");
+        session.CharacterFilterCharacter = null;
+        Assert(Visible(session).SequenceEqual(allVoice),
+            "SET_CHARACTER_FILTER all restores every same-Item Set without changing manual order");
+
+        session.CharacterFilterCharacter = "Filter A";
+        session.SelectedPalette = session.Palettes.Single(x => x.Id == own.Id);
+        var active = session.SelectedPalette!;
+        active.CharacterName = "Filter C";
+        Assert(Visible(session).Contains(active.Id) && session.CharacterFilterCharacter == "Filter A",
+            "SET_CHARACTER_FILTER an actively edited Set remains bound while its own character field changes");
+        session.CharacterFilterCharacter = "Filter B";
+        Assert(!Visible(session).Contains(active.Id) && session.SelectedPalette?.Id == other.Id,
+            "SET_CHARACTER_FILTER an explicit filter change clears the edit pin and is authoritative");
+
+        session.SelectedItemContext = session.ItemContexts.Single(x => x.Key == textKey);
+        Assert(session.CharacterFilterCharacter == null && !session.HasCharacterFilterOptions &&
+            Visible(session).SequenceEqual(new[] { text.Id }),
+            "SET_CHARACTER_FILTER changing Item parent resets the transient filter and hides it when that parent has no configured character");
         session.SelectedItemContext = session.ItemContexts.Single(x => x.IsGeneric);
-        Assert(!session.HasSettingsReferenceCharacter && Visible(session).Length == 0 && session.SelectedGenericSet?.Id == generic.Id,
-            "SET_CHARACTER_FILTER Generic retains its separate Set model and never applies this targeted character filter");
+        Assert(!session.HasCharacterFilterOptions && session.CharacterFilterCharacter == null &&
+            Visible(session).Length == 0 && session.SelectedGenericSet?.Id == generic.Id,
+            "SET_CHARACTER_FILTER Generic keeps its separate Set model and never exposes the character filter");
+        session.SelectedItemContext = session.ItemContexts.Single(x => x.IsMultiTypeCompatibility);
+        Assert(!session.HasCharacterFilterOptions && Visible(session).SequenceEqual(new[] { legacy.Id }),
+            "SET_CHARACTER_FILTER legacy multi-type compatibility keeps its own unfiltered semantics");
 
-        var editing = Session(a); editing.OpenPaletteForEditing(editing.Palettes.Single(x => x.Id == own.Id));
-        var active = editing.SelectedPalette!;
-        active.MinimumCount = "入力途中"; active.CharacterName = "Filter C";
-        active.CharacterRestricted = false; active.CharacterRestricted = true;
-        active.TypeChoices.Single(x => x.Key == voiceKey).Selected = false;
-        Assert(ReferenceEquals(editing.SelectedPalette, active) && Visible(editing).Contains(active.Id) &&
-            active.MinimumCount == "入力途中" && active.CharacterName == "Filter C" && !active.TypeChoices.Single(x => x.Key == voiceKey).Selected &&
-            editing.Palettes.Select(x => x.Id).SequenceEqual(order),
-            "SET_CHARACTER_FILTER editing conditions keep the active draft visible with invalid/incomplete input and preserve every underlying Set/order");
-        active.TypeChoices.Single(x => x.Key == voiceKey).Selected = true; active.MinimumCount = "1";
-        active.CharacterName = "Filter A";
-        editing.ShowOtherCharacterSets = true;
-        var otherDraft = editing.Palettes.Single(x => x.Id == other.Id); editing.SelectedPalette = otherDraft;
-        editing.ShowOtherCharacterSets = false;
-        Assert(!Visible(editing).Contains(other.Id) && !ReferenceEquals(editing.SelectedPalette, otherDraft) &&
-            editing.Palettes.Contains(otherDraft) && editing.SettingsReferenceCharacterLabel.Contains("Filter A", StringComparison.Ordinal),
-            "SET_CHARACTER_FILTER explicit OFF immediately hides an active other-character Set without deleting its draft; reference remains fixed");
+        var opened = Session();
+        opened.OpenPaletteForEditing(opened.Palettes.Single(x => x.Id == own.Id));
+        Assert(opened.SelectedItemContext?.Key == voiceKey && opened.CharacterFilterCharacter == null &&
+            opened.HasCharacterFilterOptions && opened.SelectedPalette?.Id == own.Id,
+            "SET_CHARACTER_FILTER opening a Set directly enters its Item parent with the explicit filter at all");
         Assert(JsonSerializer.Serialize(fixture) == sourceJson,
-            "SET_CHARACTER_FILTER all visibility and incomplete edits leave the original settings snapshot unchanged");
-
-        var directory = Path.Combine(output, "settings-character-filter"); Directory.CreateDirectory(directory);
-        var path = Path.Combine(directory, "settings.json"); if (File.Exists(path)) File.Delete(path);
-        var store = new PlacerSettingsStore(path); store.Load(); store.Save(fixture);
-        var transaction = new SettingsEditTransaction(store, fixture);
-        var savedDraft = Session(a); VoiceParent(savedDraft); savedDraft.ShowOtherCharacterSets = true;
-        var committed = transaction.Commit(fixture, savedDraft.Build()); savedDraft.AcceptCommitted(committed);
-        var loaded = new PlacerSettingsStore(path).Load();
-        var reloaded = new IntentSettingsSession(loaded, new[] { typeof(VoiceItem) }, [a]); VoiceParent(reloaded);
-        var presentation = new PalettePresentationDraft(loaded.Presentation); presentation.FixedColumns = "6";
-        Assert(loaded.Presentation.ShowOtherCharacterSets && reloaded.ShowOtherCharacterSets && !savedDraft.HasChanges &&
-            Visible(reloaded).SequenceEqual(allVoice) && presentation.Build().ShowOtherCharacterSets &&
-            PlacerSettingsStore.Copy(loaded).Presentation.ShowOtherCharacterSets && loaded.IntentPalettes.Select(x => x.Id).SequenceEqual(order),
-            "SET_CHARACTER_FILTER protected commit, JSON reload, presentation reconstruction and source copy retain visibility preference and manual order");
-        var stable = File.ReadAllBytes(path);
-        var invalidDraft = new IntentSettingsSession(committed, new[] { typeof(VoiceItem) }, [a]); VoiceParent(invalidDraft);
-        var invalidActive = invalidDraft.SelectedPalette!; invalidActive.MinimumCount = "入力途中"; invalidDraft.ShowOtherCharacterSets = false;
-        var invalidRejected = false;
-        try { transaction.Commit(committed, invalidDraft.Build()); } catch (InvalidOperationException) { invalidRejected = true; }
-        Assert(invalidRejected && invalidActive.MinimumCount == "入力途中" && !invalidDraft.ShowOtherCharacterSets &&
-            File.ReadAllBytes(path).SequenceEqual(stable),
-            "SET_CHARACTER_FILTER toggling with invalid input retains both pending values and cannot persist through a second route");
-        var rolledBack = transaction.Rollback(committed);
-        Assert(!rolledBack.Presentation.ShowOtherCharacterSets && !new PlacerSettingsStore(path).Load().Presentation.ShowOtherCharacterSets,
-            "SET_CHARACTER_FILTER the existing session rollback restores the opening UI preference");
-        var external = File.ReadAllBytes(path).Concat(new byte[] { 10 }).ToArray(); File.WriteAllBytes(path, external);
-        var rejected = false;
-        try { transaction.Commit(rolledBack, committed); } catch (InvalidOperationException) { rejected = true; }
-        Assert(rejected && File.ReadAllBytes(path).SequenceEqual(external),
-            "SET_CHARACTER_FILTER visibility preference saves obey the existing external-modification/digest guard");
-
-        foreach (var damaged in new[] { "{ broken json", "{\"Schema\":5}" })
-        {
-            var damagedPath = Path.Combine(directory, "damaged.json"); File.WriteAllText(damagedPath, damaged);
-            var damagedStore = new PlacerSettingsStore(damagedPath);
-            try { damagedStore.Load(); } catch (Exception ex) when (ex is InvalidDataException or JsonException) { }
-            var saveRejected = false;
-            try { damagedStore.Save(committed); } catch (InvalidOperationException) { saveRejected = true; }
-            Assert(saveRejected && File.ReadAllText(damagedPath) == damaged,
-                "SET_CHARACTER_FILTER visibility preference has no bypass for corrupt or future-version protected settings");
-        }
+            "SET_CHARACTER_FILTER navigation and filtering never mutate the source settings snapshot");
 
         scope.Apply(fixture, [a, b], [a]);
         var vm = ViewModel!; vm.BeginIntentSettings(); await Idle();
         Assert(vm.IntentSettings!.SelectedItemContext?.IsCurrentSelection == true &&
             View!.RelativeSettingsSurface.SettingsCharacterFilterRow.Visibility == System.Windows.Visibility.Collapsed,
-            "SET_CHARACTER_FILTER actual UI does not add inactive visibility controls to strict current-selection mode");
+            "SET_CHARACTER_FILTER actual UI hides the filter in strict current-selection mode");
+
         vm.IntentSettings.OpenPaletteForEditing(vm.IntentSettings.Palettes.Single(x => x.Id == own.Id)); await Idle();
-        Assert(View!.RelativeSettingsSurface.SettingsCharacterFilterRow.Visibility == System.Windows.Visibility.Visible &&
-            View.RelativeSettingsSurface.ShowOtherCharacterSetsCheck.IsEnabled,
-            "SET_CHARACTER_FILTER actual UI exposes the preference in a definite-character editing parent");
-        vm.IntentSettings.ShowOtherCharacterSets = true; await Idle();
-        var uiOther = vm.IntentSettings.Palettes.Single(x => x.Id == other.Id);
-        vm.IntentSettings.SelectedPalette = uiOther; await Idle();
-        View.RelativeSettingsSurface.ShowOtherCharacterSetsCheck.IsChecked = false; await Idle();
-        Assert(!vm.IntentSettings.VisiblePalettes.Cast<IntentPaletteDraft>().Any(x => x.Id == other.Id) &&
-            vm.IntentSettings.SelectedPalette?.Id != other.Id,
-            "SET_CHARACTER_FILTER actual checkbox OFF immediately removes the active other-character Set from the picker");
+        var panel = View!.RelativeSettingsSurface;
+        Assert(panel.SettingsCharacterFilterRow.Visibility == System.Windows.Visibility.Visible &&
+            panel.CharacterFilterPicker.Items.Count == 4 &&
+            panel.CharacterFilterPicker.Text == "すべて",
+            "SET_CHARACTER_FILTER actual UI shows キャラで絞り込み with all plus the configured character names");
+
+        panel.CharacterFilterPicker.SelectedValue = "Filter A"; await Idle();
+        Assert(vm.IntentSettings.CharacterFilterCharacter == "Filter A" &&
+            vm.IntentSettings.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(new[] { pair.Id, own.Id }) &&
+            !vm.IntentSettings.HasChanges,
+            "SET_CHARACTER_FILTER actual ComboBox filters the Set picker to the selected character without creating a settings edit");
+
+        panel.CharacterFilterPicker.SelectedValue = "Filter B"; await Idle();
+        Assert(vm.IntentSettings.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(new[] { other.Id }) &&
+            vm.IntentSettings.SelectedPalette?.Id == other.Id,
+            "SET_CHARACTER_FILTER actual ComboBox switches to another character and reselects a visible Set");
+
+        panel.CharacterFilterPicker.SelectedIndex = 0; await Idle();
+        Assert(vm.IntentSettings.CharacterFilterCharacter == null &&
+            vm.IntentSettings.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(allVoice),
+            "SET_CHARACTER_FILTER actual すべて entry restores all same-Item Sets");
+
         var timelineBefore = Signature(timeline);
         var runtimeContext = IntentSelectionContext.Capture(timeline);
-        vm.IntentSettings.ShowOtherCharacterSets = true; vm.SaveIntentSettings();
-        Assert(!other.Target.Matches(runtimeContext) && own.Target.Matches(runtimeContext) && scope.Current.Presentation.ShowOtherCharacterSets,
-            "SET_CHARACTER_FILTER exposing other-character Sets never weakens runtime Target.Matches applicability");
-        vm.BeginPanelQuickSettings(); vm.PanelQuickPresentation!.FixedColumns = "7"; await Idle();
-        Assert(scope.Current.Presentation.ShowOtherCharacterSets && scope.Current.Presentation.FixedColumns == 7 &&
-            new PlacerSettingsStore(PlacerSettingsStore.DefaultPath).Load().Presentation.ShowOtherCharacterSets,
-            "SET_CHARACTER_FILTER real panel quick-settings protected save preserves the full Settings visibility preference");
-        vm.EndPanelQuickSettings();
-        vm.BeginIntentSettings(); vm.IntentSettings!.OpenPaletteForEditing(vm.IntentSettings.Palettes.Single(x => x.Id == own.Id));
-        vm.IntentSettings.ShowOtherCharacterSets = false; vm.SaveIntentSettings();
-        vm.IntentSettings.UpdateSelectionContext([b]); vm.RollbackSessionSettings();
-        Assert(scope.Current.Presentation.ShowOtherCharacterSets && vm.IntentSettings!.ShowOtherCharacterSets &&
-            vm.IntentSettings.SettingsReferenceCharacterLabel.Contains("Filter A", StringComparison.Ordinal) &&
-            vm.IntentSettings.SelectedPalette?.Id == own.Id && Signature(timeline) == timelineBefore,
-            "SET_CHARACTER_FILTER root rollback restores the opening preference, editing character and active Set while Timeline stays zero-write");
+        panel.CharacterFilterPicker.SelectedValue = "Filter B"; await Idle();
+        Assert(!other.Target.Matches(runtimeContext) && own.Target.Matches(runtimeContext) &&
+            Signature(timeline) == timelineBefore && JsonSerializer.Serialize(fixture) == sourceJson,
+            "SET_CHARACTER_FILTER Settings-only filtering never weakens runtime Target.Matches or writes Timeline/settings");
         Log("SETTINGS_CHARACTER_FILTER=PASS");
     }
 }

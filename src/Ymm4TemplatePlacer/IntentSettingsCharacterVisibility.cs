@@ -1,87 +1,130 @@
-using YukkuriMovieMaker.Project.Items;
-
 namespace Ymm4TemplatePlacer;
+
+public sealed record IntentCharacterFilterOption(string? CharacterName, string Label);
 
 public sealed partial class IntentSettingsSession
 {
-    private string? settingsReferenceCharacter;
+    private string? characterFilterCharacter;
     private Guid? activeEditingPaletteId;
     private string? activeEditingContextKey;
 
-    public bool ShowOtherCharacterSets
+    public string? CharacterFilterCharacter
     {
-        get => Presentation.ShowOtherCharacterSets;
-        set => Presentation.ShowOtherCharacterSets = value;
-    }
-    public bool HasSettingsReferenceCharacter => SelectedItemContext?.IsRealItemType == true && settingsReferenceCharacter != null;
-    public string SettingsReferenceCharacterLabel => SelectedItemContext switch
-    {
-        { IsCurrentSelection: true } => "現在の選択条件で表示",
-        { IsMultiTypeCompatibility: true } => "複数種類セットを表示",
-        { IsRealItemType: true } when settingsReferenceCharacter != null => $"基準キャラ: {settingsReferenceCharacter}",
-        { IsRealItemType: true } => "基準キャラ: 特定なし（全セットを表示）",
-        _ => ""
-    };
-
-    private void InitializeCharacterVisibility(IReadOnlyList<IItem> selection)
-    {
-        // Capture logical names now, not host objects whose Character may later change.
-        settingsReferenceCharacter = DefiniteCharacter(selection);
-        Presentation.PropertyChanged += (_, e) =>
+        get => characterFilterCharacter;
+        set
         {
-            if (e.PropertyName != nameof(PalettePresentationDraft.ShowOtherCharacterSets)) return;
-            // An explicit visibility toggle must immediately reflect in the list.
-            // Editing-field changes still keep their active draft pinned via MatchesSettingsVisibility.
+            var normalized = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            if (normalized != null && !CharacterFilterNames().Contains(normalized, StringComparer.Ordinal)) normalized = null;
+            if (characterFilterCharacter == normalized) return;
+            characterFilterCharacter = normalized;
+            // An explicit filter change is authoritative. Do not keep a currently
+            // edited Set visible when the user deliberately chooses another character.
             ClearActiveEditingPalette();
-            RefreshNavigation(); Raise(nameof(ShowOtherCharacterSets));
-        };
+            RefreshPaletteFilter();
+            Raise(nameof(CharacterFilterCharacter));
+            Raise(nameof(CharacterFilterOptions));
+            Raise(nameof(HasCharacterFilterOptions));
+        }
     }
 
-    private static string? DefiniteCharacter(IReadOnlyList<IItem> selection)
+    public IReadOnlyList<IntentCharacterFilterOption> CharacterFilterOptions
     {
-        var names = selection.Select(x => ItemCharacters.Get(x)?.Name).Distinct(StringComparer.Ordinal).ToArray();
-        return names.Length == 1 && !string.IsNullOrWhiteSpace(names[0]) ? names[0] : null;
+        get
+        {
+            var result = new List<IntentCharacterFilterOption> { new(null, "すべて") };
+            result.AddRange(CharacterFilterNames().Select(x => new IntentCharacterFilterOption(x, x)));
+            return result;
+        }
     }
-    private void RaiseCharacterVisibility()
+
+    public bool HasCharacterFilterOptions => SelectedItemContext?.IsRealItemType == true && CharacterFilterNames().Count != 0;
+
+    private IReadOnlyList<string> CharacterFilterNames()
     {
-        Raise(nameof(HasSettingsReferenceCharacter)); Raise(nameof(SettingsReferenceCharacterLabel));
+        if (selectedItemContext?.IsRealItemType != true) return [];
+        return Palettes
+            .Where(x => x.IsSingleOwner && x.OwnerTypeKey == selectedItemContext.Key &&
+                x.CharacterRestricted && !string.IsNullOrWhiteSpace(x.CharacterName))
+            .Select(x => x.CharacterName.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
     }
+
+    private void InitializeCharacterFilter() => characterFilterCharacter = null;
+
+    private void ResetCharacterFilterForContext()
+    {
+        characterFilterCharacter = null;
+        Raise(nameof(CharacterFilterCharacter));
+        Raise(nameof(CharacterFilterOptions));
+        Raise(nameof(HasCharacterFilterOptions));
+    }
+
+    private void RefreshCharacterFilterState()
+    {
+        var names = CharacterFilterNames();
+        if (characterFilterCharacter != null && !names.Contains(characterFilterCharacter, StringComparer.Ordinal))
+            characterFilterCharacter = null;
+        Raise(nameof(CharacterFilterCharacter));
+        Raise(nameof(CharacterFilterOptions));
+        Raise(nameof(HasCharacterFilterOptions));
+    }
+
     private void ClearActiveEditingPalette()
     {
-        activeEditingPaletteId = null; activeEditingContextKey = null;
+        activeEditingPaletteId = null;
+        activeEditingContextKey = null;
     }
+
     private void PinActiveEditingPalette(IntentPaletteDraft? palette)
     {
         activeEditingPaletteId = palette?.Id;
         activeEditingContextKey = selectedItemContext?.IsRealItemType == true ? selectedItemContext.Key : null;
     }
+
     private bool MatchesSettingsVisibility(IntentPaletteDraft draft)
     {
-        // Current-selection applicability and legacy compatibility keep their exact old semantics.
+        // Current-selection applicability and legacy compatibility keep their exact
+        // runtime-like Settings semantics. The explicit character filter belongs only
+        // to the manually chosen single Item-type parent.
         if (selectedItemContext?.IsRealItemType != true) return MatchesContext(draft);
-        // A draft may be temporarily incomplete, or the user may turn OFF while editing
-        // another character's Set. Never evict that bound editor from its opening parent.
+
+        // Keep a bound draft alive while its own target fields are being edited.
+        // Selecting a different character filter clears this pin first.
         if (draft.Id == activeEditingPaletteId && selectedItemContext.Key == activeEditingContextKey) return true;
         if (!MatchesContext(draft)) return false;
-        return ShowOtherCharacterSets || settingsReferenceCharacter == null || !draft.CharacterRestricted ||
-            string.IsNullOrWhiteSpace(draft.CharacterName) || draft.CharacterName.Trim() == settingsReferenceCharacter;
+        if (characterFilterCharacter == null) return true;
+
+        return draft.CharacterRestricted &&
+            !string.IsNullOrWhiteSpace(draft.CharacterName) &&
+            draft.CharacterName.Trim() == characterFilterCharacter;
     }
+
     internal void OpenPaletteForEditing(IntentPaletteDraft palette)
     {
         if (!Palettes.Contains(palette)) throw new InvalidOperationException("編集するSetが下書きにありません。");
         var context = ContextForPalette(palette);
-        settingsReferenceCharacter = palette.CharacterRestricted && !string.IsNullOrWhiteSpace(palette.CharacterName)
-            ? palette.CharacterName.Trim() : DefiniteCharacter(ItemContexts.FirstOrDefault(x => x.IsCurrentSelection)?.Selection ?? []);
         selectedItemContext = context;
+        ResetCharacterFilterForContext();
         selectedPalette = palette;
         PinActiveEditingPalette(palette);
-        RefreshNavigation(); NavigationChanged(nameof(SelectedItemContext));
-        Raise(nameof(IsGenericContext)); Raise(nameof(IsTargetedContext)); Raise(nameof(CanCreateForContext)); Raise(nameof(ContextNotice));
-        RaiseCharacterVisibility();
+        RefreshNavigation();
+        NavigationChanged(nameof(SelectedItemContext));
+        Raise(nameof(IsGenericContext));
+        Raise(nameof(IsTargetedContext));
+        Raise(nameof(CanCreateForContext));
+        Raise(nameof(ContextNotice));
     }
-    internal void RestoreCharacterVisibility(IntentSettingsSession previous)
+
+    internal void RestoreCharacterFilter(IntentSettingsSession previous)
     {
-        settingsReferenceCharacter = previous.settingsReferenceCharacter;
-        RaiseCharacterVisibility();
+        var previousCharacter = previous.characterFilterCharacter;
+        characterFilterCharacter = previousCharacter != null &&
+            CharacterFilterNames().Contains(previousCharacter, StringComparer.Ordinal)
+                ? previousCharacter
+                : null;
+        ClearActiveEditingPalette();
+        RefreshPaletteFilter();
+        RefreshCharacterFilterState();
     }
 }

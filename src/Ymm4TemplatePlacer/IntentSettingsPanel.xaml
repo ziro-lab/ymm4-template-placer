@@ -88,10 +88,16 @@
      </Style></ComboBox.ItemContainerStyle>
     </ComboBox>
    </Grid>
-   <DockPanel x:Name="SettingsCharacterFilterRow" Margin="0,3,6,4" Visibility="{Binding IntentSettings.SelectedItemContext.IsRealItemType,Converter={StaticResource VisibleWhen}}">
-    <CheckBox x:Name="ShowOtherCharacterSetsCheck" DockPanel.Dock="Right" Content="他のキャラ専用セットを表示" IsChecked="{Binding IntentSettings.ShowOtherCharacterSets,Mode=TwoWay}" IsEnabled="{Binding IntentSettings.HasSettingsReferenceCharacter}" VerticalAlignment="Center" Margin="8,0,0,0"/>
-    <TextBlock x:Name="SettingsReferenceCharacterText" Text="{Binding IntentSettings.SettingsReferenceCharacterLabel}" ToolTip="{Binding IntentSettings.SettingsReferenceCharacterLabel}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Opacity="0.72"/>
-   </DockPanel>
+   <Grid x:Name="SettingsCharacterFilterRow" Margin="0,3,6,4" Visibility="{Binding IntentSettings.HasCharacterFilterOptions,Converter={StaticResource VisibleWhen}}">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="104"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <TextBlock Text="キャラで絞り込み" VerticalAlignment="Center" Margin="0,0,8,0"/>
+    <ComboBox x:Name="CharacterFilterPicker" Grid.Column="1"
+     ItemsSource="{Binding IntentSettings.CharacterFilterOptions}" DisplayMemberPath="Label"
+     SelectedValuePath="CharacterName" SelectedValue="{Binding IntentSettings.CharacterFilterCharacter,Mode=TwoWay}"
+     MinWidth="110" MaxDropDownHeight="260" Padding="5,3"
+     ToolTip="このアイテム種類のSetに設定されているキャラ名で、設定画面のSet一覧だけを絞り込みます。配置条件は変更しません。"
+     AutomationProperties.Name="キャラで絞り込み"/>
+   </Grid>
    <TextBlock x:Name="ContextNoticeText" Text="{Binding IntentSettings.ContextNotice}" TextWrapping="Wrap" Opacity="0.72"/>
 
   </StackPanel>

@@ -155,20 +155,28 @@ internal static partial class NativeProof
                         var panel = capture.RelativeSettingsSurface;
                         panel.PalettePicker.IsDropDownOpen = true; await Idle();
                         var popup = (Popup)panel.PalettePicker.Template.FindName("PART_Popup", panel.PalettePicker);
+                        Assert(panel.SettingsCharacterFilterRow.IsVisible &&
+                            session.CharacterFilterOptions.Select(x => x.Label).SequenceEqual(new[] { "すべて", "霊夢", "魔理沙" }),
+                            "CROWDED_SETS explicit character filter derives only configured character names plus all");
+                        panel.PalettePicker.IsDropDownOpen = false; await Idle();
+                        panel.CharacterFilterPicker.SelectedValue = "霊夢"; await Idle();
+                        Assert(session.CharacterFilterCharacter == "霊夢" &&
+                            session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(all.Where(x => x.Target.CharacterName == "霊夢").Select(x => x.Id)),
+                            "CROWDED_SETS selecting 霊夢 shows only Sets explicitly configured for 霊夢 and excludes common/other-character Sets");
+                        panel.PalettePicker.IsDropDownOpen = true; await Idle();
+                        popup = (Popup)panel.PalettePicker.Template.FindName("PART_Popup", panel.PalettePicker);
                         var filename = $"crowded-settings-{width}-character-dropdown.png";
                         images.Add(new { File = filename, Sha256 = SaveFullSettingsBitmap(capture, filename, (FrameworkElement)popup.Child),
                             Width = width, Height = 640, Case = "settings-character-dropdown",
                             SelectedSet = session.SelectedPalette!.Name,
                             SetNames = session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Name).ToArray(),
-                            CharacterContext = (panel.FindName("SettingsReferenceCharacterText") as TextBlock)?.Text });
+                            CharacterFilter = panel.CharacterFilterPicker.SelectedValue?.ToString() });
                         VerifyCrowdedPopupBounds((FrameworkElement)popup.Child, window, width);
-                        Assert(session.HasSettingsReferenceCharacter && !session.ShowOtherCharacterSets &&
-                            session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(all.Where(x => x.Target.CharacterName != "魔理沙").Select(x => x.Id)),
-                            "CROWDED_SETS real Set-opening coordinator shows reference-character plus common Sets in saved order");
                         panel.PalettePicker.IsDropDownOpen = false; await Idle();
-                        panel.ShowOtherCharacterSetsCheck.IsChecked = true; await Idle();
-                        Assert(session.ShowOtherCharacterSets && session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(all.Select(x => x.Id)),
-                            "CROWDED_SETS actual checkbox reveals all same-type Sets without changing order");
+                        panel.CharacterFilterPicker.SelectedIndex = 0; await Idle();
+                        Assert(session.CharacterFilterCharacter == null &&
+                            session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(all.Select(x => x.Id)),
+                            "CROWDED_SETS すべて restores every same-type Set without changing order");
                         panel.PalettePicker.IsDropDownOpen = true; await Idle();
                         popup = (Popup)panel.PalettePicker.Template.FindName("PART_Popup", panel.PalettePicker);
                         filename = $"crowded-settings-{width}-all-characters-dropdown.png";
@@ -176,8 +184,8 @@ internal static partial class NativeProof
                         images.Add(new { File = filename, Sha256 = SaveFullSettingsBitmap(capture, filename, (FrameworkElement)popup.Child),
                             Width = width, Height = 640, Case = "settings-all-characters-dropdown", SelectedSet = session.SelectedPalette!.Name,
                             SetNames = session.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Name).ToArray(),
-                            CharacterContext = panel.SettingsReferenceCharacterText.Text });
-                        panel.PalettePicker.IsDropDownOpen = false; panel.ShowOtherCharacterSetsCheck.IsChecked = false; await Idle();
+                            CharacterFilter = "すべて" });
+                        panel.PalettePicker.IsDropDownOpen = false; await Idle();
                     }
                     if (session.HasChanges) vm.SaveIntentSettings();
                     Assert(JsonSerializer.Serialize(session.Build()) == draftBefore,

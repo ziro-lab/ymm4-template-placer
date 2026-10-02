@@ -66,9 +66,9 @@ public sealed partial class IntentSettingsSession
         set
         {
             if (refreshingNavigation || value == selectedItemContext || (value != null && !ItemContexts.Contains(value))) return;
-            selectedItemContext = value; ClearActiveEditingPalette(); RefreshNavigation(); NavigationChanged();
+            selectedItemContext = value; ClearActiveEditingPalette(); ResetCharacterFilterForContext(); RefreshNavigation(); NavigationChanged();
             Raise(nameof(IsGenericContext)); Raise(nameof(IsTargetedContext)); Raise(nameof(HasSelectedSet)); Raise(nameof(HasSelectedSetEntry));
-            Raise(nameof(CanCreateForContext)); Raise(nameof(ContextNotice)); RaiseCharacterVisibility(); RefreshCopyDestination();
+            Raise(nameof(CanCreateForContext)); Raise(nameof(ContextNotice)); RefreshCopyDestination();
         }
     }
     public string? SelectedIntent
@@ -94,7 +94,7 @@ public sealed partial class IntentSettingsSession
             ItemContexts.Add(new(pair.Key, label, [pair.Key]));
         }
         EnsureCompatibilityContext();
-        InitializeCharacterVisibility(selection);
+        InitializeCharacterFilter();
         UpdateSelectionContext(selection);
         RefreshNavigation();
     }
@@ -131,11 +131,14 @@ public sealed partial class IntentSettingsSession
             var label = "現在: " + character + string.Join("・", typeNames) + (selection.Count > 1 ? $" ({selection.Count}件)" : "");
             current = new("current-selection", label, types, selection.ToArray()); ItemContexts.Insert(0, current);
         }
-        if (followSelection) selectedItemContext = current;
+        if (followSelection)
+        {
+            selectedItemContext = current;
+            ResetCharacterFilterForContext();
+        }
         refreshingNavigation = false;
         RefreshNavigation(); NavigationChanged(nameof(SelectedItemContext));
         Raise(nameof(CanCreateForContext)); Raise(nameof(ContextNotice));
-        RaiseCharacterVisibility();
         Raise(nameof(DirectItemContexts)); Raise(nameof(CommonItemContexts)); Raise(nameof(OtherItemContexts));
         Raise(nameof(IsGenericContext)); Raise(nameof(IsTargetedContext));
     }
@@ -157,6 +160,7 @@ public sealed partial class IntentSettingsSession
     {
         if (VisiblePalettes == null || refreshingNavigation) return;
         EnsureCompatibilityContext();
+        RefreshCharacterFilterState();
         refreshingNavigation = true;
         try
         {
