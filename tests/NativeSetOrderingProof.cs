@@ -43,8 +43,10 @@ internal static partial class NativeProof
         Assert(File.ReadAllBytes(PlacerSettingsStore.DefaultPath).SequenceEqual(noOp), "SET_ORDER self drop is no-op without a redundant save");
         var openingOrder = saved.IntentPalettes.Select(x => x.Id).ToArray();
         vm.IntentSettings!.OpenPaletteForEditing(vm.IntentSettings.Palettes.Single(x => x.Id == c.Id));
-        Assert(vm.IntentSettings.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id).SequenceEqual(new[] { b.Id, c.Id, d.Id, a.Id }),
-            "SET_ORDER Settings shows the same persisted relative order as placement tabs");
+        Assert(vm.IntentSettings.CharacterFilterCharacter == null &&
+            vm.IntentSettings.VisiblePalettes.Cast<IntentPaletteDraft>().Select(x => x.Id)
+                .SequenceEqual(new[] { b.Id, hidden1.Id, c.Id, d.Id, hidden2.Id, a.Id }),
+            "SET_ORDER Settings default character filter is すべて and preserves the complete persisted Set order");
         vm.IntentSettings.MoveOwned(1); vm.SaveIntentSettings();
         Assert(!vm.ReorderIntentSetCommand.CanExecute(new IntentSetReorderRequest(vm.IntentSets[0], vm.IntentSets[3], true)),
             "SET_ORDER direct reorder cannot reset an active committed Settings rollback snapshot");
