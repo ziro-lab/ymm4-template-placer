@@ -64,8 +64,16 @@ internal static partial class NativeProof
             window.Show(); await Idle();
             Assert(ReferenceEquals(session, vm.IntentSettings), "SETTINGS_CAPTURE uses the configured live Settings session");
             var panel = capture.RelativeSettingsSurface;
-            var entryDetails = RelativeVisuals(panel.EntryEditor).OfType<Expander>()
-                .Single(x => x.Header?.ToString() == "選択した演出だけの微調整");
+            var entryDetails = panel.EntryPlacementAdvanced;
+            var selectedPalette = session.SelectedPalette!;
+            var selectedTile = selectedPalette.Entries[1];
+            selectedPalette.SelectedEntry = selectedTile;
+            await Idle();
+            Assert(panel.SelectedTileAppearanceName.Text == selectedTile.Name &&
+                panel.SelectedTilePlacementName.Text == selectedTile.Name,
+                "SETTINGS_HIERARCHY both tile scopes follow the live selected tile identity");
+            selectedPalette.SelectedEntry = selectedPalette.Entries[0];
+            await Idle();
             foreach (var width in new[] { 360, 640 })
             {
                 capture.Width = width;
@@ -86,6 +94,23 @@ internal static partial class NativeProof
                     Assert(scroll.ViewportHeight > 200 && scroll.ScrollableHeight > 0 &&
                         scroll.ExtentWidth <= scroll.ViewportWidth + 1,
                         $"SETTINGS_CAPTURE usable vertical-only viewport at {width}px");
+                    double Left(FrameworkElement element) => element.TranslatePoint(new Point(), panel).X;
+                    double Right(FrameworkElement element) => element.TranslatePoint(new Point(element.ActualWidth, 0), panel).X;
+                    Assert(panel.SetCommonPlacementHeading.Text == "セット共通の配置" &&
+                        entryDetails.Header?.ToString() == "選択タイルだけの配置" &&
+                        Math.Abs(Left(panel.AnchorBox) - Left(panel.AlignmentBox)) <= 1 &&
+                        Math.Abs(Left(panel.AnchorBox) - Left(panel.DurationBox)) <= 1 &&
+                        Math.Abs(Left(panel.AnchorBox) - Left(panel.LayerModeBox)) <= 1 &&
+                        Right(panel.AnchorBox) <= scroll.ActualWidth + 1 &&
+                        Right(panel.DurationBox) <= scroll.ActualWidth + 1,
+                        $"SETTINGS_HIERARCHY labeled common fields align and fit {width}px");
+                    if (expanded)
+                        Assert(Math.Abs(Left(panel.SetStartOffsetBox) - Left(panel.SetEndOffsetBox)) <= 1 &&
+                            panel.SetEndOffsetBox.TranslatePoint(new Point(), panel).Y >
+                                panel.SetStartOffsetBox.TranslatePoint(new Point(), panel).Y &&
+                            Right(panel.SetStartOffsetBox) <= scroll.ActualWidth + 1 &&
+                            Right(panel.SetEndOffsetBox) <= scroll.ActualWidth + 1,
+                            $"SETTINGS_HIERARCHY advanced offsets keep complete aligned label/input rows at {width}px");
                     var mode = expanded ? "expanded" : "default";
                     var sectionPositions = new FrameworkElement[] { panel.SetManagement, panel.TargetEditor, panel.RelationEditor,
                         panel.EntryEditor, panel.EntryAppearanceEditor, panel.SourceEditor, panel.PresentationSettingsSurface, panel.SetShapeButtons }
@@ -147,7 +172,7 @@ internal static partial class NativeProof
         }
     }
 
-    private static string SaveFullSettingsBitmap(PlacerView view, string filename)
+    private static string SaveFullSettingsBitmap(PlacerView view, string filename, FrameworkElement? popup = null)
     {
         var bitmap = new RenderTargetBitmap((int)Math.Round(view.ActualWidth), (int)Math.Round(view.ActualHeight),
             96, 96, PixelFormats.Pbgra32);
@@ -161,11 +186,24 @@ internal static partial class NativeProof
         var bounds = new Rect(0, 0, host.ActualWidth, host.ActualHeight);
         var visual = new DrawingVisual();
         using (var drawing = visual.RenderOpen())
+        {
             drawing.DrawRectangle(new VisualBrush(host)
             {
                 ViewboxUnits = BrushMappingMode.Absolute, Viewbox = bounds,
                 Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top
             }, null, bounds);
+            if (popup != null)
+            {
+                // WPF Popup is a separate native presentation source. Preserve
+                // its real layout; draw it at its actual window-relative point.
+                var screen = popup.PointToScreen(new Point());
+                var origin = host.PointToScreen(new Point());
+                var popupBounds = new Rect(screen.X - origin.X, screen.Y - origin.Y, popup.ActualWidth, popup.ActualHeight);
+                Log($"CROWDED_SETS native popup bounds: {popupBounds}");
+                drawing.DrawRectangle(new VisualBrush(popup) { Stretch = Stretch.None,
+                    AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top }, null, popupBounds);
+            }
+        }
         bitmap.Render(visual);
         var pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
         bitmap.CopyPixels(pixels, bitmap.PixelWidth * 4, 0);

@@ -37,7 +37,7 @@ public sealed partial class PlacerViewModel
     {
         RenameIntentTileCommand?.RaiseCanExecuteChanged(); ColorIntentTileCommand?.RaiseCanExecuteChanged();
         ShapeIntentTileCommand?.RaiseCanExecuteChanged(); OpenTileSettingsCommand?.RaiseCanExecuteChanged();
-        ReorderIntentTileCommand?.RaiseCanExecuteChanged(); ExecuteIntentTileCommand?.RaiseCanExecuteChanged();
+        ReorderIntentTileCommand?.RaiseCanExecuteChanged(); ReorderIntentSetCommand?.RaiseCanExecuteChanged(); ExecuteIntentTileCommand?.RaiseCanExecuteChanged();
         ShapeIntentSetCommand?.RaiseCanExecuteChanged(); OpenIntentSetSettingsCommand?.RaiseCanExecuteChanged();
         ShapeCurrentIntentSetCommand?.RaiseCanExecuteChanged(); RefreshPanelQuickSettingsAdmission();
         UpdateGenericLayerCommands();
@@ -104,8 +104,7 @@ public sealed partial class PlacerViewModel
         else
         {
             var set = session.Palettes.SingleOrDefault(x => x.Id == selected.Id) ?? throw new InvalidOperationException("下書きではこのSetを削除済みです。");
-            session.SelectedItemContext = session.ContextForPalette(set);
-            session.SelectedPalette = set;
+            session.OpenPaletteForEditing(set);
             set.SelectedEntry = set.Entries.SingleOrDefault(x => x.LibraryEntryId == entryId);
         }
     }

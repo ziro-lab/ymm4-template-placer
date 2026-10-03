@@ -59,8 +59,8 @@ internal static partial class NativeProof
                 "UIUX selection itself exposes the editing context before any feature choice");
             Assert(vm.IntentSets.Select(x => x.Id).SequenceEqual(new[] { first.Id, second.Id, reaction.Id }) && surface.FindName("IntentTabStrip") == null,
                 "UIUX/R2-B selected Voice shows applicable Sets directly and has no separate Intent control");
-            Assert(vm.IntentSets.Count == 3 && vm.UseSegmentedIntentSets && !vm.UseIntentSetPicker && surface.IntentSetSegments.IsVisible && !surface.IntentSetPicker.IsVisible,
-                "UIUX a small high-frequency set choice is always-visible segments instead of a ComboBox");
+            Assert(vm.IntentSets.Count == 3 && vm.UseSegmentedIntentSets && !vm.UseIntentSetPicker && surface.IntentSetSegments.IsVisible && surface.FindName("IntentSetPicker") == null,
+                "UIUX a small high-frequency set choice uses native tabs");
             var beforeSwitch = Signature(timeline); surface.IntentSetSegments.SelectedIndex = 1; await Idle();
             Assert(vm.SelectedIntentSet?.Targeted?.Id == second.Id && Signature(timeline) == beforeSwitch,
                 "UIUX switching a set is one visible operation and is zero-write");
@@ -80,14 +80,14 @@ internal static partial class NativeProof
                 narrowButtons.All(x => x.ActualWidth > 0 && x.TranslatePoint(new Point(x.ActualWidth, 0), surface).X <= surface.ActualWidth + 1) &&
                 surface.PanelQuickSettingsButton.IsVisible && surface.PanelQuickSettingsButton.ActualHeight > 0 &&
                 surface.PanelQuickSettingsButton.TranslatePoint(new Point(surface.PanelQuickSettingsButton.ActualWidth, surface.PanelQuickSettingsButton.ActualHeight), surface).Y <= surface.ActualHeight + 1,
-                "UIUX 360px keeps context, directly segmented Sets, action tiles and quick-settings discovery understandable");
+                "UIUX 360px keeps context, native Set tabs, action tiles and quick-settings discovery understandable");
             SaveNamedView(view, "v042-uiux-edit-360.png");
 
             var many = PlacerSettingsStore.Copy(fixture);
             many.IntentPalettes = Enumerable.Range(1, 5).Select(i => first with { Id = Guid.NewGuid(), Name = $"セット{i}" }).Append(reaction).ToList();
             field.SetValue(vm, many); vm.Refresh(); view.PaletteTab.IsSelected = true; await Idle();
-            Assert(vm.IntentSets.Count == 6 && !vm.UseSegmentedIntentSets && vm.UseIntentSetPicker && !surface.IntentSetSegments.IsVisible && surface.IntentSetPicker.IsVisible,
-                "UIUX many sets deliberately collapse to a ComboBox instead of overflowing the high-frequency surface");
+            Assert(vm.IntentSets.Count == 6 && vm.UseSegmentedIntentSets && !vm.UseIntentSetPicker && surface.IntentSetSegments.IsVisible && surface.IntentSetHeaderScroll!.ScrollableWidth > 0 && view.PaletteTab.IsSelected,
+                "UIUX many sets retain a bounded native tab strip without changing the main task");
 
             field.SetValue(vm, fixture); timeline.SelectedItems = [text]; vm.Refresh(); view.PaletteTab.IsSelected = true; await Idle();
             Assert(vm.IntentSets.Count == 0 && vm.IntentTiles.Count == 0 && vm.ShowIntentEmptyAction && surface.IntentEmptyActionButton.IsVisible &&

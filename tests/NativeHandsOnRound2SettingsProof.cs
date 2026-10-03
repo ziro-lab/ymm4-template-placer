@@ -120,10 +120,15 @@ internal static partial class NativeProof
                 Signature(timeline) == signature,
                 "BEHAVIOR_PREVIEW v2 compact Settings updates diagram from the live Draft without Timeline writes");
             double Top(FrameworkElement element) => element.TranslatePoint(new Point(0, 0), panel).Y;
-            Assert(Top(panel.SetNameBox) < Top(panel.TargetEditor) &&
-                Top(panel.TargetEditor) < Top(panel.BehaviorPreviewCard) &&
-                Top(panel.BehaviorPreviewCard) < Top(panel.RelationEditor),
-                "BEHAVIOR_PREVIEW UX targeted Settings reads Set name -> target -> Preview -> placement controls");
+            Assert(Top(panel.SetManagement) <= Top(panel.SetManagementHeading) &&
+                Top(panel.SetManagementHeading) < Top(panel.SetNameBox) &&
+                Top(panel.SetNameBox) < Top(panel.SetCommonPlacementHeading) &&
+                Top(panel.SetCommonPlacementHeading) < Top(panel.BehaviorPreviewCard) &&
+                Top(panel.BehaviorPreviewCard) < Top(panel.RelationEditor) &&
+                Top(panel.RelationEditor) < Top(panel.TargetEditor) &&
+                Top(panel.TargetEditor) < Top(panel.EntryEditor) &&
+                Top(panel.EntryEditor) < Top(panel.SourceEditor),
+                "SETTINGS_HIERARCHY Set management stays at the top, followed by Preview/common controls/applicability/tiles/sources");
             Assert(panel.SettingsScrollContent.Margin.Right == 8 &&
                 panel.EntryList.Margin.Right == 0 && panel.SourceList.Margin.Right == 0 &&
                 panel.EntryListActions.Margin.Right == 0 && panel.SourceListActions.Margin.Right == 0,

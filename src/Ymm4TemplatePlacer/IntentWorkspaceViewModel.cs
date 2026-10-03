@@ -17,8 +17,9 @@ public sealed partial class PlacerViewModel
     public ObservableCollection<IntentTileChoice> IntentTiles { get; } = [];
     public bool HasIntentSets => IntentSets.Count > 1;
     public bool ShowSingleSetName => IntentSets.Count == 1;
-    public bool UseSegmentedIntentSets => IntentSets.Count is > 1 and <= 4;
-    public bool UseIntentSetPicker => IntentSets.Count > 4;
+    // Compatibility aliases: all multi-Set selectors now use the same native tab strip.
+    public bool UseSegmentedIntentSets => HasIntentSets;
+    public bool UseIntentSetPicker => false;
     public bool ShowIntentEmptyAction => timeline != null && (PlacementContext == PlacementContext.Generic || timeline.SelectedItems.Count > 0) && IntentTiles.Count == 0;
     public string IntentNotice { get => intentNotice; private set => Set(ref intentNotice, value); }
     public string IntentContextTitle { get => intentContextTitle; private set => Set(ref intentContextTitle, value); }
@@ -45,7 +46,7 @@ public sealed partial class PlacerViewModel
         if (!intentInitialized)
         {
             intentInitialized = true;
-            InitializeIntentTileOrdering(); InitializeIntentTileEditing(); InitializeGenericLayerTarget();
+            InitializeIntentTileOrdering(); InitializeIntentSetOrdering(); InitializeIntentTileEditing(); InitializeGenericLayerTarget();
             ExecuteIntentTileCommand = new ActionCommand(x => !intentExecuting && tileEditState == IntentTileEditState.Idle && settingsAvailable && undo != null &&
                 !PlacementQuickSettingsBlocksPlacement &&
                 x is IntentTileChoice tile && tile.Available && (!tile.IsGeneric || GenericLayerReadyForExecution) && IntentTiles.Any(x => ReferenceEquals(x, tile)),

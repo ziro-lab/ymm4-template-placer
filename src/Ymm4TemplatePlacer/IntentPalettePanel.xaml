@@ -26,26 +26,62 @@
    </Grid>
   </Grid>
 
-  <TextBlock x:Name="SingleSetTitleText" Grid.Row="1" Text="{Binding SelectedIntentSet.Label}" FontWeight="SemiBold" Margin="4,0,4,6">
-   <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowSingleSetName}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+  <TextBlock x:Name="SingleSetTitleText" Grid.Row="1" Text="{Binding SelectedIntentSet.Label}" ToolTip="{Binding SelectedIntentSet.Label}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" FontWeight="SemiBold" Margin="4,0,4,6">
+   <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding ShowSingleSetName}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding HasIntentSets}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
   </TextBlock>
 
-  <DockPanel x:Name="IntentSetRow" Grid.Row="2" Margin="2,6,2,8">
-   <DockPanel.Style><Style TargetType="DockPanel"><Style.Triggers><DataTrigger Binding="{Binding HasIntentSets}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></DockPanel.Style>
-   <TextBlock Text="セット" VerticalAlignment="Center" Margin="0,0,8,0" DockPanel.Dock="Left"/>
-   <ComboBox x:Name="IntentSetPicker" ItemsSource="{Binding IntentSets}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedIntentSet,Mode=TwoWay}" MinWidth="120" HorizontalContentAlignment="Stretch" AutomationProperties.Name="セットを選択">
-    <ComboBox.Style><Style TargetType="ComboBox"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding UseIntentSetPicker}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></ComboBox.Style>
-   </ComboBox>
-   <ListBox x:Name="IntentSetSegments" ItemsSource="{Binding IntentSets}" SelectedItem="{Binding SelectedIntentSet,Mode=TwoWay}" BorderThickness="0" Background="Transparent"
-    ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="セットを切り替える">
-    <ListBox.Style><Style TargetType="ListBox"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding UseSegmentedIntentSets}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></ListBox.Style>
-    <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
-    <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Label}" Padding="10,5"/></DataTemplate></ListBox.ItemTemplate>
-   </ListBox>
-  </DockPanel>
+  <Grid x:Name="IntentSetRow" Grid.Row="2" Margin="2,6,2,0" AllowDrop="True" PreviewMouseWheel="IntentSetWheel" DragOver="SetStripDragOver" Drop="SetStripDrop" DragLeave="SetStripDragLeave">
+   <Grid.Style><Style TargetType="Grid"><Style.Triggers><DataTrigger Binding="{Binding HasIntentSets}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Grid.Style>
+   <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <!-- The native selected TabItem overlaps this shared content edge. No per-Set content is created. -->
+   <Border Grid.ColumnSpan="3" VerticalAlignment="Bottom" Height="1" Background="{Binding BorderBrush,ElementName=IntentSetSegments}"/>
+   <Button x:Name="IntentSetScrollLeftButton" Grid.Column="0" Content="‹" Width="26" Margin="0,2,2,1" Padding="0"
+    IsEnabled="False" Click="IntentSetScrollLeft" ToolTip="左のセットを表示" AutomationProperties.Name="左のセットを表示"/>
+   <TabControl x:Name="IntentSetSegments" Grid.Column="1" ItemsSource="{Binding IntentSets}" SelectedItem="{Binding SelectedIntentSet,Mode=TwoWay}"
+    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" SelectionChanged="IntentSetSelectionChanged"
+    AutomationProperties.Name="セットを切り替える" SnapsToDevicePixels="True">
+    <TabControl.Template><ControlTemplate TargetType="TabControl">
+     <!-- Retain the theme's TabItem template, colours, focus and selection border. Only the header host is bounded. -->
+     <ScrollViewer x:Name="IntentSetHeaderScroll" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" CanContentScroll="False"
+      Focusable="False" ScrollChanged="IntentSetHeaderScrollChanged" KeyboardNavigation.TabNavigation="Once">
+      <ItemsPresenter x:Name="ItemsPresenter" Margin="2,2,2,1"/>
+     </ScrollViewer>
+    </ControlTemplate></TabControl.Template>
+    <TabControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></TabControl.ItemsPanel>
+    <TabControl.ItemContainerStyle><Style TargetType="TabItem">
+     <Setter Property="AllowDrop" Value="True"/>
+     <EventSetter Event="PreviewMouseLeftButtonDown" Handler="SetPointerDown"/>
+     <EventSetter Event="PreviewMouseLeftButtonUp" Handler="SetPointerUp"/>
+     <EventSetter Event="PreviewMouseMove" Handler="SetPointerMove"/>
+     <EventSetter Event="LostMouseCapture" Handler="SetPointerLostCapture"/>
+     <EventSetter Event="QueryContinueDrag" Handler="SetQueryContinueDrag"/>
+     <EventSetter Event="DragOver" Handler="SetHeaderDragOver"/>
+     <EventSetter Event="Drop" Handler="SetHeaderDrop"/>
+     <Setter Property="Header" Value="{Binding Label}"/>
+     <Setter Property="Width" Value="52"/>
+     <Setter Property="ToolTip" Value="{Binding Label}"/><Setter Property="AutomationProperties.Name" Value="{Binding Label}"/>
+     <Setter Property="HeaderTemplate"><Setter.Value><DataTemplate>
+      <TextBlock Text="{Binding}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Height="42" LineHeight="14" LineStackingStrategy="BlockLineHeight"/>
+     </DataTemplate></Setter.Value></Setter>
+    </Style></TabControl.ItemContainerStyle>
+   </TabControl>
+   <Grid x:Name="IntentSetDropFeedback" Grid.Column="1" ClipToBounds="True" IsHitTestVisible="False">
+    <Border x:Name="IntentSetInsertionMarker" Width="2" HorizontalAlignment="Left" Margin="0,2,0,0" Visibility="Collapsed"
+     Background="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}">
+     <Border.RenderTransform><TranslateTransform/></Border.RenderTransform>
+    </Border>
+   </Grid>
+   <Button x:Name="IntentSetScrollRightButton" Grid.Column="2" Content="›" Width="26" Margin="2,2,0,1" Padding="0"
+    IsEnabled="False" Click="IntentSetScrollRight" ToolTip="右のセットを表示" AutomationProperties.Name="右のセットを表示"/>
+  </Grid>
 
 
-  <Grid Grid.Row="4">
+  <Border x:Name="IntentSetContentBorder" Grid.Row="4" Margin="2,0,2,0">
+   <Border.Style><Style TargetType="Border"><Style.Triggers><DataTrigger Binding="{Binding HasIntentSets}" Value="True">
+    <Setter Property="BorderThickness" Value="1,0,1,1"/><Setter Property="BorderBrush" Value="{Binding BorderBrush,ElementName=IntentSetSegments}"/>
+    <Setter Property="Background" Value="{Binding Background,ElementName=IntentSetSegments}"/>
+   </DataTrigger></Style.Triggers></Style></Border.Style>
+  <Grid>
    <ScrollViewer x:Name="PaletteTileScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
     <ItemsControl x:Name="IntentTileItems" ItemsSource="{Binding IntentTiles}">
      <ItemsControl.ItemsPanel><ItemsPanelTemplate><local:PaletteTilePanel LayoutMode="{Binding PaletteLayout}" FixedColumns="{Binding PaletteFixedColumns}" ViewportWidth="{Binding ViewportWidth,RelativeSource={RelativeSource AncestorType=ScrollViewer}}"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -83,6 +119,7 @@
     </Button>
    </StackPanel>
   </Grid>
+  </Border>
 
   <Grid Grid.Row="5" HorizontalAlignment="Right" Margin="0,6,0,0">
    <ToggleButton x:Name="PanelQuickSettingsButton" Content="⚙ 簡易設定" Padding="10,5" Checked="PanelQuickSettingsOpened" AutomationProperties.Name="配置パネルの簡易設定"/>

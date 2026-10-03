@@ -45,7 +45,8 @@ public sealed partial class PlacerViewModel
         var types = (timeline?.Items.Select(x => x.GetType()) ?? [])
             .Concat(ItemSettings.Default.Templates.SelectMany(x => x.Items).Select(x => x.GetType()));
         var restored = new IntentSettingsSession(candidate, types, timeline?.SelectedItems.ToArray() ?? []);
-         restored.SelectedItemContext = restored.ItemContexts.FirstOrDefault(x => x.Key == contextKey);
+        restored.SelectedItemContext = restored.ItemContexts.FirstOrDefault(x => x.Key == contextKey);
+        restored.RestoreCharacterFilter(session);
         if (targetedId.HasValue) restored.SelectedPalette = restored.Palettes.FirstOrDefault(x => x.Id == targetedId) ?? restored.SelectedPalette;
         if (genericId.HasValue) restored.SelectedGenericSet = restored.GenericSets.FirstOrDefault(x => x.Id == genericId) ?? restored.SelectedGenericSet;
         if (restored.SelectedPalette is { } p) p.SelectedEntry = p.Entries.FirstOrDefault(x => x.LibraryEntryId == targetedEntry);

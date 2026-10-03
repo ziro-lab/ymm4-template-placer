@@ -66,7 +66,7 @@ public sealed partial class IntentSettingsSession
         set
         {
             if (refreshingNavigation || value == selectedItemContext || (value != null && !ItemContexts.Contains(value))) return;
-            selectedItemContext = value; RefreshNavigation(); NavigationChanged();
+            selectedItemContext = value; ClearActiveEditingPalette(); ResetCharacterFilterForContext(); RefreshNavigation(); NavigationChanged();
             Raise(nameof(IsGenericContext)); Raise(nameof(IsTargetedContext)); Raise(nameof(HasSelectedSet)); Raise(nameof(HasSelectedSetEntry));
             Raise(nameof(CanCreateForContext)); Raise(nameof(ContextNotice)); RefreshCopyDestination();
         }
@@ -83,7 +83,7 @@ public sealed partial class IntentSettingsSession
     private void InitializeNavigation(IReadOnlyList<IItem> selection)
     {
         VisiblePalettes = new ListCollectionView(Palettes);
-        VisiblePalettes.Filter = x => x is IntentPaletteDraft draft && !IsGenericContext && MatchesContext(draft);
+        VisiblePalettes.Filter = x => x is IntentPaletteDraft draft && !IsGenericContext && MatchesSettingsVisibility(draft);
         ItemContexts.Add(new("generic", "汎用", []));
         var names = KnownTypes.Values.GroupBy(x => x, StringComparer.Ordinal).ToDictionary(x => x.Key, x => x.Count(), StringComparer.Ordinal);
         var ordinals = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -94,6 +94,7 @@ public sealed partial class IntentSettingsSession
             ItemContexts.Add(new(pair.Key, label, [pair.Key]));
         }
         EnsureCompatibilityContext();
+        InitializeCharacterFilter();
         UpdateSelectionContext(selection);
         RefreshNavigation();
     }
@@ -130,7 +131,11 @@ public sealed partial class IntentSettingsSession
             var label = "現在: " + character + string.Join("・", typeNames) + (selection.Count > 1 ? $" ({selection.Count}件)" : "");
             current = new("current-selection", label, types, selection.ToArray()); ItemContexts.Insert(0, current);
         }
-        if (followSelection) selectedItemContext = current;
+        if (followSelection)
+        {
+            selectedItemContext = current;
+            ResetCharacterFilterForContext();
+        }
         refreshingNavigation = false;
         RefreshNavigation(); NavigationChanged(nameof(SelectedItemContext));
         Raise(nameof(CanCreateForContext)); Raise(nameof(ContextNotice));
@@ -155,11 +160,12 @@ public sealed partial class IntentSettingsSession
     {
         if (VisiblePalettes == null || refreshingNavigation) return;
         EnsureCompatibilityContext();
+        RefreshCharacterFilterState();
         refreshingNavigation = true;
         try
         {
             var preferred = selectedPalette?.Id;
-            var applicable = Palettes.Where(MatchesContext).ToArray();
+            var applicable = Palettes.Where(MatchesSettingsVisibility).ToArray();
             var intent = applicable.FirstOrDefault(x => x.Id == preferred)?.Intent ?? selectedIntent;
             Intents.Clear(); foreach (var name in applicable.Select(x => x.Intent).Distinct(StringComparer.Ordinal)) Intents.Add(name);
             selectedIntent = intent != null && Intents.Contains(intent) ? intent : Intents.FirstOrDefault();
@@ -182,6 +188,7 @@ public sealed partial class IntentSettingsSession
         VisiblePalettes.Refresh();
         var visible = VisiblePalettes.Cast<IntentPaletteDraft>().ToArray();
         selectedPalette = visible.FirstOrDefault(x => x.Id == preferred) ?? visible.FirstOrDefault();
+        PinActiveEditingPalette(selectedPalette);
     }
     private void RefreshCopyDestination()
     {

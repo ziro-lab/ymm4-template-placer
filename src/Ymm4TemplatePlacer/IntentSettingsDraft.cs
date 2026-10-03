@@ -345,7 +345,17 @@ public sealed partial class IntentSettingsSession : IntentEditable
     public ObservableCollection<IntentPaletteDraft> Palettes { get; } = [];
     public ObservableCollection<IntentSourceOption> Sources { get; } = [];
     public ICollectionView VisibleSources { get; }
-    public IntentPaletteDraft? SelectedPalette { get => selectedPalette; set { if (refreshingNavigation || selectedPalette == value) return; selectedPalette = value; NavigationChanged(); } }
+    public IntentPaletteDraft? SelectedPalette
+    {
+        get => selectedPalette;
+        set
+        {
+            if (refreshingNavigation || selectedPalette == value) return;
+            selectedPalette = value; PinActiveEditingPalette(value);
+            if (SelectedItemContext?.IsRealItemType == true) RefreshPaletteFilter();
+            else NavigationChanged();
+        }
+    }
     public string SourceSearch { get => sourceSearch; set { sourceSearch = value; VisibleSources.Refresh(); Raise(); } }
     public IntentSettingsSession(PlacerSettings source, IEnumerable<Type> knownTypes, IReadOnlyList<IItem>? selection = null)
     {
@@ -370,6 +380,10 @@ public sealed partial class IntentSettingsSession : IntentEditable
         draft.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(IntentPaletteDraft.SelectedEntry)) NavigationChanged(nameof(SelectedPalette));
+            if (SelectedItemContext?.IsRealItemType == true &&
+                (e.PropertyName is nameof(IntentPaletteDraft.CharacterRestricted) or nameof(IntentPaletteDraft.CharacterName) or
+                    nameof(IntentPaletteDraft.TypeChoices) or nameof(IntentPaletteDraft.TypeMatch)))
+                RefreshNavigation();
         };
         Palettes.Add(draft); return draft;
     }
